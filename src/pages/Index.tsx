@@ -1,13 +1,20 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import AppLayout from "@/components/AppLayout";
+import FeedHeader from "@/components/FeedHeader";
+import StoriesBar from "@/components/StoriesBar";
+import PostCard from "@/components/PostCard";
+import { mockPosts } from "@/data/mockData";
 
 const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <AppLayout>
+      <FeedHeader />
+      <StoriesBar />
+      <div className="mx-auto max-w-lg">
+        {mockPosts.map((post) => (
+          <PostCard key={post.id} post={post} />
+        ))}
       </div>
-    </div>
+    </AppLayout>
   );
 };
 
