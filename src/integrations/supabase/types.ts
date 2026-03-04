@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocked_users: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number
@@ -80,6 +101,66 @@ export type Database = {
           follower_id?: string
           following_id?: string
           id?: string
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          email_booking_confirmation: boolean
+          email_booking_request: boolean
+          email_new_message: boolean
+          email_new_review: boolean
+          email_payment_received: boolean
+          email_promotions: boolean
+          id: string
+          push_booking_confirmation: boolean
+          push_booking_request: boolean
+          push_new_message: boolean
+          push_new_review: boolean
+          push_payment_received: boolean
+          push_promotions: boolean
+          sms_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_booking_confirmation?: boolean
+          email_booking_request?: boolean
+          email_new_message?: boolean
+          email_new_review?: boolean
+          email_payment_received?: boolean
+          email_promotions?: boolean
+          id?: string
+          push_booking_confirmation?: boolean
+          push_booking_request?: boolean
+          push_new_message?: boolean
+          push_new_review?: boolean
+          push_payment_received?: boolean
+          push_promotions?: boolean
+          sms_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_booking_confirmation?: boolean
+          email_booking_request?: boolean
+          email_new_message?: boolean
+          email_new_review?: boolean
+          email_payment_received?: boolean
+          email_promotions?: boolean
+          id?: string
+          push_booking_confirmation?: boolean
+          push_booking_request?: boolean
+          push_new_message?: boolean
+          push_new_review?: boolean
+          push_payment_received?: boolean
+          push_promotions?: boolean
+          sms_enabled?: boolean
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -209,6 +290,39 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          message: string
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          message: string
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          message?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -224,6 +338,72 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          font_size: string
+          id: string
+          language: string
+          medical_notes_privacy: string
+          messaging_access: string
+          private_account: boolean
+          professional_mode: boolean
+          show_activity_status: boolean
+          show_in_search: boolean
+          show_rating_publicly: boolean
+          theme: string
+          two_factor_enabled: boolean
+          updated_at: string
+          user_id: string
+          vet_name: string | null
+          vet_phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          font_size?: string
+          id?: string
+          language?: string
+          medical_notes_privacy?: string
+          messaging_access?: string
+          private_account?: boolean
+          professional_mode?: boolean
+          show_activity_status?: boolean
+          show_in_search?: boolean
+          show_rating_publicly?: boolean
+          theme?: string
+          two_factor_enabled?: boolean
+          updated_at?: string
+          user_id: string
+          vet_name?: string | null
+          vet_phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          font_size?: string
+          id?: string
+          language?: string
+          medical_notes_privacy?: string
+          messaging_access?: string
+          private_account?: boolean
+          professional_mode?: boolean
+          show_activity_status?: boolean
+          show_in_search?: boolean
+          show_rating_publicly?: boolean
+          theme?: string
+          two_factor_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+          vet_name?: string | null
+          vet_phone?: string | null
         }
         Relationships: []
       }
