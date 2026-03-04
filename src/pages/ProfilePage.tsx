@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 const ProfilePage = () => {
   const { user, profile, refreshProfile, signOut } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -94,7 +96,7 @@ const ProfilePage = () => {
             <button onClick={signOut} className="rounded-full p-2 hover:bg-secondary">
               <LogOut className="h-5 w-5" />
             </button>
-            <button className="rounded-full p-2 hover:bg-secondary">
+            <button onClick={() => navigate("/settings")} className="rounded-full p-2 hover:bg-secondary">
               <Settings className="h-5 w-5" />
             </button>
           </div>
