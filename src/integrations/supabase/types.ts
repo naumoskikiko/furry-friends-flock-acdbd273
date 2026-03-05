@@ -298,6 +298,7 @@ export type Database = {
           likes_count: number
           location: string | null
           pet_id: string | null
+          post_type: string
           updated_at: string
           user_id: string
         }
@@ -310,6 +311,7 @@ export type Database = {
           likes_count?: number
           location?: string | null
           pet_id?: string | null
+          post_type?: string
           updated_at?: string
           user_id: string
         }
@@ -322,6 +324,7 @@ export type Database = {
           likes_count?: number
           location?: string | null
           pet_id?: string | null
+          post_type?: string
           updated_at?: string
           user_id?: string
         }

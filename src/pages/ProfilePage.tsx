@@ -14,6 +14,8 @@ import AddPetFlow from "@/components/profile/AddPetFlow";
 import CreatePostModal from "@/components/profile/CreatePostModal";
 import PostGrid from "@/components/profile/PostGrid";
 import PetCard from "@/components/profile/PetCard";
+import PetProfileModal from "@/components/profile/PetProfileModal";
+import LikedPostsGrid from "@/components/profile/LikedPostsGrid";
 
 const ProfilePage = () => {
   const { user, profile, refreshProfile } = useAuth();
@@ -37,6 +39,8 @@ const ProfilePage = () => {
   const [editPet, setEditPet] = useState<any>(null);
   const [createPostOpen, setCreatePostOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"posts" | "saved" | "liked">("posts");
+
+  const [viewPet, setViewPet] = useState<any>(null);
 
   useEffect(() => {
     if (profile) {
@@ -143,19 +147,15 @@ const ProfilePage = () => {
           </div>
 
           <h2 className="mt-3 font-display text-xl font-extrabold">{displayName}</h2>
-
           <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
             <Star className="h-3 w-3 text-primary fill-primary" /> — reviews
           </div>
-
           {profile?.location && (
             <p className="mt-0.5 text-xs text-muted-foreground flex items-center gap-1">
               <MapPin className="h-3 w-3" /> {profile.location}
             </p>
           )}
-
           <p className="mt-1 text-sm text-center max-w-xs">{profile?.bio || "No bio yet"}</p>
-
           <span className="mt-1 text-[10px] rounded-full bg-petkeep-cream px-2 py-0.5 font-bold capitalize text-foreground">
             {profile?.role || "owner"}
           </span>
@@ -207,7 +207,7 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {/* My Pets */}
+        {/* My Pets - circular icons */}
         <div className="px-4 pb-4">
           <div className="flex items-center justify-between">
             <h3 className="font-display text-base font-bold">My Pets</h3>
@@ -218,14 +218,9 @@ const ProfilePage = () => {
               + Add Pet
             </button>
           </div>
-          <div className="mt-2 flex gap-3 overflow-x-auto pb-1">
+          <div className="mt-2 flex gap-4 overflow-x-auto pb-1">
             {pets.map((pet) => (
-              <PetCard
-                key={pet.id}
-                pet={pet}
-                onEdit={(p) => { setEditPet(p); setAddPetOpen(true); }}
-                onDelete={handleDeletePet}
-              />
+              <PetCard key={pet.id} pet={pet} onClick={setViewPet} />
             ))}
             {pets.length === 0 && (
               <p className="py-4 text-sm text-muted-foreground">No pets added yet. Tap "Add Pet" to get started!</p>
@@ -263,12 +258,7 @@ const ProfilePage = () => {
             <p className="mt-2 text-sm text-muted-foreground">Saved posts coming soon</p>
           </div>
         )}
-        {activeTab === "liked" && (
-          <div className="flex flex-col items-center py-12">
-            <Heart className="h-8 w-8 text-muted-foreground" />
-            <p className="mt-2 text-sm text-muted-foreground">Liked posts coming soon</p>
-          </div>
-        )}
+        {activeTab === "liked" && <LikedPostsGrid />}
       </div>
 
       {/* Edit Profile Dialog */}
@@ -295,21 +285,21 @@ const ProfilePage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Add/Edit Pet Flow */}
-      <AddPetFlow
-        open={addPetOpen}
-        onOpenChange={setAddPetOpen}
-        onPetAdded={fetchData}
-        editPet={editPet}
+      {/* Pet Profile Modal */}
+      <PetProfileModal
+        pet={viewPet}
+        open={!!viewPet}
+        onOpenChange={(v) => { if (!v) setViewPet(null); }}
+        isOwner={true}
+        onEdit={(p) => { setEditPet(p); setAddPetOpen(true); }}
+        onDelete={handleDeletePet}
       />
 
+      {/* Add/Edit Pet Flow */}
+      <AddPetFlow open={addPetOpen} onOpenChange={setAddPetOpen} onPetAdded={fetchData} editPet={editPet} />
+
       {/* Create Post Modal */}
-      <CreatePostModal
-        open={createPostOpen}
-        onOpenChange={setCreatePostOpen}
-        onPostCreated={fetchData}
-        pets={pets}
-      />
+      <CreatePostModal open={createPostOpen} onOpenChange={setCreatePostOpen} onPostCreated={fetchData} pets={pets} />
     </AppLayout>
   );
 };
