@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { Heart, MessageCircle, Trash2, Send, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Heart, MessageCircle, Trash2, Send, Play, MoreVertical } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +18,17 @@ interface Post {
   comments_count: number;
   created_at: string;
   pet_id: string | null;
+  post_type?: string;
+}
+
+interface Comment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  username?: string;
+  avatar_url?: string;
 }
 
 interface PostGridProps {
@@ -29,7 +41,7 @@ const PostGrid = ({ posts, onRefresh }: PostGridProps) => {
   const { toast } = useToast();
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [likes, setLikes] = useState<Record<string, boolean>>({});
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
 
@@ -45,7 +57,19 @@ const PostGrid = ({ posts, onRefresh }: PostGridProps) => {
   const loadComments = async (postId: string) => {
     setLoadingComments(true);
     const { data } = await supabase.from("post_comments").select("*").eq("post_id", postId).order("created_at", { ascending: true });
-    setComments(data || []);
+    if (data && data.length > 0) {
+      const userIds = [...new Set(data.map(c => c.user_id))];
+      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds);
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      const enriched = data.map(c => ({
+        ...c,
+        username: profileMap.get(c.user_id)?.full_name || "Unknown",
+        avatar_url: profileMap.get(c.user_id)?.avatar_url || null,
+      }));
+      setComments(enriched);
+    } else {
+      setComments([]);
+    }
     setLoadingComments(false);
   };
 
@@ -72,6 +96,20 @@ const PostGrid = ({ posts, onRefresh }: PostGridProps) => {
     onRefresh();
   };
 
+  const deleteComment = async (commentId: string) => {
+    if (!selectedPost) return;
+    await supabase.from("post_comments").delete().eq("id", commentId);
+    await supabase.from("posts").update({ comments_count: Math.max(0, selectedPost.comments_count - 1) }).eq("id", selectedPost.id);
+    loadComments(selectedPost.id);
+    onRefresh();
+    toast({ title: "Comment deleted" });
+  };
+
+  const canDeleteComment = (comment: Comment) => {
+    if (!user) return false;
+    return user.id === comment.user_id || user.id === selectedPost?.user_id;
+  };
+
   const deletePost = async (postId: string) => {
     await supabase.from("posts").delete().eq("id", postId);
     setSelectedPost(null);
@@ -83,6 +121,8 @@ const PostGrid = ({ posts, onRefresh }: PostGridProps) => {
     navigator.clipboard.writeText(`${window.location.origin}/post/${postId}`);
     toast({ title: "Link copied!" });
   };
+
+  const isVideo = (post: Post) => post.post_type === "video" || (post.image_url && /\.(mp4|mov|webm)$/i.test(post.image_url));
 
   if (posts.length === 0) {
     return (
@@ -98,9 +138,18 @@ const PostGrid = ({ posts, onRefresh }: PostGridProps) => {
     <>
       <div className="grid grid-cols-3 gap-0.5">
         {posts.map((post) => (
-          <button key={post.id} onClick={() => openPost(post)} className="aspect-square overflow-hidden bg-secondary">
+          <button key={post.id} onClick={() => openPost(post)} className="aspect-square overflow-hidden bg-secondary relative">
             {post.image_url ? (
-              <img src={post.image_url} alt="" className="h-full w-full object-cover" loading="lazy" />
+              isVideo(post) ? (
+                <>
+                  <video src={post.image_url} className="h-full w-full object-cover" muted preload="metadata" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-foreground/10">
+                    <Play className="h-8 w-8 text-background fill-background" />
+                  </div>
+                </>
+              ) : (
+                <img src={post.image_url} alt="" className="h-full w-full object-cover" loading="lazy" />
+              )
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-secondary p-2">
                 <p className="text-xs text-muted-foreground line-clamp-3">{post.caption}</p>
@@ -110,16 +159,18 @@ const PostGrid = ({ posts, onRefresh }: PostGridProps) => {
         ))}
       </div>
 
-      {/* Post Detail Modal */}
       <Dialog open={!!selectedPost} onOpenChange={(v) => { if (!v) setSelectedPost(null); }}>
-        <DialogContent className="max-w-md p-0 overflow-hidden">
+        <DialogContent className="max-w-md p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
           {selectedPost && (
             <div>
               {selectedPost.image_url && (
-                <img src={selectedPost.image_url} alt="" className="w-full aspect-square object-cover" />
+                isVideo(selectedPost) ? (
+                  <video src={selectedPost.image_url} controls autoPlay muted className="w-full aspect-square object-cover" />
+                ) : (
+                  <img src={selectedPost.image_url} alt="" className="w-full aspect-square object-cover" />
+                )
               )}
               <div className="p-4">
-                {/* Actions */}
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-4">
                     <button onClick={() => toggleLike(selectedPost)} className="transition-transform active:scale-90">
@@ -142,15 +193,43 @@ const PostGrid = ({ posts, onRefresh }: PostGridProps) => {
                 {selectedPost.location && <p className="mt-1 text-xs text-muted-foreground">📍 {selectedPost.location}</p>}
 
                 {/* Comments */}
-                <div className="mt-3 max-h-32 space-y-2 overflow-y-auto">
+                <div className="mt-3 max-h-40 space-y-3 overflow-y-auto">
                   {comments.map(c => (
-                    <p key={c.id} className="text-xs">
-                      <span className="font-bold">User</span> {c.content}
-                    </p>
+                    <div key={c.id} className="flex items-start gap-2">
+                      {c.avatar_url ? (
+                        <img src={c.avatar_url} alt="" className="h-6 w-6 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <div className="h-6 w-6 rounded-full bg-secondary shrink-0 flex items-center justify-center text-[8px] font-bold">
+                          {(c.username || "U")[0].toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs">
+                          <span className="font-bold">{c.username}</span>{" "}
+                          {c.content}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {new Date(c.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      {canDeleteComment(c) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="shrink-0 p-0.5 text-muted-foreground hover:text-foreground">
+                              <MoreVertical className="h-3.5 w-3.5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem className="text-destructive" onClick={() => deleteComment(c.id)}>
+                              Delete comment
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
                   ))}
                 </div>
 
-                {/* Add comment */}
                 <div className="mt-3 flex gap-2">
                   <Input
                     placeholder="Add a comment..."
