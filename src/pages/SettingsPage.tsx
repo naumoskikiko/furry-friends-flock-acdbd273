@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, User, Shield, Bell, CreditCard, Lock, Palette, PawPrint, ShieldCheck, HelpCircle, FileText, AlertTriangle, Sparkles, ChevronRight } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, User, Shield, Bell, CreditCard, Lock, Palette, PawPrint, ShieldCheck, HelpCircle, FileText, AlertTriangle, Sparkles, ChevronRight, LogOut } from "lucide-react";
 import SettingsAccount from "@/components/settings/SettingsAccount";
 import SettingsSecurity from "@/components/settings/SettingsSecurity";
 import SettingsNotifications from "@/components/settings/SettingsNotifications";
@@ -35,6 +33,7 @@ const sections = [
 
 const SettingsPage = () => {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const [activeSection, setActiveSection] = useState<SettingsSection>("main");
 
   const handleBack = () => {
@@ -93,6 +92,19 @@ const SettingsPage = () => {
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
             ))}
+
+            {/* Logout at the very bottom */}
+            <div className="mt-6 mb-8 border-t border-border pt-4">
+              <button
+                onClick={signOut}
+                className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-destructive transition-colors hover:bg-destructive/5"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10">
+                  <LogOut className="h-4.5 w-4.5 text-destructive" />
+                </div>
+                <p className="text-sm font-semibold">Log Out</p>
+              </button>
+            </div>
           </div>
         )}
 
