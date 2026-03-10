@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   Search, Pin, PinOff, Trash2, MoreHorizontal,
-  Archive, ArchiveRestore, BellOff, Bell,
+  Archive, ArchiveRestore, BellOff, Bell, FileEdit,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -161,7 +161,9 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
               : "";
             const activity = getActivityStatus(c.other_user.last_active_at);
 
-            const lastText = c.last_message?.deleted_at
+            const lastText = c.draft
+              ? c.draft
+              : c.last_message?.deleted_at
               ? "This message was deleted"
               : c.last_message?.message_type === "appointment"
               ? "📅 Appointment booked"
@@ -197,8 +199,15 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
                         <span className="text-[10px] text-muted-foreground ml-2 shrink-0">{timeAgo}</span>
                       )}
                     </div>
-                    <p className={`truncate text-xs ${c.unread_count > 0 ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
-                      {lastText}
+                    <p className={`truncate text-xs flex items-center gap-1 ${
+                      c.draft
+                        ? "text-primary italic"
+                        : c.unread_count > 0
+                        ? "font-semibold text-foreground"
+                        : "text-muted-foreground"
+                    }`}>
+                      {c.draft && <FileEdit className="h-3 w-3 shrink-0" />}
+                      {c.draft ? `Draft: ${lastText}` : lastText}
                     </p>
                   </div>
                   {c.unread_count > 0 && (
