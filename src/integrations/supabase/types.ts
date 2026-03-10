@@ -237,6 +237,98 @@ export type Database = {
           },
         ]
       }
+      care_payments: {
+        Row: {
+          booking_id: string
+          created_at: string
+          id: string
+          payment_method: string
+          platform_fee: number
+          provider_earnings: number
+          provider_id: string
+          status: string
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          id?: string
+          payment_method?: string
+          platform_fee?: number
+          provider_earnings?: number
+          provider_id: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          id?: string
+          payment_method?: string
+          platform_fee?: number
+          provider_earnings?: number
+          provider_id?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "care_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_payments_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "care_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      care_payouts: {
+        Row: {
+          amount: number
+          id: string
+          processed_at: string | null
+          provider_id: string
+          requested_at: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          id?: string
+          processed_at?: string | null
+          provider_id: string
+          requested_at?: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          id?: string
+          processed_at?: string | null
+          provider_id?: string
+          requested_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_payouts_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "care_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_providers: {
         Row: {
           avg_rating: number
@@ -1037,6 +1129,44 @@ export type Database = {
           },
         ]
       }
+      provider_balances: {
+        Row: {
+          available_balance: number
+          id: string
+          pending_balance: number
+          provider_id: string
+          total_earned: number
+          total_platform_fees: number
+          updated_at: string
+        }
+        Insert: {
+          available_balance?: number
+          id?: string
+          pending_balance?: number
+          provider_id: string
+          total_earned?: number
+          total_platform_fees?: number
+          updated_at?: string
+        }
+        Update: {
+          available_balance?: number
+          id?: string
+          pending_balance?: number
+          provider_id?: string
+          total_earned?: number
+          total_platform_fees?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_balances_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: true
+            referencedRelation: "care_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       provider_gallery: {
         Row: {
           caption: string | null
@@ -1405,6 +1535,15 @@ export type Database = {
       is_conversation_member: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
+      }
+      process_care_payment: {
+        Args: {
+          _booking_id: string
+          _provider_id: string
+          _total_amount: number
+          _user_id: string
+        }
+        Returns: string
       }
     }
     Enums: {
