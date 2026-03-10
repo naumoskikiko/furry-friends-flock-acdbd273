@@ -23,6 +23,10 @@ export interface CareProvider {
   total_bookings: number;
   opening_hours: any;
   created_at: string;
+  emergency_available: boolean;
+  cancellation_hours: number;
+  cancellation_policy: string;
+  response_time_minutes: number | null;
   profile?: { full_name: string; username: string | null; avatar_url: string | null };
 }
 
@@ -41,6 +45,7 @@ export interface CareBooking {
   user_id: string;
   provider_id: string;
   service_id: string;
+  pet_id: string | null;
   booking_date: string;
   booking_time: string;
   status: string;
@@ -49,6 +54,7 @@ export interface CareBooking {
   created_at: string;
   service?: CareService;
   provider?: CareProvider;
+  pet?: { id: string; name: string; animal_type: string; breed: string | null; photo_url: string | null };
   user_profile?: { full_name: string; username: string | null; avatar_url: string | null };
 }
 
@@ -71,6 +77,14 @@ export interface ProviderAvailability {
   is_available: boolean;
 }
 
+export interface GalleryImage {
+  id: string;
+  provider_id: string;
+  image_url: string;
+  caption: string;
+  created_at: string;
+}
+
 const CATEGORIES = [
   { value: "veterinarian", label: "Veterinarian", icon: "🏥" },
   { value: "groomer", label: "Groomer", icon: "✂️" },
@@ -86,8 +100,19 @@ export { CATEGORIES };
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 export { DAY_NAMES };
 
+// Helper: check if provider is currently open based on availability
+export function isProviderOpen(availability: ProviderAvailability[]): "open" | "closed" {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const dayAvail = availability.find((a) => a.day_of_week === dayOfWeek && a.is_available);
+  if (!dayAvail) return "closed";
+  if (currentTime >= dayAvail.start_time.slice(0, 5) && currentTime <= dayAvail.end_time.slice(0, 5)) return "open";
+  return "closed";
+}
+
 // --- Browse providers ---
-export function useCareProviders(category?: string, searchQuery?: string) {
+export function useCareProviders(category?: string, searchQuery?: string, emergencyOnly?: boolean) {
   const [providers, setProviders] = useState<CareProvider[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -102,6 +127,9 @@ export function useCareProviders(category?: string, searchQuery?: string) {
     }
     if (searchQuery && searchQuery.trim()) {
       query = query.ilike("business_name", `%${searchQuery.trim()}%`);
+    }
+    if (emergencyOnly) {
+      query = query.eq("emergency_available", true);
     }
 
     const { data } = await query;
@@ -123,7 +151,7 @@ export function useCareProviders(category?: string, searchQuery?: string) {
 
     setProviders(providerList);
     setLoading(false);
-  }, [category, searchQuery]);
+  }, [category, searchQuery, emergencyOnly]);
 
   useEffect(() => {
     fetchProviders();
@@ -205,12 +233,41 @@ export function useProviderAvailability(providerId: string | null) {
   return availability;
 }
 
+// --- Provider gallery ---
+export function useProviderGallery(providerId: string | null) {
+  const [images, setImages] = useState<GalleryImage[]>([]);
+
+  const fetchGallery = useCallback(async () => {
+    if (!providerId) { setImages([]); return; }
+    const { data } = await fromTable("provider_gallery")
+      .select("*")
+      .eq("provider_id", providerId)
+      .order("created_at", { ascending: false });
+    setImages((data || []) as GalleryImage[]);
+  }, [providerId]);
+
+  useEffect(() => { fetchGallery(); }, [fetchGallery]);
+
+  const addImage = useCallback(async (imageUrl: string, caption?: string) => {
+    if (!providerId) return;
+    await fromTable("provider_gallery").insert({ provider_id: providerId, image_url: imageUrl, caption: caption || "" });
+    fetchGallery();
+  }, [providerId, fetchGallery]);
+
+  const removeImage = useCallback(async (imageId: string) => {
+    await fromTable("provider_gallery").delete().eq("id", imageId);
+    fetchGallery();
+  }, [fetchGallery]);
+
+  return { images, addImage, removeImage, refresh: fetchGallery };
+}
+
 // --- Create booking ---
 export function useBooking() {
   const { user } = useAuth();
 
   const createBooking = useCallback(
-    async (providerId: string, serviceId: string, date: string, time: string, notes?: string) => {
+    async (providerId: string, serviceId: string, date: string, time: string, notes?: string, petId?: string) => {
       if (!user) return null;
 
       // Check for double booking
@@ -249,6 +306,7 @@ export function useBooking() {
         booking_date: date,
         booking_time: time,
         notes: notes || "",
+        pet_id: petId || null,
         conversation_id: conversationId,
       }).select("*").single();
 
@@ -261,10 +319,17 @@ export function useBooking() {
           .eq("id", serviceId)
           .single();
 
+        // Get pet info if provided
+        let petInfo = null;
+        if (petId) {
+          const { data: pet } = await supabase.from("pets").select("name, animal_type, breed").eq("id", petId).single();
+          petInfo = pet;
+        }
+
         await fromTable("messages").insert({
           conversation_id: conversationId,
           sender_id: user.id,
-          message_text: `Appointment booked: ${service?.service_name || "Service"}`,
+          message_text: `Appointment booked: ${service?.service_name || "Service"}${petInfo ? ` for ${petInfo.name}` : ""}`,
           message_type: "appointment",
           metadata: {
             provider: provider?.business_name,
@@ -272,6 +337,7 @@ export function useBooking() {
             time,
             service: service?.service_name,
             booking_id: booking?.id,
+            pet: petInfo,
           },
         });
       }
@@ -304,22 +370,29 @@ export function useMyBookings() {
 
     const bookingList = (data || []) as CareBooking[];
 
-    // Enrich with provider + service data
+    // Enrich with provider + service + pet data
     if (bookingList.length > 0) {
       const providerIds = [...new Set(bookingList.map((b) => b.provider_id))];
       const serviceIds = [...new Set(bookingList.map((b) => b.service_id))];
+      const petIds = [...new Set(bookingList.map((b) => b.pet_id).filter(Boolean))] as string[];
 
-      const [{ data: providers }, { data: services }] = await Promise.all([
+      const promises: Promise<any>[] = [
         fromTable("care_providers").select("id, business_name, category, photo_url, user_id").in("id", providerIds),
         fromTable("care_services").select("id, service_name, price, duration").in("id", serviceIds),
-      ]);
+      ];
+      if (petIds.length > 0) {
+        promises.push(supabase.from("pets").select("id, name, animal_type, breed, photo_url").in("id", petIds));
+      }
 
-      const provMap = new Map((providers || []).map((p: any) => [p.id, p]));
-      const svcMap = new Map((services || []).map((s: any) => [s.id, s]));
+      const results = await Promise.all(promises);
+      const provMap = new Map((results[0].data || []).map((p: any) => [p.id, p]));
+      const svcMap = new Map((results[1].data || []).map((s: any) => [s.id, s]));
+      const petMap = petIds.length > 0 ? new Map((results[2]?.data || []).map((p: any) => [p.id, p])) : new Map();
 
       bookingList.forEach((b) => {
         b.provider = provMap.get(b.provider_id) as any;
         b.service = svcMap.get(b.service_id) as any;
+        if (b.pet_id) b.pet = petMap.get(b.pet_id) as any;
       });
     }
 
@@ -329,7 +402,12 @@ export function useMyBookings() {
 
   useEffect(() => { fetchBookings(); }, [fetchBookings]);
 
-  return { bookings, loading, refresh: fetchBookings };
+  const cancelBooking = useCallback(async (bookingId: string) => {
+    await fromTable("care_bookings").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", bookingId);
+    fetchBookings();
+  }, [fetchBookings]);
+
+  return { bookings, loading, refresh: fetchBookings, cancelBooking };
 }
 
 // --- Provider's bookings (for dashboard) ---
@@ -347,22 +425,29 @@ export function useProviderBookings(providerId: string | null) {
 
     const bookingList = (data || []) as CareBooking[];
 
-    // Enrich with user profiles + services
+    // Enrich with user profiles + services + pets
     if (bookingList.length > 0) {
       const userIds = [...new Set(bookingList.map((b) => b.user_id))];
       const serviceIds = [...new Set(bookingList.map((b) => b.service_id))];
+      const petIds = [...new Set(bookingList.map((b) => b.pet_id).filter(Boolean))] as string[];
 
-      const [{ data: profiles }, { data: services }] = await Promise.all([
+      const promises: Promise<any>[] = [
         supabase.from("profiles").select("user_id, full_name, username, avatar_url").in("user_id", userIds),
         fromTable("care_services").select("id, service_name, price, duration").in("id", serviceIds),
-      ]);
+      ];
+      if (petIds.length > 0) {
+        promises.push(supabase.from("pets").select("id, name, animal_type, breed, photo_url").in("id", petIds));
+      }
 
-      const profMap = new Map((profiles || []).map((p) => [p.user_id, p]));
-      const svcMap = new Map((services || []).map((s: any) => [s.id, s]));
+      const results = await Promise.all(promises);
+      const profMap = new Map((results[0].data || []).map((p: any) => [p.user_id, p]));
+      const svcMap = new Map((results[1].data || []).map((s: any) => [s.id, s]));
+      const petMap = petIds.length > 0 ? new Map((results[2]?.data || []).map((p: any) => [p.id, p])) : new Map();
 
       bookingList.forEach((b) => {
         b.user_profile = profMap.get(b.user_id) as any;
         b.service = svcMap.get(b.service_id) as any;
+        if (b.pet_id) b.pet = petMap.get(b.pet_id) as any;
       });
     }
 

@@ -1,18 +1,19 @@
 import { useState, useEffect } from "react";
 import {
-  Star, BadgeCheck, MapPin, ChevronRight, Search, Clock, DollarSign,
-  Calendar, ChevronLeft, X, MessageSquare,
+  Star, BadgeCheck, MapPin, Clock, DollarSign,
+  Calendar, ChevronLeft, MessageSquare, AlertTriangle, Image as ImageIcon, Shield,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import {
-  useCareProviders, useProviderServices, useProviderReviews,
-  useProviderAvailability, useBooking, useSubmitReview,
+  useProviderServices, useProviderReviews,
+  useProviderAvailability, useProviderGallery, useBooking, useSubmitReview,
   generateTimeSlots, CATEGORIES, DAY_NAMES,
   type CareProvider, type CareService,
 } from "@/hooks/useCare";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
 interface ProviderDetailProps {
@@ -25,22 +26,33 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   const { services } = useProviderServices(provider.id);
   const { reviews, refresh: refreshReviews } = useProviderReviews(provider.id);
   const availability = useProviderAvailability(provider.id);
+  const { images: galleryImages } = useProviderGallery(provider.id);
   const { createBooking } = useBooking();
   const { submitReview } = useSubmitReview();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<"services" | "reviews" | "hours">("services");
+  const [tab, setTab] = useState<"services" | "reviews" | "hours" | "gallery">("services");
   const [selectedService, setSelectedService] = useState<CareService | null>(null);
   const [bookingDate, setBookingDate] = useState("");
   const [bookingTime, setBookingTime] = useState("");
   const [bookingNotes, setBookingNotes] = useState("");
+  const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
   const [booking, setBooking] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [userPets, setUserPets] = useState<{ id: string; name: string; animal_type: string; breed: string | null }[]>([]);
 
   const catInfo = CATEGORIES.find((c) => c.value === provider.category);
+
+  // Fetch user's pets for booking
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("pets").select("id, name, animal_type, breed").eq("owner_id", user.id).then(({ data }) => {
+      setUserPets(data || []);
+    });
+  }, [user]);
 
   // Available time slots for selected date
   const selectedDayOfWeek = bookingDate ? new Date(bookingDate).getDay() : -1;
@@ -49,16 +61,23 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
     ? generateTimeSlots(dayAvail.start_time, dayAvail.end_time, selectedService.duration)
     : [];
 
+  // Provider status
+  const now = new Date();
+  const currentDayAvail = availability.find((a) => a.day_of_week === now.getDay() && a.is_available);
+  const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const isOpen = currentDayAvail && currentTime >= currentDayAvail.start_time.slice(0, 5) && currentTime <= currentDayAvail.end_time.slice(0, 5);
+
   const handleBook = async () => {
     if (!selectedService || !bookingDate || !bookingTime) return;
     setBooking(true);
     try {
-      await createBooking(provider.id, selectedService.id, bookingDate, bookingTime, bookingNotes);
+      await createBooking(provider.id, selectedService.id, bookingDate, bookingTime, bookingNotes, selectedPetId || undefined);
       toast({ title: "Booking confirmed!", description: `${selectedService.service_name} on ${bookingDate} at ${bookingTime}` });
       setSelectedService(null);
       setBookingDate("");
       setBookingTime("");
       setBookingNotes("");
+      setSelectedPetId(null);
     } catch (e: any) {
       toast({ title: "Booking failed", description: e.message, variant: "destructive" });
     }
@@ -77,6 +96,12 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   };
 
   const isOwnProfile = user?.id === provider.user_id;
+  const tabs = [
+    { key: "services" as const, label: "Services" },
+    { key: "reviews" as const, label: "Reviews" },
+    { key: "hours" as const, label: "Hours" },
+    ...(galleryImages.length > 0 ? [{ key: "gallery" as const, label: "Gallery" }] : []),
+  ];
 
   return (
     <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
@@ -88,10 +113,7 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
           </button>
           <h1 className="font-display text-lg font-bold truncate flex-1">Provider Profile</h1>
           {!isOwnProfile && (
-            <button
-              onClick={() => navigate("/messages")}
-              className="rounded-full p-1.5 hover:bg-secondary"
-            >
+            <button onClick={() => navigate("/messages")} className="rounded-full p-1.5 hover:bg-secondary">
               <MessageSquare className="h-5 w-5" />
             </button>
           )}
@@ -118,34 +140,58 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
                 </span>
                 <span>({provider.total_reviews} reviews)</span>
               </div>
-              <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                <span className="rounded-full bg-secondary px-2 py-0.5 font-semibold">
+              <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold">
                   {catInfo?.icon} {catInfo?.label || provider.category}
                 </span>
                 {provider.location && (
-                  <span className="flex items-center gap-0.5">
+                  <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
                     <MapPin className="h-3 w-3" /> {provider.location}
                   </span>
                 )}
+                {availability.length > 0 && (
+                  <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
+                    isOpen ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-muted text-muted-foreground"
+                  }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${isOpen ? "bg-green-500" : "bg-muted-foreground/50"}`} />
+                    {isOpen ? "Open Now" : "Closed"}
+                  </span>
+                )}
+                {provider.emergency_available && (
+                  <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive flex items-center gap-0.5">
+                    <AlertTriangle className="h-2.5 w-2.5" /> Emergency
+                  </span>
+                )}
               </div>
+              {provider.response_time_minutes && (
+                <p className="mt-1 text-[10px] text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-3 w-3" /> Responds within ~{provider.response_time_minutes} min
+                </p>
+              )}
             </div>
           </div>
           {provider.description && (
             <p className="mt-3 text-sm text-muted-foreground">{provider.description}</p>
           )}
+          {provider.cancellation_policy && (
+            <div className="mt-3 flex items-start gap-2 rounded-xl bg-secondary/50 p-3">
+              <Shield className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+              <p className="text-[11px] text-muted-foreground">{provider.cancellation_policy}</p>
+            </div>
+          )}
         </div>
 
         {/* Tabs */}
         <div className="flex border-b border-border">
-          {(["services", "reviews", "hours"] as const).map((t) => (
+          {tabs.map((t) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={t.key}
+              onClick={() => setTab(t.key)}
               className={`flex-1 py-2.5 text-xs font-bold capitalize transition-colors ${
-                tab === t ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
+                tab === t.key ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
               }`}
             >
-              {t === "hours" ? "Hours" : t}
+              {t.label}
             </button>
           ))}
         </div>
@@ -189,6 +235,28 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
                   {/* Booking form inline */}
                   {selectedService?.id === s.id && (
                     <div className="mt-4 pt-3 border-t border-border space-y-3">
+                      {/* Pet selection */}
+                      {userPets.length > 0 && (
+                        <div>
+                          <label className="text-xs font-semibold text-muted-foreground">Select Pet</label>
+                          <div className="mt-1 flex flex-wrap gap-2">
+                            {userPets.map((pet) => (
+                              <button
+                                key={pet.id}
+                                onClick={() => setSelectedPetId(selectedPetId === pet.id ? null : pet.id)}
+                                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                  selectedPetId === pet.id
+                                    ? "petkeep-gradient text-primary-foreground"
+                                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                }`}
+                              >
+                                🐾 {pet.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <div>
                         <label className="text-xs font-semibold text-muted-foreground">Select Date</label>
                         <input
@@ -228,12 +296,13 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
                       {bookingTime && (
                         <>
                           <div>
-                            <label className="text-xs font-semibold text-muted-foreground">Notes (optional)</label>
-                            <input
+                            <label className="text-xs font-semibold text-muted-foreground">Notes for provider</label>
+                            <textarea
                               value={bookingNotes}
                               onChange={(e) => setBookingNotes(e.target.value)}
-                              placeholder="Any special requirements..."
-                              className="mt-1 w-full rounded-xl bg-secondary px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
+                              placeholder="Any special requirements, medical notes, pet behavior info..."
+                              rows={3}
+                              className="mt-1 w-full rounded-xl bg-secondary px-3 py-2 text-sm outline-none resize-none placeholder:text-muted-foreground"
                             />
                           </div>
                           <button
@@ -323,9 +392,12 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
               ) : (
                 DAY_NAMES.map((day, i) => {
                   const avail = availability.find((a) => a.day_of_week === i);
+                  const isToday = now.getDay() === i;
                   return (
-                    <div key={i} className="flex items-center justify-between rounded-xl bg-card px-4 py-3 border border-border">
-                      <span className="text-sm font-semibold">{day}</span>
+                    <div key={i} className={`flex items-center justify-between rounded-xl bg-card px-4 py-3 border ${isToday ? "border-primary/30 bg-primary/5" : "border-border"}`}>
+                      <span className={`text-sm font-semibold ${isToday ? "text-primary" : ""}`}>
+                        {day} {isToday && <span className="text-[10px] font-normal text-muted-foreground">(Today)</span>}
+                      </span>
                       {avail && avail.is_available ? (
                         <span className="text-xs text-muted-foreground">
                           {avail.start_time.slice(0, 5)} – {avail.end_time.slice(0, 5)}
@@ -337,6 +409,17 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
                   );
                 })
               )}
+            </div>
+          )}
+
+          {/* Gallery */}
+          {tab === "gallery" && (
+            <div className="grid grid-cols-2 gap-2">
+              {galleryImages.map((img) => (
+                <div key={img.id} className="rounded-xl overflow-hidden aspect-square bg-secondary">
+                  <img src={img.image_url} alt={img.caption || "Gallery"} className="w-full h-full object-cover" />
+                </div>
+              ))}
             </div>
           )}
         </div>
