@@ -11,10 +11,27 @@ export const useStories = () => {
 
   const fetchStories = useCallback(async () => {
     setLoading(true);
-    const { data: stories } = await supabase
+
+    // Get followed user IDs to filter stories
+    let followedIds: string[] = [];
+    if (user) {
+      const { data: follows } = await supabase
+        .from("followers")
+        .select("following_id")
+        .eq("follower_id", user.id);
+      followedIds = follows?.map((f) => f.following_id) || [];
+    }
+    const storyUserIds = user ? [...followedIds, user.id] : [];
+
+    const query = supabase
       .from("stories")
       .select("*")
       .order("created_at", { ascending: true });
+
+    // If user is logged in, filter to own + followed
+    const { data: stories } = storyUserIds.length > 0
+      ? await query.in("user_id", storyUserIds)
+      : await query;
 
     if (!stories || stories.length === 0) {
       setStoryGroups([]);
