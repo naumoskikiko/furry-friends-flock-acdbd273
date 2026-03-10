@@ -299,6 +299,42 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          actor_id: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          is_read: boolean
+          message: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pets: {
         Row: {
           age: string | null

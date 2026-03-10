@@ -5,7 +5,6 @@ import {
   Send,
   Bookmark,
   MoreHorizontal,
-  Play,
   Trash2,
   MoreVertical,
 } from "lucide-react";
@@ -13,6 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { createNotification } from "@/hooks/useNotifications";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -64,6 +64,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     if (newLiked) {
       await supabase.from("post_likes").insert({ post_id: post.id, user_id: user.id });
       await supabase.from("posts").update({ likes_count: likesCount + 1 }).eq("id", post.id);
+      createNotification(user.id, post.user_id, "like", "post", post.id, "liked your post");
     } else {
       await supabase.from("post_likes").delete().eq("post_id", post.id).eq("user_id", user.id);
       await supabase.from("posts").update({ likes_count: Math.max(0, likesCount - 1) }).eq("id", post.id);
@@ -78,6 +79,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
 
     if (newSaved) {
       await (supabase as any).from("saved_posts").insert({ post_id: post.id, user_id: user.id });
+      createNotification(user.id, post.user_id, "save", "post", post.id, "saved your post");
       toast({ title: "Post saved" });
     } else {
       await (supabase as any).from("saved_posts").delete().eq("post_id", post.id).eq("user_id", user.id);
@@ -123,6 +125,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     await supabase.from("post_comments").insert({ post_id: post.id, user_id: user.id, content: newComment.trim() });
     await supabase.from("posts").update({ comments_count: commentsCount + 1 }).eq("id", post.id);
     setCommentsCount((c) => c + 1);
+    createNotification(user.id, post.user_id, "comment", "post", post.id, "commented on your post");
     setNewComment("");
     openComments();
   };
