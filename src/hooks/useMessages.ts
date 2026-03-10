@@ -23,6 +23,7 @@ export interface Conversation {
   is_pinned: boolean;
   is_archived: boolean;
   is_muted: boolean;
+  draft?: string;
 }
 
 export interface Message {
@@ -40,8 +41,73 @@ export interface Message {
   metadata: any | null;
 }
 
+export interface PendingMessage {
+  id: string;
+  text: string;
+  replyToId?: string;
+  messageType: string;
+  metadata?: any;
+  status: "pending" | "sending" | "failed";
+  timestamp: number;
+}
+
 const fromTable = (table: string) => (supabase as any).from(table);
 const MESSAGES_PAGE_SIZE = 50;
+const DRAFT_KEY = (convId: string) => `msg_draft_${convId}`;
+const QUEUE_KEY = "msg_offline_queue";
+
+// --- Drafts ---
+export function saveDraft(conversationId: string, text: string) {
+  if (!text.trim()) {
+    localStorage.removeItem(DRAFT_KEY(conversationId));
+  } else {
+    localStorage.setItem(DRAFT_KEY(conversationId), text);
+  }
+}
+
+export function loadDraft(conversationId: string): string {
+  return localStorage.getItem(DRAFT_KEY(conversationId)) || "";
+}
+
+// --- Offline queue ---
+function getOfflineQueue(): PendingMessage[] {
+  try {
+    return JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]");
+  } catch { return []; }
+}
+
+function setOfflineQueue(queue: PendingMessage[]) {
+  localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+}
+
+function addToQueue(msg: PendingMessage) {
+  const queue = getOfflineQueue();
+  queue.push(msg);
+  setOfflineQueue(queue);
+}
+
+function removeFromQueue(id: string) {
+  const queue = getOfflineQueue().filter((m) => m.id !== id);
+  setOfflineQueue(queue);
+}
+
+// --- Connection status ---
+export function useConnectionStatus() {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const onOnline = () => setIsOnline(true);
+    const onOffline = () => setIsOnline(false);
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+    };
+  }, []);
+
+  return isOnline;
+}
 
 // --- Activity status tracking ---
 let activityInterval: ReturnType<typeof setInterval> | null = null;
@@ -62,6 +128,17 @@ export function useActivityTracking() {
       if (activityInterval) clearInterval(activityInterval);
     };
   }, [user]);
+}
+
+// --- Link preview detection ---
+const URL_REGEX = /https?:\/\/[^\s<]+/g;
+
+export function extractLinks(text: string): string[] {
+  return text.match(URL_REGEX) || [];
+}
+
+export function isLinkMessage(text: string): boolean {
+  return URL_REGEX.test(text);
 }
 
 // --- Conversations ---
@@ -135,6 +212,7 @@ export function useConversations() {
         .neq("sender_id", user.id);
 
       const meta = metaMap.get(convId) || { is_pinned: false, is_archived: false, is_muted: false };
+      const draft = loadDraft(convId);
 
       convList.push({
         id: convId,
@@ -159,6 +237,7 @@ export function useConversations() {
         is_pinned: meta.is_pinned,
         is_archived: meta.is_archived,
         is_muted: meta.is_muted,
+        draft: draft || undefined,
       });
     }
 
@@ -313,13 +392,57 @@ export function useTotalUnread() {
   return count;
 }
 
-// --- Chat messages with pagination ---
+// --- Chat messages with pagination + offline queue ---
 export function useChatMessages(conversationId: string | null) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
+  const [pendingMessages, setPendingMessages] = useState<PendingMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
   const oldestRef = useRef<string | null>(null);
+  const isOnline = useConnectionStatus();
+
+  // Load pending from queue on mount
+  useEffect(() => {
+    if (!conversationId) return;
+    const queue = getOfflineQueue().filter(
+      (m) => (m as any).conversationId === conversationId
+    );
+    setPendingMessages(queue);
+  }, [conversationId]);
+
+  // Flush offline queue when back online
+  useEffect(() => {
+    if (!isOnline || !user || !conversationId) return;
+    const queue = getOfflineQueue();
+    const forThisConv = queue.filter((m) => (m as any).conversationId === conversationId);
+    if (forThisConv.length === 0) return;
+
+    const flush = async () => {
+      for (const pending of forThisConv) {
+        setPendingMessages((prev) =>
+          prev.map((m) => (m.id === pending.id ? { ...m, status: "sending" as const } : m))
+        );
+        const { error } = await fromTable("messages").insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          message_text: pending.text,
+          reply_to_id: pending.replyToId || null,
+          message_type: pending.messageType,
+          metadata: pending.metadata || null,
+        });
+        if (!error) {
+          removeFromQueue(pending.id);
+          setPendingMessages((prev) => prev.filter((m) => m.id !== pending.id));
+        } else {
+          setPendingMessages((prev) =>
+            prev.map((m) => (m.id === pending.id ? { ...m, status: "failed" as const } : m))
+          );
+        }
+      }
+    };
+    flush();
+  }, [isOnline, user, conversationId]);
 
   const fetchMessages = useCallback(
     async (before?: string) => {
@@ -418,10 +541,31 @@ export function useChatMessages(conversationId: string | null) {
     };
   }, [conversationId, user]);
 
-  // --- Send with optional reply ---
+  // --- Send with optional reply + offline support ---
   const sendMessage = useCallback(
     async (text: string, replyToId?: string, messageType: string = "text", metadata?: any) => {
       if (!conversationId || !user || (!text.trim() && messageType === "text")) return;
+
+      // Clear draft
+      saveDraft(conversationId, "");
+
+      if (!navigator.onLine) {
+        // Queue for offline
+        const pending: PendingMessage & { conversationId: string } = {
+          id: `pending_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          text: text.trim(),
+          replyToId,
+          messageType,
+          metadata,
+          status: "pending",
+          timestamp: Date.now(),
+          conversationId,
+        };
+        addToQueue(pending);
+        setPendingMessages((prev) => [...prev, pending]);
+        return;
+      }
+
       await fromTable("messages").insert({
         conversation_id: conversationId,
         sender_id: user.id,
@@ -432,6 +576,38 @@ export function useChatMessages(conversationId: string | null) {
       });
     },
     [conversationId, user]
+  );
+
+  // --- Retry failed message ---
+  const retryMessage = useCallback(
+    async (pendingId: string) => {
+      if (!conversationId || !user) return;
+      const pending = pendingMessages.find((m) => m.id === pendingId);
+      if (!pending) return;
+
+      setPendingMessages((prev) =>
+        prev.map((m) => (m.id === pendingId ? { ...m, status: "sending" as const } : m))
+      );
+
+      const { error } = await fromTable("messages").insert({
+        conversation_id: conversationId,
+        sender_id: user.id,
+        message_text: pending.text,
+        reply_to_id: pending.replyToId || null,
+        message_type: pending.messageType,
+        metadata: pending.metadata || null,
+      });
+
+      if (!error) {
+        removeFromQueue(pendingId);
+        setPendingMessages((prev) => prev.filter((m) => m.id !== pendingId));
+      } else {
+        setPendingMessages((prev) =>
+          prev.map((m) => (m.id === pendingId ? { ...m, status: "failed" as const } : m))
+        );
+      }
+    },
+    [conversationId, user, pendingMessages]
   );
 
   // --- Forward message to another conversation ---
@@ -532,10 +708,12 @@ export function useChatMessages(conversationId: string | null) {
 
   return {
     messages,
+    pendingMessages,
     loading,
     hasMore,
     loadMore,
     sendMessage,
+    retryMessage,
     forwardMessage,
     editMessage,
     deleteForEveryone,
