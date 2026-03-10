@@ -18,6 +18,7 @@ import NotificationsPage from "./pages/NotificationsPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import SearchResultsPage from "./pages/SearchResultsPage";
 import PlaceDetailPage from "./pages/PlaceDetailPage";
+import FindMyPetPage from "./pages/FindMyPetPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
