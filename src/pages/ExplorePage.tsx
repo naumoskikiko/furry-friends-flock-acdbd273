@@ -140,7 +140,7 @@ const ExplorePage = () => {
             </div>
             <div className="text-left">
               <p className="text-sm font-bold font-display">🐾 Find My Pet</p>
-              <p className="text-[11px] text-muted-foreground">GPS tracking & lost pets</p>
+              <p className="text-[11px] text-muted-foreground">GPS tracking & safe zones</p>
             </div>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
