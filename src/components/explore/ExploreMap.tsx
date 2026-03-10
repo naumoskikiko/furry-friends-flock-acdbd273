@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Fix default marker icon
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
@@ -27,6 +26,8 @@ export interface MapMarker {
   emoji: string;
   rating?: number;
   distance?: string;
+  image_url?: string;
+  description?: string;
 }
 
 interface ExploreMapProps {
@@ -40,7 +41,6 @@ const ExploreMap = ({ markers, center, onMarkerClick }: ExploreMapProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
 
-  // Initialize map once
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     const map = L.map(containerRef.current, {
@@ -60,20 +60,34 @@ const ExploreMap = ({ markers, center, onMarkerClick }: ExploreMapProps) => {
     };
   }, []);
 
-  // Update center
   useEffect(() => {
     mapRef.current?.setView(center);
   }, [center]);
 
-  // Update markers
   useEffect(() => {
     const layer = markersLayerRef.current;
     if (!layer) return;
     layer.clearLayers();
     markers.forEach((m) => {
       const marker = L.marker([m.lat, m.lng], { icon: emojiIcon(m.emoji) });
+
+      const imgHtml = m.image_url
+        ? `<img src="${m.image_url}" style="width:100%;height:80px;object-fit:cover;border-radius:8px 8px 0 0;margin-bottom:6px;" />`
+        : "";
+      const descHtml = m.description
+        ? `<p style="color:#666;font-size:11px;margin:4px 0;">${m.description.slice(0, 80)}${m.description.length > 80 ? "…" : ""}</p>`
+        : "";
+
       marker.bindPopup(
-        `<div style="text-align:center"><b>${m.name}</b><br/><span style="color:#888">${m.type}</span>${m.rating ? `<br/>⭐ ${m.rating}` : ""}${m.distance ? `<br/>${m.distance}` : ""}</div>`
+        `<div style="text-align:center;min-width:160px;max-width:200px;">
+          ${imgHtml}
+          <b style="font-size:13px;">${m.name}</b><br/>
+          <span style="color:#888;font-size:11px;">${m.type}</span>
+          ${descHtml}
+          ${m.rating ? `<span style="font-size:11px;">⭐ ${m.rating}</span>` : ""}
+          ${m.distance ? `<span style="font-size:11px;margin-left:6px;">📍 ${m.distance}</span>` : ""}
+        </div>`,
+        { maxWidth: 220 }
       );
       if (onMarkerClick) {
         marker.on("click", () => onMarkerClick(m));
