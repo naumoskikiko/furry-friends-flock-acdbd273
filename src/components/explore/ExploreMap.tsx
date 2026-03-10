@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -36,48 +35,59 @@ interface ExploreMapProps {
   onMarkerClick?: (marker: MapMarker) => void;
 }
 
-const RecenterMap = ({ center }: { center: [number, number] }) => {
-  const map = useMap();
-  useEffect(() => {
-    map.setView(center, map.getZoom());
-  }, [center, map]);
-  return null;
-};
-
 const ExploreMap = ({ markers, center, onMarkerClick }: ExploreMapProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markersLayerRef = useRef<L.LayerGroup | null>(null);
+
+  // Initialize map once
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
+    const map = L.map(containerRef.current, {
+      center,
+      zoom: 14,
+      zoomControl: false,
+    });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+    }).addTo(map);
+    markersLayerRef.current = L.layerGroup().addTo(map);
+    mapRef.current = map;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  // Update center
+  useEffect(() => {
+    mapRef.current?.setView(center);
+  }, [center]);
+
+  // Update markers
+  useEffect(() => {
+    const layer = markersLayerRef.current;
+    if (!layer) return;
+    layer.clearLayers();
+    markers.forEach((m) => {
+      const marker = L.marker([m.lat, m.lng], { icon: emojiIcon(m.emoji) });
+      marker.bindPopup(
+        `<div style="text-align:center"><b>${m.name}</b><br/><span style="color:#888">${m.type}</span>${m.rating ? `<br/>⭐ ${m.rating}` : ""}${m.distance ? `<br/>${m.distance}` : ""}</div>`
+      );
+      if (onMarkerClick) {
+        marker.on("click", () => onMarkerClick(m));
+      }
+      layer.addLayer(marker);
+    });
+  }, [markers, onMarkerClick]);
+
   return (
-    <div className="relative overflow-hidden rounded-2xl" style={{ height: "45vh" }}>
-      <MapContainer
-        center={center}
-        zoom={14}
-        scrollWheelZoom={true}
-        style={{ height: "100%", width: "100%", borderRadius: "1rem" }}
-        zoomControl={false}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <RecenterMap center={center} />
-        {markers.map((m) => (
-          <Marker
-            key={m.id}
-            position={[m.lat, m.lng]}
-            icon={emojiIcon(m.emoji)}
-            eventHandlers={{ click: () => onMarkerClick?.(m) }}
-          >
-            <Popup>
-              <div className="text-center">
-                <p className="font-bold text-sm">{m.name}</p>
-                <p className="text-xs text-gray-500">{m.type}</p>
-                {m.rating && <p className="text-xs">⭐ {m.rating}</p>}
-                {m.distance && <p className="text-xs">{m.distance}</p>}
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
-    </div>
+    <div
+      ref={containerRef}
+      className="relative overflow-hidden rounded-2xl"
+      style={{ height: "45vh", width: "100%" }}
+    />
   );
 };
 
