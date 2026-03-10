@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, User, Mail, MapPin, Phone } from "lucide-react";
+import { Camera, User, Mail, MapPin, Phone, AtSign } from "lucide-react";
 
 const SettingsAccount = () => {
   const { user, profile, refreshProfile } = useAuth();
