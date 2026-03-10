@@ -1,88 +1,196 @@
+import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
-import { Star, BadgeCheck, GraduationCap, MapPin, ChevronRight } from "lucide-react";
-import { mockSitters } from "@/data/mockData";
-
-const serviceFilters = ["All", "Sitting", "Walking", "Foster", "Drop-in", "Group"];
+import { Star, BadgeCheck, MapPin, ChevronRight, Search, Briefcase } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useCareProviders, useMyProvider, CATEGORIES, type CareProvider } from "@/hooks/useCare";
+import ProviderDetail from "@/components/care/ProviderDetail";
+import ProviderDashboard from "@/components/care/ProviderDashboard";
 
 const CarePage = () => {
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const { providers, loading } = useCareProviders(activeCategory, searchQuery);
+  const { provider: myProvider } = useMyProvider();
+  const [selectedProvider, setSelectedProvider] = useState<CareProvider | null>(null);
+  const [showDashboard, setShowDashboard] = useState(false);
+
+  const handleSearch = (q: string) => {
+    setSearchInput(q);
+    if (q.length >= 2 || q.length === 0) setSearchQuery(q);
+  };
+
+  // Featured = top rated
+  const featured = providers.filter((p) => p.avg_rating >= 4.5).slice(0, 3);
+  const allProviders = providers;
+
+  const allCategories = [{ value: "all", label: "All", icon: "🐾" }, ...CATEGORIES];
+
   return (
     <AppLayout>
       <div className="mx-auto max-w-lg">
-        <div className="px-4 pt-4 pb-2">
-          <h1 className="font-display text-2xl font-extrabold">Pet Care</h1>
-          <p className="text-sm text-muted-foreground">Find trusted sitters & walkers near you</p>
+        {/* Header */}
+        <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-2xl font-extrabold">Pet Care</h1>
+            <p className="text-sm text-muted-foreground">Find trusted providers near you</p>
+          </div>
+          <button
+            onClick={() => setShowDashboard(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-secondary transition-colors"
+          >
+            <Briefcase className="h-3.5 w-3.5" />
+            {myProvider ? "Dashboard" : "Become Provider"}
+          </button>
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-2 overflow-x-auto px-4 pb-3">
-          {serviceFilters.map((f, i) => (
+        {/* Search */}
+        <div className="px-4 pb-3">
+          <div className="flex items-center gap-2 rounded-xl bg-secondary px-3 py-2.5">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input
+              value={searchInput}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="Search providers, services..."
+              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            />
+          </div>
+        </div>
+
+        {/* Category filters */}
+        <div className="flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-hide">
+          {allCategories.map((c) => (
             <button
-              key={f}
-              className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
-                i === 0
+              key={c.value}
+              onClick={() => setActiveCategory(c.value)}
+              className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                activeCategory === c.value
                   ? "petkeep-gradient text-primary-foreground"
                   : "bg-secondary text-secondary-foreground"
               }`}
             >
-              {f}
+              {c.icon} {c.label}
             </button>
           ))}
         </div>
 
-        {/* Sitter cards */}
-        <div className="space-y-3 px-4 pb-4">
-          {mockSitters.map((sitter) => (
-            <div
-              key={sitter.id}
-              className="rounded-2xl bg-card p-4 petkeep-card-shadow petkeep-card-hover"
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-petkeep-orange-light font-display text-lg font-bold text-primary-foreground">
-                  {sitter.avatar}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="font-display text-base font-bold">{sitter.name}</h3>
-                    {sitter.verified && <BadgeCheck className="h-4 w-4 text-primary" />}
-                    {sitter.isStudent && <GraduationCap className="h-4 w-4 text-accent" />}
-                  </div>
-                  <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-0.5">
-                      <Star className="h-3 w-3 fill-primary text-primary" />
-                      {sitter.rating}
-                    </span>
-                    <span>({sitter.reviews} reviews)</span>
-                    <span className="flex items-center gap-0.5">
-                      <MapPin className="h-3 w-3" />
-                      {sitter.distance}
-                    </span>
-                  </div>
-                  <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{sitter.bio}</p>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {sitter.services.map((s) => (
-                      <span key={s} className="rounded-full bg-petkeep-mint-light px-2 py-0.5 text-[10px] font-semibold text-petkeep-mint">
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
-                <div>
-                  <span className="font-display text-lg font-extrabold text-primary">
-                    {sitter.pricePerHour} MKD
-                  </span>
-                  <span className="text-xs text-muted-foreground"> /hour</span>
-                </div>
-                <button className="petkeep-gradient flex items-center gap-1 rounded-xl px-4 py-2 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90">
-                  Book Now
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
+        {/* Featured section */}
+        {featured.length > 0 && !searchQuery && (
+          <div className="px-4 pb-4">
+            <h3 className="font-display text-base font-bold mb-2">⭐ Top Rated</h3>
+            <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+              {featured.map((p) => {
+                const catInfo = CATEGORIES.find((c) => c.value === p.category);
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setSelectedProvider(p)}
+                    className="min-w-[200px] rounded-2xl bg-card border border-border p-3.5 text-left petkeep-card-hover shrink-0"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={p.photo_url || p.profile?.avatar_url || undefined} />
+                        <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-sm font-bold text-primary-foreground">
+                          {catInfo?.icon || "🐾"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1">
+                          <p className="text-xs font-bold truncate">{p.business_name}</p>
+                          {p.is_verified && <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />}
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <Star className="h-3 w-3 fill-primary text-primary" />
+                          {Number(p.avg_rating).toFixed(1)} ({p.total_reviews})
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          ))}
+          </div>
+        )}
+
+        {/* All providers */}
+        <div className="px-4 pb-4">
+          {!searchQuery && <h3 className="font-display text-base font-bold mb-2">All Providers</h3>}
+
+          {loading ? (
+            <div className="flex justify-center py-10">
+              <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+            </div>
+          ) : allProviders.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <span className="text-4xl mb-2">🐾</span>
+              <p className="text-sm font-semibold">No providers found</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {searchQuery ? "Try a different search" : "Be the first to offer care services!"}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {allProviders.map((p) => {
+                const catInfo = CATEGORIES.find((c) => c.value === p.category);
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setSelectedProvider(p)}
+                    className="w-full rounded-2xl bg-card p-4 border border-border text-left petkeep-card-hover transition-all"
+                  >
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-14 w-14">
+                        <AvatarImage src={p.photo_url || p.profile?.avatar_url || undefined} />
+                        <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-xl font-bold text-primary-foreground">
+                          {catInfo?.icon || "🐾"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="font-display text-base font-bold truncate">{p.business_name}</h3>
+                          {p.is_verified && <BadgeCheck className="h-4 w-4 text-primary shrink-0" />}
+                        </div>
+                        <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-0.5">
+                            <Star className="h-3 w-3 fill-primary text-primary" />
+                            {Number(p.avg_rating).toFixed(1)}
+                          </span>
+                          <span>({p.total_reviews} reviews)</span>
+                          {p.location && (
+                            <span className="flex items-center gap-0.5">
+                              <MapPin className="h-3 w-3" />
+                              {p.location}
+                            </span>
+                          )}
+                        </div>
+                        {p.description && (
+                          <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{p.description}</p>
+                        )}
+                        <div className="mt-2">
+                          <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold">
+                            {catInfo?.icon} {catInfo?.label || p.category}
+                          </span>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground mt-2 shrink-0" />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Provider detail modal */}
+      {selectedProvider && (
+        <ProviderDetail provider={selectedProvider} onClose={() => setSelectedProvider(null)} />
+      )}
+
+      {/* Provider dashboard */}
+      {showDashboard && (
+        <ProviderDashboard onClose={() => setShowDashboard(false)} />
+      )}
     </AppLayout>
   );
 };
