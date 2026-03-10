@@ -1,10 +1,9 @@
 import { Suspense, lazy, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
-import { Search, SlidersHorizontal, MapPin, Locate, Maximize2 } from "lucide-react";
+import { Search, MapPin, Locate, Maximize2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import NearbySection from "@/components/explore/NearbySection";
-import SearchFilterModal, { SearchFilters } from "@/components/explore/SearchFilterModal";
 import FullscreenMap from "@/components/explore/FullscreenMap";
 import { useExplore, FILTERS } from "@/hooks/useExplore";
 import { Skeleton } from "@/components/ui/skeleton";
