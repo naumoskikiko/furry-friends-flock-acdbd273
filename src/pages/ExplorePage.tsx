@@ -16,8 +16,6 @@ const ExplorePage = () => {
     setActiveFilter,
     searchQuery,
     setSearchQuery,
-    findMyPet,
-    setFindMyPet,
     center,
     allMarkers,
     searchResults,
