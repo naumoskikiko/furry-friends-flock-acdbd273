@@ -2,30 +2,40 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { MapMarker } from "@/components/explore/ExploreMap";
 import type { NearbyItem } from "@/components/explore/NearbySection";
+import { getCategoryEmoji } from "@/hooks/usePlaces";
 
 const SKOPJE: [number, number] = [41.9981, 21.4254];
 
-// Seed nearby places (static for now, can be DB-backed later)
-const PLACES: (MapMarker & { category: string })[] = [
-  { id: "p1", name: "Happy Paws Vet", type: "Vet Clinic", category: "vets", emoji: "🏥", lat: 41.9995, lng: 21.4280, rating: 4.8, distance: "0.3 km" },
-  { id: "p2", name: "PetShop Plus", type: "Pet Store", category: "stores", emoji: "🏪", lat: 41.9970, lng: 21.4200, rating: 4.5, distance: "0.8 km" },
-  { id: "p3", name: "City Dog Park", type: "Dog Park", category: "parks", emoji: "🌳", lat: 41.9960, lng: 21.4310, rating: 4.7, distance: "1.1 km" },
-  { id: "p4", name: "Bark & Bath Grooming", type: "Grooming Salon", category: "grooming", emoji: "✂️", lat: 42.0010, lng: 21.4220, rating: 4.6, distance: "0.5 km" },
-  { id: "p5", name: "PetWorld Store", type: "Pet Store", category: "stores", emoji: "🏪", lat: 41.9950, lng: 21.4270, rating: 4.3, distance: "1.4 km" },
-  { id: "p6", name: "VetCare Clinic", type: "Vet Clinic", category: "vets", emoji: "🏥", lat: 42.0020, lng: 21.4180, rating: 4.9, distance: "1.0 km" },
-  { id: "p7", name: "Riverside Pet Walk", type: "Dog Park", category: "parks", emoji: "🌳", lat: 41.9940, lng: 21.4350, rating: 4.4, distance: "1.6 km" },
-  { id: "p8", name: "Paw Spa", type: "Grooming Salon", category: "grooming", emoji: "✂️", lat: 42.0005, lng: 21.4150, rating: 4.2, distance: "1.2 km" },
-];
+const CATEGORY_TYPE_MAP: Record<string, string> = {
+  vet: "Vet Clinic",
+  "pet-shop": "Pet Store",
+  park: "Dog Park",
+  sitter: "Pet Sitter",
+  grooming: "Grooming Salon",
+  walker: "Dog Walker",
+  other: "Place",
+};
 
 const FILTERS = ["All", "Sitters", "Walkers", "Vets", "Stores", "Grooming", "Parks", "Users"] as const;
 export type FilterType = (typeof FILTERS)[number];
 export { FILTERS };
 
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export function useExplore() {
   const [activeFilter, setActiveFilter] = useState<FilterType>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [findMyPet, setFindMyPet] = useState(false);
-  const [center] = useState<[number, number]>(SKOPJE);
+  const [center, setCenter] = useState<[number, number]>(SKOPJE);
+  const [dbPlaces, setDbPlaces] = useState<any[]>([]);
   const [sitterProfiles, setSitterProfiles] = useState<any[]>([]);
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,13 +43,15 @@ export function useExplore() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const [{ data: sitters }, { data: profiles }] = await Promise.all([
+      const [{ data: places }, { data: sitters }, { data: profiles }] = await Promise.all([
+        supabase.from("places").select("*"),
         supabase.from("sitter_profiles").select("*"),
         supabase.from("profiles").select("user_id, full_name, avatar_url, location"),
       ]);
 
-      // sitter_profiles doesn't have FK named that way, so fetch separately
-      const sitterIds = (sitters || []).map((s) => s.user_id);
+      setDbPlaces(places || []);
+
+      const sitterIds = (sitters || []).map((s: any) => s.user_id);
       let sitterProfileData: any[] = [];
       if (sitterIds.length > 0) {
         const { data } = await supabase.from("profiles").select("user_id, full_name, avatar_url, location").in("user_id", sitterIds);
@@ -47,7 +59,7 @@ export function useExplore() {
       }
 
       setSitterProfiles(
-        (sitters || []).map((s) => {
+        (sitters || []).map((s: any) => {
           const p = sitterProfileData.find((pr: any) => pr.user_id === s.user_id);
           return { ...s, profile: p };
         })
@@ -58,9 +70,37 @@ export function useExplore() {
     load();
   }, []);
 
+  // Try to get user location
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setCenter([pos.coords.latitude, pos.coords.longitude]),
+        () => {} // keep default
+      );
+    }
+  }, []);
+
+  const placeMarkers: MapMarker[] = useMemo(
+    () =>
+      dbPlaces.map((p: any) => {
+        const dist = haversineDistance(center[0], center[1], p.latitude, p.longitude);
+        return {
+          id: p.id,
+          lat: p.latitude,
+          lng: p.longitude,
+          name: p.name,
+          type: CATEGORY_TYPE_MAP[p.category] || p.category,
+          emoji: getCategoryEmoji(p.category),
+          rating: Number(p.rating) || 0,
+          distance: `${dist.toFixed(1)} km`,
+        };
+      }),
+    [dbPlaces, center]
+  );
+
   const sitterMarkers: MapMarker[] = useMemo(
     () =>
-      sitterProfiles.map((s, i) => ({
+      sitterProfiles.map((s: any) => ({
         id: `sitter-${s.id}`,
         lat: SKOPJE[0] + (Math.random() - 0.5) * 0.01,
         lng: SKOPJE[1] + (Math.random() - 0.5) * 0.01,
@@ -74,7 +114,7 @@ export function useExplore() {
   );
 
   const allMarkers = useMemo(() => {
-    let markers = [...PLACES.map((p) => ({ ...p })), ...sitterMarkers];
+    let markers = [...placeMarkers, ...sitterMarkers];
 
     if (activeFilter !== "All") {
       const filterMap: Record<string, string[]> = {
@@ -100,42 +140,42 @@ export function useExplore() {
     }
 
     return markers;
-  }, [activeFilter, searchQuery, sitterMarkers]);
+  }, [activeFilter, searchQuery, placeMarkers, sitterMarkers]);
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
-    const placeResults = PLACES.filter(
+    const placeResults = placeMarkers.filter(
       (p) => p.name.toLowerCase().includes(q) || p.type.toLowerCase().includes(q)
-    );
+    ).map((p) => ({ ...p, avatar_url: null }));
     const userResults = userProfiles
-      .filter((u) => u.full_name?.toLowerCase().includes(q))
-      .map((u) => ({
+      .filter((u: any) => u.full_name?.toLowerCase().includes(q))
+      .map((u: any) => ({
         id: u.user_id,
         name: u.full_name,
         type: "User",
         emoji: "👤",
         avatar_url: u.avatar_url,
       }));
-    return [...placeResults.map((p) => ({ ...p, avatar_url: null })), ...userResults].slice(0, 8);
-  }, [searchQuery, userProfiles]);
+    return [...placeResults, ...userResults].slice(0, 8);
+  }, [searchQuery, placeMarkers, userProfiles]);
 
   const nearbyByCategory = useMemo(() => {
-    const toNearby = (p: typeof PLACES[0]): NearbyItem => ({
-      id: p.id,
-      name: p.name,
-      type: p.type,
-      distance: p.distance || "",
-      rating: p.rating || 0,
-      emoji: p.emoji,
+    const toNearby = (m: MapMarker): NearbyItem => ({
+      id: m.id,
+      name: m.name,
+      type: m.type,
+      distance: m.distance || "",
+      rating: m.rating || 0,
+      emoji: m.emoji,
     });
     return {
-      stores: PLACES.filter((p) => p.category === "stores").map(toNearby),
-      vets: PLACES.filter((p) => p.category === "vets").map(toNearby),
-      parks: PLACES.filter((p) => p.category === "parks").map(toNearby),
-      grooming: PLACES.filter((p) => p.category === "grooming").map(toNearby),
+      stores: placeMarkers.filter((m) => m.type === "Pet Store").map(toNearby),
+      vets: placeMarkers.filter((m) => m.type === "Vet Clinic").map(toNearby),
+      parks: placeMarkers.filter((m) => m.type === "Dog Park").map(toNearby),
+      grooming: placeMarkers.filter((m) => m.type === "Grooming Salon").map(toNearby),
     };
-  }, []);
+  }, [placeMarkers]);
 
   return {
     activeFilter,

@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, User, Shield, Bell, CreditCard, Lock, Palette, PawPrint, ShieldCheck, HelpCircle, FileText, AlertTriangle, Sparkles, ChevronRight, LogOut } from "lucide-react";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { ArrowLeft, User, Shield, Bell, CreditCard, Lock, Palette, PawPrint, ShieldCheck, HelpCircle, FileText, AlertTriangle, Sparkles, ChevronRight, LogOut, Map } from "lucide-react";
 import SettingsAccount from "@/components/settings/SettingsAccount";
 import SettingsSecurity from "@/components/settings/SettingsSecurity";
 import SettingsNotifications from "@/components/settings/SettingsNotifications";
@@ -14,8 +15,9 @@ import SettingsTrust from "@/components/settings/SettingsTrust";
 import SettingsSupport from "@/components/settings/SettingsSupport";
 import SettingsLegal from "@/components/settings/SettingsLegal";
 import SettingsDangerZone from "@/components/settings/SettingsDangerZone";
+import SettingsMapManagement from "@/components/settings/SettingsMapManagement";
 
-type SettingsSection = "main" | "account" | "security" | "notifications" | "payments" | "privacy" | "appearance" | "pet" | "trust" | "support" | "legal" | "danger";
+type SettingsSection = "main" | "account" | "security" | "notifications" | "payments" | "privacy" | "appearance" | "pet" | "trust" | "support" | "legal" | "danger" | "map-management";
 
 const sections = [
   { id: "account" as const, label: "Account", icon: User, description: "Edit profile, password, email" },
@@ -34,6 +36,7 @@ const sections = [
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [activeSection, setActiveSection] = useState<SettingsSection>("main");
 
   const handleBack = () => {
@@ -71,6 +74,23 @@ const SettingsPage = () => {
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
+
+            {/* Admin-only Map Management */}
+            {isAdmin && (
+              <button
+                onClick={() => setActiveSection("map-management")}
+                className="w-full flex items-center gap-3 rounded-xl px-3 py-3 mb-1 transition-colors hover:bg-secondary/60"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+                  <Map className="h-4.5 w-4.5 text-primary" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-semibold">Map Management</p>
+                  <p className="text-xs text-muted-foreground">Add, edit & delete map locations</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            )}
 
             {sections.map((section) => (
               <button
@@ -119,6 +139,7 @@ const SettingsPage = () => {
         {activeSection === "support" && <SettingsSupport />}
         {activeSection === "legal" && <SettingsLegal />}
         {activeSection === "danger" && <SettingsDangerZone />}
+        {activeSection === "map-management" && <SettingsMapManagement />}
       </div>
     </AppLayout>
   );
