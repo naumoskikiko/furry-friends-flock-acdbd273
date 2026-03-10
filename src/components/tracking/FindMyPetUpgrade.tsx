@@ -10,7 +10,7 @@ const features = [
   { icon: Navigation, label: "Live location updates" },
   { icon: MapPin, label: "Real-time map tracking" },
   { icon: Shield, label: "Safe zone alerts" },
-  { icon: Bell, label: "Lost pet emergency alerts" },
+  { icon: Bell, label: "Movement & battery alerts" },
 ];
 
 const FindMyPetUpgrade = ({ onUpgrade }: Props) => {

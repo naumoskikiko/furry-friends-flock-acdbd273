@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useSubscription, useTrackers } from "@/hooks/useTracking";
 import FindMyPetUpgrade from "@/components/tracking/FindMyPetUpgrade";
@@ -11,7 +10,7 @@ import { Button } from "@/components/ui/button";
 
 const FindMyPetPage = () => {
   const { hasSubscription, loading: subLoading, activate } = useSubscription();
-  const { trackers, loading: trackLoading, addTracker, toggleLost } = useTrackers();
+  const { trackers, loading: trackLoading, addTracker } = useTrackers();
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedTrackerId, setSelectedTrackerId] = useState<string | null>(null);
 
@@ -42,7 +41,6 @@ const FindMyPetPage = () => {
         <TrackerDashboard
           tracker={selectedTracker}
           onBack={() => setSelectedTrackerId(null)}
-          onToggleLost={toggleLost}
         />
       </AppLayout>
     );
@@ -110,11 +108,6 @@ const FindMyPetPage = () => {
                     {tracker.pet_type} • {tracker.tracker_device_id}
                   </p>
                 </div>
-                {tracker.is_lost && (
-                  <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-[10px] font-bold text-destructive">
-                    LOST
-                  </span>
-                )}
               </button>
             ))}
           </div>

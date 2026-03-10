@@ -671,6 +671,47 @@ export type Database = {
         }
         Relationships: []
       }
+      safe_zones: {
+        Row: {
+          center_lat: number
+          center_lng: number
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          radius: number
+          tracker_id: string
+        }
+        Insert: {
+          center_lat: number
+          center_lng: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          radius?: number
+          tracker_id: string
+        }
+        Update: {
+          center_lat?: number
+          center_lng?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          radius?: number
+          tracker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safe_zones_tracker_id_fkey"
+            columns: ["tracker_id"]
+            isOneToOne: false
+            referencedRelation: "pet_trackers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_posts: {
         Row: {
           created_at: string
