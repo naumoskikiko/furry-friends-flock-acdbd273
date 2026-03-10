@@ -1,0 +1,213 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+import { X, ChevronLeft, ChevronRight, MapPin, Pause, Play } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+
+export interface StoryItem {
+  id: string;
+  media_url: string;
+  media_type: string;
+  caption: string;
+  location: string;
+  text_overlay: string;
+  sticker: string;
+  created_at: string;
+}
+
+export interface StoryGroup {
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  initials: string;
+  stories: StoryItem[];
+}
+
+interface StoryViewerProps {
+  groups: StoryGroup[];
+  initialGroupIndex: number;
+  open: boolean;
+  onClose: () => void;
+}
+
+const STORY_DURATION = 5000;
+
+const StoryViewer = ({ groups, initialGroupIndex, open, onClose }: StoryViewerProps) => {
+  const [groupIndex, setGroupIndex] = useState(initialGroupIndex);
+  const [storyIndex, setStoryIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const timerRef = useRef<number>(0);
+  const startTimeRef = useRef<number>(0);
+  const elapsedRef = useRef<number>(0);
+
+  const group = groups[groupIndex];
+  const story = group?.stories[storyIndex];
+  const isVideo = story?.media_type === "video";
+
+  const goNext = useCallback(() => {
+    if (!group) return;
+    if (storyIndex < group.stories.length - 1) {
+      setStoryIndex((s) => s + 1);
+      setProgress(0);
+    } else if (groupIndex < groups.length - 1) {
+      setGroupIndex((g) => g + 1);
+      setStoryIndex(0);
+      setProgress(0);
+    } else {
+      onClose();
+    }
+  }, [group, storyIndex, groupIndex, groups.length, onClose]);
+
+  const goPrev = useCallback(() => {
+    if (storyIndex > 0) {
+      setStoryIndex((s) => s - 1);
+      setProgress(0);
+    } else if (groupIndex > 0) {
+      setGroupIndex((g) => g - 1);
+      setStoryIndex(0);
+      setProgress(0);
+    }
+  }, [storyIndex, groupIndex]);
+
+  // Timer for image stories
+  useEffect(() => {
+    if (!open || !story || isVideo || paused) return;
+
+    startTimeRef.current = Date.now();
+    const remaining = STORY_DURATION - elapsedRef.current;
+
+    const animate = () => {
+      const elapsed = elapsedRef.current + (Date.now() - startTimeRef.current);
+      const pct = Math.min(elapsed / STORY_DURATION, 1);
+      setProgress(pct);
+      if (pct < 1) {
+        timerRef.current = requestAnimationFrame(animate);
+      } else {
+        elapsedRef.current = 0;
+        goNext();
+      }
+    };
+
+    timerRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(timerRef.current);
+  }, [open, story, isVideo, paused, goNext]);
+
+  // Reset elapsed when story changes
+  useEffect(() => {
+    elapsedRef.current = 0;
+    setProgress(0);
+    setPaused(false);
+  }, [groupIndex, storyIndex]);
+
+  useEffect(() => {
+    setGroupIndex(initialGroupIndex);
+    setStoryIndex(0);
+  }, [initialGroupIndex]);
+
+  const handlePauseToggle = () => {
+    if (paused) {
+      setPaused(false);
+    } else {
+      elapsedRef.current += Date.now() - startTimeRef.current;
+      cancelAnimationFrame(timerRef.current);
+      setPaused(true);
+    }
+  };
+
+  const handleVideoEnd = () => goNext();
+
+  if (!open || !group || !story) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black">
+      {/* Close */}
+      <button onClick={onClose} className="absolute right-4 top-4 z-50 text-white">
+        <X className="h-6 w-6" />
+      </button>
+
+      {/* Left/Right tap zones */}
+      <button onClick={goPrev} className="absolute left-0 top-0 z-40 h-full w-1/3" />
+      <button onClick={goNext} className="absolute right-0 top-0 z-40 h-full w-1/3" />
+
+      {/* Center pause zone */}
+      <button
+        onMouseDown={handlePauseToggle}
+        onTouchStart={handlePauseToggle}
+        className="absolute left-1/3 top-0 z-40 h-full w-1/3"
+      />
+
+      {/* Progress bars */}
+      <div className="absolute left-0 right-0 top-0 z-50 flex gap-1 p-2">
+        {group.stories.map((_, i) => (
+          <div key={i} className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/30">
+            <div
+              className="h-full bg-white transition-none"
+              style={{
+                width: `${i < storyIndex ? 100 : i === storyIndex ? progress * 100 : 0}%`,
+              }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* User info */}
+      <div className="absolute left-0 right-0 top-4 z-50 flex items-center gap-3 px-4 pt-4">
+        {group.avatar_url ? (
+          <img src={group.avatar_url} className="h-8 w-8 rounded-full object-cover ring-2 ring-white/50" />
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+            {group.initials}
+          </div>
+        )}
+        <span className="text-sm font-bold text-white">{group.username}</span>
+        <span className="text-xs text-white/60">{formatDistanceToNow(new Date(story.created_at), { addSuffix: true })}</span>
+        {paused && <Pause className="ml-auto h-4 w-4 text-white/60" />}
+      </div>
+
+      {/* Media */}
+      <div className="relative h-full w-full">
+        {isVideo ? (
+          <video
+            key={story.id}
+            src={story.media_url}
+            className="h-full w-full object-contain"
+            autoPlay
+            muted={false}
+            playsInline
+            onEnded={handleVideoEnd}
+          />
+        ) : (
+          <img
+            key={story.id}
+            src={story.media_url}
+            alt=""
+            className="h-full w-full object-contain"
+          />
+        )}
+
+        {/* Overlays */}
+        {story.text_overlay && (
+          <div className="absolute inset-x-0 bottom-32 z-30 text-center">
+            <span className="rounded-lg bg-black/60 px-4 py-2 text-lg font-bold text-white">
+              {story.text_overlay}
+            </span>
+          </div>
+        )}
+        {story.sticker && (
+          <div className="absolute right-6 top-24 z-30 text-5xl">{story.sticker}</div>
+        )}
+        {story.location && (
+          <div className="absolute left-4 top-20 z-30 flex items-center gap-1 rounded-full bg-black/50 px-3 py-1 text-xs text-white">
+            <MapPin className="h-3 w-3" /> {story.location}
+          </div>
+        )}
+        {story.caption && (
+          <div className="absolute inset-x-0 bottom-8 z-30 px-6 text-center">
+            <p className="text-sm text-white drop-shadow-lg">{story.caption}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default StoryViewer;
