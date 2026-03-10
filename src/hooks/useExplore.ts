@@ -48,7 +48,7 @@ export function useExplore() {
       const [{ data: places }, { data: sitters }, { data: profiles }] = await Promise.all([
         supabase.from("places").select("*"),
         supabase.from("sitter_profiles").select("*"),
-        supabase.from("profiles").select("user_id, full_name, avatar_url, location"),
+        supabase.from("profiles").select("user_id, full_name, avatar_url, location, username"),
       ]);
 
       setDbPlaces(places || []);
