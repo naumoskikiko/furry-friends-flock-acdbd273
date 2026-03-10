@@ -321,6 +321,19 @@ const ProfilePage = () => {
 
       {/* Create Post Modal */}
       <CreatePostModal open={createPostOpen} onOpenChange={setCreatePostOpen} onPostCreated={fetchData} pets={pets} />
+
+      {/* Create Story Modal */}
+      <CreateStoryModal open={createStoryOpen} onOpenChange={setCreateStoryOpen} onStoryCreated={refreshStories} pets={pets} />
+
+      {/* Story Viewer */}
+      {storyViewerOpen && storyGroups.length > 0 && (
+        <StoryViewer
+          groups={storyGroups}
+          initialGroupIndex={storyGroups.findIndex((g) => g.user_id === user?.id)}
+          open={storyViewerOpen}
+          onClose={() => setStoryViewerOpen(false)}
+        />
+      )}
     </AppLayout>
   );
 };
