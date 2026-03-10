@@ -110,6 +110,7 @@ export default {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "heart-pop": "heart-pop 0.3s ease-in-out",
+        "heart-burst": "heart-burst 0.9s ease-out forwards",
         "slide-up": "slide-up 0.3s ease-out",
       },
     },
