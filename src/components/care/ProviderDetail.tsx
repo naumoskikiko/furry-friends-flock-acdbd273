@@ -312,12 +312,28 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
                               className="mt-1 w-full rounded-xl bg-secondary px-3 py-2 text-sm outline-none resize-none placeholder:text-muted-foreground"
                             />
                           </div>
+                          {/* Price breakdown */}
+                          <div className="rounded-xl bg-secondary/50 p-3 space-y-1.5">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Service price</span>
+                              <span className="font-semibold">{s.price} MKD</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Platform fee (10%)</span>
+                              <span className="font-semibold">{calculateFees(s.price).platformFee} MKD</span>
+                            </div>
+                            <div className="border-t border-border pt-1.5 flex justify-between text-xs">
+                              <span className="font-bold">Total</span>
+                              <span className="font-bold text-primary">{s.price} MKD</span>
+                            </div>
+                            <p className="text-[9px] text-muted-foreground">💳 Simulated payment · Stripe coming soon</p>
+                          </div>
                           <button
                             onClick={handleBook}
                             disabled={booking}
                             className="w-full petkeep-gradient rounded-xl py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
                           >
-                            {booking ? "Booking..." : `Confirm Booking — ${s.price} MKD`}
+                            {booking ? "Processing payment..." : `Pay & Book — ${s.price} MKD`}
                           </button>
                         </>
                       )}
