@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import AppLayout from "@/components/AppLayout";
 import FeedHeader from "@/components/FeedHeader";
 import StoriesBar from "@/components/StoriesBar";
 import FeedPostCard from "@/components/FeedPostCard";
 import BlogFeed from "@/components/blog/BlogFeed";
+import FeedSkeleton from "@/components/feed/FeedSkeleton";
 import { useFeed } from "@/hooks/useFeed";
 import { Loader2, Newspaper, Image } from "lucide-react";
 
@@ -11,25 +12,43 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<"feed" | "blog">("feed");
   const { posts, loading, hasMore, loadMore, refreshFeed } = useFeed();
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const pullStartY = useRef(0);
+  const feedRef = useRef<HTMLDivElement>(null);
 
-  // Infinite scroll observer for feed
+  // Pull to refresh
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    pullStartY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    async (e: React.TouchEvent) => {
+      const pullDistance = e.changedTouches[0].clientY - pullStartY.current;
+      if (pullDistance > 100 && window.scrollY <= 0 && activeTab === "feed") {
+        setRefreshing(true);
+        await refreshFeed();
+        setRefreshing(false);
+      }
+    },
+    [activeTab, refreshFeed]
+  );
+
+  // Infinite scroll observer
   useEffect(() => {
     if (activeTab !== "feed") return;
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          loadMore();
-        }
+        if (entries[0].isIntersecting && hasMore && !loading) loadMore();
       },
       { rootMargin: "200px" }
     );
-
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, [hasMore, loading, loadMore, activeTab]);
+
+  const showSkeleton = loading && posts.length === 0;
 
   return (
     <AppLayout>
@@ -65,10 +84,24 @@ const Index = () => {
       </div>
 
       {/* Content */}
-      <div className="mx-auto max-w-lg">
+      <div
+        ref={feedRef}
+        className="mx-auto max-w-lg"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Pull to refresh indicator */}
+        {refreshing && (
+          <div className="flex justify-center py-4">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          </div>
+        )}
+
         {activeTab === "feed" && (
           <>
-            {posts.length === 0 && !loading && (
+            {showSkeleton && <FeedSkeleton />}
+
+            {!showSkeleton && posts.length === 0 && (
               <div className="flex flex-col items-center py-16 text-center">
                 <span className="text-4xl">📸</span>
                 <p className="mt-3 font-display font-bold">Your feed is empty</p>
@@ -90,7 +123,7 @@ const Index = () => {
 
             <div ref={sentinelRef} className="h-1" />
 
-            {loading && (
+            {loading && posts.length > 0 && (
               <div className="flex justify-center py-6">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
