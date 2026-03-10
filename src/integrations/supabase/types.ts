@@ -170,6 +170,212 @@ export type Database = {
           },
         ]
       }
+      care_bookings: {
+        Row: {
+          booking_date: string
+          booking_time: string
+          conversation_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          provider_id: string
+          service_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_date: string
+          booking_time: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          provider_id: string
+          service_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_date?: string
+          booking_time?: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          provider_id?: string
+          service_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_bookings_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "care_providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "care_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      care_providers: {
+        Row: {
+          avg_rating: number
+          business_name: string
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_verified: boolean
+          latitude: number | null
+          location: string | null
+          longitude: number | null
+          opening_hours: Json | null
+          phone: string | null
+          photo_url: string | null
+          total_bookings: number
+          total_reviews: number
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          avg_rating?: number
+          business_name: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_verified?: boolean
+          latitude?: number | null
+          location?: string | null
+          longitude?: number | null
+          opening_hours?: Json | null
+          phone?: string | null
+          photo_url?: string | null
+          total_bookings?: number
+          total_reviews?: number
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          avg_rating?: number
+          business_name?: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_verified?: boolean
+          latitude?: number | null
+          location?: string | null
+          longitude?: number | null
+          opening_hours?: Json | null
+          phone?: string | null
+          photo_url?: string | null
+          total_bookings?: number
+          total_reviews?: number
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      care_reviews: {
+        Row: {
+          booking_id: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          provider_id: string
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          provider_id: string
+          rating: number
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          provider_id?: string
+          rating?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "care_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_reviews_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "care_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      care_services: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration: number
+          id: string
+          is_active: boolean
+          price: number
+          provider_id: string
+          service_name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration?: number
+          id?: string
+          is_active?: boolean
+          price?: number
+          provider_id: string
+          service_name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration?: number
+          id?: string
+          is_active?: boolean
+          price?: number
+          provider_id?: string
+          service_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_services_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "care_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_participants: {
         Row: {
           conversation_id: string
@@ -773,6 +979,41 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      provider_availability: {
+        Row: {
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean
+          provider_id: string
+          start_time: string
+        }
+        Insert: {
+          day_of_week: number
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          provider_id: string
+          start_time?: string
+        }
+        Update: {
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          provider_id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_availability_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "care_providers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       safe_zones: {
         Row: {
