@@ -54,6 +54,9 @@ export const PRODUCT_CATEGORIES = [
   { value: "general", label: "General", icon: "📦" },
 ];
 
+// Helper to query tables not yet in generated types
+const fromTable = (table: string) => supabase.from(table as any);
+
 export function useMyBusiness() {
   const { user } = useAuth();
   const [business, setBusiness] = useState<BusinessProfile | null>(null);
@@ -61,12 +64,11 @@ export function useMyBusiness() {
 
   const refresh = useCallback(async () => {
     if (!user) { setBusiness(null); setLoading(false); return; }
-    const { data } = await supabase
-      .from("business_profiles")
+    const { data } = await fromTable("business_profiles")
       .select("*")
       .eq("user_id", user.id)
       .maybeSingle();
-    setBusiness(data);
+    setBusiness(data as BusinessProfile | null);
     setLoading(false);
   }, [user]);
 
@@ -74,21 +76,20 @@ export function useMyBusiness() {
 
   const createBusiness = async (fields: { business_name: string; category: string; description?: string; location?: string; website?: string; phone?: string }) => {
     if (!user) return null;
-    const { data, error } = await supabase
-      .from("business_profiles")
-      .insert({ user_id: user.id, ...fields })
+    const { data, error } = await fromTable("business_profiles")
+      .insert({ user_id: user.id, ...fields } as any)
       .select()
       .single();
     if (error) throw error;
-    setBusiness(data);
-    return data;
+    const biz = data as unknown as BusinessProfile;
+    setBusiness(biz);
+    return biz;
   };
 
   const updateBusiness = async (updates: Partial<BusinessProfile>) => {
     if (!business) return;
-    const { error } = await supabase
-      .from("business_profiles")
-      .update(updates)
+    const { error } = await fromTable("business_profiles")
+      .update(updates as any)
       .eq("id", business.id);
     if (error) throw error;
     await refresh();
@@ -103,12 +104,11 @@ export function useBusinessProducts(businessId: string | null) {
 
   const refresh = useCallback(async () => {
     if (!businessId) { setProducts([]); setLoading(false); return; }
-    const { data } = await supabase
-      .from("products")
+    const { data } = await fromTable("products")
       .select("*")
       .eq("business_id", businessId)
       .order("created_at", { ascending: false });
-    setProducts(data || []);
+    setProducts((data as unknown as Product[]) || []);
     setLoading(false);
   }, [businessId]);
 
@@ -116,25 +116,22 @@ export function useBusinessProducts(businessId: string | null) {
 
   const addProduct = async (fields: { name: string; description?: string; price: number; category: string; image_url?: string }) => {
     if (!businessId) return;
-    const { error } = await supabase
-      .from("products")
-      .insert({ business_id: businessId, ...fields });
+    const { error } = await fromTable("products")
+      .insert({ business_id: businessId, ...fields } as any);
     if (error) throw error;
     await refresh();
   };
 
   const updateProduct = async (id: string, updates: Partial<Product>) => {
-    const { error } = await supabase
-      .from("products")
-      .update(updates)
+    const { error } = await fromTable("products")
+      .update(updates as any)
       .eq("id", id);
     if (error) throw error;
     await refresh();
   };
 
   const deleteProduct = async (id: string) => {
-    const { error } = await supabase
-      .from("products")
+    const { error } = await fromTable("products")
       .delete()
       .eq("id", id);
     if (error) throw error;
@@ -151,11 +148,11 @@ export function useAllBusinesses(category?: string, search?: string) {
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
-      let query = supabase.from("business_profiles").select("*").order("avg_rating", { ascending: false });
+      let query = fromTable("business_profiles").select("*").order("avg_rating", { ascending: false });
       if (category && category !== "all") query = query.eq("category", category);
       if (search) query = query.ilike("business_name", `%${search}%`);
       const { data } = await query;
-      setBusinesses(data || []);
+      setBusinesses((data as unknown as BusinessProfile[]) || []);
       setLoading(false);
     };
     fetch();
@@ -171,11 +168,11 @@ export function useAllProducts(category?: string, search?: string) {
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
-      let query = supabase.from("products").select("*").eq("is_active", true).order("created_at", { ascending: false });
+      let query = fromTable("products").select("*").eq("is_active", true).order("created_at", { ascending: false });
       if (category && category !== "all") query = query.eq("category", category);
       if (search) query = query.ilike("name", `%${search}%`);
       const { data } = await query;
-      setProducts(data || []);
+      setProducts((data as unknown as Product[]) || []);
       setLoading(false);
     };
     fetch();
