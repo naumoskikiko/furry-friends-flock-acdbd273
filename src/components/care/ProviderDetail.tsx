@@ -12,6 +12,7 @@ import {
   generateTimeSlots, CATEGORIES, DAY_NAMES,
   type CareProvider, type CareService,
 } from "@/hooks/useCare";
+import { useProcessPayment, calculateFees } from "@/hooks/usePayments";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -29,6 +30,7 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   const { images: galleryImages } = useProviderGallery(provider.id);
   const { createBooking } = useBooking();
   const { submitReview } = useSubmitReview();
+  const { processPayment } = useProcessPayment();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -71,8 +73,13 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
     if (!selectedService || !bookingDate || !bookingTime) return;
     setBooking(true);
     try {
-      await createBooking(provider.id, selectedService.id, bookingDate, bookingTime, bookingNotes, selectedPetId || undefined);
-      toast({ title: "Booking confirmed!", description: `${selectedService.service_name} on ${bookingDate} at ${bookingTime}` });
+      const result = await createBooking(provider.id, selectedService.id, bookingDate, bookingTime, bookingNotes, selectedPetId || undefined);
+      // Process simulated payment with 10% platform fee
+      if (result?.id) {
+        await processPayment(result.id, provider.id, selectedService.price);
+      }
+      const fees = calculateFees(selectedService.price);
+      toast({ title: "Booking & Payment confirmed!", description: `${selectedService.service_name} — ${fees.totalAmount} MKD paid` });
       setSelectedService(null);
       setBookingDate("");
       setBookingTime("");
@@ -305,12 +312,28 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
                               className="mt-1 w-full rounded-xl bg-secondary px-3 py-2 text-sm outline-none resize-none placeholder:text-muted-foreground"
                             />
                           </div>
+                          {/* Price breakdown */}
+                          <div className="rounded-xl bg-secondary/50 p-3 space-y-1.5">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Service price</span>
+                              <span className="font-semibold">{s.price} MKD</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Platform fee (10%)</span>
+                              <span className="font-semibold">{calculateFees(s.price).platformFee} MKD</span>
+                            </div>
+                            <div className="border-t border-border pt-1.5 flex justify-between text-xs">
+                              <span className="font-bold">Total</span>
+                              <span className="font-bold text-primary">{s.price} MKD</span>
+                            </div>
+                            <p className="text-[9px] text-muted-foreground">💳 Simulated payment · Stripe coming soon</p>
+                          </div>
                           <button
                             onClick={handleBook}
                             disabled={booking}
                             className="w-full petkeep-gradient rounded-xl py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
                           >
-                            {booking ? "Booking..." : `Confirm Booking — ${s.price} MKD`}
+                            {booking ? "Processing payment..." : `Pay & Book — ${s.price} MKD`}
                           </button>
                         </>
                       )}
