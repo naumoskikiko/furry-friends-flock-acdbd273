@@ -147,7 +147,7 @@ const ChatView = ({ conversation, onBack }: ChatViewProps) => {
             </AvatarFallback>
           </Avatar>
           {activity.isOnline && (
-            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-card" />
+            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-card" />
           )}
         </div>
         <div className="flex-1 min-w-0">

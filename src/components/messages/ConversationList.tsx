@@ -178,7 +178,7 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
                       </AvatarFallback>
                     </Avatar>
                     {activity.isOnline && (
-                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-card" />
+                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-accent ring-2 ring-card" />
                     )}
                   </div>
                   <div className="flex-1 text-left min-w-0">
