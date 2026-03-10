@@ -143,6 +143,23 @@ const SettingsAccount = () => {
           <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" />
         </div>
         <div className="space-y-2">
+          <Label className="flex items-center gap-2"><AtSign className="h-3.5 w-3.5" /> Username</Label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+            <Input
+              value={username}
+              onChange={(e) => validateUsername(e.target.value)}
+              placeholder="petlover"
+              className="pl-7"
+            />
+          </div>
+          {checkingUsername && <p className="text-xs text-muted-foreground">Checking availability...</p>}
+          {usernameError && <p className="text-xs text-destructive">{usernameError}</p>}
+          {username && !usernameError && !checkingUsername && username.length >= 3 && (
+            <p className="text-xs text-accent">✓ Username available</p>
+          )}
+        </div>
+        <div className="space-y-2">
           <Label className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> Email</Label>
           <Input value={user?.email || ""} disabled className="bg-muted" />
           <p className="text-xs text-muted-foreground">Email cannot be changed here</p>
