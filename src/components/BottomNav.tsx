@@ -1,6 +1,8 @@
 import { Home, Map, ShoppingBag, Heart, MessageCircle, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useTotalUnread } from "@/hooks/useMessages";
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const tabs = [
   { path: "/", icon: Home, label: "Home" },
@@ -11,10 +13,48 @@ const tabs = [
   { path: "/profile", icon: User, label: "Profile" },
 ];
 
+const fromTable = (table: string) => (supabase as any).from(table);
+
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const unreadCount = useTotalUnread();
+  const { user } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchCount = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data: participations } = await fromTable("conversation_participants")
+        .select("conversation_id")
+        .eq("user_id", user.id);
+
+      if (!participations?.length) { setUnreadCount(0); return; }
+
+      const convIds = participations.map((p: any) => p.conversation_id);
+      const { count } = await fromTable("messages")
+        .select("id", { count: "exact", head: true })
+        .in("conversation_id", convIds)
+        .eq("is_read", false)
+        .neq("sender_id", user.id);
+
+      setUnreadCount(count || 0);
+    } catch {
+      setUnreadCount(0);
+    }
+  }, [user]);
+
+  useEffect(() => { fetchCount(); }, [fetchCount]);
+
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel("bottom-nav-unread")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+        fetchCount();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, fetchCount]);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md">
