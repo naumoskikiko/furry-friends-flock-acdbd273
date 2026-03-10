@@ -435,7 +435,105 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
             </div>
           )}
 
-          {/* Settings */}
+          {/* Earnings */}
+          {tab === "earnings" && (
+            <div className="space-y-4">
+              {/* Balance cards */}
+              <div className="rounded-2xl petkeep-gradient p-5 text-primary-foreground">
+                <p className="text-xs font-semibold opacity-80">Available Balance</p>
+                <p className="font-display text-3xl font-extrabold mt-1">
+                  {(balance?.available_balance || 0).toLocaleString()} MKD
+                </p>
+                <p className="text-xs opacity-70 mt-0.5">💰 Ready for payout</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-card border border-border p-3 text-center">
+                  <p className="font-display text-xl font-extrabold text-primary">{(balance?.total_earned || 0).toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground">Total Earned (MKD)</p>
+                </div>
+                <div className="rounded-2xl bg-card border border-border p-3 text-center">
+                  <p className="font-display text-xl font-extrabold text-muted-foreground">{(balance?.total_platform_fees || 0).toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground">Platform Fees (10%)</p>
+                </div>
+              </div>
+
+              {(balance?.pending_balance || 0) > 0 && (
+                <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3">
+                  <p className="text-xs font-bold text-amber-800 dark:text-amber-400">Pending Payout</p>
+                  <p className="font-display text-lg font-extrabold text-amber-700 dark:text-amber-300">{(balance?.pending_balance || 0).toLocaleString()} MKD</p>
+                </div>
+              )}
+
+              {/* Request Payout */}
+              <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Wallet className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-bold">Request Payout</h3>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    value={payoutAmount}
+                    onChange={(e) => setPayoutAmount(e.target.value)}
+                    type="number"
+                    placeholder="Amount (MKD)"
+                    max={balance?.available_balance || 0}
+                    className="flex-1 rounded-xl bg-secondary px-3 py-2 text-sm outline-none"
+                  />
+                  <button
+                    onClick={handleRequestPayout}
+                    disabled={!payoutAmount || Number(payoutAmount) <= 0 || Number(payoutAmount) > (balance?.available_balance || 0)}
+                    className="petkeep-gradient rounded-xl px-4 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50 flex items-center gap-1"
+                  >
+                    <ArrowUpRight className="h-3.5 w-3.5" /> Request
+                  </button>
+                </div>
+                <p className="text-[9px] text-muted-foreground">💳 Simulated payouts · Stripe Connect coming soon</p>
+              </div>
+
+              {/* Recent Payments */}
+              <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                <h3 className="text-sm font-bold">Recent Payments</h3>
+                {providerPayments.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">No payments yet</p>
+                ) : providerPayments.slice(0, 10).map((p) => (
+                  <div key={p.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                    <div>
+                      <p className="text-xs font-semibold">{p.total_amount} MKD</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Fee: {p.platform_fee} MKD · Net: {p.provider_earnings} MKD
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      p.status === "completed" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                    }`}>{p.status}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Payout History */}
+              {payouts.length > 0 && (
+                <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                  <h3 className="text-sm font-bold">Payout History</h3>
+                  {payouts.map((p) => (
+                    <div key={p.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div>
+                        <p className="text-xs font-semibold">{p.amount} MKD</p>
+                        <p className="text-[10px] text-muted-foreground">{new Date(p.requested_at).toLocaleDateString()}</p>
+                      </div>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        p.status === "paid" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                        : p.status === "rejected" ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                        : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                      }`}>{p.status}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {tab === "settings" && (
             <div className="space-y-5">
               {/* Emergency */}
