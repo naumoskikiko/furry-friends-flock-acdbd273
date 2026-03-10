@@ -1,9 +1,28 @@
+import { Suspense, lazy } from "react";
 import AppLayout from "@/components/AppLayout";
-import { Search, MapPin, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, MapPin, Locate } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import NearbySection from "@/components/explore/NearbySection";
+import { useExplore, FILTERS } from "@/hooks/useExplore";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const filters = ["All", "Sitters", "Walkers", "Vets", "Stores", "Parks"];
+const ExploreMap = lazy(() => import("@/components/explore/ExploreMap"));
 
 const ExplorePage = () => {
+  const {
+    activeFilter,
+    setActiveFilter,
+    searchQuery,
+    setSearchQuery,
+    findMyPet,
+    setFindMyPet,
+    center,
+    allMarkers,
+    searchResults,
+    nearbyByCategory,
+    loading,
+  } = useExplore();
+
   return (
     <AppLayout>
       <div className="mx-auto max-w-lg">
@@ -13,21 +32,25 @@ const ExplorePage = () => {
             <div className="flex flex-1 items-center gap-2 rounded-xl bg-secondary px-3 py-2.5">
               <Search className="h-4 w-4 text-muted-foreground" />
               <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search places, sitters, stores..."
-                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground font-body"
               />
             </div>
             <button className="rounded-xl bg-secondary p-2.5">
               <SlidersHorizontal className="h-4 w-4 text-foreground" />
             </button>
           </div>
+
           {/* Filter chips */}
-          <div className="mt-3 flex gap-2 overflow-x-auto">
-            {filters.map((f, i) => (
+          <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide">
+            {FILTERS.map((f) => (
               <button
                 key={f}
+                onClick={() => setActiveFilter(f)}
                 className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
-                  i === 0
+                  activeFilter === f
                     ? "petkeep-gradient text-primary-foreground"
                     : "bg-secondary text-secondary-foreground hover:bg-muted"
                 }`}
@@ -38,42 +61,68 @@ const ExplorePage = () => {
           </div>
         </div>
 
-        {/* Map placeholder */}
-        <div className="relative mx-4 mt-4 overflow-hidden rounded-2xl bg-petkeep-beige" style={{ height: "50vh" }}>
-          <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
-            <MapPin className="h-12 w-12 text-primary" />
-            <p className="font-display text-lg font-bold text-foreground">Explore Your Area</p>
-            <p className="text-sm">Interactive map coming soon</p>
-            <p className="text-xs">Skopje, North Macedonia</p>
-          </div>
-          {/* Fake pins */}
-          <div className="absolute left-[20%] top-[30%] flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground shadow-lg">🐕</div>
-          <div className="absolute left-[60%] top-[25%] flex h-8 w-8 items-center justify-center rounded-full bg-accent text-xs text-accent-foreground shadow-lg">🏥</div>
-          <div className="absolute left-[45%] top-[55%] flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground shadow-lg">🏪</div>
-          <div className="absolute left-[75%] top-[60%] flex h-8 w-8 items-center justify-center rounded-full bg-petkeep-green text-xs shadow-lg">🌳</div>
-        </div>
-
-        {/* Nearby */}
-        <div className="p-4">
-          <h3 className="font-display text-lg font-bold">Nearby</h3>
-          <div className="mt-3 space-y-3">
-            {[
-              { name: "Happy Paws Vet", type: "Vet Clinic", dist: "0.3 km", icon: "🏥" },
-              { name: "PetShop Plus", type: "Pet Store", dist: "0.8 km", icon: "🏪" },
-              { name: "City Dog Park", type: "Dog Park", dist: "1.1 km", icon: "🌳" },
-            ].map((place) => (
-              <div key={place.name} className="flex items-center gap-3 rounded-xl bg-card p-3 petkeep-card-shadow petkeep-card-hover">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-lg">
-                  {place.icon}
+        {/* Search results dropdown */}
+        {searchQuery.trim() && searchResults.length > 0 && (
+          <div className="mx-4 rounded-2xl bg-card border border-border shadow-lg overflow-hidden">
+            {searchResults.map((r: any) => (
+              <button
+                key={r.id}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-secondary/50 transition-colors"
+              >
+                {r.avatar_url ? (
+                  <img src={r.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-base">
+                    {r.emoji}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold truncate">{r.name}</p>
+                  <p className="text-xs text-muted-foreground">{r.type}</p>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold">{place.name}</p>
-                  <p className="text-xs text-muted-foreground">{place.type} • {place.dist}</p>
-                </div>
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-              </div>
+                <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+              </button>
             ))}
           </div>
+        )}
+
+        {/* Find My Pet toggle */}
+        <div className="mx-4 mt-3 flex items-center justify-between rounded-2xl bg-card p-3 petkeep-card-shadow">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-petkeep-mint/15">
+              <Locate className="h-5 w-5 text-accent" />
+            </div>
+            <div>
+              <p className="text-sm font-bold font-display">Find My Pet</p>
+              <p className="text-[11px] text-muted-foreground">GPS tracking & lost pets</p>
+            </div>
+          </div>
+          <Switch checked={findMyPet} onCheckedChange={setFindMyPet} />
+        </div>
+
+        {/* Map */}
+        <div className="mx-4 mt-3">
+          {loading ? (
+            <Skeleton className="h-[45vh] w-full rounded-2xl" />
+          ) : (
+            <Suspense fallback={<Skeleton className="h-[45vh] w-full rounded-2xl" />}>
+              <ExploreMap markers={allMarkers} center={center} />
+            </Suspense>
+          )}
+          {findMyPet && (
+            <div className="mt-2 rounded-xl bg-accent/10 border border-accent/20 p-3 text-center">
+              <p className="text-xs font-semibold text-accent">🐾 Find My Pet mode active</p>
+              <p className="text-[11px] text-muted-foreground mt-1">Lost pet reports & GPS devices will appear on the map</p>
+            </div>
+          )}
+        </div>
+
+        {/* Nearby sections */}
+        <div className="mt-2 pb-4">
+          <NearbySection title="Nearby Pet Shops" items={nearbyByCategory.stores} />
+          <NearbySection title="Nearby Veterinarians" items={nearbyByCategory.vets} />
+          <NearbySection title="Nearby Parks" items={nearbyByCategory.parks} />
+          <NearbySection title="Nearby Grooming Salons" items={nearbyByCategory.grooming} />
         </div>
       </div>
     </AppLayout>
