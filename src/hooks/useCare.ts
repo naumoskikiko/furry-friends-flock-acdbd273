@@ -381,7 +381,7 @@ export function useMyBookings() {
         fromTable("care_services").select("id, service_name, price, duration").in("id", serviceIds),
       ];
       if (petIds.length > 0) {
-        promises.push(supabase.from("pets").select("id, name, animal_type, breed, photo_url").in("id", petIds));
+        promises.push(fromTable("pets").select("id, name, animal_type, breed, photo_url").in("id", petIds));
       }
 
       const results = await Promise.all(promises);
