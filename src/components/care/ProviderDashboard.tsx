@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { X, Plus, Trash2, Clock, DollarSign, Save, Image as ImageIcon, Upload } from "lucide-react";
+import { X, Plus, Trash2, Clock, DollarSign, Save, Image as ImageIcon, Upload, Wallet, ArrowUpRight } from "lucide-react";
 import { useMyProvider, useProviderServices, useProviderAvailability, useProviderBookings, useProviderReviews, useProviderGallery, CATEGORIES, DAY_NAMES, type CareService } from "@/hooks/useCare";
+import { useProviderBalance, useProviderPayments, useProviderPayouts } from "@/hooks/usePayments";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, BadgeCheck, Calendar, CheckCircle2, XCircle, MessageSquare, AlertTriangle, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
