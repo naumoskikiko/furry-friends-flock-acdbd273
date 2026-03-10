@@ -30,6 +30,7 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   const { images: galleryImages } = useProviderGallery(provider.id);
   const { createBooking } = useBooking();
   const { submitReview } = useSubmitReview();
+  const { processPayment } = useProcessPayment();
   const { toast } = useToast();
   const navigate = useNavigate();
 
