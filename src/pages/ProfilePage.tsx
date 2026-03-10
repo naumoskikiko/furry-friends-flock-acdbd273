@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Settings, Grid3X3, Bookmark, Heart, Star, MapPin, CreditCard, Camera, Plus } from "lucide-react";
+import { Settings, Grid3X3, Bookmark, Heart, Tag, MapPin, CreditCard, Camera, Plus, Star, Link as LinkIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,7 @@ import PetCard from "@/components/profile/PetCard";
 import PetProfileModal from "@/components/profile/PetProfileModal";
 import LikedPostsGrid from "@/components/profile/LikedPostsGrid";
 import SavedPostsGrid from "@/components/profile/SavedPostsGrid";
+import FollowListModal from "@/components/profile/FollowListModal";
 import CreateStoryModal from "@/components/stories/CreateStoryModal";
 import StoryViewer from "@/components/stories/StoryViewer";
 import { useStories } from "@/hooks/useStories";
@@ -30,6 +32,7 @@ const ProfilePage = () => {
   const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
+  const [website, setWebsite] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -42,11 +45,15 @@ const ProfilePage = () => {
   const [addPetOpen, setAddPetOpen] = useState(false);
   const [editPet, setEditPet] = useState<any>(null);
   const [createPostOpen, setCreatePostOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"posts" | "saved" | "liked">("posts");
+  const [activeTab, setActiveTab] = useState<"posts" | "saved" | "liked" | "tagged">("posts");
 
   const [viewPet, setViewPet] = useState<any>(null);
   const [createStoryOpen, setCreateStoryOpen] = useState(false);
   const [storyViewerOpen, setStoryViewerOpen] = useState(false);
+
+  // Follow list modals
+  const [followListOpen, setFollowListOpen] = useState(false);
+  const [followListType, setFollowListType] = useState<"followers" | "following">("followers");
 
   const { storyGroups, hasOwnStory, refreshStories } = useStories();
 
@@ -116,8 +123,17 @@ const ProfilePage = () => {
 
   const handleShareProfile = () => {
     const url = `${window.location.origin}/profile/${user?.id}`;
-    navigator.clipboard.writeText(url);
-    toast({ title: "Link copied!", description: "Profile link copied to clipboard." });
+    if (navigator.share) {
+      navigator.share({ title: displayName, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url);
+      toast({ title: "Link copied!" });
+    }
+  };
+
+  const openFollowList = (type: "followers" | "following") => {
+    setFollowListType(type);
+    setFollowListOpen(true);
   };
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
@@ -145,7 +161,7 @@ const ProfilePage = () => {
               onClick={() => {
                 if (hasOwnStory) {
                   const idx = storyGroups.findIndex((g) => g.user_id === user?.id);
-                  if (idx >= 0) { setStoryViewerOpen(true); }
+                  if (idx >= 0) setStoryViewerOpen(true);
                 }
               }}
               className="block"
@@ -160,18 +176,14 @@ const ProfilePage = () => {
                 )}
               </div>
             </button>
-            <button
-              onClick={() => setCreateStoryOpen(true)}
-              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
+            {/* Camera button for avatar upload */}
+            <label className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
+              <Camera className="h-4 w-4" />
+              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploading} />
+            </label>
           </div>
 
           <h2 className="mt-3 font-display text-xl font-extrabold">{displayName}</h2>
-          <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-            <Star className="h-3 w-3 text-primary fill-primary" /> — reviews
-          </div>
           {profile?.location && (
             <p className="mt-0.5 text-xs text-muted-foreground flex items-center gap-1">
               <MapPin className="h-3 w-3" /> {profile.location}
@@ -183,20 +195,20 @@ const ProfilePage = () => {
           </span>
         </div>
 
-        {/* Stats row */}
+        {/* Stats row - tappable */}
         <div className="mt-4 flex justify-center gap-8">
           <div className="text-center">
             <p className="font-display text-lg font-extrabold">{posts.length}</p>
             <p className="text-[10px] text-muted-foreground">Posts</p>
           </div>
-          <div className="text-center">
+          <button className="text-center" onClick={() => openFollowList("followers")}>
             <p className="font-display text-lg font-extrabold">{followerCount}</p>
             <p className="text-[10px] text-muted-foreground">Followers</p>
-          </div>
-          <div className="text-center">
+          </button>
+          <button className="text-center" onClick={() => openFollowList("following")}>
             <p className="font-display text-lg font-extrabold">{followingCount}</p>
             <p className="text-[10px] text-muted-foreground">Following</p>
-          </div>
+          </button>
         </div>
 
         {/* Action buttons */}
@@ -229,7 +241,7 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {/* My Pets - circular icons */}
+        {/* My Pets */}
         <div className="px-4 pb-4">
           <div className="flex items-center justify-between">
             <h3 className="font-display text-base font-bold">My Pets</h3>
@@ -252,37 +264,56 @@ const ProfilePage = () => {
 
         {/* Tab bar */}
         <div className="flex border-t border-border">
-          <button
-            onClick={() => setActiveTab("posts")}
-            className={`flex-1 py-3 flex items-center justify-center ${activeTab === "posts" ? "border-b-2 border-foreground" : "text-muted-foreground"}`}
-          >
-            <Grid3X3 className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setActiveTab("saved")}
-            className={`flex-1 py-3 flex items-center justify-center ${activeTab === "saved" ? "border-b-2 border-foreground" : "text-muted-foreground"}`}
-          >
-            <Bookmark className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setActiveTab("liked")}
-            className={`flex-1 py-3 flex items-center justify-center ${activeTab === "liked" ? "border-b-2 border-foreground" : "text-muted-foreground"}`}
-          >
-            <Heart className="h-5 w-5" />
-          </button>
+          {([
+            { key: "posts" as const, icon: Grid3X3 },
+            { key: "saved" as const, icon: Bookmark },
+            { key: "liked" as const, icon: Heart },
+            { key: "tagged" as const, icon: Tag },
+          ]).map(({ key, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`flex-1 py-3 flex items-center justify-center ${activeTab === key ? "border-b-2 border-foreground" : "text-muted-foreground"}`}
+            >
+              <Icon className="h-5 w-5" />
+            </button>
+          ))}
         </div>
 
-        {/* Post grid */}
+        {/* Tab content */}
         {activeTab === "posts" && <PostGrid posts={posts} onRefresh={fetchData} />}
         {activeTab === "saved" && <SavedPostsGrid />}
         {activeTab === "liked" && <LikedPostsGrid />}
+        {activeTab === "tagged" && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <span className="text-4xl">🏷️</span>
+            <p className="mt-2 text-sm font-semibold text-muted-foreground">No tagged posts</p>
+            <p className="text-xs text-muted-foreground">Posts you're tagged in will appear here</p>
+          </div>
+        )}
       </div>
 
       {/* Edit Profile Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Edit Profile</DialogTitle></DialogHeader>
           <div className="space-y-4">
+            {/* Avatar upload */}
+            <div className="flex items-center gap-4">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="" className="h-16 w-16 rounded-full object-cover" />
+              ) : (
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-petkeep-orange-light text-xl font-bold text-primary-foreground">
+                  {initials}
+                </div>
+              )}
+              <label className="cursor-pointer text-sm font-semibold text-primary hover:underline">
+                Change Photo
+                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploading} />
+              </label>
+              {uploading && <span className="text-xs text-muted-foreground">Uploading...</span>}
+            </div>
+
             <div className="space-y-2">
               <Label>Full Name</Label>
               <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
@@ -295,12 +326,26 @@ const ProfilePage = () => {
               <Label>Location</Label>
               <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, Country" />
             </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input value={user?.email || ""} disabled className="bg-muted" />
+            </div>
             <Button onClick={handleSaveProfile} className="w-full petkeep-gradient text-primary-foreground font-bold" disabled={saving}>
               {saving ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Follow List Modal */}
+      {user && (
+        <FollowListModal
+          open={followListOpen}
+          onOpenChange={setFollowListOpen}
+          userId={user.id}
+          type={followListType}
+        />
+      )}
 
       {/* Pet Profile Modal */}
       <PetProfileModal
