@@ -26,7 +26,8 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<"overview" | "services" | "bookings" | "hours" | "reviews" | "settings">("overview");
+  const [tab, setTab] = useState<"overview" | "services" | "bookings" | "hours" | "reviews" | "earnings" | "settings">("overview");
+  const [payoutAmount, setPayoutAmount] = useState("");
   const [creating, setCreating] = useState(!provider && !loading);
 
   // Create provider form
