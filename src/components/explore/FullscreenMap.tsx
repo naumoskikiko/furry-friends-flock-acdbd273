@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
-  ArrowLeft, Search, SlidersHorizontal, Plus, Minus, Crosshair,
-  MapPin, Star, ChevronUp, ChevronDown, X,
+  ArrowLeft, Search, Plus, Minus, Crosshair,
+  MapPin, Star, ChevronUp, ChevronDown, X, ChevronRight,
 } from "lucide-react";
 import type { MapMarker } from "@/components/explore/ExploreMap";
 import type { NearbyItem } from "@/components/explore/NearbySection";
@@ -36,6 +36,8 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
   const [searchQuery, setSearchQuery] = useState("");
   const [panelExpanded, setPanelExpanded] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState<MapMarker | null>(null);
+  const [mapReady, setMapReady] = useState(false);
+  const prevSelectedRef = useRef<string | null>(null);
 
   const filteredMarkers = searchQuery.trim()
     ? markers.filter(
@@ -57,7 +59,6 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
   useEffect(() => {
     if (!open || !containerRef.current) return;
 
-    // Small delay to let the DOM settle
     const timer = setTimeout(() => {
       if (mapRef.current || !containerRef.current) return;
 
@@ -75,8 +76,25 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
       markersLayerRef.current = L.layerGroup().addTo(map);
       mapRef.current = map;
 
-      // Invalidate size after render
+      // Intercept popup link clicks for SPA navigation
+      map.on("popupopen", (e: any) => {
+        const container = e.popup.getElement();
+        if (!container) return;
+        const links = container.querySelectorAll("a[data-nav]");
+        links.forEach((link: HTMLAnchorElement) => {
+          link.addEventListener("click", (ev: Event) => {
+            ev.preventDefault();
+            const href = link.getAttribute("data-nav");
+            if (href) {
+              onClose();
+              navigate(href);
+            }
+          });
+        });
+      });
+
       setTimeout(() => map.invalidateSize(), 100);
+      setMapReady(true);
     }, 50);
 
     return () => {
@@ -85,6 +103,7 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
         mapRef.current.remove();
         mapRef.current = null;
         leafletMarkersRef.current.clear();
+        setMapReady(false);
       }
     };
   }, [open]);
@@ -96,16 +115,15 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
     }
   }, [center, open]);
 
-  // Update markers
+  // Update markers (no selectedMarker dependency)
   useEffect(() => {
     const layer = markersLayerRef.current;
-    if (!layer || !open) return;
+    if (!layer || !mapReady) return;
     layer.clearLayers();
     leafletMarkersRef.current.clear();
 
     filteredMarkers.forEach((m) => {
-      const isSelected = selectedMarker?.id === m.id;
-      const marker = L.marker([m.lat, m.lng], { icon: emojiIcon(m.emoji, isSelected) });
+      const marker = L.marker([m.lat, m.lng], { icon: emojiIcon(m.emoji, false) });
 
       const imgHtml = m.image_url
         ? `<img src="${m.image_url}" style="width:100%;height:80px;object-fit:cover;border-radius:8px 8px 0 0;margin-bottom:6px;" />`
@@ -122,7 +140,7 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
           ${descHtml}
           ${m.rating ? `<span style="font-size:11px;">⭐ ${m.rating}</span>` : ""}
           ${m.distance ? `<span style="font-size:11px;margin-left:6px;">📍 ${m.distance}</span>` : ""}
-          <br/><a href="/place/${m.id}" style="display:inline-block;margin-top:8px;padding:4px 14px;background:hsl(25,90%,55%);color:white;border-radius:8px;font-size:11px;font-weight:700;text-decoration:none;">View Details</a>
+          <br/><a data-nav="/place/${m.id}" href="#" style="display:inline-block;margin-top:8px;padding:4px 14px;background:hsl(25,90%,55%);color:white;border-radius:8px;font-size:11px;font-weight:700;text-decoration:none;">View Details</a>
         </div>`,
         { maxWidth: 240 }
       );
@@ -134,7 +152,31 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
       layer.addLayer(marker);
       leafletMarkersRef.current.set(m.id, marker);
     });
-  }, [filteredMarkers, open, selectedMarker]);
+  }, [filteredMarkers, mapReady]);
+
+  // Update selected marker icon without re-creating all markers
+  useEffect(() => {
+    const prevId = prevSelectedRef.current;
+    const newId = selectedMarker?.id || null;
+
+    if (prevId && prevId !== newId) {
+      const prevLeaflet = leafletMarkersRef.current.get(prevId);
+      const prevData = filteredMarkers.find((m) => m.id === prevId);
+      if (prevLeaflet && prevData) {
+        prevLeaflet.setIcon(emojiIcon(prevData.emoji, false));
+      }
+    }
+
+    if (newId) {
+      const newLeaflet = leafletMarkersRef.current.get(newId);
+      const newData = filteredMarkers.find((m) => m.id === newId);
+      if (newLeaflet && newData) {
+        newLeaflet.setIcon(emojiIcon(newData.emoji, true));
+      }
+    }
+
+    prevSelectedRef.current = newId;
+  }, [selectedMarker, filteredMarkers]);
 
   const handleZoomIn = () => mapRef.current?.zoomIn();
   const handleZoomOut = () => mapRef.current?.zoomOut();
@@ -152,7 +194,6 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
   };
 
   const handleNearbyClick = useCallback((item: NearbyItem) => {
-    // Find corresponding marker
     const marker = filteredMarkers.find((m) => m.id === item.id);
     if (marker && mapRef.current) {
       mapRef.current.setView([marker.lat, marker.lng], 16);
@@ -243,7 +284,7 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
 
         {/* Selected marker quick card */}
         {selectedMarker && (
-          <div className="absolute bottom-[calc(env(safe-area-inset-bottom,0px)+140px)] left-3 right-3 z-[1000]">
+          <div className="absolute bottom-[calc(env(safe-area-inset-bottom,0px)+190px)] left-3 right-3 z-[1000]">
             <div className="rounded-2xl bg-card p-3 shadow-xl border border-border flex gap-3 items-center">
               {selectedMarker.image_url ? (
                 <img
@@ -299,8 +340,8 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         className={`relative z-10 bg-card border-t border-border rounded-t-2xl transition-all duration-300 safe-area-bottom ${
-          panelExpanded ? "max-h-[60vh]" : "max-h-[140px]"
-        } overflow-hidden`}
+          panelExpanded ? "max-h-[60vh]" : "max-h-[180px]"
+        }`}
       >
         {/* Drag handle */}
         <div className="flex justify-center py-2 cursor-grab" onClick={() => setPanelExpanded(!panelExpanded)}>
@@ -318,7 +359,7 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
           </button>
         </div>
 
-        <div className="overflow-y-auto px-4 pb-4" style={{ maxHeight: panelExpanded ? "calc(60vh - 60px)" : "80px" }}>
+        <div className="overflow-y-auto px-4 pb-4" style={{ maxHeight: panelExpanded ? "calc(60vh - 60px)" : "120px" }}>
           {filteredNearby.length === 0 && (
             <p className="text-xs text-muted-foreground text-center py-3">No nearby places found</p>
           )}
@@ -344,6 +385,7 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
                   <MapPin className="h-3 w-3" />
                   {item.distance}
                 </span>
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
               </div>
             </button>
           ))}
