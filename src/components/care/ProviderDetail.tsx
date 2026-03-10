@@ -73,8 +73,13 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
     if (!selectedService || !bookingDate || !bookingTime) return;
     setBooking(true);
     try {
-      await createBooking(provider.id, selectedService.id, bookingDate, bookingTime, bookingNotes, selectedPetId || undefined);
-      toast({ title: "Booking confirmed!", description: `${selectedService.service_name} on ${bookingDate} at ${bookingTime}` });
+      const result = await createBooking(provider.id, selectedService.id, bookingDate, bookingTime, bookingNotes, selectedPetId || undefined);
+      // Process simulated payment with 10% platform fee
+      if (result?.id) {
+        await processPayment(result.id, provider.id, selectedService.price);
+      }
+      const fees = calculateFees(selectedService.price);
+      toast({ title: "Booking & Payment confirmed!", description: `${selectedService.service_name} — ${fees.totalAmount} MKD paid` });
       setSelectedService(null);
       setBookingDate("");
       setBookingTime("");
