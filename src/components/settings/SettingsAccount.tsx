@@ -191,10 +191,12 @@ const SettingsAccount = () => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold">Account Type</p>
-            <p className="text-xs text-muted-foreground capitalize">{profile?.role || "owner"}</p>
+            <p className="text-xs text-muted-foreground capitalize">
+              {profile?.role === "provider" ? "🩺 Provider" : profile?.role === "business" ? "🏪 Business" : "🐾 User"}
+            </p>
           </div>
           <span className="rounded-full bg-petkeep-cream px-3 py-1 text-xs font-bold capitalize text-foreground">
-            {profile?.role || "owner"}
+            {profile?.role === "provider" ? "Provider" : profile?.role === "business" ? "Business" : "User"}
           </span>
         </div>
       </div>

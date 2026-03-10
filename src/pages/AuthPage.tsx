@@ -4,19 +4,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { PawPrint, Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { PawPrint, Mail, Lock, User, ArrowLeft, Store, Briefcase } from "lucide-react";
 
 type AuthView = "login" | "signup" | "forgot";
+type AccountRole = "user" | "provider" | "business";
+
+const ROLES: { value: AccountRole; label: string; icon: React.ReactNode; emoji: string; desc: string }[] = [
+  { value: "user", label: "Pet Owner", icon: <PawPrint className="h-5 w-5" />, emoji: "🐾", desc: "Find care & connect" },
+  { value: "provider", label: "Provider", icon: <Briefcase className="h-5 w-5" />, emoji: "🩺", desc: "Offer pet services" },
+  { value: "business", label: "Business", icon: <Store className="h-5 w-5" />, emoji: "🏪", desc: "Sell pet products" },
+];
 
 const AuthPage = () => {
   const [view, setView] = useState<AuthView>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState<"owner" | "sitter">("owner");
+  const [role, setRole] = useState<AccountRole>("user");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -132,29 +138,31 @@ const AuthPage = () => {
             {view === "signup" && (
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>I am a...</Label>
-                  <RadioGroup value={role} onValueChange={(v) => setRole(v as "owner" | "sitter")} className="flex gap-4">
-                    <label className={`flex flex-1 cursor-pointer items-center gap-2 rounded-xl border-2 p-3 transition-all ${role === "owner" ? "border-primary bg-petkeep-cream" : "border-border"}`}>
-                      <RadioGroupItem value="owner" id="owner" />
-                      <div>
-                        <p className="text-sm font-bold">🐾 Pet Owner</p>
-                        <p className="text-[10px] text-muted-foreground">Find care for my pets</p>
-                      </div>
-                    </label>
-                    <label className={`flex flex-1 cursor-pointer items-center gap-2 rounded-xl border-2 p-3 transition-all ${role === "sitter" ? "border-primary bg-petkeep-cream" : "border-border"}`}>
-                      <RadioGroupItem value="sitter" id="sitter" />
-                      <div>
-                        <p className="text-sm font-bold">🏠 Sitter</p>
-                        <p className="text-[10px] text-muted-foreground">Offer pet care services</p>
-                      </div>
-                    </label>
-                  </RadioGroup>
+                  <Label>Select your account type</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {ROLES.map((r) => (
+                      <button
+                        key={r.value}
+                        type="button"
+                        onClick={() => setRole(r.value)}
+                        className={`flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 transition-all ${
+                          role === r.value
+                            ? "border-primary bg-petkeep-cream dark:bg-primary/10"
+                            : "border-border hover:border-muted-foreground/30"
+                        }`}
+                      >
+                        <span className="text-2xl">{r.emoji}</span>
+                        <p className="text-xs font-bold">{r.label}</p>
+                        <p className="text-[9px] text-muted-foreground leading-tight text-center">{r.desc}</p>
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
+                  <Label htmlFor="fullName">{role === "business" ? "Business Name" : "Full Name"}</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="fullName" placeholder="John Doe" value={fullName} onChange={(e) => setFullName(e.target.value)} className="pl-10" required />
+                    <Input id="fullName" placeholder={role === "business" ? "Happy Paws Pet Shop" : "John Doe"} value={fullName} onChange={(e) => setFullName(e.target.value)} className="pl-10" required />
                   </div>
                 </div>
                 <div className="space-y-2">
