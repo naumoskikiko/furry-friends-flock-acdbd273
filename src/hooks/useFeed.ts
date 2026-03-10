@@ -41,13 +41,15 @@ export const useFeed = () => {
 
     const [profilesRes, petsRes, likesRes, savesRes] = await Promise.all([
       supabase.from("profiles").select("user_id, full_name, avatar_url, role").in("user_id", userIds),
-      petIds.length > 0 ? supabase.from("pets").select("id, name, breed").in("id", petIds) : { data: [] },
-      user ? supabase.from("post_likes").select("post_id").eq("user_id", user.id).in("post_id", postIds) : { data: [] },
-      user ? supabase.from("saved_posts").select("post_id").eq("user_id", user.id).in("post_id", postIds) : { data: [] },
+      petIds.length > 0 ? supabase.from("pets").select("id, name, breed").in("id", petIds) : { data: [] as any[] },
+      user ? supabase.from("post_likes").select("post_id").eq("user_id", user.id).in("post_id", postIds) : { data: [] as any[] },
+      user ? (supabase as any).from("saved_posts").select("post_id").eq("user_id", user.id).in("post_id", postIds) : { data: [] as any[] },
     ]);
 
     const profileMap = new Map(profilesRes.data?.map((p) => [p.user_id, p]) || []);
-    const petMap = new Map(petsRes.data?.map((p: any) => [p.id, p]) || []);
+    const petMap = new Map<string, { name: string; breed: string | null }>(
+      (petsRes.data || []).map((p: any) => [p.id, { name: p.name, breed: p.breed }])
+    );
     const likedSet = new Set(likesRes.data?.map((l: any) => l.post_id) || []);
     const savedSet = new Set(savesRes.data?.map((s: any) => s.post_id) || []);
 

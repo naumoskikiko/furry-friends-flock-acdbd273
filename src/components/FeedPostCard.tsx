@@ -77,10 +77,10 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     setSaved(newSaved);
 
     if (newSaved) {
-      await supabase.from("saved_posts").insert({ post_id: post.id, user_id: user.id });
+      await (supabase as any).from("saved_posts").insert({ post_id: post.id, user_id: user.id });
       toast({ title: "Post saved" });
     } else {
-      await supabase.from("saved_posts").delete().eq("post_id", post.id).eq("user_id", user.id);
+      await (supabase as any).from("saved_posts").delete().eq("post_id", post.id).eq("user_id", user.id);
       toast({ title: "Post unsaved" });
     }
     onSaveToggle(post.id, newSaved);
