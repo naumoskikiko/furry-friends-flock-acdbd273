@@ -1,12 +1,10 @@
 import { useState } from "react";
 import {
   Heart,
-  Heart,
   MessageCircle,
   Send,
   Bookmark,
   MoreHorizontal,
-  Play,
   Trash2,
   MoreVertical,
 } from "lucide-react";
@@ -14,6 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { createNotification } from "@/hooks/useNotifications";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
