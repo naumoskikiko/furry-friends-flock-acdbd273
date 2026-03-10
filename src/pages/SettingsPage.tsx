@@ -139,6 +139,7 @@ const SettingsPage = () => {
         {activeSection === "support" && <SettingsSupport />}
         {activeSection === "legal" && <SettingsLegal />}
         {activeSection === "danger" && <SettingsDangerZone />}
+        {activeSection === "map-management" && <SettingsMapManagement />}
       </div>
     </AppLayout>
   );
