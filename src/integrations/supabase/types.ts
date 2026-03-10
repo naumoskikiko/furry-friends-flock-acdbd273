@@ -406,9 +406,11 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          image_url: string | null
           latitude: number
           longitude: number
           name: string
+          opening_hours: string | null
           phone: string | null
           rating: number | null
           updated_at: string
@@ -421,9 +423,11 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          image_url?: string | null
           latitude: number
           longitude: number
           name: string
+          opening_hours?: string | null
           phone?: string | null
           rating?: number | null
           updated_at?: string
@@ -436,9 +440,11 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          image_url?: string | null
           latitude?: number
           longitude?: number
           name?: string
+          opening_hours?: string | null
           phone?: string | null
           rating?: number | null
           updated_at?: string
