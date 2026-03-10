@@ -16,6 +16,9 @@ import PostGrid from "@/components/profile/PostGrid";
 import PetCard from "@/components/profile/PetCard";
 import PetProfileModal from "@/components/profile/PetProfileModal";
 import LikedPostsGrid from "@/components/profile/LikedPostsGrid";
+import CreateStoryModal from "@/components/stories/CreateStoryModal";
+import StoryViewer from "@/components/stories/StoryViewer";
+import { useStories } from "@/hooks/useStories";
 
 const ProfilePage = () => {
   const { user, profile, refreshProfile } = useAuth();
