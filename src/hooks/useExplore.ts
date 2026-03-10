@@ -34,7 +34,7 @@ export function useExplore() {
     const load = async () => {
       setLoading(true);
       const [{ data: sitters }, { data: profiles }] = await Promise.all([
-        supabase.from("sitter_profiles").select("*, profiles!sitter_profiles_user_id_fkey(full_name, avatar_url, location)"),
+        supabase.from("sitter_profiles").select("*"),
         supabase.from("profiles").select("user_id, full_name, avatar_url, location"),
       ]);
 
