@@ -1,14 +1,17 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { Search, SlidersHorizontal, MapPin, Locate } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import NearbySection from "@/components/explore/NearbySection";
+import SearchFilterModal, { SearchFilters } from "@/components/explore/SearchFilterModal";
 import { useExplore, FILTERS } from "@/hooks/useExplore";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ExploreMap = lazy(() => import("@/components/explore/ExploreMap"));
 
 const ExplorePage = () => {
+  const navigate = useNavigate();
   const {
     activeFilter,
     setActiveFilter,
@@ -23,6 +26,29 @@ const ExplorePage = () => {
     loading,
   } = useExplore();
 
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<SearchFilters>({
+    contentTypes: [],
+    location: "all",
+    sort: "relevant",
+  });
+
+  const handleResultClick = (r: any) => {
+    if (r.type === "User") {
+      navigate(`/user/${r.username || r.id}`);
+    } else {
+      navigate(`/place/${r.id}`);
+    }
+  };
+
+  const handleSeeMore = (tab: "users" | "places" | "posts") => {
+    navigate(`/search?q=${encodeURIComponent(searchQuery)}&tab=${tab}`);
+  };
+
+  const handleNearbyClick = (item: any) => {
+    navigate(`/place/${item.id}`);
+  };
+
   return (
     <AppLayout>
       <div className="mx-auto max-w-lg">
@@ -34,11 +60,16 @@ const ExplorePage = () => {
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search places, sitters, stores..."
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && searchQuery.trim()) {
+                    handleSeeMore("users");
+                  }
+                }}
+                placeholder="Search places, users, @username..."
                 className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground font-body"
               />
             </div>
-            <button className="rounded-xl bg-secondary p-2.5">
+            <button onClick={() => setFilterOpen(true)} className="rounded-xl bg-secondary p-2.5">
               <SlidersHorizontal className="h-4 w-4 text-foreground" />
             </button>
           </div>
@@ -67,6 +98,7 @@ const ExplorePage = () => {
             {searchResults.map((r: any) => (
               <button
                 key={r.id}
+                onClick={() => handleResultClick(r)}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-secondary/50 transition-colors"
               >
                 {r.avatar_url ? (
@@ -78,11 +110,34 @@ const ExplorePage = () => {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold truncate">{r.name}</p>
-                  <p className="text-xs text-muted-foreground">{r.type}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {r.username ? `@${r.username}` : r.type}
+                  </p>
                 </div>
                 <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
               </button>
             ))}
+            {/* See More buttons */}
+            <div className="flex border-t border-border divide-x divide-border">
+              <button
+                onClick={() => handleSeeMore("users")}
+                className="flex-1 py-2.5 text-xs font-semibold text-primary hover:bg-secondary/30 transition-colors"
+              >
+                See More Users
+              </button>
+              <button
+                onClick={() => handleSeeMore("places")}
+                className="flex-1 py-2.5 text-xs font-semibold text-primary hover:bg-secondary/30 transition-colors"
+              >
+                See More Places
+              </button>
+              <button
+                onClick={() => handleSeeMore("posts")}
+                className="flex-1 py-2.5 text-xs font-semibold text-primary hover:bg-secondary/30 transition-colors"
+              >
+                See More Posts
+              </button>
+            </div>
           </div>
         )}
 
@@ -119,13 +174,21 @@ const ExplorePage = () => {
 
         {/* Nearby sections */}
         <div className="mt-2 pb-4">
-          <NearbySection title="Nearby Pet Shops" items={nearbyByCategory.stores} />
-          <NearbySection title="Nearby Veterinarians" items={nearbyByCategory.vets} />
-          <NearbySection title="Nearby Parks" items={nearbyByCategory.parks} />
-          <NearbySection title="Nearby Grooming Salons" items={nearbyByCategory.grooming} />
-          <NearbySection title="Nearby Pet Friendly Cafes" items={nearbyByCategory.cafes} />
+          <NearbySection title="Nearby Pet Shops" items={nearbyByCategory.stores} onItemClick={handleNearbyClick} />
+          <NearbySection title="Nearby Veterinarians" items={nearbyByCategory.vets} onItemClick={handleNearbyClick} />
+          <NearbySection title="Nearby Parks" items={nearbyByCategory.parks} onItemClick={handleNearbyClick} />
+          <NearbySection title="Nearby Grooming Salons" items={nearbyByCategory.grooming} onItemClick={handleNearbyClick} />
+          <NearbySection title="Nearby Pet Friendly Cafes" items={nearbyByCategory.cafes} onItemClick={handleNearbyClick} />
         </div>
       </div>
+
+      {/* Filter Modal */}
+      <SearchFilterModal
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        filters={filters}
+        onApply={setFilters}
+      />
     </AppLayout>
   );
 };

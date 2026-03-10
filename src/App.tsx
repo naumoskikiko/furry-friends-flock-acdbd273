@@ -15,6 +15,9 @@ import AuthPage from "./pages/AuthPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import UserProfilePage from "./pages/UserProfilePage";
+import SearchResultsPage from "./pages/SearchResultsPage";
+import PlaceDetailPage from "./pages/PlaceDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +40,9 @@ const App = () => (
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+            <Route path="/user/:username" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
+            <Route path="/search" element={<ProtectedRoute><SearchResultsPage /></ProtectedRoute>} />
+            <Route path="/place/:id" element={<ProtectedRoute><PlaceDetailPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
