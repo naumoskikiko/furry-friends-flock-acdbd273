@@ -169,16 +169,30 @@ const UserProfilePage = () => {
           </div>
         </div>
 
-        <div className="mt-3 px-4">
+        <div className="mt-3 px-4 flex gap-2">
           <button
             onClick={handleFollow}
-            className={`w-full rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-2 ${
+            className={`flex-1 rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-2 ${
               isFollowing
                 ? "bg-secondary text-secondary-foreground"
                 : "petkeep-gradient text-primary-foreground"
             }`}
           >
             {isFollowing ? <><UserCheck className="h-4 w-4" /> Following</> : <><UserPlus className="h-4 w-4" /> Follow</>}
+          </button>
+          <button
+            onClick={async () => {
+              if (!user || !profile) return;
+              try {
+                await getOrCreateConversation(profile.user_id);
+                navigate("/messages", { state: { openChat: profile.user_id } });
+              } catch (e) {
+                toast({ title: "Error", description: "Could not open chat", variant: "destructive" });
+              }
+            }}
+            className="rounded-xl py-2.5 px-4 text-sm font-bold flex items-center justify-center gap-2 bg-secondary text-secondary-foreground"
+          >
+            <MessageCircle className="h-4 w-4" />
           </button>
         </div>
 
