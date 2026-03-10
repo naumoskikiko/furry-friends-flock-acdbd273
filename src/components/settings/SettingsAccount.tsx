@@ -59,7 +59,14 @@ const SettingsAccount = () => {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({ full_name: fullName, bio, location }).eq("user_id", user.id);
+    if (usernameError) {
+      toast({ title: "Fix errors", description: usernameError, variant: "destructive" });
+      setSaving(false);
+      return;
+    }
+    const updates: any = { full_name: fullName, bio, location };
+    if (username) updates.username = username;
+    const { error } = await supabase.from("profiles").update(updates).eq("user_id", user.id);
     setSaving(false);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
