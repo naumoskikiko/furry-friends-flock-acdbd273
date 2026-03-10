@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Search, Pin, PinOff, Trash2, MoreHorizontal } from "lucide-react";
+import {
+  Search, Pin, PinOff, Trash2, MoreHorizontal,
+  Archive, ArchiveRestore, BellOff, Bell,
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  useConversations,
-  type Conversation,
-  getOrCreateConversation,
-  getActivityStatus,
+  useConversations, type Conversation,
+  getOrCreateConversation, getActivityStatus,
 } from "@/hooks/useMessages";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +18,11 @@ interface ConversationListProps {
 }
 
 const ConversationList = ({ onSelect }: ConversationListProps) => {
-  const { conversations, loading, togglePin, deleteConversation } = useConversations();
+  const {
+    conversations, loading, togglePin, toggleArchive,
+    toggleMute, deleteConversation, showArchived,
+    setShowArchived, archivedCount,
+  } = useConversations();
   const { user } = useAuth();
   const { toast } = useToast();
   const [search, setSearch] = useState("");
@@ -27,10 +32,7 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
 
   const handleSearch = async (query: string) => {
     setSearch(query);
-    if (query.length < 2) {
-      setSearchResults([]);
-      return;
-    }
+    if (query.length < 2) { setSearchResults([]); return; }
     setSearching(true);
     const cleanQuery = query.startsWith("@") ? query.slice(1) : query;
     const { data } = await supabase
@@ -59,6 +61,8 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
         },
         unread_count: 0,
         is_pinned: false,
+        is_archived: false,
+        is_muted: false,
       });
       setSearch("");
       setSearchResults([]);
@@ -67,21 +71,28 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
     }
   };
 
-  const filtered =
-    search.length >= 2
-      ? conversations.filter(
-          (c) =>
-            c.other_user.full_name.toLowerCase().includes(search.toLowerCase()) ||
-            c.other_user.username
-              ?.toLowerCase()
-              .includes(search.replace("@", "").toLowerCase())
-        )
-      : conversations;
+  const filtered = search.length >= 2
+    ? conversations.filter((c) =>
+        c.other_user.full_name.toLowerCase().includes(search.toLowerCase()) ||
+        c.other_user.username?.toLowerCase().includes(search.replace("@", "").toLowerCase())
+      )
+    : conversations;
 
   return (
     <div>
-      <div className="px-4 pt-4 pb-2">
-        <h1 className="font-display text-2xl font-extrabold">Messages</h1>
+      <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+        <h1 className="font-display text-2xl font-extrabold">
+          {showArchived ? "Archived" : "Messages"}
+        </h1>
+        {showArchived ? (
+          <button onClick={() => setShowArchived(false)} className="text-xs font-semibold text-primary">
+            ← Back
+          </button>
+        ) : archivedCount > 0 ? (
+          <button onClick={() => setShowArchived(true)} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground">
+            <Archive className="h-3.5 w-3.5" /> Archived ({archivedCount})
+          </button>
+        ) : null}
       </div>
 
       {/* Search */}
@@ -100,17 +111,9 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
       {/* Profile search results */}
       {search.length >= 2 && searchResults.length > 0 && (
         <div className="px-4 pb-2">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5">
-            People
-          </p>
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1.5">People</p>
           {searchResults.map((p) => {
-            const initials =
-              p.full_name
-                ?.split(" ")
-                .map((n: string) => n[0])
-                .join("")
-                .toUpperCase()
-                .slice(0, 2) || "?";
+            const initials = p.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
             return (
               <button
                 key={p.user_id}
@@ -125,9 +128,7 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
                 </Avatar>
                 <div className="text-left">
                   <p className="text-sm font-bold">{p.full_name}</p>
-                  {p.username && (
-                    <p className="text-[11px] text-muted-foreground">@{p.username}</p>
-                  )}
+                  {p.username && <p className="text-[11px] text-muted-foreground">@{p.username}</p>}
                 </div>
               </button>
             );
@@ -143,26 +144,28 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center px-4">
-          <span className="text-4xl mb-2">💬</span>
-          <p className="text-sm font-semibold">No conversations yet</p>
+          <span className="text-4xl mb-2">{showArchived ? "📦" : "💬"}</span>
+          <p className="text-sm font-semibold">
+            {showArchived ? "No archived conversations" : "No conversations yet"}
+          </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Search for a user to start chatting
+            {showArchived ? "Archived chats will appear here" : "Search for a user to start chatting"}
           </p>
         </div>
       ) : (
         <div>
           {filtered.map((c) => {
-            const initials =
-              c.other_user.full_name
-                ?.split(" ")
-                .map((n) => n[0])
-                .join("")
-                .toUpperCase()
-                .slice(0, 2) || "?";
+            const initials = c.other_user.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
             const timeAgo = c.last_message?.created_at
               ? formatDistanceToNow(new Date(c.last_message.created_at), { addSuffix: false })
               : "";
             const activity = getActivityStatus(c.other_user.last_active_at);
+
+            const lastText = c.last_message?.deleted_at
+              ? "This message was deleted"
+              : c.last_message?.message_type === "appointment"
+              ? "📅 Appointment booked"
+              : c.last_message?.message_text || "No messages yet";
 
             return (
               <div key={c.id} className="relative flex items-center group">
@@ -185,28 +188,17 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
                     <div className="flex items-center justify-between gap-1">
                       <div className="flex items-center gap-1.5 min-w-0">
                         {c.is_pinned && <Pin className="h-3 w-3 text-primary shrink-0" />}
+                        {c.is_muted && <BellOff className="h-3 w-3 text-muted-foreground shrink-0" />}
                         <span className="text-sm font-bold truncate">
-                          {c.other_user.username
-                            ? `@${c.other_user.username}`
-                            : c.other_user.full_name}
+                          {c.other_user.username ? `@${c.other_user.username}` : c.other_user.full_name}
                         </span>
                       </div>
                       {timeAgo && (
-                        <span className="text-[10px] text-muted-foreground ml-2 shrink-0">
-                          {timeAgo}
-                        </span>
+                        <span className="text-[10px] text-muted-foreground ml-2 shrink-0">{timeAgo}</span>
                       )}
                     </div>
-                    <p
-                      className={`truncate text-xs ${
-                        c.unread_count > 0
-                          ? "font-semibold text-foreground"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      {c.last_message?.deleted_at
-                        ? "This message was deleted"
-                        : c.last_message?.message_text || "No messages yet"}
+                    <p className={`truncate text-xs ${c.unread_count > 0 ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
+                      {lastText}
                     </p>
                   </div>
                   {c.unread_count > 0 && (
@@ -219,41 +211,35 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
                 {/* Quick actions */}
                 <div className="relative pr-2">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMenuOpen(menuOpen === c.id ? null : c.id);
-                    }}
+                    onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === c.id ? null : c.id); }}
                     className="opacity-0 group-hover:opacity-100 rounded-full p-1.5 hover:bg-secondary transition-opacity"
                   >
                     <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                   </button>
                   {menuOpen === c.id && (
-                    <div className="absolute right-2 top-full z-50 w-40 rounded-xl border border-border bg-card shadow-lg py-1 text-sm">
+                    <div className="absolute right-2 top-full z-50 w-44 rounded-xl border border-border bg-card shadow-lg py-1 text-sm">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          togglePin(c.id, !c.is_pinned);
-                          setMenuOpen(null);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); togglePin(c.id, !c.is_pinned); setMenuOpen(null); }}
                         className="flex w-full items-center gap-2 px-3 py-2 hover:bg-secondary"
                       >
-                        {c.is_pinned ? (
-                          <>
-                            <PinOff className="h-3.5 w-3.5" /> Unpin
-                          </>
-                        ) : (
-                          <>
-                            <Pin className="h-3.5 w-3.5" /> Pin
-                          </>
-                        )}
+                        {c.is_pinned ? <><PinOff className="h-3.5 w-3.5" /> Unpin</> : <><Pin className="h-3.5 w-3.5" /> Pin</>}
                       </button>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteConversation(c.id);
-                          setMenuOpen(null);
-                          toast({ title: "Conversation hidden" });
-                        }}
+                        onClick={(e) => { e.stopPropagation(); toggleMute(c.id, !c.is_muted); setMenuOpen(null); toast({ title: c.is_muted ? "Unmuted" : "Muted" }); }}
+                        className="flex w-full items-center gap-2 px-3 py-2 hover:bg-secondary"
+                      >
+                        {c.is_muted ? <><Bell className="h-3.5 w-3.5" /> Unmute</> : <><BellOff className="h-3.5 w-3.5" /> Mute</>}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleArchive(c.id, !c.is_archived); setMenuOpen(null); toast({ title: c.is_archived ? "Unarchived" : "Archived" }); }}
+                        className="flex w-full items-center gap-2 px-3 py-2 hover:bg-secondary"
+                      >
+                        {c.is_archived
+                          ? <><ArchiveRestore className="h-3.5 w-3.5" /> Unarchive</>
+                          : <><Archive className="h-3.5 w-3.5" /> Archive</>}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteConversation(c.id); setMenuOpen(null); toast({ title: "Conversation deleted" }); }}
                         className="flex w-full items-center gap-2 px-3 py-2 hover:bg-secondary text-destructive"
                       >
                         <Trash2 className="h-3.5 w-3.5" /> Delete

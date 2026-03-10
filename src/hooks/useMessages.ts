@@ -17,9 +17,12 @@ export interface Conversation {
     created_at: string;
     sender_id: string;
     deleted_at: string | null;
+    message_type: string;
   };
   unread_count: number;
   is_pinned: boolean;
+  is_archived: boolean;
+  is_muted: boolean;
 }
 
 export interface Message {
@@ -31,10 +34,13 @@ export interface Message {
   is_read: boolean;
   edited_at: string | null;
   deleted_at: string | null;
+  reply_to_id: string | null;
+  forwarded_from_id: string | null;
+  message_type: string;
+  metadata: any | null;
 }
 
 const fromTable = (table: string) => (supabase as any).from(table);
-
 const MESSAGES_PAGE_SIZE = 50;
 
 // --- Activity status tracking ---
@@ -42,20 +48,16 @@ let activityInterval: ReturnType<typeof setInterval> | null = null;
 
 export function useActivityTracking() {
   const { user } = useAuth();
-
   useEffect(() => {
     if (!user) return;
-
     const updateActivity = async () => {
       await supabase
         .from("profiles")
         .update({ last_active_at: new Date().toISOString() } as any)
         .eq("user_id", user.id);
     };
-
     updateActivity();
-    activityInterval = setInterval(updateActivity, 60000); // every minute
-
+    activityInterval = setInterval(updateActivity, 60000);
     return () => {
       if (activityInterval) clearInterval(activityInterval);
     };
@@ -67,12 +69,13 @@ export function useConversations() {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showArchived, setShowArchived] = useState(false);
 
   const fetchConversations = useCallback(async () => {
     if (!user) return;
 
     const { data: participations } = await fromTable("conversation_participants")
-      .select("conversation_id, is_pinned")
+      .select("conversation_id, is_pinned, is_archived, is_muted")
       .eq("user_id", user.id);
 
     if (!participations?.length) {
@@ -82,7 +85,12 @@ export function useConversations() {
     }
 
     const convIds = participations.map((p: any) => p.conversation_id);
-    const pinMap = new Map(participations.map((p: any) => [p.conversation_id, p.is_pinned]));
+    const metaMap = new Map(
+      participations.map((p: any) => [
+        p.conversation_id,
+        { is_pinned: !!p.is_pinned, is_archived: !!p.is_archived, is_muted: !!p.is_muted },
+      ])
+    );
 
     const { data: otherParticipants } = await fromTable("conversation_participants")
       .select("conversation_id, user_id")
@@ -103,12 +111,6 @@ export function useConversations() {
 
     const profileMap = new Map((profiles as any[])?.map((p: any) => [p.user_id, p]) || []);
 
-    // Fetch deleted_messages for current user
-    const { data: deletedMsgs } = await fromTable("deleted_messages")
-      .select("message_id")
-      .eq("user_id", user.id);
-    const deletedSet = new Set((deletedMsgs || []).map((d: any) => d.message_id));
-
     const convList: Conversation[] = [];
 
     for (const convId of convIds) {
@@ -118,7 +120,7 @@ export function useConversations() {
       if (!profile) continue;
 
       const { data: lastMsg } = await fromTable("messages")
-        .select("id, message_text, created_at, sender_id, deleted_at")
+        .select("id, message_text, created_at, sender_id, deleted_at, message_type")
         .eq("conversation_id", convId)
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
@@ -131,6 +133,8 @@ export function useConversations() {
         .eq("is_read", false)
         .is("deleted_at", null)
         .neq("sender_id", user.id);
+
+      const meta = metaMap.get(convId) || { is_pinned: false, is_archived: false, is_muted: false };
 
       convList.push({
         id: convId,
@@ -148,17 +152,22 @@ export function useConversations() {
               created_at: lastMsg.created_at,
               sender_id: lastMsg.sender_id,
               deleted_at: lastMsg.deleted_at,
+              message_type: lastMsg.message_type || "text",
             }
           : undefined,
         unread_count: count || 0,
-        is_pinned: !!(pinMap.get(convId)),
+        is_pinned: meta.is_pinned,
+        is_archived: meta.is_archived,
+        is_muted: meta.is_muted,
       });
     }
 
-    // Sort: pinned first, then by last message time
+    // Smart sorting: pinned → unread → recent
     convList.sort((a, b) => {
       if (a.is_pinned && !b.is_pinned) return -1;
       if (!a.is_pinned && b.is_pinned) return 1;
+      if (a.unread_count > 0 && b.unread_count === 0) return -1;
+      if (a.unread_count === 0 && b.unread_count > 0) return 1;
       const ta = a.last_message?.created_at || a.created_at;
       const tb = b.last_message?.created_at || b.created_at;
       return new Date(tb).getTime() - new Date(ta).getTime();
@@ -197,10 +206,33 @@ export function useConversations() {
     [user, fetchConversations]
   );
 
+  const toggleArchive = useCallback(
+    async (conversationId: string, archived: boolean) => {
+      if (!user) return;
+      await fromTable("conversation_participants")
+        .update({ is_archived: archived })
+        .eq("conversation_id", conversationId)
+        .eq("user_id", user.id);
+      fetchConversations();
+    },
+    [user, fetchConversations]
+  );
+
+  const toggleMute = useCallback(
+    async (conversationId: string, muted: boolean) => {
+      if (!user) return;
+      await fromTable("conversation_participants")
+        .update({ is_muted: muted })
+        .eq("conversation_id", conversationId)
+        .eq("user_id", user.id);
+      fetchConversations();
+    },
+    [user, fetchConversations]
+  );
+
   const deleteConversation = useCallback(
     async (conversationId: string) => {
       if (!user) return;
-      // Mark all messages as deleted for this user
       const { data: msgs } = await fromTable("messages")
         .select("id")
         .eq("conversation_id", conversationId);
@@ -213,7 +245,25 @@ export function useConversations() {
     [user, fetchConversations]
   );
 
-  return { conversations, loading, refresh: fetchConversations, togglePin, deleteConversation };
+  const activeConversations = showArchived
+    ? conversations.filter((c) => c.is_archived)
+    : conversations.filter((c) => !c.is_archived);
+
+  const archivedCount = conversations.filter((c) => c.is_archived).length;
+
+  return {
+    conversations: activeConversations,
+    allConversations: conversations,
+    loading,
+    refresh: fetchConversations,
+    togglePin,
+    toggleArchive,
+    toggleMute,
+    deleteConversation,
+    showArchived,
+    setShowArchived,
+    archivedCount,
+  };
 }
 
 // --- Unread count ---
@@ -305,7 +355,6 @@ export function useChatMessages(conversationId: string | null) {
       }
       setLoading(false);
 
-      // Mark as read
       if (user && !before) {
         await fromTable("messages")
           .update({ is_read: true })
@@ -335,12 +384,7 @@ export function useChatMessages(conversationId: string | null) {
       .channel(`chat-${conversationId}`)
       .on(
         "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
+        { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
         (payload) => {
           const newMsg = payload.new as Message;
           setMessages((prev) => {
@@ -354,27 +398,15 @@ export function useChatMessages(conversationId: string | null) {
       )
       .on(
         "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
+        { event: "UPDATE", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
         (payload) => {
           const updated = payload.new as Message;
-          setMessages((prev) =>
-            prev.map((m) => (m.id === updated.id ? updated : m))
-          );
+          setMessages((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
         }
       )
       .on(
         "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
+        { event: "DELETE", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
         (payload) => {
           const deleted = payload.old as any;
           setMessages((prev) => prev.filter((m) => m.id !== deleted.id));
@@ -386,17 +418,39 @@ export function useChatMessages(conversationId: string | null) {
     };
   }, [conversationId, user]);
 
-  // --- Send ---
+  // --- Send with optional reply ---
   const sendMessage = useCallback(
-    async (text: string) => {
-      if (!conversationId || !user || !text.trim()) return;
+    async (text: string, replyToId?: string, messageType: string = "text", metadata?: any) => {
+      if (!conversationId || !user || (!text.trim() && messageType === "text")) return;
       await fromTable("messages").insert({
         conversation_id: conversationId,
         sender_id: user.id,
         message_text: text.trim(),
+        reply_to_id: replyToId || null,
+        message_type: messageType,
+        metadata: metadata || null,
       });
     },
     [conversationId, user]
+  );
+
+  // --- Forward message to another conversation ---
+  const forwardMessage = useCallback(
+    async (messageId: string, targetConversationId: string) => {
+      if (!user) return false;
+      const msg = messages.find((m) => m.id === messageId);
+      if (!msg) return false;
+      const { error } = await fromTable("messages").insert({
+        conversation_id: targetConversationId,
+        sender_id: user.id,
+        message_text: msg.message_text,
+        forwarded_from_id: messageId,
+        message_type: msg.message_type,
+        metadata: msg.metadata,
+      });
+      return !error;
+    },
+    [user, messages]
   );
 
   // --- Edit (within 15 minutes) ---
@@ -405,36 +459,27 @@ export function useChatMessages(conversationId: string | null) {
       if (!user || !newText.trim()) return false;
       const msg = messages.find((m) => m.id === messageId);
       if (!msg || msg.sender_id !== user.id) return false;
-
-      const sentAt = new Date(msg.created_at).getTime();
-      const now = Date.now();
-      if (now - sentAt > 15 * 60 * 1000) return false; // 15 minute limit
-
+      if (Date.now() - new Date(msg.created_at).getTime() > 15 * 60 * 1000) return false;
       const { error } = await fromTable("messages")
         .update({ message_text: newText.trim(), edited_at: new Date().toISOString() })
         .eq("id", messageId)
         .eq("sender_id", user.id);
-
       return !error;
     },
     [user, messages]
   );
 
-  // --- Delete for everyone (sender only) ---
+  // --- Delete for everyone ---
   const deleteForEveryone = useCallback(
     async (messageId: string) => {
       if (!user) return false;
       const msg = messages.find((m) => m.id === messageId);
       if (!msg || msg.sender_id !== user.id) return false;
-
       const { error } = await fromTable("messages")
         .update({ deleted_at: new Date().toISOString(), message_text: "" })
         .eq("id", messageId)
         .eq("sender_id", user.id);
-
-      if (!error) {
-        setMessages((prev) => prev.filter((m) => m.id !== messageId));
-      }
+      if (!error) setMessages((prev) => prev.filter((m) => m.id !== messageId));
       return !error;
     },
     [user, messages]
@@ -448,9 +493,7 @@ export function useChatMessages(conversationId: string | null) {
         message_id: messageId,
         user_id: user.id,
       });
-      if (!error) {
-        setMessages((prev) => prev.filter((m) => m.id !== messageId));
-      }
+      if (!error) setMessages((prev) => prev.filter((m) => m.id !== messageId));
       return !error;
     },
     [user]
@@ -493,6 +536,7 @@ export function useChatMessages(conversationId: string | null) {
     hasMore,
     loadMore,
     sendMessage,
+    forwardMessage,
     editMessage,
     deleteForEveryone,
     deleteForMe,
@@ -501,7 +545,7 @@ export function useChatMessages(conversationId: string | null) {
   };
 }
 
-// --- Typing indicator (presence-based, no DB needed) ---
+// --- Typing indicator ---
 export function useTypingIndicator(conversationId: string | null) {
   const { user } = useAuth();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
@@ -509,11 +553,9 @@ export function useTypingIndicator(conversationId: string | null) {
 
   useEffect(() => {
     if (!conversationId || !user) return;
-
     const channel = supabase.channel(`typing-${conversationId}`, {
       config: { presence: { key: user.id } },
     });
-
     channel
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState();
@@ -524,23 +566,16 @@ export function useTypingIndicator(conversationId: string | null) {
         setTypingUsers(typing);
       })
       .subscribe();
-
     channelRef.current = channel;
-
     return () => {
       supabase.removeChannel(channel);
       channelRef.current = null;
     };
   }, [conversationId, user]);
 
-  const setTyping = useCallback(
-    (typing: boolean) => {
-      if (channelRef.current) {
-        channelRef.current.track({ typing });
-      }
-    },
-    []
-  );
+  const setTyping = useCallback((typing: boolean) => {
+    if (channelRef.current) channelRef.current.track({ typing });
+  }, []);
 
   return { typingUsers, setTyping };
 }
@@ -554,7 +589,7 @@ export async function getOrCreateConversation(otherUserId: string): Promise<stri
   return data as string;
 }
 
-// --- Get activity status label ---
+// --- Activity status label ---
 export function getActivityStatus(lastActiveAt: string | null): {
   label: string;
   isOnline: boolean;

@@ -1,23 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  ArrowLeft,
-  Send,
-  Check,
-  CheckCheck,
-  Search,
-  X,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  Flag,
-  ChevronUp,
+  ArrowLeft, Send, Check, CheckCheck, Search, X, MoreVertical,
+  Pencil, Trash2, Flag, ChevronUp, Reply, Forward, Mic, Calendar,
 } from "lucide-react";
 import {
-  useChatMessages,
-  useTypingIndicator,
-  useActivityTracking,
-  getActivityStatus,
-  type Conversation,
+  useChatMessages, useTypingIndicator, useActivityTracking,
+  getActivityStatus, type Conversation, type Message,
 } from "@/hooks/useMessages";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,21 +15,15 @@ import { useToast } from "@/hooks/use-toast";
 interface ChatViewProps {
   conversation: Conversation;
   onBack: () => void;
+  onForward?: (messageId: string) => void;
 }
 
-const ChatView = ({ conversation, onBack }: ChatViewProps) => {
+const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
   const { user } = useAuth();
   const {
-    messages,
-    loading,
-    hasMore,
-    loadMore,
-    sendMessage,
-    editMessage,
-    deleteForEveryone,
-    deleteForMe,
-    searchMessages,
-    reportMessage,
+    messages, loading, hasMore, loadMore, sendMessage,
+    editMessage, deleteForEveryone, deleteForMe,
+    searchMessages, reportMessage,
   } = useChatMessages(conversation.id);
   const { typingUsers, setTyping } = useTypingIndicator(conversation.id);
   const { toast } = useToast();
@@ -51,22 +33,21 @@ const ChatView = ({ conversation, onBack }: ChatViewProps) => {
   const [text, setText] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
-  const topRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Typing indicator
   const handleTextChange = (value: string) => {
     setText(value);
     setTyping(true);
@@ -77,9 +58,11 @@ const ChatView = ({ conversation, onBack }: ChatViewProps) => {
   const handleSend = async () => {
     if (!text.trim()) return;
     const msg = text;
+    const replyId = replyTo?.id;
     setText("");
+    setReplyTo(null);
     setTyping(false);
-    await sendMessage(msg);
+    await sendMessage(msg, replyId);
     inputRef.current?.focus();
   };
 
@@ -95,42 +78,29 @@ const ChatView = ({ conversation, onBack }: ChatViewProps) => {
     }
   };
 
-  const handleDeleteForEveryone = async (id: string) => {
-    await deleteForEveryone(id);
-    setActiveMenu(null);
-    toast({ title: "Message deleted for everyone" });
-  };
-
-  const handleDeleteForMe = async (id: string) => {
-    await deleteForMe(id);
-    setActiveMenu(null);
-    toast({ title: "Message hidden" });
-  };
-
-  const handleReport = async (id: string) => {
-    await reportMessage(id, "spam");
-    setActiveMenu(null);
-    toast({ title: "Message reported" });
+  const scrollToMessage = (msgId: string) => {
+    const el = messageRefs.current.get(msgId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-primary");
+      setTimeout(() => el.classList.remove("ring-2", "ring-primary"), 2000);
+    }
   };
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      return;
-    }
+    if (!searchQuery.trim()) { setSearchResults([]); return; }
     const results = await searchMessages(searchQuery);
     setSearchResults(results.map((m) => m.id));
   };
 
   const other = conversation.other_user;
-  const initials =
-    other.full_name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2) || "?";
+  const initials = other.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
   const activity = getActivityStatus(other.last_active_at);
+
+  const getReplyPreview = (replyToId: string | null) => {
+    if (!replyToId) return null;
+    return messages.find((m) => m.id === replyToId);
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -153,19 +123,15 @@ const ChatView = ({ conversation, onBack }: ChatViewProps) => {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold leading-tight truncate">{other.full_name}</p>
           <p className="text-[10px] text-muted-foreground">
-            {other.username && `@${other.username} · `}
-            {activity.label}
+            {other.username && `@${other.username} · `}{activity.label}
           </p>
         </div>
-        <button
-          onClick={() => setShowSearch(!showSearch)}
-          className="rounded-full p-1.5 hover:bg-secondary"
-        >
+        <button onClick={() => setShowSearch(!showSearch)} className="rounded-full p-1.5 hover:bg-secondary">
           {showSearch ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
         </button>
       </div>
 
-      {/* Search bar */}
+      {/* Search */}
       {showSearch && (
         <div className="flex items-center gap-2 border-b border-border px-3 py-2 bg-secondary/30">
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -177,25 +143,19 @@ const ChatView = ({ conversation, onBack }: ChatViewProps) => {
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             autoFocus
           />
-          <button onClick={handleSearch} className="text-xs font-semibold text-primary">
-            Search
-          </button>
+          <button onClick={handleSearch} className="text-xs font-semibold text-primary">Search</button>
         </div>
       )}
 
       {/* Load more */}
       {hasMore && (
-        <button
-          onClick={loadMore}
-          className="flex items-center justify-center gap-1 py-2 text-xs text-muted-foreground hover:text-foreground"
-        >
+        <button onClick={loadMore} className="flex items-center justify-center gap-1 py-2 text-xs text-muted-foreground hover:text-foreground">
           <ChevronUp className="h-3 w-3" /> Load older messages
         </button>
       )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5">
-        <div ref={topRef} />
         {loading ? (
           <div className="flex justify-center py-10">
             <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
@@ -209,9 +169,47 @@ const ChatView = ({ conversation, onBack }: ChatViewProps) => {
           messages.map((msg) => {
             const isMine = msg.sender_id === user?.id;
             const isHighlighted = searchResults.includes(msg.id);
-            const canEdit =
-              isMine && Date.now() - new Date(msg.created_at).getTime() < 15 * 60 * 1000;
+            const canEdit = isMine && Date.now() - new Date(msg.created_at).getTime() < 15 * 60 * 1000;
+            const replyPreview = getReplyPreview(msg.reply_to_id);
 
+            // Appointment card
+            if (msg.message_type === "appointment" && msg.metadata) {
+              return (
+                <div key={msg.id} ref={(el) => { if (el) messageRefs.current.set(msg.id, el); }} className="flex justify-center">
+                  <div className="w-[85%] rounded-2xl border border-border bg-card p-3.5 shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-bold text-primary">Appointment Booked</span>
+                    </div>
+                    <p className="text-sm font-semibold">{msg.metadata.provider || "Service Provider"}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {msg.metadata.date} · {msg.metadata.time}
+                    </p>
+                    {msg.metadata.service && (
+                      <p className="text-xs text-muted-foreground">{msg.metadata.service}</p>
+                    )}
+                    <div className="flex items-center gap-1 mt-2">
+                      <span className="text-[10px] text-muted-foreground">
+                        {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            // System message
+            if (msg.message_type === "system") {
+              return (
+                <div key={msg.id} ref={(el) => { if (el) messageRefs.current.set(msg.id, el); }} className="flex justify-center py-1">
+                  <span className="text-[11px] text-muted-foreground bg-secondary/50 rounded-full px-3 py-1">
+                    {msg.message_text}
+                  </span>
+                </div>
+              );
+            }
+
+            // Editing state
             if (editingId === msg.id) {
               return (
                 <div key={msg.id} className="flex justify-end">
@@ -224,15 +222,8 @@ const ChatView = ({ conversation, onBack }: ChatViewProps) => {
                       autoFocus
                     />
                     <div className="flex gap-2 justify-end">
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="text-[10px] text-muted-foreground"
-                      >
-                        Cancel
-                      </button>
-                      <button onClick={handleEdit} className="text-[10px] font-bold text-primary">
-                        Save
-                      </button>
+                      <button onClick={() => setEditingId(null)} className="text-[10px] text-muted-foreground">Cancel</button>
+                      <button onClick={handleEdit} className="text-[10px] font-bold text-primary">Save</button>
                     </div>
                   </div>
                 </div>
@@ -242,44 +233,61 @@ const ChatView = ({ conversation, onBack }: ChatViewProps) => {
             return (
               <div
                 key={msg.id}
-                className={`group flex items-end gap-1.5 ${isMine ? "justify-end" : "justify-start"}`}
+                ref={(el) => { if (el) messageRefs.current.set(msg.id, el); }}
+                className={`group flex items-end gap-1.5 transition-all rounded-xl ${isMine ? "justify-end" : "justify-start"}`}
               >
-                {/* Message bubble */}
-                <div
-                  className={`relative max-w-[75%] rounded-2xl px-3.5 py-2 ${
-                    isHighlighted ? "ring-2 ring-yellow-400" : ""
-                  } ${
-                    isMine
-                      ? "bg-primary text-primary-foreground rounded-br-md"
-                      : "bg-secondary text-secondary-foreground rounded-bl-md"
-                  }`}
-                >
-                  <p className="text-sm whitespace-pre-wrap break-words">{msg.message_text}</p>
-                  <div
-                    className={`flex items-center gap-1 mt-0.5 ${isMine ? "justify-end" : ""}`}
-                  >
-                    {msg.edited_at && (
-                      <span
-                        className={`text-[9px] italic ${
-                          isMine ? "text-primary-foreground/50" : "text-muted-foreground"
-                        }`}
-                      >
-                        edited
-                      </span>
-                    )}
-                    <span
-                      className={`text-[10px] ${
-                        isMine ? "text-primary-foreground/60" : "text-muted-foreground"
+                <div className={`relative max-w-[75%] rounded-2xl px-3.5 py-2 ${isHighlighted ? "ring-2 ring-accent" : ""} ${
+                  isMine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-secondary text-secondary-foreground rounded-bl-md"
+                }`}>
+                  {/* Forwarded label */}
+                  {msg.forwarded_from_id && (
+                    <p className={`text-[9px] italic mb-0.5 flex items-center gap-1 ${isMine ? "text-primary-foreground/50" : "text-muted-foreground"}`}>
+                      <Forward className="h-2.5 w-2.5" /> Forwarded
+                    </p>
+                  )}
+
+                  {/* Reply preview */}
+                  {replyPreview && (
+                    <button
+                      onClick={() => scrollToMessage(replyPreview.id)}
+                      className={`mb-1.5 w-full text-left rounded-lg px-2.5 py-1.5 border-l-2 ${
+                        isMine ? "bg-primary-foreground/10 border-primary-foreground/30" : "bg-foreground/5 border-foreground/20"
                       }`}
                     >
+                      <p className={`text-[10px] font-semibold ${isMine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                        {replyPreview.sender_id === user?.id ? "You" : other.full_name}
+                      </p>
+                      <p className={`text-[11px] truncate ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                        {replyPreview.message_text}
+                      </p>
+                    </button>
+                  )}
+
+                  {/* Voice message placeholder */}
+                  {msg.message_type === "voice" ? (
+                    <div className="flex items-center gap-2">
+                      <Mic className="h-4 w-4" />
+                      <div className="flex-1 h-1 bg-current/20 rounded-full">
+                        <div className="h-1 w-1/2 bg-current rounded-full" />
+                      </div>
+                      <span className="text-[10px]">{msg.metadata?.duration || "0:00"}</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap break-words">{msg.message_text}</p>
+                  )}
+
+                  {/* Footer */}
+                  <div className={`flex items-center gap-1 mt-0.5 ${isMine ? "justify-end" : ""}`}>
+                    {msg.edited_at && (
+                      <span className={`text-[9px] italic ${isMine ? "text-primary-foreground/50" : "text-muted-foreground"}`}>edited</span>
+                    )}
+                    <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                       {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
                     </span>
-                    {isMine &&
-                      (msg.is_read ? (
-                        <CheckCheck className="h-3 w-3 text-primary-foreground/60" />
-                      ) : (
-                        <Check className="h-3 w-3 text-primary-foreground/60" />
-                      ))}
+                    {isMine && (msg.is_read
+                      ? <CheckCheck className="h-3 w-3 text-primary-foreground/60" />
+                      : <Check className="h-3 w-3 text-primary-foreground/60" />
+                    )}
                   </div>
                 </div>
 
@@ -292,14 +300,24 @@ const ChatView = ({ conversation, onBack }: ChatViewProps) => {
                     <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                   {activeMenu === msg.id && (
-                    <div className="absolute bottom-full right-0 mb-1 z-50 w-44 rounded-xl border border-border bg-card shadow-lg py-1 text-sm">
+                    <div className="absolute bottom-full right-0 mb-1 z-50 w-48 rounded-xl border border-border bg-card shadow-lg py-1 text-sm">
+                      <button
+                        onClick={() => { setReplyTo(msg); setActiveMenu(null); inputRef.current?.focus(); }}
+                        className="flex w-full items-center gap-2 px-3 py-2 hover:bg-secondary"
+                      >
+                        <Reply className="h-3.5 w-3.5" /> Reply
+                      </button>
+                      {onForward && (
+                        <button
+                          onClick={() => { onForward(msg.id); setActiveMenu(null); }}
+                          className="flex w-full items-center gap-2 px-3 py-2 hover:bg-secondary"
+                        >
+                          <Forward className="h-3.5 w-3.5" /> Forward
+                        </button>
+                      )}
                       {isMine && canEdit && (
                         <button
-                          onClick={() => {
-                            setEditingId(msg.id);
-                            setEditText(msg.message_text);
-                            setActiveMenu(null);
-                          }}
+                          onClick={() => { setEditingId(msg.id); setEditText(msg.message_text); setActiveMenu(null); }}
                           className="flex w-full items-center gap-2 px-3 py-2 hover:bg-secondary"
                         >
                           <Pencil className="h-3.5 w-3.5" /> Edit
@@ -307,21 +325,21 @@ const ChatView = ({ conversation, onBack }: ChatViewProps) => {
                       )}
                       {isMine && (
                         <button
-                          onClick={() => handleDeleteForEveryone(msg.id)}
+                          onClick={() => { deleteForEveryone(msg.id); setActiveMenu(null); toast({ title: "Deleted for everyone" }); }}
                           className="flex w-full items-center gap-2 px-3 py-2 hover:bg-secondary text-destructive"
                         >
                           <Trash2 className="h-3.5 w-3.5" /> Delete for everyone
                         </button>
                       )}
                       <button
-                        onClick={() => handleDeleteForMe(msg.id)}
+                        onClick={() => { deleteForMe(msg.id); setActiveMenu(null); toast({ title: "Message hidden" }); }}
                         className="flex w-full items-center gap-2 px-3 py-2 hover:bg-secondary"
                       >
                         <Trash2 className="h-3.5 w-3.5" /> Delete for me
                       </button>
                       {!isMine && (
                         <button
-                          onClick={() => handleReport(msg.id)}
+                          onClick={() => { reportMessage(msg.id, "spam"); setActiveMenu(null); toast({ title: "Message reported" }); }}
                           className="flex w-full items-center gap-2 px-3 py-2 hover:bg-secondary text-destructive"
                         >
                           <Flag className="h-3.5 w-3.5" /> Report
@@ -347,9 +365,24 @@ const ChatView = ({ conversation, onBack }: ChatViewProps) => {
             </div>
           </div>
         )}
-
         <div ref={bottomRef} />
       </div>
+
+      {/* Reply bar */}
+      {replyTo && (
+        <div className="flex items-center gap-2 border-t border-border px-3 py-2 bg-secondary/30">
+          <Reply className="h-3.5 w-3.5 text-primary shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-semibold text-primary">
+              Replying to {replyTo.sender_id === user?.id ? "yourself" : other.full_name}
+            </p>
+            <p className="text-[11px] text-muted-foreground truncate">{replyTo.message_text}</p>
+          </div>
+          <button onClick={() => setReplyTo(null)} className="rounded-full p-1 hover:bg-secondary">
+            <X className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+        </div>
+      )}
 
       {/* Input */}
       <div className="border-t border-border px-3 py-2.5">
@@ -367,7 +400,7 @@ const ChatView = ({ conversation, onBack }: ChatViewProps) => {
             disabled={!text.trim()}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40 transition-opacity"
           >
-            <Send className="h-4 w-4" />
+            {text.trim() ? <Send className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
           </button>
         </div>
       </div>
