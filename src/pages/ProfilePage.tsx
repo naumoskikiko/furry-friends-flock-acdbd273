@@ -16,6 +16,9 @@ import PostGrid from "@/components/profile/PostGrid";
 import PetCard from "@/components/profile/PetCard";
 import PetProfileModal from "@/components/profile/PetProfileModal";
 import LikedPostsGrid from "@/components/profile/LikedPostsGrid";
+import CreateStoryModal from "@/components/stories/CreateStoryModal";
+import StoryViewer from "@/components/stories/StoryViewer";
+import { useStories } from "@/hooks/useStories";
 
 const ProfilePage = () => {
   const { user, profile, refreshProfile } = useAuth();
@@ -41,6 +44,10 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState<"posts" | "saved" | "liked">("posts");
 
   const [viewPet, setViewPet] = useState<any>(null);
+  const [createStoryOpen, setCreateStoryOpen] = useState(false);
+  const [storyViewerOpen, setStoryViewerOpen] = useState(false);
+
+  const { storyGroups, hasOwnStory, refreshStories } = useStories();
 
   useEffect(() => {
     if (profile) {
@@ -133,17 +140,31 @@ const ProfilePage = () => {
         {/* Centered profile info */}
         <div className="flex flex-col items-center px-4 pt-4">
           <div className="relative">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="Avatar" className="h-24 w-24 rounded-full object-cover ring-4 ring-primary/20" />
-            ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-primary to-petkeep-orange-light font-display text-3xl font-bold text-primary-foreground ring-4 ring-primary/20">
-                {initials}
+            <button
+              onClick={() => {
+                if (hasOwnStory) {
+                  const idx = storyGroups.findIndex((g) => g.user_id === user?.id);
+                  if (idx >= 0) { setStoryViewerOpen(true); }
+                }
+              }}
+              className="block"
+            >
+              <div className={`rounded-full p-[3px] ${hasOwnStory ? "bg-gradient-to-br from-primary via-petkeep-orange-light to-accent" : ""}`}>
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Avatar" className="h-24 w-24 rounded-full object-cover ring-2 ring-card" />
+                ) : (
+                  <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-primary to-petkeep-orange-light font-display text-3xl font-bold text-primary-foreground ring-2 ring-card">
+                    {initials}
+                  </div>
+                )}
               </div>
-            )}
-            <label className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
-              <Camera className="h-4 w-4" />
-              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploading} />
-            </label>
+            </button>
+            <button
+              onClick={() => setCreateStoryOpen(true)}
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
           </div>
 
           <h2 className="mt-3 font-display text-xl font-extrabold">{displayName}</h2>
@@ -300,6 +321,19 @@ const ProfilePage = () => {
 
       {/* Create Post Modal */}
       <CreatePostModal open={createPostOpen} onOpenChange={setCreatePostOpen} onPostCreated={fetchData} pets={pets} />
+
+      {/* Create Story Modal */}
+      <CreateStoryModal open={createStoryOpen} onOpenChange={setCreateStoryOpen} onStoryCreated={refreshStories} pets={pets} />
+
+      {/* Story Viewer */}
+      {storyViewerOpen && storyGroups.length > 0 && (
+        <StoryViewer
+          groups={storyGroups}
+          initialGroupIndex={storyGroups.findIndex((g) => g.user_id === user?.id)}
+          open={storyViewerOpen}
+          onClose={() => setStoryViewerOpen(false)}
+        />
+      )}
     </AppLayout>
   );
 };

@@ -422,6 +422,56 @@ export type Database = {
         }
         Relationships: []
       }
+      stories: {
+        Row: {
+          caption: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          location: string | null
+          media_type: string
+          media_url: string
+          pet_id: string | null
+          sticker: string | null
+          text_overlay: string | null
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          location?: string | null
+          media_type?: string
+          media_url: string
+          pet_id?: string | null
+          sticker?: string | null
+          text_overlay?: string | null
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          location?: string | null
+          media_type?: string
+          media_url?: string
+          pet_id?: string | null
+          sticker?: string | null
+          text_overlay?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stories_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           category: string
