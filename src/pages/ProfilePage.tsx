@@ -122,7 +122,8 @@ const ProfilePage = () => {
   };
 
   const handleShareProfile = () => {
-    const url = `${window.location.origin}/profile/${user?.id}`;
+    const uname = (profile as any)?.username || user?.id;
+    const url = `${window.location.origin}/user/${uname}`;
     if (navigator.share) {
       navigator.share({ title: displayName, url }).catch(() => {});
     } else {
