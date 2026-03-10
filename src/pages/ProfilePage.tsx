@@ -44,6 +44,10 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState<"posts" | "saved" | "liked">("posts");
 
   const [viewPet, setViewPet] = useState<any>(null);
+  const [createStoryOpen, setCreateStoryOpen] = useState(false);
+  const [storyViewerOpen, setStoryViewerOpen] = useState(false);
+
+  const { storyGroups, hasOwnStory, refreshStories } = useStories();
 
   useEffect(() => {
     if (profile) {
