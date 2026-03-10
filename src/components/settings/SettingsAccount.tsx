@@ -15,6 +15,9 @@ const SettingsAccount = () => {
   const [fullName, setFullName] = useState(profile?.full_name || "");
   const [bio, setBio] = useState(profile?.bio || "");
   const [location, setLocation] = useState(profile?.location || "");
+  const [username, setUsername] = useState((profile as any)?.username || "");
+  const [usernameError, setUsernameError] = useState("");
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [professionalMode, setProfessionalMode] = useState(false);
@@ -24,8 +27,28 @@ const SettingsAccount = () => {
       setFullName(profile.full_name || "");
       setBio(profile.bio || "");
       setLocation(profile.location || "");
+      setUsername((profile as any)?.username || "");
     }
   }, [profile]);
+
+  const validateUsername = async (value: string) => {
+    const clean = value.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase();
+    setUsername(clean);
+    setUsernameError("");
+    if (!clean) return;
+    if (clean.length < 3) { setUsernameError("Username must be at least 3 characters"); return; }
+    if (clean === (profile as any)?.username) return;
+    setCheckingUsername(true);
+    const { data } = await supabase
+      .from("profiles")
+      .select("user_id")
+      .eq("username", clean)
+      .maybeSingle();
+    setCheckingUsername(false);
+    if (data && data.user_id !== user?.id) {
+      setUsernameError("Username already taken");
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
