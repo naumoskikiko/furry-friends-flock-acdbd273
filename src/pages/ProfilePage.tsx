@@ -16,6 +16,7 @@ import PostGrid from "@/components/profile/PostGrid";
 import PetCard from "@/components/profile/PetCard";
 import PetProfileModal from "@/components/profile/PetProfileModal";
 import LikedPostsGrid from "@/components/profile/LikedPostsGrid";
+import SavedPostsGrid from "@/components/profile/SavedPostsGrid";
 import CreateStoryModal from "@/components/stories/CreateStoryModal";
 import StoryViewer from "@/components/stories/StoryViewer";
 import { useStories } from "@/hooks/useStories";
