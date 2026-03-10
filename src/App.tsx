@@ -44,6 +44,7 @@ const App = () => (
             <Route path="/user/:username" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
             <Route path="/search" element={<ProtectedRoute><SearchResultsPage /></ProtectedRoute>} />
             <Route path="/place/:id" element={<ProtectedRoute><PlaceDetailPage /></ProtectedRoute>} />
+            <Route path="/find-my-pet" element={<ProtectedRoute><FindMyPetPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
