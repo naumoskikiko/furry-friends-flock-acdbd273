@@ -1,19 +1,42 @@
 import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
-import { Star, BadgeCheck, MapPin, ChevronRight, Search, Briefcase } from "lucide-react";
+import { Star, BadgeCheck, MapPin, ChevronRight, Search, Briefcase, AlertTriangle, Clock, History } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useCareProviders, useMyProvider, CATEGORIES, type CareProvider } from "@/hooks/useCare";
+import { useCareProviders, useMyProvider, useMyBookings, useProviderAvailability, CATEGORIES, type CareProvider } from "@/hooks/useCare";
 import ProviderDetail from "@/components/care/ProviderDetail";
 import ProviderDashboard from "@/components/care/ProviderDashboard";
+import BookingHistory from "@/components/care/BookingHistory";
+
+const ProviderStatusBadge = ({ providerId }: { providerId: string }) => {
+  const availability = useProviderAvailability(providerId);
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const dayAvail = availability.find((a) => a.day_of_week === dayOfWeek && a.is_available);
+  const isOpen = dayAvail && currentTime >= dayAvail.start_time.slice(0, 5) && currentTime <= dayAvail.end_time.slice(0, 5);
+
+  if (availability.length === 0) return null;
+
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
+      isOpen ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-muted text-muted-foreground"
+    }`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${isOpen ? "bg-green-500" : "bg-muted-foreground/50"}`} />
+      {isOpen ? "Open" : "Closed"}
+    </span>
+  );
+};
 
 const CarePage = () => {
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const { providers, loading } = useCareProviders(activeCategory, searchQuery);
+  const [emergencyOnly, setEmergencyOnly] = useState(false);
+  const { providers, loading } = useCareProviders(activeCategory, searchQuery, emergencyOnly);
   const { provider: myProvider } = useMyProvider();
   const [selectedProvider, setSelectedProvider] = useState<CareProvider | null>(null);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const handleSearch = (q: string) => {
     setSearchInput(q);
@@ -35,13 +58,21 @@ const CarePage = () => {
             <h1 className="font-display text-2xl font-extrabold">Pet Care</h1>
             <p className="text-sm text-muted-foreground">Find trusted providers near you</p>
           </div>
-          <button
-            onClick={() => setShowDashboard(true)}
-            className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-secondary transition-colors"
-          >
-            <Briefcase className="h-3.5 w-3.5" />
-            {myProvider ? "Dashboard" : "Become Provider"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowHistory(true)}
+              className="flex items-center gap-1 rounded-xl border border-border px-2.5 py-2 text-xs font-bold hover:bg-secondary transition-colors"
+            >
+              <History className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => setShowDashboard(true)}
+              className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-secondary transition-colors"
+            >
+              <Briefcase className="h-3.5 w-3.5" />
+              {myProvider ? "Dashboard" : "Become Provider"}
+            </button>
+          </div>
         </div>
 
         {/* Search */}
@@ -57,8 +88,18 @@ const CarePage = () => {
           </div>
         </div>
 
-        {/* Category filters */}
+        {/* Emergency + Category filters */}
         <div className="flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-hide">
+          <button
+            onClick={() => setEmergencyOnly(!emergencyOnly)}
+            className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1 ${
+              emergencyOnly
+                ? "bg-destructive text-destructive-foreground"
+                : "bg-destructive/10 text-destructive"
+            }`}
+          >
+            <AlertTriangle className="h-3 w-3" /> Emergency
+          </button>
           {allCategories.map((c) => (
             <button
               key={c.value}
@@ -75,7 +116,7 @@ const CarePage = () => {
         </div>
 
         {/* Featured section */}
-        {featured.length > 0 && !searchQuery && (
+        {featured.length > 0 && !searchQuery && !emergencyOnly && (
           <div className="px-4 pb-4">
             <h3 className="font-display text-base font-bold mb-2">⭐ Top Rated</h3>
             <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
@@ -103,6 +144,7 @@ const CarePage = () => {
                           <Star className="h-3 w-3 fill-primary text-primary" />
                           {Number(p.avg_rating).toFixed(1)} ({p.total_reviews})
                         </div>
+                        <ProviderStatusBadge providerId={p.id} />
                       </div>
                     </div>
                   </button>
@@ -114,7 +156,9 @@ const CarePage = () => {
 
         {/* All providers */}
         <div className="px-4 pb-4">
-          {!searchQuery && <h3 className="font-display text-base font-bold mb-2">All Providers</h3>}
+          {!searchQuery && <h3 className="font-display text-base font-bold mb-2">
+            {emergencyOnly ? "🚨 Emergency Providers" : "All Providers"}
+          </h3>}
 
           {loading ? (
             <div className="flex justify-center py-10">
@@ -125,7 +169,7 @@ const CarePage = () => {
               <span className="text-4xl mb-2">🐾</span>
               <p className="text-sm font-semibold">No providers found</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {searchQuery ? "Try a different search" : "Be the first to offer care services!"}
+                {searchQuery ? "Try a different search" : emergencyOnly ? "No emergency providers available" : "Be the first to offer care services!"}
               </p>
             </div>
           ) : (
@@ -150,7 +194,7 @@ const CarePage = () => {
                           <h3 className="font-display text-base font-bold truncate">{p.business_name}</h3>
                           {p.is_verified && <BadgeCheck className="h-4 w-4 text-primary shrink-0" />}
                         </div>
-                        <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                           <span className="flex items-center gap-0.5">
                             <Star className="h-3 w-3 fill-primary text-primary" />
                             {Number(p.avg_rating).toFixed(1)}
@@ -162,14 +206,25 @@ const CarePage = () => {
                               {p.location}
                             </span>
                           )}
+                          <ProviderStatusBadge providerId={p.id} />
                         </div>
                         {p.description && (
                           <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{p.description}</p>
                         )}
-                        <div className="mt-2">
+                        <div className="mt-2 flex items-center gap-1.5 flex-wrap">
                           <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold">
                             {catInfo?.icon} {catInfo?.label || p.category}
                           </span>
+                          {p.emergency_available && (
+                            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive flex items-center gap-0.5">
+                              <AlertTriangle className="h-2.5 w-2.5" /> Emergency
+                            </span>
+                          )}
+                          {p.response_time_minutes && (
+                            <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground flex items-center gap-0.5">
+                              <Clock className="h-2.5 w-2.5" /> ~{p.response_time_minutes}min
+                            </span>
+                          )}
                         </div>
                       </div>
                       <ChevronRight className="h-5 w-5 text-muted-foreground mt-2 shrink-0" />
@@ -190,6 +245,11 @@ const CarePage = () => {
       {/* Provider dashboard */}
       {showDashboard && (
         <ProviderDashboard onClose={() => setShowDashboard(false)} />
+      )}
+
+      {/* Booking history */}
+      {showHistory && (
+        <BookingHistory onClose={() => setShowHistory(false)} />
       )}
     </AppLayout>
   );

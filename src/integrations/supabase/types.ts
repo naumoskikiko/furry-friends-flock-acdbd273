@@ -178,6 +178,7 @@ export type Database = {
           created_at: string
           id: string
           notes: string | null
+          pet_id: string | null
           provider_id: string
           service_id: string
           status: string
@@ -191,6 +192,7 @@ export type Database = {
           created_at?: string
           id?: string
           notes?: string | null
+          pet_id?: string | null
           provider_id: string
           service_id: string
           status?: string
@@ -204,6 +206,7 @@ export type Database = {
           created_at?: string
           id?: string
           notes?: string | null
+          pet_id?: string | null
           provider_id?: string
           service_id?: string
           status?: string
@@ -211,6 +214,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "care_bookings_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "care_bookings_provider_id_fkey"
             columns: ["provider_id"]
@@ -231,9 +241,12 @@ export type Database = {
         Row: {
           avg_rating: number
           business_name: string
+          cancellation_hours: number | null
+          cancellation_policy: string | null
           category: string
           created_at: string
           description: string | null
+          emergency_available: boolean | null
           id: string
           is_verified: boolean
           latitude: number | null
@@ -242,6 +255,7 @@ export type Database = {
           opening_hours: Json | null
           phone: string | null
           photo_url: string | null
+          response_time_minutes: number | null
           total_bookings: number
           total_reviews: number
           updated_at: string
@@ -251,9 +265,12 @@ export type Database = {
         Insert: {
           avg_rating?: number
           business_name: string
+          cancellation_hours?: number | null
+          cancellation_policy?: string | null
           category?: string
           created_at?: string
           description?: string | null
+          emergency_available?: boolean | null
           id?: string
           is_verified?: boolean
           latitude?: number | null
@@ -262,6 +279,7 @@ export type Database = {
           opening_hours?: Json | null
           phone?: string | null
           photo_url?: string | null
+          response_time_minutes?: number | null
           total_bookings?: number
           total_reviews?: number
           updated_at?: string
@@ -271,9 +289,12 @@ export type Database = {
         Update: {
           avg_rating?: number
           business_name?: string
+          cancellation_hours?: number | null
+          cancellation_policy?: string | null
           category?: string
           created_at?: string
           description?: string | null
+          emergency_available?: boolean | null
           id?: string
           is_verified?: boolean
           latitude?: number | null
@@ -282,6 +303,7 @@ export type Database = {
           opening_hours?: Json | null
           phone?: string | null
           photo_url?: string | null
+          response_time_minutes?: number | null
           total_bookings?: number
           total_reviews?: number
           updated_at?: string
@@ -1008,6 +1030,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "provider_availability_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "care_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_gallery: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          image_url: string
+          provider_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url: string
+          provider_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          provider_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_gallery_provider_id_fkey"
             columns: ["provider_id"]
             isOneToOne: false
             referencedRelation: "care_providers"

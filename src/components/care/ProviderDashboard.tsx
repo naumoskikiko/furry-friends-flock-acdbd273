@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { X, Plus, Trash2, Clock, DollarSign, Save } from "lucide-react";
-import { useMyProvider, useProviderServices, useProviderAvailability, useProviderBookings, useProviderReviews, CATEGORIES, DAY_NAMES, type CareService } from "@/hooks/useCare";
+import { X, Plus, Trash2, Clock, DollarSign, Save, Image as ImageIcon, Upload } from "lucide-react";
+import { useMyProvider, useProviderServices, useProviderAvailability, useProviderBookings, useProviderReviews, useProviderGallery, CATEGORIES, DAY_NAMES, type CareService } from "@/hooks/useCare";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, BadgeCheck, Calendar, CheckCircle2, XCircle, MessageSquare } from "lucide-react";
+import { Star, BadgeCheck, Calendar, CheckCircle2, XCircle, MessageSquare, AlertTriangle, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProviderDashboardProps {
   onClose: () => void;
@@ -17,10 +18,11 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const availability = useProviderAvailability(provider?.id || null);
   const { bookings, updateBookingStatus } = useProviderBookings(provider?.id || null);
   const { reviews } = useProviderReviews(provider?.id || null);
+  const { images: galleryImages, addImage, removeImage } = useProviderGallery(provider?.id || null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<"overview" | "services" | "bookings" | "hours" | "reviews">("overview");
+  const [tab, setTab] = useState<"overview" | "services" | "bookings" | "hours" | "reviews" | "settings">("overview");
   const [creating, setCreating] = useState(!provider && !loading);
 
   // Create provider form
@@ -36,6 +38,14 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const [svcDesc, setSvcDesc] = useState("");
   const [svcPrice, setSvcPrice] = useState("");
   const [svcDuration, setSvcDuration] = useState("30");
+
+  // Settings
+  const [emergencyAvail, setEmergencyAvail] = useState(provider?.emergency_available || false);
+  const [cancelPolicy, setCancelPolicy] = useState(provider?.cancellation_policy || "Free cancellation up to 24 hours before appointment");
+  const [cancelHours, setCancelHours] = useState(String(provider?.cancellation_hours || 24));
+
+  // Gallery upload
+  const [galleryUrl, setGalleryUrl] = useState("");
 
   const handleCreateProvider = async () => {
     if (!formName.trim()) return;
@@ -70,6 +80,22 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const handleSetAvailability = async (day: number, start: string, end: string, available: boolean) => {
     await setAvailability(day, start, end, available);
     toast({ title: `${DAY_NAMES[day]} updated` });
+  };
+
+  const handleSaveSettings = async () => {
+    await updateProvider({
+      emergency_available: emergencyAvail,
+      cancellation_policy: cancelPolicy,
+      cancellation_hours: Number(cancelHours) || 24,
+    } as any);
+    toast({ title: "Settings saved!" });
+  };
+
+  const handleAddGalleryImage = async () => {
+    if (!galleryUrl.trim()) return;
+    await addImage(galleryUrl.trim());
+    setGalleryUrl("");
+    toast({ title: "Image added to gallery!" });
   };
 
   if (loading) {
@@ -138,12 +164,13 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const confirmedBookings = bookings.filter((b) => b.status === "confirmed");
 
   const tabs = [
-    { key: "overview", label: "Overview" },
-    { key: "services", label: `Services (${services.length})` },
-    { key: "bookings", label: `Bookings (${pendingBookings.length})` },
-    { key: "hours", label: "Hours" },
-    { key: "reviews", label: `Reviews (${reviews.length})` },
-  ] as const;
+    { key: "overview" as const, label: "Overview" },
+    { key: "services" as const, label: `Services (${services.length})` },
+    { key: "bookings" as const, label: `Bookings (${pendingBookings.length})` },
+    { key: "hours" as const, label: "Hours" },
+    { key: "reviews" as const, label: `Reviews (${reviews.length})` },
+    { key: "settings" as const, label: "Settings" },
+  ];
 
   return (
     <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
@@ -158,7 +185,7 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
         </div>
 
         {/* Tabs */}
-        <div className="flex overflow-x-auto border-b border-border">
+        <div className="flex overflow-x-auto border-b border-border scrollbar-hide">
           {tabs.map((t) => (
             <button key={t.key} onClick={() => setTab(t.key)}
               className={`whitespace-nowrap px-4 py-2.5 text-xs font-bold transition-colors ${tab === t.key ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}>
@@ -194,6 +221,9 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
                       <div>
                         <p className="text-xs font-bold">{b.user_profile?.full_name || "User"}</p>
                         <p className="text-[10px] text-muted-foreground">{b.service?.service_name} · {b.booking_date} {b.booking_time}</p>
+                        {b.pet && (
+                          <p className="text-[10px] text-muted-foreground">🐾 {b.pet.name} ({b.pet.animal_type})</p>
+                        )}
                       </div>
                       <div className="flex gap-1.5">
                         <button onClick={() => updateBookingStatus(b.id, "confirmed")} className="rounded-full p-1.5 bg-accent/10 text-accent hover:bg-accent/20">
@@ -264,10 +294,10 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
                 <p className="text-center text-sm text-muted-foreground py-8">No bookings yet</p>
               ) : bookings.map((b) => {
                 const statusColors: Record<string, string> = {
-                  pending: "bg-amber-100 text-amber-800",
-                  confirmed: "bg-green-100 text-green-800",
-                  completed: "bg-blue-100 text-blue-800",
-                  cancelled: "bg-red-100 text-red-800",
+                  pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+                  confirmed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+                  completed: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+                  cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
                 };
                 return (
                   <div key={b.id} className="rounded-2xl bg-card border border-border p-4">
@@ -291,6 +321,12 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
                       <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {b.booking_date}</span>
                       <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {b.booking_time}</span>
                     </div>
+                    {b.pet && (
+                      <p className="mt-1 text-[10px] text-muted-foreground">🐾 {b.pet.name} ({b.pet.animal_type}{b.pet.breed ? ` · ${b.pet.breed}` : ""})</p>
+                    )}
+                    {b.notes && (
+                      <p className="mt-1.5 text-[10px] text-muted-foreground italic rounded-lg bg-secondary/50 p-2">📝 {b.notes}</p>
+                    )}
                     {b.status === "pending" && (
                       <div className="flex gap-2 mt-3">
                         <button onClick={() => updateBookingStatus(b.id, "confirmed")}
@@ -382,6 +418,81 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
                   {r.comment && <p className="mt-2 text-xs text-muted-foreground">{r.comment}</p>}
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Settings */}
+          {tab === "settings" && (
+            <div className="space-y-5">
+              {/* Emergency */}
+              <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                  <h3 className="text-sm font-bold">Emergency Care</h3>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Accept emergency / urgent visits</p>
+                  <button
+                    onClick={() => setEmergencyAvail(!emergencyAvail)}
+                    className={`rounded-full px-3 py-1 text-[10px] font-bold transition-colors ${emergencyAvail ? "bg-destructive/10 text-destructive" : "bg-secondary text-muted-foreground"}`}
+                  >
+                    {emergencyAvail ? "Enabled" : "Disabled"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Cancellation */}
+              <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-bold">Cancellation Policy</h3>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Free cancellation window (hours)</label>
+                  <input value={cancelHours} onChange={(e) => setCancelHours(e.target.value)} type="number"
+                    className="mt-1 w-full rounded-xl bg-secondary px-3 py-2 text-sm outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Policy description</label>
+                  <textarea value={cancelPolicy} onChange={(e) => setCancelPolicy(e.target.value)} rows={2}
+                    className="mt-1 w-full rounded-xl bg-secondary px-3 py-2 text-sm outline-none resize-none" />
+                </div>
+              </div>
+
+              {/* Gallery */}
+              <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-bold">Gallery ({galleryImages.length})</h3>
+                </div>
+                <div className="flex gap-2">
+                  <input value={galleryUrl} onChange={(e) => setGalleryUrl(e.target.value)}
+                    placeholder="Image URL"
+                    className="flex-1 rounded-xl bg-secondary px-3 py-2 text-sm outline-none" />
+                  <button onClick={handleAddGalleryImage} disabled={!galleryUrl.trim()}
+                    className="petkeep-gradient rounded-xl px-3 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50">
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+                {galleryImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {galleryImages.map((img) => (
+                      <div key={img.id} className="relative rounded-lg overflow-hidden aspect-square bg-secondary group">
+                        <img src={img.image_url} alt="" className="w-full h-full object-cover" />
+                        <button onClick={() => removeImage(img.id)}
+                          className="absolute top-1 right-1 rounded-full bg-destructive/80 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Trash2 className="h-3 w-3 text-destructive-foreground" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <button onClick={handleSaveSettings}
+                className="w-full petkeep-gradient rounded-xl py-3 text-sm font-bold text-primary-foreground flex items-center justify-center gap-2">
+                <Save className="h-4 w-4" /> Save Settings
+              </button>
             </div>
           )}
         </div>
