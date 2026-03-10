@@ -36,6 +36,7 @@ const sections = [
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [activeSection, setActiveSection] = useState<SettingsSection>("main");
 
   const handleBack = () => {
