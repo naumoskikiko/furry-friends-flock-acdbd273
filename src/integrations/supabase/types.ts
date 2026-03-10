@@ -174,18 +174,24 @@ export type Database = {
         Row: {
           conversation_id: string
           id: string
+          is_archived: boolean
+          is_muted: boolean
           joined_at: string
           user_id: string
         }
         Insert: {
           conversation_id: string
           id?: string
+          is_archived?: boolean
+          is_muted?: boolean
           joined_at?: string
           user_id: string
         }
         Update: {
           conversation_id?: string
           id?: string
+          is_archived?: boolean
+          is_muted?: boolean
           joined_at?: string
           user_id?: string
         }
@@ -290,25 +296,37 @@ export type Database = {
         Row: {
           conversation_id: string
           created_at: string
+          forwarded_from_id: string | null
           id: string
           is_read: boolean
           message_text: string
+          message_type: string
+          metadata: Json | null
+          reply_to_id: string | null
           sender_id: string
         }
         Insert: {
           conversation_id: string
           created_at?: string
+          forwarded_from_id?: string | null
           id?: string
           is_read?: boolean
           message_text?: string
+          message_type?: string
+          metadata?: Json | null
+          reply_to_id?: string | null
           sender_id: string
         }
         Update: {
           conversation_id?: string
           created_at?: string
+          forwarded_from_id?: string | null
           id?: string
           is_read?: boolean
           message_text?: string
+          message_type?: string
+          metadata?: Json | null
+          reply_to_id?: string | null
           sender_id?: string
         }
         Relationships: [
