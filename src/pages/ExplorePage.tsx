@@ -1,8 +1,7 @@
 import { Suspense, lazy, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
-import { Search, MapPin, Locate, Maximize2 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Search, MapPin, Locate, Maximize2, ChevronRight } from "lucide-react";
 import NearbySection from "@/components/explore/NearbySection";
 import FullscreenMap from "@/components/explore/FullscreenMap";
 import { useExplore, FILTERS } from "@/hooks/useExplore";
