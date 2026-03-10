@@ -184,13 +184,6 @@ const ExplorePage = () => {
         </div>
       </div>
 
-      {/* Filter Modal */}
-      <SearchFilterModal
-        open={filterOpen}
-        onOpenChange={setFilterOpen}
-        filters={filters}
-        onApply={setFilters}
-      />
 
       {/* Fullscreen Map */}
       <FullscreenMap
