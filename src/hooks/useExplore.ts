@@ -8,15 +8,17 @@ const SKOPJE: [number, number] = [41.9981, 21.4254];
 
 const CATEGORY_TYPE_MAP: Record<string, string> = {
   vet: "Vet Clinic",
-  "pet-shop": "Pet Store",
-  park: "Dog Park",
+  "pet-shop": "Pet Shop",
+  park: "Park",
   sitter: "Pet Sitter",
   grooming: "Grooming Salon",
   walker: "Dog Walker",
+  cafe: "Pet Friendly Cafe",
+  "pet-service": "Pet Service",
   other: "Place",
 };
 
-const FILTERS = ["All", "Sitters", "Walkers", "Vets", "Stores", "Grooming", "Parks", "Users"] as const;
+const FILTERS = ["All", "Sitters", "Walkers", "Vets", "Stores", "Grooming", "Parks", "Cafes", "Users"] as const;
 export type FilterType = (typeof FILTERS)[number];
 export { FILTERS };
 
@@ -70,12 +72,11 @@ export function useExplore() {
     load();
   }, []);
 
-  // Try to get user location
   useEffect(() => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setCenter([pos.coords.latitude, pos.coords.longitude]),
-        () => {} // keep default
+        () => {}
       );
     }
   }, []);
@@ -93,6 +94,8 @@ export function useExplore() {
           emoji: getCategoryEmoji(p.category),
           rating: Number(p.rating) || 0,
           distance: `${dist.toFixed(1)} km`,
+          image_url: p.image_url || undefined,
+          description: p.description || undefined,
         };
       }),
     [dbPlaces, center]
@@ -121,9 +124,10 @@ export function useExplore() {
         Sitters: ["Pet Sitter"],
         Walkers: ["Dog Walker"],
         Vets: ["Vet Clinic"],
-        Stores: ["Pet Store"],
+        Stores: ["Pet Shop"],
         Grooming: ["Grooming Salon"],
-        Parks: ["Dog Park"],
+        Parks: ["Park"],
+        Cafes: ["Pet Friendly Cafe"],
         Users: [],
       };
       const types = filterMap[activeFilter] || [];
@@ -170,10 +174,11 @@ export function useExplore() {
       emoji: m.emoji,
     });
     return {
-      stores: placeMarkers.filter((m) => m.type === "Pet Store").map(toNearby),
+      stores: placeMarkers.filter((m) => m.type === "Pet Shop").map(toNearby),
       vets: placeMarkers.filter((m) => m.type === "Vet Clinic").map(toNearby),
-      parks: placeMarkers.filter((m) => m.type === "Dog Park").map(toNearby),
+      parks: placeMarkers.filter((m) => m.type === "Park").map(toNearby),
       grooming: placeMarkers.filter((m) => m.type === "Grooming Salon").map(toNearby),
+      cafes: placeMarkers.filter((m) => m.type === "Pet Friendly Cafe").map(toNearby),
     };
   }, [placeMarkers]);
 

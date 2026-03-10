@@ -123,6 +123,7 @@ const ExplorePage = () => {
           <NearbySection title="Nearby Veterinarians" items={nearbyByCategory.vets} />
           <NearbySection title="Nearby Parks" items={nearbyByCategory.parks} />
           <NearbySection title="Nearby Grooming Salons" items={nearbyByCategory.grooming} />
+          <NearbySection title="Nearby Pet Friendly Cafes" items={nearbyByCategory.cafes} />
         </div>
       </div>
     </AppLayout>

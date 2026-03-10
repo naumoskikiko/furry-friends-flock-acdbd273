@@ -12,6 +12,8 @@ export interface Place {
   phone: string;
   website: string;
   rating: number;
+  image_url: string;
+  opening_hours: string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -21,11 +23,13 @@ export type PlaceInsert = Omit<Place, "id" | "created_at" | "updated_at">;
 
 const CATEGORY_EMOJI: Record<string, string> = {
   vet: "🏥",
-  "pet-shop": "🏪",
+  "pet-shop": "🐾",
   park: "🌳",
-  sitter: "🐾",
+  sitter: "🐕",
   grooming: "✂️",
   walker: "🐕‍🦺",
+  cafe: "☕",
+  "pet-service": "🐕",
   other: "📍",
 };
 
@@ -33,11 +37,13 @@ export const getCategoryEmoji = (category: string) =>
   CATEGORY_EMOJI[category] || "📍";
 
 export const PLACE_CATEGORIES = [
-  { value: "vet", label: "Veterinarian" },
   { value: "pet-shop", label: "Pet Shop" },
-  { value: "park", label: "Dog Park" },
-  { value: "sitter", label: "Pet Sitter" },
+  { value: "vet", label: "Veterinary Clinic" },
+  { value: "park", label: "Park" },
+  { value: "cafe", label: "Pet Friendly Cafe" },
+  { value: "pet-service", label: "Pet Service" },
   { value: "grooming", label: "Grooming Salon" },
+  { value: "sitter", label: "Pet Sitter" },
   { value: "walker", label: "Dog Walker" },
   { value: "other", label: "Other" },
 ];

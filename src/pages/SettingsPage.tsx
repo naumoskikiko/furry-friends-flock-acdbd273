@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
-import { ArrowLeft, User, Shield, Bell, CreditCard, Lock, Palette, PawPrint, ShieldCheck, HelpCircle, FileText, AlertTriangle, Sparkles, ChevronRight, LogOut, Map } from "lucide-react";
+import { ArrowLeft, User, Shield, Bell, CreditCard, Lock, Palette, PawPrint, ShieldCheck, HelpCircle, FileText, AlertTriangle, Sparkles, ChevronRight, LogOut } from "lucide-react";
 import SettingsAccount from "@/components/settings/SettingsAccount";
 import SettingsSecurity from "@/components/settings/SettingsSecurity";
 import SettingsNotifications from "@/components/settings/SettingsNotifications";
@@ -15,9 +15,9 @@ import SettingsTrust from "@/components/settings/SettingsTrust";
 import SettingsSupport from "@/components/settings/SettingsSupport";
 import SettingsLegal from "@/components/settings/SettingsLegal";
 import SettingsDangerZone from "@/components/settings/SettingsDangerZone";
-import SettingsMapManagement from "@/components/settings/SettingsMapManagement";
+import ProfessionalMode from "@/components/settings/ProfessionalMode";
 
-type SettingsSection = "main" | "account" | "security" | "notifications" | "payments" | "privacy" | "appearance" | "pet" | "trust" | "support" | "legal" | "danger" | "map-management";
+type SettingsSection = "main" | "account" | "security" | "notifications" | "payments" | "privacy" | "appearance" | "pet" | "trust" | "support" | "legal" | "danger" | "professional";
 
 const sections = [
   { id: "account" as const, label: "Account", icon: User, description: "Edit profile, password, email" },
@@ -47,46 +47,34 @@ const SettingsPage = () => {
     }
   };
 
-  const sectionTitle = activeSection === "main" ? "Settings" : sections.find(s => s.id === activeSection)?.label || "Settings";
+  const getSectionTitle = () => {
+    if (activeSection === "main") return "Settings";
+    if (activeSection === "professional") return "Professional Mode";
+    return sections.find(s => s.id === activeSection)?.label || "Settings";
+  };
 
   return (
     <AppLayout>
       <div className="mx-auto max-w-lg min-h-screen">
-        {/* Header */}
         <div className="sticky top-0 z-10 flex items-center gap-3 bg-background/95 backdrop-blur-sm px-4 py-3 border-b border-border">
           <button onClick={handleBack} className="rounded-full p-1.5 hover:bg-secondary">
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="font-display text-lg font-bold">{sectionTitle}</h1>
+          <h1 className="font-display text-lg font-bold">{getSectionTitle()}</h1>
         </div>
 
         {activeSection === "main" && (
           <div className="px-4 py-2">
-            {/* Professional Mode Banner */}
-            <button
-              onClick={() => setActiveSection("account")}
-              className="w-full mb-3 mt-2 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 p-4 petkeep-card-shadow"
-            >
-              <Sparkles className="h-5 w-5 text-primary" />
-              <div className="text-left flex-1">
-                <p className="text-sm font-bold">Professional Mode</p>
-                <p className="text-xs text-muted-foreground">Unlock sitter analytics & insights</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </button>
-
-            {/* Admin-only Map Management */}
+            {/* Professional Mode Banner - Admin Only */}
             {isAdmin && (
               <button
-                onClick={() => setActiveSection("map-management")}
-                className="w-full flex items-center gap-3 rounded-xl px-3 py-3 mb-1 transition-colors hover:bg-secondary/60"
+                onClick={() => setActiveSection("professional")}
+                className="w-full mb-3 mt-2 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 p-4 petkeep-card-shadow"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-                  <Map className="h-4.5 w-4.5 text-primary" />
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-semibold">Map Management</p>
-                  <p className="text-xs text-muted-foreground">Add, edit & delete map locations</p>
+                <Sparkles className="h-5 w-5 text-primary" />
+                <div className="text-left flex-1">
+                  <p className="text-sm font-bold">Professional Mode</p>
+                  <p className="text-xs text-muted-foreground">Admin tools & platform management</p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -113,7 +101,6 @@ const SettingsPage = () => {
               </button>
             ))}
 
-            {/* Logout at the very bottom */}
             <div className="mt-6 mb-8 border-t border-border pt-4">
               <button
                 onClick={signOut}
@@ -139,7 +126,7 @@ const SettingsPage = () => {
         {activeSection === "support" && <SettingsSupport />}
         {activeSection === "legal" && <SettingsLegal />}
         {activeSection === "danger" && <SettingsDangerZone />}
-        {activeSection === "map-management" && <SettingsMapManagement />}
+        {activeSection === "professional" && <ProfessionalMode />}
       </div>
     </AppLayout>
   );
