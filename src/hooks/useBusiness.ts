@@ -68,7 +68,7 @@ export function useMyBusiness() {
       .select("*")
       .eq("user_id", user.id)
       .maybeSingle();
-    setBusiness(data as BusinessProfile | null);
+    setBusiness(data as unknown as BusinessProfile | null);
     setLoading(false);
   }, [user]);
 
