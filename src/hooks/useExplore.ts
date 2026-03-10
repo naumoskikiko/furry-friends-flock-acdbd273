@@ -186,6 +186,18 @@ export function useExplore() {
     };
   }, [placeMarkers]);
 
+  const allNearbyItems = useMemo(() => {
+    const toNearby = (m: MapMarker): NearbyItem => ({
+      id: m.id,
+      name: m.name,
+      type: m.type,
+      distance: m.distance || "",
+      rating: m.rating || 0,
+      emoji: m.emoji,
+    });
+    return placeMarkers.map(toNearby);
+  }, [placeMarkers]);
+
   return {
     activeFilter,
     setActiveFilter,
@@ -197,6 +209,7 @@ export function useExplore() {
     allMarkers,
     searchResults,
     nearbyByCategory,
+    allNearbyItems,
     loading,
   };
 }

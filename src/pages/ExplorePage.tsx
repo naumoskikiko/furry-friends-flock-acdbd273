@@ -1,10 +1,11 @@
 import { Suspense, lazy, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
-import { Search, SlidersHorizontal, MapPin, Locate } from "lucide-react";
+import { Search, SlidersHorizontal, MapPin, Locate, Maximize2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import NearbySection from "@/components/explore/NearbySection";
 import SearchFilterModal, { SearchFilters } from "@/components/explore/SearchFilterModal";
+import FullscreenMap from "@/components/explore/FullscreenMap";
 import { useExplore, FILTERS } from "@/hooks/useExplore";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -23,10 +24,12 @@ const ExplorePage = () => {
     allMarkers,
     searchResults,
     nearbyByCategory,
+    allNearbyItems,
     loading,
   } = useExplore();
 
   const [filterOpen, setFilterOpen] = useState(false);
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({
     contentTypes: [],
     location: "all",
@@ -155,14 +158,25 @@ const ExplorePage = () => {
           <Switch checked={findMyPet} onCheckedChange={setFindMyPet} />
         </div>
 
-        {/* Map */}
-        <div className="mx-4 mt-3">
+        {/* Map — tappable to go fullscreen */}
+        <div className="mx-4 mt-3 relative">
           {loading ? (
             <Skeleton className="h-[45vh] w-full rounded-2xl" />
           ) : (
-            <Suspense fallback={<Skeleton className="h-[45vh] w-full rounded-2xl" />}>
-              <ExploreMap markers={allMarkers} center={center} />
-            </Suspense>
+            <>
+              <button
+                onClick={() => setFullscreenOpen(true)}
+                className="absolute top-3 right-3 z-30 flex h-9 w-9 items-center justify-center rounded-xl bg-card/90 shadow-lg border border-border backdrop-blur-sm"
+                aria-label="Open fullscreen map"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </button>
+              <div onClick={() => setFullscreenOpen(true)} className="cursor-pointer">
+                <Suspense fallback={<Skeleton className="h-[45vh] w-full rounded-2xl" />}>
+                  <ExploreMap markers={allMarkers} center={center} />
+                </Suspense>
+              </div>
+            </>
           )}
           {findMyPet && (
             <div className="mt-2 rounded-xl bg-accent/10 border border-accent/20 p-3 text-center">
@@ -188,6 +202,16 @@ const ExplorePage = () => {
         onOpenChange={setFilterOpen}
         filters={filters}
         onApply={setFilters}
+      />
+
+      {/* Fullscreen Map */}
+      <FullscreenMap
+        open={fullscreenOpen}
+        onClose={() => setFullscreenOpen(false)}
+        markers={allMarkers}
+        center={center}
+        nearbyItems={allNearbyItems}
+        findMyPet={findMyPet}
       />
     </AppLayout>
   );
