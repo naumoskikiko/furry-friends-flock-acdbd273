@@ -1,8 +1,7 @@
 import { Suspense, lazy, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
-import { Search, MapPin, Locate, Maximize2 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Search, MapPin, Locate, Maximize2, ChevronRight } from "lucide-react";
 import NearbySection from "@/components/explore/NearbySection";
 import FullscreenMap from "@/components/explore/FullscreenMap";
 import { useExplore, FILTERS } from "@/hooks/useExplore";
@@ -17,8 +16,6 @@ const ExplorePage = () => {
     setActiveFilter,
     searchQuery,
     setSearchQuery,
-    findMyPet,
-    setFindMyPet,
     center,
     allMarkers,
     searchResults,
@@ -132,19 +129,22 @@ const ExplorePage = () => {
           </div>
         )}
 
-        {/* Find My Pet toggle */}
-        <div className="mx-4 mt-3 flex items-center justify-between rounded-2xl bg-card p-3 petkeep-card-shadow">
+        {/* Find My Pet button */}
+        <button
+          onClick={() => navigate("/find-my-pet")}
+          className="mx-4 mt-3 flex w-[calc(100%-2rem)] items-center justify-between rounded-2xl bg-card p-3 petkeep-card-shadow hover:bg-secondary/30 transition-colors"
+        >
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-petkeep-mint/15">
               <Locate className="h-5 w-5 text-accent" />
             </div>
-            <div>
-              <p className="text-sm font-bold font-display">Find My Pet</p>
+            <div className="text-left">
+              <p className="text-sm font-bold font-display">🐾 Find My Pet</p>
               <p className="text-[11px] text-muted-foreground">GPS tracking & lost pets</p>
             </div>
           </div>
-          <Switch checked={findMyPet} onCheckedChange={setFindMyPet} />
-        </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </button>
 
         {/* Map — tappable to go fullscreen */}
         <div className="mx-4 mt-3 relative">
@@ -166,12 +166,6 @@ const ExplorePage = () => {
               </div>
             </>
           )}
-          {findMyPet && (
-            <div className="mt-2 rounded-xl bg-accent/10 border border-accent/20 p-3 text-center">
-              <p className="text-xs font-semibold text-accent">🐾 Find My Pet mode active</p>
-              <p className="text-[11px] text-muted-foreground mt-1">Lost pet reports & GPS devices will appear on the map</p>
-            </div>
-          )}
         </div>
 
         {/* Nearby sections */}
@@ -192,7 +186,7 @@ const ExplorePage = () => {
         markers={allMarkers}
         center={center}
         nearbyItems={allNearbyItems}
-        findMyPet={findMyPet}
+        findMyPet={false}
       />
     </AppLayout>
   );
