@@ -50,24 +50,19 @@ const ExplorePage = () => {
       <div className="mx-auto max-w-lg">
         {/* Search */}
         <div className="sticky top-0 z-40 bg-card/95 px-4 py-3 backdrop-blur-md">
-          <div className="flex items-center gap-2">
-            <div className="flex flex-1 items-center gap-2 rounded-xl bg-secondary px-3 py-2.5">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && searchQuery.trim()) {
-                    handleSeeMore("users");
-                  }
-                }}
-                placeholder="Search places, users, @username..."
-                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground font-body"
-              />
-            </div>
-            <button onClick={() => setFilterOpen(true)} className="rounded-xl bg-secondary p-2.5">
-              <SlidersHorizontal className="h-4 w-4 text-foreground" />
-            </button>
+          <div className="flex items-center gap-2 rounded-xl bg-secondary px-3 py-2.5">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && searchQuery.trim()) {
+                  handleSeeMore("users");
+                }
+              }}
+              placeholder="Search places, users, @username..."
+              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground font-body"
+            />
           </div>
 
           {/* Filter chips */}
