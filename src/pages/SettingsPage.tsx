@@ -75,6 +75,23 @@ const SettingsPage = () => {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
 
+            {/* Admin-only Map Management */}
+            {isAdmin && (
+              <button
+                onClick={() => setActiveSection("map-management")}
+                className="w-full flex items-center gap-3 rounded-xl px-3 py-3 mb-1 transition-colors hover:bg-secondary/60"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+                  <Map className="h-4.5 w-4.5 text-primary" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-semibold">Map Management</p>
+                  <p className="text-xs text-muted-foreground">Add, edit & delete map locations</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            )}
+
             {sections.map((section) => (
               <button
                 key={section.id}
