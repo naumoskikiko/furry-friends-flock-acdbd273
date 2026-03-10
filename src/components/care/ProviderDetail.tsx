@@ -12,6 +12,7 @@ import {
   generateTimeSlots, CATEGORIES, DAY_NAMES,
   type CareProvider, type CareService,
 } from "@/hooks/useCare";
+import { useProcessPayment, calculateFees } from "@/hooks/usePayments";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
