@@ -1,64 +1,38 @@
 
 
-# PetKeep — Sectioned Execution Plan
+## Issues Identified
 
-The full feature set is broken into 6 executable sections. Each section delivers working functionality before moving to the next.
+1. **Race condition on map init**: The fullscreen map creates the Leaflet instance with a 50ms delay, but the marker-update effect fires immediately when `open` becomes true. At that point `markersLayerRef.current` is still `null`, so no markers are added. If the markers/filteredMarkers array doesn't change after those 50ms, the effect never re-runs.
 
----
+2. **Markers re-created on selection**: The marker-update effect depends on `selectedMarker`, causing all markers to be cleared and re-added every time the user taps one. This destroys the open popup and causes visual flicker.
 
-## Section 1: Authentication & Database Foundation
-**Requires: Lovable Cloud enabled first**
+3. **Bottom panel too small in collapsed state**: `max-h-[140px]` with header + drag handle leaves only ~80px for content, barely showing one item. Scrolling doesn't work well because `overflow-hidden` is on the parent.
 
-- Create Supabase database schema: `profiles`, `user_roles`, `pets`, `sitter_profiles`, `credits`, `credit_transactions`, `followers`
-- RLS policies on all tables
-- Storage buckets for avatars and pet photos
-- Auth pages: Login (email/password), Sign Up (with role selection: Owner/Sitter), Forgot Password, Reset Password
-- Auto-create profile on signup via database trigger
-- Protected routes — unauthenticated users redirected to `/auth`
-- Profile page becomes functional: edit name/bio/location, upload avatar
+4. **Bottom panel items only focus the map, don't navigate**: Clicking a nearby item in the bottom panel centers the map and opens a popup, but the user also expects to navigate to place details. The UX is inconsistent with the main Explore page.
 
-## Section 2: Pet Management & Profile Features
-- Full CRUD for pets (add/edit/delete with photo upload)
-- Pet mini-profiles with breed, age, weight, medical notes
-- Followers/following system (follow/unfollow, clickable lists)
-- Share Profile (copy link)
-- Credits wallet page with balance and transaction history
-- Reviews page showing star breakdown and written reviews
+## Plan
 
-## Section 3: Booking & Sitter Marketplace
-- Sitter profile pages with availability, pricing, services
-- Care page filters: price range, rating, student badge, service type
-- Calendar-based booking flow with price calculation
-- Booking status management (pending → confirmed → active → completed → cancelled)
-- Home dashboard shows active/upcoming bookings
-- Tables: `bookings`, `reviews`, `availability`
+### 1. Fix race condition -- markers not appearing
 
-## Section 4: Real-Time Messaging
-- Tables: `conversations`, `messages`
-- Conversation list with unread indicators
-- Real-time chat using Supabase realtime subscriptions
-- Image sharing in chat
-- Booking reference cards in conversations
-- Auto-open chat after booking confirmation
+- After creating the map in the init effect, immediately add the markers inside the same `setTimeout` callback instead of relying on a separate effect.
+- Add a `mapReady` state flag. Set it to `true` after the map is created. Make the markers effect depend on `mapReady` so it re-runs once the map is actually initialized.
 
-## Section 5: Settings & Admin
-- Full settings page: account, notifications, privacy, security, danger zone
-- Dark mode toggle
-- Admin panel (role-gated): user management, student verification, analytics dashboard
-- Admin role assignment via `user_roles` table
+### 2. Stop re-creating markers on selection
 
-## Section 6: Advanced Features
-- Emergency "Find Immediate Help" button
-- SOS during active booking
-- Referral system with unique codes
-- Achievement badges for sitters
-- "Top Sitter of the Month" highlight
-- In-app announcements banner
-- Smart discovery with map view placeholders
+- Remove `selectedMarker` from the markers effect dependency array.
+- Instead, use a separate effect that only updates the icon of the previously selected and newly selected marker (swap between active/inactive icon) without clearing the entire layer.
 
----
+### 3. Fix bottom panel layout and interaction
 
-## To Start Section 1
+- Increase collapsed `max-h` from `140px` to `180px` and inner scroll area from `80px` to `120px` so 2-3 items are visible.
+- Move `overflow-hidden` to only the scroll container, not the outer panel, so the drag handle and header remain interactive.
+- Add a "View Details" action: tapping a nearby item centers the map and shows the quick card; add a small arrow/chevron to indicate it's tappable.
 
-I need you to **enable Lovable Cloud** first. Click the Cloud icon in the left sidebar, or I can guide you through it. Once Cloud is enabled, I will immediately begin implementing the database schema, auth system, and functional profile page.
+### 4. Ensure popup links work correctly
+
+- The popup "View Details" `<a>` tag uses raw `href="/place/..."` which causes a full page reload in a SPA. Intercept popup link clicks using Leaflet's `popupopen` event and use `navigate()` instead.
+
+### Files to modify
+
+- `src/components/explore/FullscreenMap.tsx` -- all fixes above
 
