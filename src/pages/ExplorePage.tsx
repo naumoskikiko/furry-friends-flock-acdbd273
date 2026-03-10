@@ -27,13 +27,7 @@ const ExplorePage = () => {
     loading,
   } = useExplore();
 
-  const [filterOpen, setFilterOpen] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
-  const [filters, setFilters] = useState<SearchFilters>({
-    contentTypes: [],
-    location: "all",
-    sort: "relevant",
-  });
 
   const handleResultClick = (r: any) => {
     if (r.type === "User") {
