@@ -151,7 +151,7 @@ export function useConversations() {
             }
           : undefined,
         unread_count: count || 0,
-        is_pinned: pinMap.get(convId) || false,
+        is_pinned: !!(pinMap.get(convId)),
       });
     }
 
