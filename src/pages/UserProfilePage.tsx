@@ -4,8 +4,9 @@ import AppLayout from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, MapPin, Grid3X3, Star, UserPlus, UserCheck } from "lucide-react";
+import { ArrowLeft, MapPin, Grid3X3, Star, UserPlus, UserCheck, MessageCircle } from "lucide-react";
 import PostGrid from "@/components/profile/PostGrid";
+import { getOrCreateConversation } from "@/hooks/useMessages";
 
 const UserProfilePage = () => {
   const { username } = useParams<{ username: string }>();
