@@ -186,7 +186,7 @@ const ExplorePage = () => {
         markers={allMarkers}
         center={center}
         nearbyItems={allNearbyItems}
-        findMyPet={findMyPet}
+        findMyPet={false}
       />
     </AppLayout>
   );
