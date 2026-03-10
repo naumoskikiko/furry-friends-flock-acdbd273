@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   Heart,
+  Heart,
   MessageCircle,
   Send,
   Bookmark,
