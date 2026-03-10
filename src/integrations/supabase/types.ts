@@ -335,6 +335,72 @@ export type Database = {
         }
         Relationships: []
       }
+      pet_subscriptions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          plan: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          plan?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          plan?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pet_trackers: {
+        Row: {
+          breed: string | null
+          created_at: string
+          id: string
+          is_lost: boolean
+          pet_name: string
+          pet_photo: string | null
+          pet_type: string
+          tracker_device_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          breed?: string | null
+          created_at?: string
+          id?: string
+          is_lost?: boolean
+          pet_name: string
+          pet_photo?: string | null
+          pet_type?: string
+          tracker_device_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          breed?: string | null
+          created_at?: string
+          id?: string
+          is_lost?: boolean
+          pet_name?: string
+          pet_photo?: string | null
+          pet_type?: string
+          tracker_device_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pets: {
         Row: {
           age: string | null
@@ -761,6 +827,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      tracker_locations: {
+        Row: {
+          battery_level: number | null
+          created_at: string
+          id: string
+          latitude: number
+          longitude: number
+          tracker_id: string
+        }
+        Insert: {
+          battery_level?: number | null
+          created_at?: string
+          id?: string
+          latitude: number
+          longitude: number
+          tracker_id: string
+        }
+        Update: {
+          battery_level?: number | null
+          created_at?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          tracker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracker_locations_tracker_id_fkey"
+            columns: ["tracker_id"]
+            isOneToOne: false
+            referencedRelation: "pet_trackers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
