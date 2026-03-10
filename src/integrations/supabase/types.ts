@@ -398,6 +398,54 @@ export type Database = {
         }
         Relationships: []
       }
+      places: {
+        Row: {
+          address: string | null
+          category: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          latitude: number
+          longitude: number
+          name: string
+          phone: string | null
+          rating: number | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          category?: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          latitude: number
+          longitude: number
+          name: string
+          phone?: string | null
+          rating?: number | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          latitude?: number
+          longitude?: number
+          name?: string
+          phone?: string | null
+          rating?: number | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           content: string
