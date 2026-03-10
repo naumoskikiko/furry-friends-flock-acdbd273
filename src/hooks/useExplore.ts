@@ -48,7 +48,7 @@ export function useExplore() {
       const [{ data: places }, { data: sitters }, { data: profiles }] = await Promise.all([
         supabase.from("places").select("*"),
         supabase.from("sitter_profiles").select("*"),
-        supabase.from("profiles").select("user_id, full_name, avatar_url, location"),
+        supabase.from("profiles").select("user_id, full_name, avatar_url, location, username"),
       ]);
 
       setDbPlaces(places || []);
@@ -148,20 +148,24 @@ export function useExplore() {
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase().replace(/^@/, "");
     const placeResults = placeMarkers.filter(
       (p) => p.name.toLowerCase().includes(q) || p.type.toLowerCase().includes(q)
-    ).map((p) => ({ ...p, avatar_url: null }));
+    ).map((p) => ({ ...p, avatar_url: null, username: null }));
     const userResults = userProfiles
-      .filter((u: any) => u.full_name?.toLowerCase().includes(q))
+      .filter((u: any) => 
+        u.full_name?.toLowerCase().includes(q) ||
+        u.username?.toLowerCase().includes(q)
+      )
       .map((u: any) => ({
         id: u.user_id,
         name: u.full_name,
         type: "User",
         emoji: "👤",
         avatar_url: u.avatar_url,
+        username: u.username,
       }));
-    return [...placeResults, ...userResults].slice(0, 8);
+    return [...userResults, ...placeResults].slice(0, 8);
   }, [searchQuery, placeMarkers, userProfiles]);
 
   const nearbyByCategory = useMemo(() => {

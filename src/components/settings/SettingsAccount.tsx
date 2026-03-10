@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, User, Mail, MapPin, Phone } from "lucide-react";
+import { Camera, User, Mail, MapPin, Phone, AtSign } from "lucide-react";
 
 const SettingsAccount = () => {
   const { user, profile, refreshProfile } = useAuth();
@@ -15,6 +15,9 @@ const SettingsAccount = () => {
   const [fullName, setFullName] = useState(profile?.full_name || "");
   const [bio, setBio] = useState(profile?.bio || "");
   const [location, setLocation] = useState(profile?.location || "");
+  const [username, setUsername] = useState((profile as any)?.username || "");
+  const [usernameError, setUsernameError] = useState("");
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [professionalMode, setProfessionalMode] = useState(false);
@@ -24,8 +27,28 @@ const SettingsAccount = () => {
       setFullName(profile.full_name || "");
       setBio(profile.bio || "");
       setLocation(profile.location || "");
+      setUsername((profile as any)?.username || "");
     }
   }, [profile]);
+
+  const validateUsername = async (value: string) => {
+    const clean = value.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase();
+    setUsername(clean);
+    setUsernameError("");
+    if (!clean) return;
+    if (clean.length < 3) { setUsernameError("Username must be at least 3 characters"); return; }
+    if (clean === (profile as any)?.username) return;
+    setCheckingUsername(true);
+    const { data } = await supabase
+      .from("profiles")
+      .select("user_id")
+      .eq("username", clean)
+      .maybeSingle();
+    setCheckingUsername(false);
+    if (data && data.user_id !== user?.id) {
+      setUsernameError("Username already taken");
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -36,7 +59,14 @@ const SettingsAccount = () => {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({ full_name: fullName, bio, location }).eq("user_id", user.id);
+    if (usernameError) {
+      toast({ title: "Fix errors", description: usernameError, variant: "destructive" });
+      setSaving(false);
+      return;
+    }
+    const updates: any = { full_name: fullName, bio, location };
+    if (username) updates.username = username;
+    const { error } = await supabase.from("profiles").update(updates).eq("user_id", user.id);
     setSaving(false);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -111,6 +141,23 @@ const SettingsAccount = () => {
         <div className="space-y-2">
           <Label className="flex items-center gap-2"><User className="h-3.5 w-3.5" /> Full Name</Label>
           <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" />
+        </div>
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2"><AtSign className="h-3.5 w-3.5" /> Username</Label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+            <Input
+              value={username}
+              onChange={(e) => validateUsername(e.target.value)}
+              placeholder="petlover"
+              className="pl-7"
+            />
+          </div>
+          {checkingUsername && <p className="text-xs text-muted-foreground">Checking availability...</p>}
+          {usernameError && <p className="text-xs text-destructive">{usernameError}</p>}
+          {username && !usernameError && !checkingUsername && username.length >= 3 && (
+            <p className="text-xs text-accent">✓ Username available</p>
+          )}
         </div>
         <div className="space-y-2">
           <Label className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> Email</Label>

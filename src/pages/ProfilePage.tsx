@@ -122,7 +122,8 @@ const ProfilePage = () => {
   };
 
   const handleShareProfile = () => {
-    const url = `${window.location.origin}/profile/${user?.id}`;
+    const uname = (profile as any)?.username || user?.id;
+    const url = `${window.location.origin}/user/${uname}`;
     if (navigator.share) {
       navigator.share({ title: displayName, url }).catch(() => {});
     } else {
@@ -137,7 +138,7 @@ const ProfilePage = () => {
   };
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
-  const username = user?.email?.split("@")[0] || "user";
+  const username = (profile as any)?.username || user?.email?.split("@")[0] || "user";
   const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
