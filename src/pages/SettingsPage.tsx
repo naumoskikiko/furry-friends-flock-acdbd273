@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, User, Shield, Bell, CreditCard, Lock, Palette, PawPrint, ShieldCheck, HelpCircle, FileText, AlertTriangle, Sparkles, ChevronRight, LogOut } from "lucide-react";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { ArrowLeft, User, Shield, Bell, CreditCard, Lock, Palette, PawPrint, ShieldCheck, HelpCircle, FileText, AlertTriangle, Sparkles, ChevronRight, LogOut, Map } from "lucide-react";
 import SettingsAccount from "@/components/settings/SettingsAccount";
 import SettingsSecurity from "@/components/settings/SettingsSecurity";
 import SettingsNotifications from "@/components/settings/SettingsNotifications";
@@ -14,8 +15,9 @@ import SettingsTrust from "@/components/settings/SettingsTrust";
 import SettingsSupport from "@/components/settings/SettingsSupport";
 import SettingsLegal from "@/components/settings/SettingsLegal";
 import SettingsDangerZone from "@/components/settings/SettingsDangerZone";
+import SettingsMapManagement from "@/components/settings/SettingsMapManagement";
 
-type SettingsSection = "main" | "account" | "security" | "notifications" | "payments" | "privacy" | "appearance" | "pet" | "trust" | "support" | "legal" | "danger";
+type SettingsSection = "main" | "account" | "security" | "notifications" | "payments" | "privacy" | "appearance" | "pet" | "trust" | "support" | "legal" | "danger" | "map-management";
 
 const sections = [
   { id: "account" as const, label: "Account", icon: User, description: "Edit profile, password, email" },
