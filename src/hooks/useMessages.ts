@@ -85,7 +85,7 @@ export function useConversations() {
     }
 
     const convIds = participations.map((p: any) => p.conversation_id);
-    const metaMap = new Map(
+    const metaMap = new Map<string, { is_pinned: boolean; is_archived: boolean; is_muted: boolean }>(
       participations.map((p: any) => [
         p.conversation_id,
         { is_pinned: !!p.is_pinned, is_archived: !!p.is_archived, is_muted: !!p.is_muted },
