@@ -174,8 +174,17 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
     { key: "bookings" as const, label: `Bookings (${pendingBookings.length})` },
     { key: "hours" as const, label: "Hours" },
     { key: "reviews" as const, label: `Reviews (${reviews.length})` },
+    { key: "earnings" as const, label: "Earnings" },
     { key: "settings" as const, label: "Settings" },
   ];
+
+  const handleRequestPayout = async () => {
+    const amt = Number(payoutAmount);
+    if (!amt || amt <= 0 || amt > (balance?.available_balance || 0)) return;
+    await requestPayout(amt);
+    setPayoutAmount("");
+    toast({ title: "Payout requested!", description: `${amt} MKD will be processed soon` });
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
