@@ -93,6 +93,14 @@ export default {
           "50%": { transform: "scale(1.3)" },
           "100%": { transform: "scale(1)" },
         },
+        "heart-burst": {
+          "0%": { transform: "scale(0)", opacity: "0" },
+          "15%": { transform: "scale(1.3)", opacity: "1" },
+          "30%": { transform: "scale(0.95)", opacity: "1" },
+          "45%": { transform: "scale(1.1)", opacity: "1" },
+          "80%": { transform: "scale(1)", opacity: "1" },
+          "100%": { transform: "scale(1)", opacity: "0" },
+        },
         "slide-up": {
           from: { opacity: "0", transform: "translateY(10px)" },
           to: { opacity: "1", transform: "translateY(0)" },
@@ -102,6 +110,7 @@ export default {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "heart-pop": "heart-pop 0.3s ease-in-out",
+        "heart-burst": "heart-burst 0.9s ease-out forwards",
         "slide-up": "slide-up 0.3s ease-out",
       },
     },

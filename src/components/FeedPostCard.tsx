@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Heart,
   MessageCircle,
   Send,
   Bookmark,
   MoreHorizontal,
-  Trash2,
   MoreVertical,
+  Volume2,
+  VolumeX,
+  Flag,
+  UserMinus,
+  UserX,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,8 +24,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import HeartAnimation from "@/components/feed/HeartAnimation";
+import LikesListModal from "@/components/feed/LikesListModal";
 import type { FeedPostData } from "@/hooks/useFeed";
 
 interface FeedPostCardProps {
@@ -50,10 +57,53 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [commentsCount, setCommentsCount] = useState(post.comments_count);
+  const [showHeartAnim, setShowHeartAnim] = useState(false);
+  const [likesListOpen, setLikesListOpen] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const lastTapRef = useRef(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const mediaContainerRef = useRef<HTMLDivElement>(null);
 
   const isVideo = post.post_type === "video" || (post.image_url && /\.(mp4|mov|webm)$/i.test(post.image_url));
   const initials = post.username.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   const timeAgo = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
+
+  // Video autoplay on visibility
+  useEffect(() => {
+    if (!isVideo || !videoRef.current) return;
+    const video = videoRef.current;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, [isVideo]);
+
+  const performLike = useCallback(async () => {
+    if (!user || liked) return;
+    setLiked(true);
+    setLikesCount((c) => c + 1);
+    setShowHeartAnim(true);
+    await supabase.from("post_likes").insert({ post_id: post.id, user_id: user.id });
+    await supabase.from("posts").update({ likes_count: likesCount + 1 }).eq("id", post.id);
+    createNotification(user.id, post.user_id, "like", "post", post.id, "liked your post");
+    onLikeToggle(post.id, true);
+  }, [user, liked, post.id, post.user_id, likesCount, onLikeToggle]);
+
+  const handleDoubleTap = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 350) {
+      performLike();
+    }
+    lastTapRef.current = now;
+  }, [performLike]);
 
   const toggleLike = async () => {
     if (!user) return;
@@ -62,6 +112,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     setLikesCount((c) => (newLiked ? c + 1 : Math.max(0, c - 1)));
 
     if (newLiked) {
+      setShowHeartAnim(true);
       await supabase.from("post_likes").insert({ post_id: post.id, user_id: user.id });
       await supabase.from("posts").update({ likes_count: likesCount + 1 }).eq("id", post.id);
       createNotification(user.id, post.user_id, "like", "post", post.id, "liked your post");
@@ -76,7 +127,6 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     if (!user) return;
     const newSaved = !saved;
     setSaved(newSaved);
-
     if (newSaved) {
       await (supabase as any).from("saved_posts").insert({ post_id: post.id, user_id: user.id });
       createNotification(user.id, post.user_id, "save", "post", post.id, "saved your post");
@@ -89,8 +139,13 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   };
 
   const sharePost = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/post/${post.id}`);
-    toast({ title: "Link copied!" });
+    const url = `${window.location.origin}/post/${post.id}`;
+    if (navigator.share) {
+      navigator.share({ title: post.caption || "PetKeep Post", url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url);
+      toast({ title: "Link copied!" });
+    }
   };
 
   const openComments = async () => {
@@ -138,10 +193,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     toast({ title: "Comment deleted" });
   };
 
-  const canDeleteComment = (c: Comment) => {
-    if (!user) return false;
-    return user.id === c.user_id || user.id === post.user_id;
-  };
+  const canDeleteComment = (c: Comment) => user && (user.id === c.user_id || user.id === post.user_id);
 
   const handleDeletePost = async () => {
     await supabase.from("posts").delete().eq("id", post.id);
@@ -149,7 +201,12 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     toast({ title: "Post deleted" });
   };
 
-  // Extract hashtags from caption
+  const handleUnfollow = async () => {
+    if (!user) return;
+    await supabase.from("followers").delete().eq("follower_id", user.id).eq("following_id", post.user_id);
+    toast({ title: `Unfollowed ${post.username}` });
+  };
+
   const renderCaption = () => {
     if (!post.caption) return null;
     const parts = post.caption.split(/(#\w+)/g);
@@ -161,6 +218,8 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
       )
     );
   };
+
+  const isOwner = user?.id === post.user_id;
 
   return (
     <article className="border-b border-border bg-card">
@@ -191,30 +250,57 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={sharePost}>Share</DropdownMenuItem>
-            {user?.id === post.user_id && (
-              <DropdownMenuItem className="text-destructive" onClick={handleDeletePost}>
-                Delete Post
-              </DropdownMenuItem>
+            {isOwner ? (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive" onClick={handleDeletePost}>
+                  Delete Post
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleUnfollow}>
+                  <UserMinus className="mr-2 h-4 w-4" /> Unfollow
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Flag className="mr-2 h-4 w-4" /> Report
+                </DropdownMenuItem>
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
-      {/* Content */}
+      {/* Content with double-tap */}
       {post.image_url && (
-        <div className="aspect-square w-full overflow-hidden">
+        <div
+          ref={mediaContainerRef}
+          className="relative aspect-square w-full overflow-hidden select-none"
+          onClick={handleDoubleTap}
+        >
           {isVideo ? (
-            <video
-              src={post.image_url}
-              className="h-full w-full object-cover"
-              controls
-              muted
-              playsInline
-              preload="metadata"
-            />
+            <>
+              <video
+                ref={videoRef}
+                src={post.image_url}
+                className="h-full w-full object-cover"
+                muted={muted}
+                playsInline
+                loop
+                preload="metadata"
+              />
+              <button
+                onClick={(e) => { e.stopPropagation(); setMuted(!muted); }}
+                className="absolute bottom-3 right-3 rounded-full bg-foreground/60 p-1.5 text-background"
+              >
+                {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </button>
+            </>
           ) : (
             <img src={post.image_url} alt="" className="h-full w-full object-cover" loading="lazy" />
           )}
+          <HeartAnimation show={showHeartAnim} onComplete={() => setShowHeartAnim(false)} />
         </div>
       )}
 
@@ -238,7 +324,9 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
 
       {/* Info */}
       <div className="px-4 pb-3">
-        <p className="text-sm font-bold">{likesCount.toLocaleString()} likes</p>
+        <button onClick={() => setLikesListOpen(true)} className="text-sm font-bold hover:underline">
+          {likesCount.toLocaleString()} likes
+        </button>
         {post.caption && (
           <p className="mt-1 text-sm">
             <span className="font-bold">{post.username}</span>{" "}
@@ -255,6 +343,9 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
         )}
         <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">{timeAgo}</p>
       </div>
+
+      {/* Likes List Modal */}
+      <LikesListModal open={likesListOpen} onOpenChange={setLikesListOpen} postId={post.id} />
 
       {/* Comments Dialog */}
       <Dialog open={commentsOpen} onOpenChange={setCommentsOpen}>
