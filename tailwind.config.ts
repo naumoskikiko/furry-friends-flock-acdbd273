@@ -93,6 +93,14 @@ export default {
           "50%": { transform: "scale(1.3)" },
           "100%": { transform: "scale(1)" },
         },
+        "heart-burst": {
+          "0%": { transform: "scale(0)", opacity: "0" },
+          "15%": { transform: "scale(1.3)", opacity: "1" },
+          "30%": { transform: "scale(0.95)", opacity: "1" },
+          "45%": { transform: "scale(1.1)", opacity: "1" },
+          "80%": { transform: "scale(1)", opacity: "1" },
+          "100%": { transform: "scale(1)", opacity: "0" },
+        },
         "slide-up": {
           from: { opacity: "0", transform: "translateY(10px)" },
           to: { opacity: "1", transform: "translateY(0)" },
