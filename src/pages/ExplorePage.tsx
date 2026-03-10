@@ -166,12 +166,6 @@ const ExplorePage = () => {
               </div>
             </>
           )}
-          {findMyPet && (
-            <div className="mt-2 rounded-xl bg-accent/10 border border-accent/20 p-3 text-center">
-              <p className="text-xs font-semibold text-accent">🐾 Find My Pet mode active</p>
-              <p className="text-[11px] text-muted-foreground mt-1">Lost pet reports & GPS devices will appear on the map</p>
-            </div>
-          )}
         </div>
 
         {/* Nearby sections */}
