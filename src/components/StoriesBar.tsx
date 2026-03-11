@@ -28,19 +28,20 @@ const StoriesBar = () => {
     setViewerOpen(true);
   };
 
-  const handleReply = async (storyId: string, storyOwnerId: string, mediaUrl: string) => {
+  const handleReply = async (storyId: string, storyOwnerId: string, mediaUrl: string, replyText: string) => {
     if (!user) return;
     try {
       const convId = await getOrCreateConversation(storyOwnerId);
       await fromTable("messages").insert({
         conversation_id: convId,
         sender_id: user.id,
-        message_text: "Replied to your story ❤️",
+        message_text: replyText,
         message_type: "story_reply",
         metadata: { story_id: storyId, media_url: mediaUrl },
       });
       toast({ title: "Reply sent!" });
-    } catch {
+    } catch (e) {
+      console.error("Story reply failed:", e);
       toast({ title: "Failed to send reply", variant: "destructive" });
     }
   };
