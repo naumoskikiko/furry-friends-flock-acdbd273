@@ -1,64 +1,59 @@
 
 
-# PetKeep — Sectioned Execution Plan
+## Plan: Owner Role with Full Role Control
 
-The full feature set is broken into 6 executable sections. Each section delivers working functionality before moving to the next.
+### Overview
+Add an "owner" value to the `app_role` enum, assign it to your account, create an `is_owner` check, build a Role Management panel in Professional Mode, and restrict admin capabilities.
 
----
+### Database Changes (1 migration)
 
-## Section 1: Authentication & Database Foundation
-**Requires: Lovable Cloud enabled first**
+1. **Add "owner" to `app_role` enum**: `ALTER TYPE public.app_role ADD VALUE 'owner';`
+2. **Insert owner role** for `hristijannaumoski3@gmail.com` (user_id `9bce8224-8080-43a1-9fce-16cd183eeeaa`) into `user_roles`
+3. **Create `has_role_owner` helper function** — security definer function that checks specifically for owner role
+4. **Update RLS on `user_roles`** table:
+   - SELECT: owners can see all rows, others can see their own
+   - INSERT/UPDATE/DELETE: only owner role can modify roles
+5. **Add RLS policy** so owners can do everything admins can (owner inherits admin powers)
 
-- Create Supabase database schema: `profiles`, `user_roles`, `pets`, `sitter_profiles`, `credits`, `credit_transactions`, `followers`
-- RLS policies on all tables
-- Storage buckets for avatars and pet photos
-- Auth pages: Login (email/password), Sign Up (with role selection: Owner/Sitter), Forgot Password, Reset Password
-- Auto-create profile on signup via database trigger
-- Protected routes — unauthenticated users redirected to `/auth`
-- Profile page becomes functional: edit name/bio/location, upload avatar
+### New Hook: `useIsOwner`
+- File: `src/hooks/useIsOwner.ts`
+- Calls `has_role` with `'owner'` role
+- Returns `{ isOwner, loading }`
 
-## Section 2: Pet Management & Profile Features
-- Full CRUD for pets (add/edit/delete with photo upload)
-- Pet mini-profiles with breed, age, weight, medical notes
-- Followers/following system (follow/unfollow, clickable lists)
-- Share Profile (copy link)
-- Credits wallet page with balance and transaction history
-- Reviews page showing star breakdown and written reviews
+### Update `useIsAdmin` Hook
+- Return true for both `admin` AND `owner` roles (owner inherits admin access)
+- Check both roles via two RPC calls or a single query to `user_roles`
 
-## Section 3: Booking & Sitter Marketplace
-- Sitter profile pages with availability, pricing, services
-- Care page filters: price range, rating, student badge, service type
-- Calendar-based booking flow with price calculation
-- Booking status management (pending → confirmed → active → completed → cancelled)
-- Home dashboard shows active/upcoming bookings
-- Tables: `bookings`, `reviews`, `availability`
+### New Component: Role Management Panel
+- File: `src/components/settings/RoleManagementPanel.tsx`
+- Only visible to Owner
+- Features:
+  - Search/list all users (from `profiles` table)
+  - View each user's current roles
+  - Assign/remove `admin` role
+  - View role for each user (user/admin/owner)
+  - Cannot remove own owner role (safety)
 
-## Section 4: Real-Time Messaging
-- Tables: `conversations`, `messages`
-- Conversation list with unread indicators
-- Real-time chat using Supabase realtime subscriptions
-- Image sharing in chat
-- Booking reference cards in conversations
-- Auto-open chat after booking confirmation
+### Update Professional Mode
+- File: `src/components/settings/ProfessionalMode.tsx`
+- Add "Role Management" section, gated behind `useIsOwner`
+- Uses Crown icon
 
-## Section 5: Settings & Admin
-- Full settings page: account, notifications, privacy, security, danger zone
-- Dark mode toggle
-- Admin panel (role-gated): user management, student verification, analytics dashboard
-- Admin role assignment via `user_roles` table
+### Update Settings Page
+- File: `src/pages/SettingsPage.tsx`
+- Update `useIsAdmin` usage — Professional Mode visible to both admin and owner (already works since owner will return `isAdmin = true`)
 
-## Section 6: Advanced Features
-- Emergency "Find Immediate Help" button
-- SOS during active booking
-- Referral system with unique codes
-- Achievement badges for sitters
-- "Top Sitter of the Month" highlight
-- In-app announcements banner
-- Smart discovery with map view placeholders
+### Security
+- Role changes only possible through RLS-protected `user_roles` table
+- Only owner can INSERT/UPDATE/DELETE on `user_roles`
+- The `has_role` function already uses SECURITY DEFINER to prevent recursion
 
----
-
-## To Start Section 1
-
-I need you to **enable Lovable Cloud** first. Click the Cloud icon in the left sidebar, or I can guide you through it. Once Cloud is enabled, I will immediately begin implementing the database schema, auth system, and functional profile page.
+### Files to create/modify
+| File | Action |
+|------|--------|
+| Migration SQL | Create — add enum value, insert role, update RLS |
+| `src/hooks/useIsOwner.ts` | Create |
+| `src/hooks/useIsAdmin.ts` | Modify — also return true for owner |
+| `src/components/settings/RoleManagementPanel.tsx` | Create |
+| `src/components/settings/ProfessionalMode.tsx` | Modify — add Role Management |
 
