@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { StoryGroup } from "@/components/stories/StoryViewer";
 
+const fromTable = (table: string) => (supabase as any).from(table);
+
 export const useStories = () => {
   const { user } = useAuth();
   const [storyGroups, setStoryGroups] = useState<StoryGroup[]>([]);
@@ -12,7 +14,6 @@ export const useStories = () => {
   const fetchStories = useCallback(async () => {
     setLoading(true);
 
-    // Load all active (non-expired) stories from all users
     const { data: stories } = await supabase
       .from("stories")
       .select("*")
@@ -26,16 +27,26 @@ export const useStories = () => {
       return;
     }
 
-    // Get unique user IDs
     const userIds = [...new Set(stories.map((s) => s.user_id))];
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("user_id, full_name, avatar_url")
+      .select("user_id, full_name, avatar_url, username")
       .in("user_id", userIds);
 
     const profileMap = new Map(profiles?.map((p) => [p.user_id, p]) || []);
 
-    // Group stories by user
+    // Fetch likes for all stories
+    const storyIds = stories.map((s) => s.id);
+    const { data: likes } = await fromTable("story_likes")
+      .select("story_id, user_id")
+      .in("story_id", storyIds);
+
+    const likeMap = new Map<string, string[]>();
+    for (const like of likes || []) {
+      if (!likeMap.has(like.story_id)) likeMap.set(like.story_id, []);
+      likeMap.get(like.story_id)!.push(like.user_id);
+    }
+
     const groupMap = new Map<string, StoryGroup>();
     for (const s of stories) {
       const p = profileMap.get(s.user_id);
@@ -43,14 +54,16 @@ export const useStories = () => {
       if (!groupMap.has(s.user_id)) {
         groupMap.set(s.user_id, {
           user_id: s.user_id,
-          username: name,
+          username: p?.username || name,
           avatar_url: p?.avatar_url || null,
           initials: name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2),
           stories: [],
         });
       }
+      const storyLikes = likeMap.get(s.id) || [];
       groupMap.get(s.user_id)!.stories.push({
         id: s.id,
+        user_id: s.user_id,
         media_url: s.media_url,
         media_type: s.media_type,
         caption: s.caption || "",
@@ -58,10 +71,11 @@ export const useStories = () => {
         text_overlay: s.text_overlay || "",
         sticker: s.sticker || "",
         created_at: s.created_at,
+        likes_count: storyLikes.length,
+        is_liked: user ? storyLikes.includes(user.id) : false,
       });
     }
 
-    // Sort: own story first
     const groups = Array.from(groupMap.values());
     if (user) {
       groups.sort((a, b) => {
@@ -80,5 +94,75 @@ export const useStories = () => {
     fetchStories();
   }, [fetchStories]);
 
-  return { storyGroups, loading, hasOwnStory, refreshStories: fetchStories };
+  const likeStory = useCallback(async (storyId: string) => {
+    if (!user) return;
+    await fromTable("story_likes").insert({ story_id: storyId, user_id: user.id });
+    // Optimistic update
+    setStoryGroups((prev) =>
+      prev.map((g) => ({
+        ...g,
+        stories: g.stories.map((s) =>
+          s.id === storyId ? { ...s, is_liked: true, likes_count: s.likes_count + 1 } : s
+        ),
+      }))
+    );
+  }, [user]);
+
+  const unlikeStory = useCallback(async (storyId: string) => {
+    if (!user) return;
+    await fromTable("story_likes").delete().eq("story_id", storyId).eq("user_id", user.id);
+    setStoryGroups((prev) =>
+      prev.map((g) => ({
+        ...g,
+        stories: g.stories.map((s) =>
+          s.id === storyId ? { ...s, is_liked: false, likes_count: Math.max(0, s.likes_count - 1) } : s
+        ),
+      }))
+    );
+  }, [user]);
+
+  const recordView = useCallback(async (storyId: string) => {
+    if (!user) return;
+    await fromTable("story_views").upsert(
+      { story_id: storyId, user_id: user.id },
+      { onConflict: "story_id,user_id" }
+    );
+  }, [user]);
+
+  return {
+    storyGroups, loading, hasOwnStory, refreshStories: fetchStories,
+    likeStory, unlikeStory, recordView,
+  };
 };
+
+// --- Story drafts (localStorage-based) ---
+export interface StoryDraft {
+  id: string;
+  mediaDataUrl: string;
+  mediaType: "image" | "video";
+  caption: string;
+  location: string;
+  textOverlay: string;
+  sticker: string;
+  petId: string;
+  createdAt: number;
+}
+
+const DRAFTS_KEY = "story_drafts";
+
+export function getStoryDrafts(): StoryDraft[] {
+  try {
+    return JSON.parse(localStorage.getItem(DRAFTS_KEY) || "[]");
+  } catch { return []; }
+}
+
+export function saveStoryDraft(draft: StoryDraft) {
+  const drafts = getStoryDrafts().filter((d) => d.id !== draft.id);
+  drafts.unshift(draft);
+  localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts.slice(0, 10))); // max 10 drafts
+}
+
+export function deleteStoryDraft(draftId: string) {
+  const drafts = getStoryDrafts().filter((d) => d.id !== draftId);
+  localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+}
