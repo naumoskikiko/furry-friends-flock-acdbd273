@@ -397,7 +397,7 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                     })
                   )}
                 </div>
-              )
+              )}
             </div>
           </>
         )}
