@@ -202,11 +202,6 @@ const CarePage = () => {
                           <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold">
                             {catInfo?.icon} {catInfo?.label || p.category}
                           </span>
-                          {p.emergency_available && (
-                            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive flex items-center gap-0.5">
-                              <AlertTriangle className="h-2.5 w-2.5" /> Emergency
-                            </span>
-                          )}
                           {p.response_time_minutes && (
                             <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground flex items-center gap-0.5">
                               <Clock className="h-2.5 w-2.5" /> ~{p.response_time_minutes}min
