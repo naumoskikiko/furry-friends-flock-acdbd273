@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft } from "lucide-react";
 import SettingsMapManagement from "./SettingsMapManagement";
+import CareVerificationPanel from "./CareVerificationPanel";
 
-type SubSection = "dashboard" | "map-management";
+type SubSection = "dashboard" | "map-management" | "care-verification";
 
 const futureSections = [
   { id: "analytics", label: "Platform Analytics", icon: BarChart3, description: "User stats, growth metrics", coming: true },
-  { id: "verification", label: "Business Verification", icon: ShieldCheck, description: "Verify business accounts", coming: true },
   { id: "marketplace", label: "Marketplace Control", icon: Store, description: "Manage listings & products", coming: true },
 ];
 
