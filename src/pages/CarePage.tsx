@@ -156,7 +156,7 @@ const CarePage = () => {
               <span className="text-4xl mb-2">🐾</span>
               <p className="text-sm font-semibold">No providers found</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {searchQuery ? "Try a different search" : emergencyOnly ? "No emergency providers available" : "Be the first to offer care services!"}
+                {searchQuery ? "Try a different search" : "Be the first to offer care services!"}
               </p>
             </div>
           ) : (
