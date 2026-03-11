@@ -26,6 +26,7 @@ const ProfessionalMode = () => {
         {sub === "map-management" && <SettingsMapManagement />}
         {sub === "care-verification" && <CareVerificationPanel />}
         {sub === "care-management" && <CareManagementPanel />}
+        {sub === "marketplace-control" && <MarketplaceManagementPanel />}
       </div>
     );
   }
