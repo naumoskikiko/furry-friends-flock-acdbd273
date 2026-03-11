@@ -33,7 +33,7 @@ interface StoryViewerProps {
   onClose: () => void;
   onLike?: (storyId: string) => void;
   onUnlike?: (storyId: string) => void;
-  onReply?: (storyId: string, storyOwnerId: string, mediaUrl: string) => void;
+  onReply?: (storyId: string, storyOwnerId: string, mediaUrl: string, replyText: string) => void;
   onShare?: (storyId: string, mediaUrl: string) => void;
   onView?: (storyId: string) => void;
 }
