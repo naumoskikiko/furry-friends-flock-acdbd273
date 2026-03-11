@@ -55,6 +55,7 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
   const [prodStock, setProdStock] = useState("");
   const [prodSaving, setProdSaving] = useState(false);
   const [prodImageUrl, setProdImageUrl] = useState("");
+  const [prodExtraImages, setProdExtraImages] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
 
   // Store edit form
