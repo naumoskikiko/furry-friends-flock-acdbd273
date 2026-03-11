@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { ChevronLeft, Plus, Package, Store, Trash2, Edit2 } from "lucide-react";
+import { ChevronLeft, Plus, Package, Store, Trash2, Edit2, ShoppingBag, Truck, CheckCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useMyBusiness, useBusinessProducts, BUSINESS_CATEGORIES, PRODUCT_CATEGORIES } from "@/hooks/useBusiness";
+import { useStoreOrders } from "@/hooks/useOrders";
 import { supabase } from "@/integrations/supabase/client";
 
 interface BusinessDashboardProps {
@@ -15,9 +16,10 @@ interface BusinessDashboardProps {
 const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
   const { business, createBusiness, updateBusiness, refresh } = useMyBusiness();
   const { products, addProduct, deleteProduct } = useBusinessProducts(business?.id || null);
+  const { orders: storeOrders, loading: ordersLoading, updateOrderStatus } = useStoreOrders(business?.id || null);
   const { toast } = useToast();
 
-  const [tab, setTab] = useState<"profile" | "products">("profile");
+  const [tab, setTab] = useState<"profile" | "products" | "orders">("profile");
 
   // Setup form
   const [setupName, setSetupName] = useState("");
@@ -173,6 +175,7 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
               {[
                 { key: "profile" as const, label: "Profile", icon: Store },
                 { key: "products" as const, label: "Products", icon: Package },
+                { key: "orders" as const, label: "Orders", icon: ShoppingBag },
               ].map((t) => (
                 <button
                   key={t.key}
@@ -301,6 +304,97 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                       <p className="text-sm font-semibold mt-2">No products yet</p>
                       <p className="text-xs text-muted-foreground">Add your first product to start selling</p>
                     </div>
+                  )}
+                </div>
+              )}
+
+              {tab === "orders" && (
+                <div className="space-y-3">
+                  {ordersLoading ? (
+                    <div className="flex justify-center py-10">
+                      <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+                    </div>
+                  ) : storeOrders.length === 0 ? (
+                    <div className="text-center py-8">
+                      <span className="text-3xl">📋</span>
+                      <p className="text-sm font-semibold mt-2">No orders yet</p>
+                      <p className="text-xs text-muted-foreground">Orders from customers will appear here</p>
+                    </div>
+                  ) : (
+                    storeOrders.map((item) => {
+                      const status = item.order?.status || "pending";
+                      const statusColors: Record<string, string> = {
+                        pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                        paid: "bg-primary/10 text-primary",
+                        processing: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                        shipped: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+                        delivered: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                        cancelled: "bg-destructive/10 text-destructive",
+                      };
+                      return (
+                        <div key={item.id} className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {item.product?.image_url ? (
+                                <img src={item.product.image_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                              ) : (
+                                <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center text-sm">📦</div>
+                              )}
+                              <div>
+                                <p className="text-xs font-bold">{item.product?.name || "Product"}</p>
+                                <p className="text-[10px] text-muted-foreground">Qty: {item.quantity} · {(item.price * item.quantity).toLocaleString()} MKD</p>
+                              </div>
+                            </div>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${statusColors[status] || "bg-secondary"}`}>
+                              {status}
+                            </span>
+                          </div>
+
+                          {/* Earnings breakdown */}
+                          <div className="flex items-center gap-4 text-[10px]">
+                            <span className="text-muted-foreground">Earnings: <span className="font-bold text-foreground">{Number(item.store_earnings).toLocaleString()} MKD</span></span>
+                            <span className="text-muted-foreground">Fee: {Number(item.platform_fee).toLocaleString()} MKD</span>
+                          </div>
+
+                          {/* Shipping info */}
+                          {item.order && (
+                            <p className="text-[10px] text-muted-foreground">
+                              Ship to: {item.order.shipping_name}, {item.order.shipping_city}, {item.order.shipping_country}
+                            </p>
+                          )}
+
+                          {/* Status update buttons */}
+                          {item.order && ["paid", "processing", "shipped"].includes(status) && (
+                            <div className="flex gap-2">
+                              {status === "paid" && (
+                                <button
+                                  onClick={() => updateOrderStatus(item.order_id, "processing")}
+                                  className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                >
+                                  <Package className="h-3 w-3" /> Processing
+                                </button>
+                              )}
+                              {(status === "paid" || status === "processing") && (
+                                <button
+                                  onClick={() => updateOrderStatus(item.order_id, "shipped")}
+                                  className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                                >
+                                  <Truck className="h-3 w-3" /> Shipped
+                                </button>
+                              )}
+                              {status === "shipped" && (
+                                <button
+                                  onClick={() => updateOrderStatus(item.order_id, "delivered")}
+                                  className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                >
+                                  <CheckCircle className="h-3 w-3" /> Delivered
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               )}

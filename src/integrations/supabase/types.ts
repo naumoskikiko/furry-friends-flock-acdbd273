@@ -568,6 +568,41 @@ export type Database = {
           },
         ]
       }
+      cart_items: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_participants: {
         Row: {
           conversation_id: string
@@ -887,6 +922,112 @@ export type Database = {
           message?: string
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          platform_fee: number
+          price: number
+          product_id: string
+          quantity: number
+          store_earnings: number
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          platform_fee?: number
+          price?: number
+          product_id: string
+          quantity?: number
+          store_earnings?: number
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          platform_fee?: number
+          price?: number
+          product_id?: string
+          quantity?: number
+          store_earnings?: number
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          id: string
+          platform_fee: number
+          shipping_address: string
+          shipping_city: string
+          shipping_country: string
+          shipping_name: string
+          shipping_phone: string
+          shipping_postal_code: string
+          status: string
+          total_price: number
+          updated_at: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          id?: string
+          platform_fee?: number
+          shipping_address?: string
+          shipping_city?: string
+          shipping_country?: string
+          shipping_name?: string
+          shipping_phone?: string
+          shipping_postal_code?: string
+          status?: string
+          total_price?: number
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          id?: string
+          platform_fee?: number
+          shipping_address?: string
+          shipping_city?: string
+          shipping_country?: string
+          shipping_name?: string
+          shipping_phone?: string
+          shipping_postal_code?: string
+          status?: string
+          total_price?: number
+          updated_at?: string
         }
         Relationships: []
       }

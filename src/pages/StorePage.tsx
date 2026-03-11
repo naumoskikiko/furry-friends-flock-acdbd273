@@ -208,7 +208,7 @@ const StorePage = () => {
               {filteredProducts.map((p) => {
                 const ci = PRODUCT_CATEGORIES.find((c) => c.value === p.category);
                 return (
-                  <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
+                  <div key={p.id} onClick={() => navigate(`/product/${p.id}`)} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover cursor-pointer">
                     {p.image_url ? (
                       <img src={p.image_url} alt={p.name} className="h-32 w-full object-cover" />
                     ) : (

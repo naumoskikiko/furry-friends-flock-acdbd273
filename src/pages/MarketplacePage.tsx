@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
-import { Search, ChevronRight, Star, MapPin, Store, Package, Plus, BadgeCheck } from "lucide-react";
+import { Search, ChevronRight, Star, MapPin, Store, Package, Plus, BadgeCheck, ShoppingCart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAllBusinesses, useAllProducts, BUSINESS_CATEGORIES, PRODUCT_CATEGORIES } from "@/hooks/useBusiness";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useCart } from "@/hooks/useCart";
 import BusinessDashboard from "@/components/business/BusinessDashboard";
 
 const MarketplacePage = () => {
@@ -34,6 +35,7 @@ const MarketplacePage = () => {
   const featured = businesses.filter((b) => b.avg_rating >= 4.0).slice(0, 5);
   const isBusiness = profile?.role === "business";
   const { isAdmin } = useIsAdmin();
+  const { itemCount } = useCart();
   const canManageStore = isBusiness || isAdmin;
 
   return (
@@ -46,6 +48,14 @@ const MarketplacePage = () => {
             <p className="text-sm text-muted-foreground">Your local pet marketplace</p>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={() => navigate("/cart")} className="relative rounded-full p-2 hover:bg-secondary">
+              <ShoppingCart className="h-5 w-5" />
+              {itemCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
+                  {itemCount > 9 ? "9+" : itemCount}
+                </span>
+              )}
+            </button>
             {canManageStore && (
               <button
                 onClick={() => setShowDashboard(true)}
@@ -134,7 +144,7 @@ const MarketplacePage = () => {
                   {products.map((p) => {
                     const catInfo = PRODUCT_CATEGORIES.find((c) => c.value === p.category);
                     return (
-                      <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
+                      <div key={p.id} onClick={() => navigate(`/product/${p.id}`)} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover cursor-pointer">
                         {p.image_url ? (
                           <img src={p.image_url} alt={p.name} className="h-32 w-full object-cover" />
                         ) : (
