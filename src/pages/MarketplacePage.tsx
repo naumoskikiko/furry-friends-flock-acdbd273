@@ -93,6 +93,9 @@ const MarketplacePage = () => {
             }`}
           >
             <Package className="h-3.5 w-3.5" /> Products
+            {searchQuery && products.length > 0 && (
+              <span className="bg-primary text-primary-foreground text-[9px] rounded-full px-1.5">{products.length}</span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab("businesses")}
@@ -101,6 +104,9 @@ const MarketplacePage = () => {
             }`}
           >
             <Store className="h-3.5 w-3.5" /> Stores
+            {searchQuery && businesses.length > 0 && (
+              <span className="bg-primary text-primary-foreground text-[9px] rounded-full px-1.5">{businesses.length}</span>
+            )}
           </button>
         </div>
 
