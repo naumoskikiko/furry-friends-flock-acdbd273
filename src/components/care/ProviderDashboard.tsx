@@ -24,8 +24,10 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const { balance } = useProviderBalance(provider?.id || null);
   const { payments: providerPayments } = useProviderPayments(provider?.id || null);
   const { payouts, requestPayout } = useProviderPayouts(provider?.id || null);
+  const { verifications, submitVerification, deleteVerification, pendingCount, approvedCount, rejectedCount, isFullyVerified } = useProviderVerifications(provider?.id || null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [tab, setTab] = useState<"overview" | "services" | "bookings" | "hours" | "reviews" | "earnings" | "settings">("overview");
   const [payoutAmount, setPayoutAmount] = useState("");
