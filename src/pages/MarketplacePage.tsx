@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
-import { Search, ChevronRight, Star, MapPin, Store, Package, Plus } from "lucide-react";
+import { Search, ChevronRight, Star, MapPin, Store, Package, Plus, BadgeCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAllBusinesses, useAllProducts, BUSINESS_CATEGORIES, PRODUCT_CATEGORIES } from "@/hooks/useBusiness";
 import BusinessDashboard from "@/components/business/BusinessDashboard";
