@@ -92,7 +92,7 @@ const CartPage = () => {
 
         {/* Fixed bottom checkout */}
         {items.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-4 z-40">
+          <div className="fixed left-0 right-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] bg-background/95 backdrop-blur-sm border-t border-border p-4 z-[60]">
             <div className="mx-auto max-w-lg">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm text-muted-foreground">Total ({itemCount} items)</span>
