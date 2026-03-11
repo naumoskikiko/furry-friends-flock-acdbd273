@@ -39,6 +39,8 @@ const MarketplacePage = () => {
   const isBusiness = profile?.role === "business";
   const { isAdmin } = useIsAdmin();
   const { itemCount, totalPrice, addToCart } = useCart();
+  const { business: myBusiness, loading: myBizLoading } = useMyBusiness();
+  const hasStore = !!myBusiness;
   const canManageStore = isBusiness || isAdmin;
 
   const handleQuickAdd = async (productId: string, productName: string) => {
