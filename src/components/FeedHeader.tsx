@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import petkeepLogo from "@/assets/petkeep-logo.png";
-import { Bell } from "lucide-react";
+import { Bell, PawPrint } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
 
 const FeedHeader = () => {
