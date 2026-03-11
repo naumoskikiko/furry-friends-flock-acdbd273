@@ -1,12 +1,14 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
-import { Search, ChevronRight, Star, MapPin, Store, Package, Plus } from "lucide-react";
+import { Search, ChevronRight, Star, MapPin, Store, Package, Plus, BadgeCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAllBusinesses, useAllProducts, BUSINESS_CATEGORIES, PRODUCT_CATEGORIES } from "@/hooks/useBusiness";
 import BusinessDashboard from "@/components/business/BusinessDashboard";
 
 const MarketplacePage = () => {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [activeTab, setActiveTab] = useState<"products" | "businesses">("products");
@@ -182,13 +184,16 @@ const MarketplacePage = () => {
                   {featured.map((b) => {
                     const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
                     return (
-                      <div key={b.id} className="min-w-[180px] rounded-2xl bg-card border border-border p-3 shrink-0 petkeep-card-hover">
+                      <div key={b.id} onClick={() => navigate(`/store/${b.id}`)} className="min-w-[180px] rounded-2xl bg-card border border-border p-3 shrink-0 petkeep-card-hover cursor-pointer">
                         <div className="flex items-center gap-2">
                           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-xl">
                             {catInfo?.icon || "🏪"}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-bold truncate">{b.business_name}</p>
+                            <div className="flex items-center gap-1">
+                              <p className="text-xs font-bold truncate">{b.business_name}</p>
+                              {b.is_verified && <BadgeCheck className="h-3 w-3 text-primary shrink-0" />}
+                            </div>
                             <p className="text-[10px] text-muted-foreground flex items-center gap-0.5">
                               <Star className="h-3 w-3 fill-primary text-primary" />
                               {Number(b.avg_rating).toFixed(1)}
@@ -220,29 +225,36 @@ const MarketplacePage = () => {
                   {businesses.map((b) => {
                     const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
                     return (
-                      <div key={b.id} className="flex items-center gap-3 rounded-2xl bg-card p-4 border border-border petkeep-card-hover">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-xl">
-                          {catInfo?.icon || "🏪"}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-bold truncate">{b.business_name}</h4>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span className="capitalize">{b.category.replace("_", " ")}</span>
-                            {b.avg_rating > 0 && (
-                              <span className="flex items-center gap-0.5">
-                                <Star className="h-3 w-3 fill-primary text-primary" />
-                                {Number(b.avg_rating).toFixed(1)}
-                              </span>
-                            )}
-                            {b.location && (
-                              <span className="flex items-center gap-0.5">
-                                <MapPin className="h-3 w-3" /> {b.location}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                      <div
+                        key={b.id}
+                        onClick={() => navigate(`/store/${b.id}`)}
+                        className="flex items-center gap-3 rounded-2xl bg-card p-4 border border-border petkeep-card-hover cursor-pointer"
+                      >
+                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-xl">
+                           {catInfo?.icon || "🏪"}
+                         </div>
+                         <div className="flex-1 min-w-0">
+                           <div className="flex items-center gap-1">
+                             <h4 className="text-sm font-bold truncate">{b.business_name}</h4>
+                             {b.is_verified && <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />}
+                           </div>
+                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                             <span className="capitalize">{b.category.replace("_", " ")}</span>
+                             {b.avg_rating > 0 && (
+                               <span className="flex items-center gap-0.5">
+                                 <Star className="h-3 w-3 fill-primary text-primary" />
+                                 {Number(b.avg_rating).toFixed(1)}
+                               </span>
+                             )}
+                             {b.location && (
+                               <span className="flex items-center gap-0.5">
+                                 <MapPin className="h-3 w-3" /> {b.location}
+                               </span>
+                             )}
+                           </div>
+                         </div>
+                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                       </div>
                     );
                   })}
                 </div>

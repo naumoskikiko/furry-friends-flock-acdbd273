@@ -3,18 +3,18 @@ import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users } fr
 import SettingsMapManagement from "./SettingsMapManagement";
 import CareVerificationPanel from "./CareVerificationPanel";
 import CareManagementPanel from "./CareManagementPanel";
+import MarketplaceManagementPanel from "./MarketplaceManagementPanel";
 
-type SubSection = "dashboard" | "map-management" | "care-verification" | "care-management";
+type SubSection = "dashboard" | "map-management" | "care-verification" | "care-management" | "marketplace-control";
 
 const futureSections = [
   { id: "analytics", label: "Platform Analytics", icon: BarChart3, description: "User stats, growth metrics", coming: true },
-  { id: "marketplace", label: "Marketplace Control", icon: Store, description: "Manage listings & products", coming: true },
 ];
 
 const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
 
-  if (sub === "map-management" || sub === "care-verification" || sub === "care-management") {
+  if (sub === "map-management" || sub === "care-verification" || sub === "care-management" || sub === "marketplace-control") {
     return (
       <div>
         <button
@@ -26,6 +26,7 @@ const ProfessionalMode = () => {
         {sub === "map-management" && <SettingsMapManagement />}
         {sub === "care-verification" && <CareVerificationPanel />}
         {sub === "care-management" && <CareManagementPanel />}
+        {sub === "marketplace-control" && <MarketplaceManagementPanel />}
       </div>
     );
   }
@@ -80,6 +81,21 @@ const ProfessionalMode = () => {
         <div className="flex-1 text-left">
           <p className="text-sm font-semibold">Care Management</p>
           <p className="text-xs text-muted-foreground">Manage providers, reviews & reports</p>
+        </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </button>
+
+      {/* Marketplace Control */}
+      <button
+        onClick={() => setSub("marketplace-control")}
+        className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
+      >
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+          <Store className="h-4.5 w-4.5 text-primary" />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="text-sm font-semibold">Marketplace Control</p>
+          <p className="text-xs text-muted-foreground">Manage stores, products & listings</p>
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </button>

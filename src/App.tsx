@@ -19,6 +19,7 @@ import UserProfilePage from "./pages/UserProfilePage";
 import SearchResultsPage from "./pages/SearchResultsPage";
 import PlaceDetailPage from "./pages/PlaceDetailPage";
 import FindMyPetPage from "./pages/FindMyPetPage";
+import StorePage from "./pages/StorePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/search" element={<ProtectedRoute><SearchResultsPage /></ProtectedRoute>} />
             <Route path="/place/:id" element={<ProtectedRoute><PlaceDetailPage /></ProtectedRoute>} />
             <Route path="/find-my-pet" element={<ProtectedRoute><FindMyPetPage /></ProtectedRoute>} />
+            <Route path="/store/:id" element={<ProtectedRoute><StorePage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
