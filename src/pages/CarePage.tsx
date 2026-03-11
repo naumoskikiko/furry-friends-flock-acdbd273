@@ -31,8 +31,7 @@ const CarePage = () => {
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [emergencyOnly, setEmergencyOnly] = useState(false);
-  const { providers, loading } = useCareProviders(activeCategory, searchQuery, emergencyOnly);
+  const { providers, loading } = useCareProviders(activeCategory, searchQuery);
   const { provider: myProvider } = useMyProvider();
   const [selectedProvider, setSelectedProvider] = useState<CareProvider | null>(null);
   const [showDashboard, setShowDashboard] = useState(false);
