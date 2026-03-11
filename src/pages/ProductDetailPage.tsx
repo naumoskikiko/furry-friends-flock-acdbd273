@@ -308,7 +308,7 @@ const ProductDetailPage = () => {
 
         {/* Fixed bottom add to cart */}
         {inStock && (
-          <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-4 pb-[calc(1rem+env(safe-area-inset-bottom)+5rem)] z-40">
+          <div className="fixed left-0 right-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] bg-background/95 backdrop-blur-sm border-t border-border p-4 z-[60]">
             <div className="mx-auto max-w-lg">
               <button
                 onClick={handleAddToCart}
