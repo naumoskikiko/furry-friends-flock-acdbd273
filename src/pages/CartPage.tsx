@@ -21,7 +21,7 @@ const CartPage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg pb-32">
+      <div className="mx-auto max-w-lg pb-44">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="rounded-full p-1.5 hover:bg-secondary">
