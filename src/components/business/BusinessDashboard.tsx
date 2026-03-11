@@ -19,7 +19,7 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
   const { orders: storeOrders, loading: ordersLoading, updateOrderStatus } = useStoreOrders(business?.id || null);
   const { toast } = useToast();
 
-  const [tab, setTab] = useState<"profile" | "products">("profile");
+  const [tab, setTab] = useState<"profile" | "products" | "orders">("profile");
 
   // Setup form
   const [setupName, setSetupName] = useState("");
