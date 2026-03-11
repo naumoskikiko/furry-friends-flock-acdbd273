@@ -217,6 +217,15 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
 
         {/* Tab content */}
         <div className="px-4 py-4 pb-24">
+          {/* Unverified notice */}
+          {!provider.is_verified && tab === "services" && !isOwnProfile && (
+            <div className="mb-4 rounded-xl bg-destructive/10 p-3 flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+              <p className="text-xs text-destructive font-semibold">
+                Provider verification required before accepting bookings.
+              </p>
+            </div>
+          )}
           {/* Services */}
           {tab === "services" && (
             <div className="space-y-3">
