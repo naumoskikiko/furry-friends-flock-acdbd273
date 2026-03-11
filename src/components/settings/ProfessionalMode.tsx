@@ -9,7 +9,6 @@ type SubSection = "dashboard" | "map-management" | "care-verification" | "care-m
 
 const futureSections = [
   { id: "analytics", label: "Platform Analytics", icon: BarChart3, description: "User stats, growth metrics", coming: true },
-  { id: "marketplace", label: "Marketplace Control", icon: Store, description: "Manage listings & products", coming: true },
 ];
 
 const ProfessionalMode = () => {
