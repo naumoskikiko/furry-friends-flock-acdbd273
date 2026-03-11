@@ -159,7 +159,7 @@ const StoryViewer = ({
 
   const handleReplySend = () => {
     if (!replyText.trim() || !story || !group) return;
-    onReply?.(story.id, group.user_id, story.media_url);
+    onReply?.(story.id, group.user_id, story.media_url, replyText.trim());
     setReplyText("");
     setShowReply(false);
     setPaused(false);
