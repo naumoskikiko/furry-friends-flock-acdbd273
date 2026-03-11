@@ -135,7 +135,7 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
     setAddingProduct(false); setEditingProduct(null);
   };
 
-  const startEditProduct = (p: any) => {
+  const startEditProduct = async (p: any) => {
     setProdName(p.name);
     setProdDesc(p.description || "");
     setProdPrice(String(p.price));
@@ -144,6 +144,9 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
     setProdImageUrl(p.image_url || "");
     setEditingProduct(p.id);
     setAddingProduct(true);
+    // Load extra images
+    const { data } = await (supabase as any).from("product_images").select("image_url").eq("product_id", p.id).order("display_order");
+    setProdExtraImages((data || []).map((d: any) => d.image_url));
   };
 
   const handleDuplicateProduct = async (p: any) => {
