@@ -145,9 +145,7 @@ const CarePage = () => {
 
         {/* All providers */}
         <div className="px-4 pb-4">
-          {!searchQuery && <h3 className="font-display text-base font-bold mb-2">
-            {emergencyOnly ? "🚨 Emergency Providers" : "All Providers"}
-          </h3>}
+          {!searchQuery && <h3 className="font-display text-base font-bold mb-2">All Providers</h3>}
 
           {loading ? (
             <div className="flex justify-center py-10">
