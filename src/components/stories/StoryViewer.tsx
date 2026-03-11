@@ -309,14 +309,9 @@ const StoryViewer = ({
         </div>
       )}
 
-      {/* Own story: show like count */}
-      {isMine && story.likes_count > 0 && (
-        <div className="absolute bottom-6 left-0 right-0 z-50 flex justify-center">
-          <div className="flex items-center gap-1.5 rounded-full bg-black/50 px-4 py-2 text-white">
-            <Heart className="h-4 w-4 fill-red-500 text-red-500" />
-            <span className="text-xs font-semibold">{story.likes_count} {story.likes_count === 1 ? "like" : "likes"}</span>
-          </div>
-        </div>
+      {/* Own story: analytics panel */}
+      {isMine && (
+        <StoryAnalyticsPanel storyId={story.id} likesCount={story.likes_count} />
       )}
     </div>
   );
