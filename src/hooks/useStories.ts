@@ -12,26 +12,12 @@ export const useStories = () => {
   const fetchStories = useCallback(async () => {
     setLoading(true);
 
-    // Get followed user IDs to filter stories
-    let followedIds: string[] = [];
-    if (user) {
-      const { data: follows } = await supabase
-        .from("followers")
-        .select("following_id")
-        .eq("follower_id", user.id);
-      followedIds = follows?.map((f) => f.following_id) || [];
-    }
-    const storyUserIds = user ? [...followedIds, user.id] : [];
-
-    const query = supabase
+    // Load all active (non-expired) stories from all users
+    const { data: stories } = await supabase
       .from("stories")
       .select("*")
+      .gt("expires_at", new Date().toISOString())
       .order("created_at", { ascending: true });
-
-    // If user is logged in, filter to own + followed
-    const { data: stories } = storyUserIds.length > 0
-      ? await query.in("user_id", storyUserIds)
-      : await query;
 
     if (!stories || stories.length === 0) {
       setStoryGroups([]);
