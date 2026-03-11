@@ -38,7 +38,7 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   // Create provider form
   const [formName, setFormName] = useState("");
   const [formDesc, setFormDesc] = useState("");
-  const [formCategory, setFormCategory] = useState("veterinarian");
+  const [formCategory, setFormCategory] = useState("dog_sitter");
   const [formLocation, setFormLocation] = useState("");
   const [formPhone, setFormPhone] = useState("");
 
