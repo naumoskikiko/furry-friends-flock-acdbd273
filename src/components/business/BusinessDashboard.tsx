@@ -613,6 +613,14 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                           <button onClick={() => handleDuplicateProduct(p)} className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold bg-secondary hover:bg-secondary/80">
                             <Copy className="h-3 w-3" /> Duplicate
                           </button>
+                          <button
+                            onClick={() => setBoostModal({ type: "product", id: p.id, name: p.name })}
+                            className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold ${
+                              boostedProductIds.has(p.id) ? "bg-amber-500/10 text-amber-600" : "bg-secondary hover:bg-secondary/80"
+                            }`}
+                          >
+                            <Zap className="h-3 w-3" /> {boostedProductIds.has(p.id) ? "Boosted" : "Boost"}
+                          </button>
                           <button onClick={() => deleteProduct(p.id)} className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold hover:bg-destructive/10 text-muted-foreground hover:text-destructive ml-auto">
                             <Trash2 className="h-3 w-3" /> Delete
                           </button>
