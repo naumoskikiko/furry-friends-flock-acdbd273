@@ -355,19 +355,22 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
                     <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 ${
                       isMine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-secondary text-secondary-foreground rounded-bl-md"
                     }`}>
-                      {/* Story preview */}
-                      <div className={`mb-2 rounded-xl overflow-hidden border ${
-                        isMine ? "border-primary-foreground/20" : "border-border"
-                      }`}>
+                      {/* Story preview - clickable */}
+                      <button
+                        onClick={() => openStoryFromMessage(msg.metadata)}
+                        className={`mb-2 rounded-xl overflow-hidden border w-full text-left ${
+                          isMine ? "border-primary-foreground/20" : "border-border"
+                        }`}
+                      >
                         {msg.metadata.media_url && (
                           <img src={msg.metadata.media_url} alt="" className="w-full h-24 object-cover" />
                         )}
                         <div className={`px-2.5 py-1.5 ${isMine ? "bg-primary-foreground/10" : "bg-card"}`}>
                           <p className={`text-[10px] font-semibold flex items-center gap-1 ${isMine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                            <Reply className="h-3 w-3" /> Replied to story
+                            <Reply className="h-3 w-3" /> Replied to story · Tap to view
                           </p>
                         </div>
-                      </div>
+                      </button>
                       <p className="text-sm whitespace-pre-wrap break-words">{msg.message_text}</p>
                       <div className={`flex items-center gap-1 mt-0.5 ${isMine ? "justify-end" : ""}`}>
                         <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
@@ -391,9 +394,12 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
                     ref={(el) => { if (el) messageRefs.current.set(msg.id, el); }}
                     className={`group flex items-end gap-1.5 ${isMine ? "justify-end" : "justify-start"}`}
                   >
-                    <div className={`max-w-[75%] rounded-2xl overflow-hidden ${
-                      isMine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-secondary text-secondary-foreground rounded-bl-md"
-                    }`}>
+                    <button
+                      onClick={() => openStoryFromMessage(msg.metadata)}
+                      className={`max-w-[75%] rounded-2xl overflow-hidden text-left ${
+                        isMine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-secondary text-secondary-foreground rounded-bl-md"
+                      }`}
+                    >
                       {msg.metadata.media_url && (
                         <img src={msg.metadata.media_url} alt="" className="w-full h-32 object-cover" />
                       )}
@@ -412,7 +418,52 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
                           )}
                         </div>
                       </div>
-                    </div>
+                    </button>
+                  </div>
+                );
+              }
+
+              // Post share card
+              if (msg.message_type === "post_share" && msg.metadata) {
+                return (
+                  <div
+                    key={msg.id}
+                    ref={(el) => { if (el) messageRefs.current.set(msg.id, el); }}
+                    className={`group flex items-end gap-1.5 ${isMine ? "justify-end" : "justify-start"}`}
+                  >
+                    <a
+                      href={`/post/${msg.metadata.post_id}`}
+                      className={`max-w-[75%] rounded-2xl overflow-hidden block ${
+                        isMine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-secondary text-secondary-foreground rounded-bl-md"
+                      }`}
+                    >
+                      {msg.metadata.image_url && (
+                        <img src={msg.metadata.image_url} alt="" className="w-full h-32 object-cover" />
+                      )}
+                      <div className="px-3.5 py-2">
+                        <p className={`text-[11px] font-semibold flex items-center gap-1 ${isMine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                          <Image className="h-3 w-3" /> Shared a post
+                        </p>
+                        {msg.metadata.username && (
+                          <p className={`text-xs font-bold mt-0.5`}>{msg.metadata.username}</p>
+                        )}
+                        {msg.metadata.caption && (
+                          <p className={`text-[11px] mt-0.5 truncate ${isMine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                            {msg.metadata.caption}
+                          </p>
+                        )}
+                        <p className={`text-[10px] mt-0.5 ${isMine ? "text-primary-foreground/50" : "text-muted-foreground"}`}>Tap to view post</p>
+                        <div className={`flex items-center gap-1 mt-1 ${isMine ? "justify-end" : ""}`}>
+                          <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                            {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                          </span>
+                          {isMine && (msg.is_read
+                            ? <CheckCheck className="h-3 w-3 text-primary-foreground/60" />
+                            : <Check className="h-3 w-3 text-primary-foreground/60" />
+                          )}
+                        </div>
+                      </div>
+                    </a>
                   </div>
                 );
               }
