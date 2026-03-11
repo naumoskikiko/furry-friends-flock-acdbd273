@@ -48,6 +48,14 @@ const MarketplacePage = () => {
             <p className="text-sm text-muted-foreground">Your local pet marketplace</p>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={() => navigate("/cart")} className="relative rounded-full p-2 hover:bg-secondary">
+              <ShoppingCart className="h-5 w-5" />
+              {itemCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
+                  {itemCount > 9 ? "9+" : itemCount}
+                </span>
+              )}
+            </button>
             {canManageStore && (
               <button
                 onClick={() => setShowDashboard(true)}
