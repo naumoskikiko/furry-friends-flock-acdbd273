@@ -222,29 +222,36 @@ const MarketplacePage = () => {
                   {businesses.map((b) => {
                     const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
                     return (
-                      <div key={b.id} className="flex items-center gap-3 rounded-2xl bg-card p-4 border border-border petkeep-card-hover">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-xl">
-                          {catInfo?.icon || "🏪"}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-bold truncate">{b.business_name}</h4>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span className="capitalize">{b.category.replace("_", " ")}</span>
-                            {b.avg_rating > 0 && (
-                              <span className="flex items-center gap-0.5">
-                                <Star className="h-3 w-3 fill-primary text-primary" />
-                                {Number(b.avg_rating).toFixed(1)}
-                              </span>
-                            )}
-                            {b.location && (
-                              <span className="flex items-center gap-0.5">
-                                <MapPin className="h-3 w-3" /> {b.location}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                      <div
+                        key={b.id}
+                        onClick={() => navigate(`/store/${b.id}`)}
+                        className="flex items-center gap-3 rounded-2xl bg-card p-4 border border-border petkeep-card-hover cursor-pointer"
+                      >
+                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-xl">
+                           {catInfo?.icon || "🏪"}
+                         </div>
+                         <div className="flex-1 min-w-0">
+                           <div className="flex items-center gap-1">
+                             <h4 className="text-sm font-bold truncate">{b.business_name}</h4>
+                             {b.is_verified && <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />}
+                           </div>
+                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                             <span className="capitalize">{b.category.replace("_", " ")}</span>
+                             {b.avg_rating > 0 && (
+                               <span className="flex items-center gap-0.5">
+                                 <Star className="h-3 w-3 fill-primary text-primary" />
+                                 {Number(b.avg_rating).toFixed(1)}
+                               </span>
+                             )}
+                             {b.location && (
+                               <span className="flex items-center gap-0.5">
+                                 <MapPin className="h-3 w-3" /> {b.location}
+                               </span>
+                             )}
+                           </div>
+                         </div>
+                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                       </div>
                     );
                   })}
                 </div>
