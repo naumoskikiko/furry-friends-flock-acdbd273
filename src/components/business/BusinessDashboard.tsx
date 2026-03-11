@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import {
   ChevronLeft, Plus, Package, Store, Trash2, Edit2, ShoppingBag, Truck,
   CheckCircle, BarChart3, Users, Bell, AlertTriangle, Copy, Save, X,
-  TrendingUp, DollarSign, Star, Clock, Image as ImageIcon
+  TrendingUp, DollarSign, Star, Clock, Image as ImageIcon, Zap
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
