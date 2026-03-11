@@ -226,16 +226,22 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
                       </div>
                     </div>
                     {!isOwnProfile && (
-                      <button
-                        onClick={() => setSelectedService(selectedService?.id === s.id ? null : s)}
-                        className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
-                          selectedService?.id === s.id
-                            ? "bg-secondary text-secondary-foreground"
-                            : "petkeep-gradient text-primary-foreground"
-                        }`}
-                      >
-                        {selectedService?.id === s.id ? "Cancel" : "Book"}
-                      </button>
+                      provider.is_verified ? (
+                        <button
+                          onClick={() => setSelectedService(selectedService?.id === s.id ? null : s)}
+                          className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
+                            selectedService?.id === s.id
+                              ? "bg-secondary text-secondary-foreground"
+                              : "petkeep-gradient text-primary-foreground"
+                          }`}
+                        >
+                          {selectedService?.id === s.id ? "Cancel" : "Book"}
+                        </button>
+                      ) : (
+                        <span className="rounded-xl px-3 py-1.5 text-xs font-bold bg-muted text-muted-foreground cursor-not-allowed">
+                          Not Verified
+                        </span>
+                      )
                     )}
                   </div>
 
