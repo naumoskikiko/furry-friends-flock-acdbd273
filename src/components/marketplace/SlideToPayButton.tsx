@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, forwardRef } from "react";
 import { ChevronRight, Check, Loader2 } from "lucide-react";
 
 interface SlideToPayProps {
@@ -8,24 +8,39 @@ interface SlideToPayProps {
   onConfirm: () => Promise<void>;
 }
 
-const SlideToPayButton = ({ amount, currency = "MKD", disabled, onConfirm }: SlideToPayProps) => {
+const SlideToPayButton = forwardRef<HTMLDivElement, SlideToPayProps>(({ amount, currency = "MKD", disabled, onConfirm }, forwardedRef) => {
   const [offset, setOffset] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const trackRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement | null>(null);
   const startXRef = useRef(0);
   const draggingRef = useRef(false);
   const offsetRef = useRef(0);
+  const pointerIdRef = useRef<number | null>(null);
 
   const THUMB_SIZE = 56;
   const getTrackWidth = useCallback(() => (trackRef.current?.clientWidth || 300) - THUMB_SIZE, []);
 
-  const handleStart = useCallback((clientX: number) => {
+  const setTrackRefs = useCallback(
+    (node: HTMLDivElement | null) => {
+      trackRef.current = node;
+      if (!forwardedRef) return;
+      if (typeof forwardedRef === "function") {
+        forwardedRef(node);
+      } else {
+        forwardedRef.current = node;
+      }
+    },
+    [forwardedRef]
+  );
+
+  const handleStart = useCallback((clientX: number, pointerId?: number) => {
     if (disabled || confirmed || processing) return;
     startXRef.current = clientX - offsetRef.current;
     setDragging(true);
     draggingRef.current = true;
+    pointerIdRef.current = pointerId ?? null;
   }, [disabled, confirmed, processing]);
 
   const handleMove = useCallback((clientX: number) => {
@@ -39,10 +54,12 @@ const SlideToPayButton = ({ amount, currency = "MKD", disabled, onConfirm }: Sli
   const handleEnd = useCallback(async () => {
     if (!draggingRef.current) return;
     draggingRef.current = false;
+    pointerIdRef.current = null;
     setDragging(false);
+
     const maxOffset = getTrackWidth();
     const currentOffset = offsetRef.current;
-    const threshold = maxOffset * 0.75; // Lower threshold for easier triggering
+    const threshold = maxOffset * 0.75;
 
     if (currentOffset >= threshold) {
       offsetRef.current = maxOffset;
@@ -54,33 +71,36 @@ const SlideToPayButton = ({ amount, currency = "MKD", disabled, onConfirm }: Sli
       } catch {
         offsetRef.current = 0;
         setOffset(0);
+      } finally {
+        setProcessing(false);
       }
-      setProcessing(false);
     } else {
       offsetRef.current = 0;
       setOffset(0);
     }
   }, [onConfirm, getTrackWidth]);
 
-  // Global mouse/touch listeners to prevent losing drag outside element
   useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => handleMove(e.clientX);
-    const onMouseUp = () => handleEnd();
-    const onTouchMove = (e: TouchEvent) => handleMove(e.touches[0].clientX);
-    const onTouchEnd = () => handleEnd();
+    const onPointerMove = (e: PointerEvent) => {
+      if (pointerIdRef.current !== null && e.pointerId !== pointerIdRef.current) return;
+      handleMove(e.clientX);
+    };
+
+    const onPointerEnd = (e: PointerEvent) => {
+      if (pointerIdRef.current !== null && e.pointerId !== pointerIdRef.current) return;
+      void handleEnd();
+    };
 
     if (dragging) {
-      window.addEventListener("mousemove", onMouseMove);
-      window.addEventListener("mouseup", onMouseUp);
-      window.addEventListener("touchmove", onTouchMove, { passive: true });
-      window.addEventListener("touchend", onTouchEnd);
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerEnd);
+      window.addEventListener("pointercancel", onPointerEnd);
     }
 
     return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerEnd);
+      window.removeEventListener("pointercancel", onPointerEnd);
     };
   }, [dragging, handleMove, handleEnd]);
 
@@ -88,13 +108,18 @@ const SlideToPayButton = ({ amount, currency = "MKD", disabled, onConfirm }: Sli
 
   return (
     <div
-      ref={trackRef}
+      ref={setTrackRefs}
       className={`relative h-16 rounded-2xl overflow-hidden select-none transition-colors ${
         disabled ? "bg-muted opacity-50" : confirmed ? "bg-green-500 dark:bg-green-600" : "petkeep-gradient"
       }`}
       style={{ touchAction: "none" }}
+      onPointerDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        e.preventDefault();
+        handleStart(e.clientX, e.pointerId);
+        handleMove(e.clientX);
+      }}
     >
-      {/* Track label */}
       <div
         className="absolute inset-0 flex items-center justify-center text-primary-foreground font-bold text-sm transition-opacity"
         style={{ opacity: confirmed ? 0 : Math.max(0, 1 - progress * 2) }}
@@ -102,22 +127,22 @@ const SlideToPayButton = ({ amount, currency = "MKD", disabled, onConfirm }: Sli
         Slide to Pay · {amount.toLocaleString()} {currency}
       </div>
 
-      {/* Confirmed label */}
       {confirmed && (
         <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm gap-2">
           <Check className="h-5 w-5" /> Payment Confirmed!
         </div>
       )}
 
-      {/* Thumb */}
       {!confirmed && (
         <div
           className={`absolute top-1 left-1 h-14 w-14 rounded-xl bg-white dark:bg-background shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing ${
             !dragging && !processing ? "transition-all duration-300" : ""
           }`}
           style={{ transform: `translateX(${offset}px)` }}
-          onMouseDown={(e) => { e.preventDefault(); handleStart(e.clientX); }}
-          onTouchStart={(e) => handleStart(e.touches[0].clientX)}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            handleStart(e.clientX, e.pointerId);
+          }}
         >
           {processing ? (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
@@ -127,13 +152,14 @@ const SlideToPayButton = ({ amount, currency = "MKD", disabled, onConfirm }: Sli
         </div>
       )}
 
-      {/* Progress overlay */}
       <div
         className="absolute inset-0 bg-white/10 dark:bg-white/5 rounded-2xl pointer-events-none"
         style={{ width: `${progress * 100}%` }}
       />
     </div>
   );
-};
+});
+
+SlideToPayButton.displayName = "SlideToPayButton";
 
 export default SlideToPayButton;
