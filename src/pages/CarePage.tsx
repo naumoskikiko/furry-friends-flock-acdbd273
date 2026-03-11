@@ -1,6 +1,6 @@
 import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
-import { Star, BadgeCheck, MapPin, ChevronRight, Search, Briefcase, AlertTriangle, Clock, History } from "lucide-react";
+import { Star, BadgeCheck, MapPin, ChevronRight, Search, Briefcase, Clock, History } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCareProviders, useMyProvider, useMyBookings, useProviderAvailability, CATEGORIES, type CareProvider } from "@/hooks/useCare";
 import ProviderDetail from "@/components/care/ProviderDetail";
@@ -31,8 +31,7 @@ const CarePage = () => {
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [emergencyOnly, setEmergencyOnly] = useState(false);
-  const { providers, loading } = useCareProviders(activeCategory, searchQuery, emergencyOnly);
+  const { providers, loading } = useCareProviders(activeCategory, searchQuery);
   const { provider: myProvider } = useMyProvider();
   const [selectedProvider, setSelectedProvider] = useState<CareProvider | null>(null);
   const [showDashboard, setShowDashboard] = useState(false);
@@ -88,18 +87,8 @@ const CarePage = () => {
           </div>
         </div>
 
-        {/* Emergency + Category filters */}
+        {/* Category filters */}
         <div className="flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-hide">
-          <button
-            onClick={() => setEmergencyOnly(!emergencyOnly)}
-            className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1 ${
-              emergencyOnly
-                ? "bg-destructive text-destructive-foreground"
-                : "bg-destructive/10 text-destructive"
-            }`}
-          >
-            <AlertTriangle className="h-3 w-3" /> Emergency
-          </button>
           {allCategories.map((c) => (
             <button
               key={c.value}
@@ -116,7 +105,7 @@ const CarePage = () => {
         </div>
 
         {/* Featured section */}
-        {featured.length > 0 && !searchQuery && !emergencyOnly && (
+        {featured.length > 0 && !searchQuery && (
           <div className="px-4 pb-4">
             <h3 className="font-display text-base font-bold mb-2">⭐ Top Rated</h3>
             <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
@@ -156,9 +145,7 @@ const CarePage = () => {
 
         {/* All providers */}
         <div className="px-4 pb-4">
-          {!searchQuery && <h3 className="font-display text-base font-bold mb-2">
-            {emergencyOnly ? "🚨 Emergency Providers" : "All Providers"}
-          </h3>}
+          {!searchQuery && <h3 className="font-display text-base font-bold mb-2">All Providers</h3>}
 
           {loading ? (
             <div className="flex justify-center py-10">
@@ -169,7 +156,7 @@ const CarePage = () => {
               <span className="text-4xl mb-2">🐾</span>
               <p className="text-sm font-semibold">No providers found</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {searchQuery ? "Try a different search" : emergencyOnly ? "No emergency providers available" : "Be the first to offer care services!"}
+                {searchQuery ? "Try a different search" : "Be the first to offer care services!"}
               </p>
             </div>
           ) : (
@@ -215,11 +202,6 @@ const CarePage = () => {
                           <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold">
                             {catInfo?.icon} {catInfo?.label || p.category}
                           </span>
-                          {p.emergency_available && (
-                            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive flex items-center gap-0.5">
-                              <AlertTriangle className="h-2.5 w-2.5" /> Emergency
-                            </span>
-                          )}
                           {p.response_time_minutes && (
                             <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground flex items-center gap-0.5">
                               <Clock className="h-2.5 w-2.5" /> ~{p.response_time_minutes}min

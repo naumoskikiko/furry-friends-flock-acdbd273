@@ -4,11 +4,20 @@ import { useMyProvider, useProviderServices, useProviderAvailability, useProvide
 import { useProviderBalance, useProviderPayments, useProviderPayouts } from "@/hooks/usePayments";
 import { useProviderVerifications, VERIFICATION_TYPES } from "@/hooks/useVerification";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, BadgeCheck, Calendar, CheckCircle2, XCircle, MessageSquare, AlertTriangle, Shield, FileCheck, ShieldCheck } from "lucide-react";
+import { Star, BadgeCheck, Calendar, CheckCircle2, XCircle, MessageSquare, Shield, FileCheck, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+
+const NORTH_MACEDONIA_TOWNS = [
+  "Skopje", "Bitola", "Kumanovo", "Tetovo", "Ohrid", "Prilep", "Veles", "Štip",
+  "Strumica", "Gostivar", "Kavadarci", "Kočani", "Kičevo", "Struga", "Radoviš",
+  "Gevgelija", "Debar", "Kriva Palanka", "Sveti Nikole", "Negotino", "Delčevo",
+  "Vinica", "Resen", "Probištip", "Berovo", "Kratovo", "Bogdanci", "Kruševo",
+  "Makedonski Brod", "Valandovo", "Demir Hisar", "Pehčevo", "Demir Kapija",
+  "Makedonska Kamenica", "Star Dojran",
+];
 
 interface ProviderDashboardProps {
   onClose: () => void;
@@ -38,7 +47,7 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   // Create provider form
   const [formName, setFormName] = useState("");
   const [formDesc, setFormDesc] = useState("");
-  const [formCategory, setFormCategory] = useState("veterinarian");
+  const [formCategory, setFormCategory] = useState("dog_sitter");
   const [formLocation, setFormLocation] = useState("");
   const [formPhone, setFormPhone] = useState("");
 
@@ -50,10 +59,14 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const [svcDuration, setSvcDuration] = useState("30");
 
   // Settings
-  const [emergencyAvail, setEmergencyAvail] = useState(provider?.emergency_available || false);
+  // Settings
   const [cancelPolicy, setCancelPolicy] = useState(provider?.cancellation_policy || "Free cancellation up to 24 hours before appointment");
   const [cancelHours, setCancelHours] = useState(String(provider?.cancellation_hours || 24));
-  const [serviceRadius, setServiceRadius] = useState(String((provider as any)?.service_radius_km || ""));
+  const [serviceTowns, setServiceTowns] = useState<string[]>(() => {
+    // Parse existing location as towns list
+    const loc = provider?.location || "";
+    return loc ? loc.split(",").map(t => t.trim()).filter(Boolean) : [];
+  });
   const [bookingMode, setBookingMode] = useState((provider as any)?.booking_mode || "instant");
 
   // Gallery upload
@@ -96,10 +109,9 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
 
   const handleSaveSettings = async () => {
     await updateProvider({
-      emergency_available: emergencyAvail,
       cancellation_policy: cancelPolicy,
       cancellation_hours: Number(cancelHours) || 24,
-      service_radius_km: serviceRadius ? Number(serviceRadius) : null,
+      location: serviceTowns.join(", "),
       booking_mode: bookingMode,
     } as any);
     toast({ title: "Settings saved!" });
@@ -691,23 +703,6 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
 
           {tab === "settings" && (
             <div className="space-y-5">
-              {/* Emergency */}
-              <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                  <h3 className="text-sm font-bold">Emergency Care</h3>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">Accept emergency / urgent visits</p>
-                  <button
-                    onClick={() => setEmergencyAvail(!emergencyAvail)}
-                    className={`rounded-full px-3 py-1 text-[10px] font-bold transition-colors ${emergencyAvail ? "bg-destructive/10 text-destructive" : "bg-secondary text-muted-foreground"}`}
-                  >
-                    {emergencyAvail ? "Enabled" : "Disabled"}
-                  </button>
-                </div>
-              </div>
-
               {/* Cancellation */}
               <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
                 <div className="flex items-center gap-2">
@@ -726,28 +721,34 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
                 </div>
               </div>
 
-              {/* Service Area */}
+              {/* Service Area - North Macedonia Towns */}
               <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-primary" />
                   <h3 className="text-sm font-bold">Service Area</h3>
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Service radius (km)</label>
-                  <div className="mt-1 flex flex-wrap gap-2">
-                    {[null, 5, 10, 25, 50].map((r) => (
+                <p className="text-xs text-muted-foreground">Select the towns where you offer services</p>
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                  {NORTH_MACEDONIA_TOWNS.map((town) => {
+                    const selected = serviceTowns.includes(town);
+                    return (
                       <button
-                        key={String(r)}
-                        onClick={() => setServiceRadius(r ? String(r) : "")}
+                        key={town}
+                        onClick={() => setServiceTowns(prev =>
+                          selected ? prev.filter(t => t !== town) : [...prev, town]
+                        )}
                         className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                          serviceRadius === String(r || "") ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                          selected ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"
                         }`}
                       >
-                        {r ? `${r} km` : "No limit"}
+                        {town}
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
+                {serviceTowns.length > 0 && (
+                  <p className="text-[10px] text-muted-foreground">{serviceTowns.length} town{serviceTowns.length !== 1 ? "s" : ""} selected</p>
+                )}
               </div>
 
               {/* Booking Mode */}

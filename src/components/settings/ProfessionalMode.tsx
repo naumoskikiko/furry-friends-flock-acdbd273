@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft } from "lucide-react";
 import SettingsMapManagement from "./SettingsMapManagement";
+import CareVerificationPanel from "./CareVerificationPanel";
 
-type SubSection = "dashboard" | "map-management";
+type SubSection = "dashboard" | "map-management" | "care-verification";
 
 const futureSections = [
   { id: "analytics", label: "Platform Analytics", icon: BarChart3, description: "User stats, growth metrics", coming: true },
-  { id: "verification", label: "Business Verification", icon: ShieldCheck, description: "Verify business accounts", coming: true },
   { id: "marketplace", label: "Marketplace Control", icon: Store, description: "Manage listings & products", coming: true },
 ];
 
 const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
 
-  if (sub === "map-management") {
+  if (sub === "map-management" || sub === "care-verification") {
     return (
       <div>
         <button
@@ -22,7 +22,7 @@ const ProfessionalMode = () => {
         >
           <ArrowLeft className="h-4 w-4" /> Back to Professional Mode
         </button>
-        <SettingsMapManagement />
+        {sub === "map-management" ? <SettingsMapManagement /> : <CareVerificationPanel />}
       </div>
     );
   }
@@ -51,6 +51,20 @@ const ProfessionalMode = () => {
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </button>
 
+      {/* Care Verification */}
+      <button
+        onClick={() => setSub("care-verification")}
+        className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
+      >
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+          <ShieldCheck className="h-4.5 w-4.5 text-primary" />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="text-sm font-semibold">Care Verification</p>
+          <p className="text-xs text-muted-foreground">Review provider verification requests</p>
+        </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </button>
       {/* Future sections */}
       {futureSections.map((s) => (
         <div
