@@ -16,6 +16,7 @@ import { useProcessPayment, calculateFees } from "@/hooks/usePayments";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { getOrCreateConversation } from "@/hooks/useMessages";
 
 interface ProviderDetailProps {
   provider: CareProvider;
