@@ -18,19 +18,23 @@ const MarketplacePage = () => {
   const [businessCategory, setBusinessCategory] = useState("all");
   const [showDashboard, setShowDashboard] = useState(false);
 
+  // Always pass search to both so cross-tab search works
   const { businesses, loading: bizLoading } = useAllBusinesses(
     activeTab === "businesses" ? businessCategory : undefined,
-    activeTab === "businesses" ? searchQuery : undefined
+    searchQuery || undefined
   );
   const { products, loading: prodLoading } = useAllProducts(
     activeTab === "products" ? productCategory : undefined,
-    activeTab === "products" ? searchQuery : undefined
+    searchQuery || undefined
   );
 
   const handleSearch = (q: string) => {
     setSearchInput(q);
     if (q.length >= 2 || q.length === 0) setSearchQuery(q);
   };
+
+  // When searching, show combined results indicator
+  const hasSearchResults = searchQuery && (products.length > 0 || businesses.length > 0);
 
   const featured = businesses.filter((b) => b.avg_rating >= 4.0).slice(0, 5);
   const isBusiness = profile?.role === "business";
@@ -89,6 +93,9 @@ const MarketplacePage = () => {
             }`}
           >
             <Package className="h-3.5 w-3.5" /> Products
+            {searchQuery && products.length > 0 && (
+              <span className="bg-primary text-primary-foreground text-[9px] rounded-full px-1.5">{products.length}</span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab("businesses")}
@@ -97,6 +104,9 @@ const MarketplacePage = () => {
             }`}
           >
             <Store className="h-3.5 w-3.5" /> Stores
+            {searchQuery && businesses.length > 0 && (
+              <span className="bg-primary text-primary-foreground text-[9px] rounded-full px-1.5">{businesses.length}</span>
+            )}
           </button>
         </div>
 
