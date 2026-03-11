@@ -16,6 +16,7 @@ import { useProcessPayment, calculateFees } from "@/hooks/usePayments";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { getOrCreateConversation } from "@/hooks/useMessages";
 
 interface ProviderDetailProps {
   provider: CareProvider;
@@ -120,7 +121,18 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
           </button>
           <h1 className="font-display text-lg font-bold truncate flex-1">Provider Profile</h1>
           {!isOwnProfile && (
-            <button onClick={() => navigate("/messages")} className="rounded-full p-1.5 hover:bg-secondary">
+            <button
+              onClick={async () => {
+                try {
+                  const convId = await getOrCreateConversation(provider.user_id);
+                  navigate(`/messages?conversation=${convId}&userId=${provider.user_id}`);
+                } catch (e) {
+                  console.error("Failed to create conversation", e);
+                  navigate("/messages");
+                }
+              }}
+              className="rounded-full p-1.5 hover:bg-secondary"
+            >
               <MessageSquare className="h-5 w-5" />
             </button>
           )}
@@ -205,6 +217,15 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
 
         {/* Tab content */}
         <div className="px-4 py-4 pb-24">
+          {/* Unverified notice */}
+          {!provider.is_verified && tab === "services" && !isOwnProfile && (
+            <div className="mb-4 rounded-xl bg-destructive/10 p-3 flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+              <p className="text-xs text-destructive font-semibold">
+                Provider verification required before accepting bookings.
+              </p>
+            </div>
+          )}
           {/* Services */}
           {tab === "services" && (
             <div className="space-y-3">
@@ -226,16 +247,22 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
                       </div>
                     </div>
                     {!isOwnProfile && (
-                      <button
-                        onClick={() => setSelectedService(selectedService?.id === s.id ? null : s)}
-                        className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
-                          selectedService?.id === s.id
-                            ? "bg-secondary text-secondary-foreground"
-                            : "petkeep-gradient text-primary-foreground"
-                        }`}
-                      >
-                        {selectedService?.id === s.id ? "Cancel" : "Book"}
-                      </button>
+                      provider.is_verified ? (
+                        <button
+                          onClick={() => setSelectedService(selectedService?.id === s.id ? null : s)}
+                          className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
+                            selectedService?.id === s.id
+                              ? "bg-secondary text-secondary-foreground"
+                              : "petkeep-gradient text-primary-foreground"
+                          }`}
+                        >
+                          {selectedService?.id === s.id ? "Cancel" : "Book"}
+                        </button>
+                      ) : (
+                        <span className="rounded-xl px-3 py-1.5 text-xs font-bold bg-muted text-muted-foreground cursor-not-allowed">
+                          Not Verified
+                        </span>
+                      )
                     )}
                   </div>
 
