@@ -44,6 +44,7 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [storyViewerData, setStoryViewerData] = useState<{ groups: StoryGroup[]; open: boolean } | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
