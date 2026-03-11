@@ -32,7 +32,7 @@ const cardSchema = z.object({
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { items, totalPrice, itemCount } = useCart();
+  const { items, totalPrice, itemCount, loading: cartLoading } = useCart();
   const { createOrder } = useCreateOrder();
   const { defaultMethod, saveCard, loading: paymentLoading } = usePaymentMethods();
 
@@ -120,6 +120,16 @@ const CheckoutPage = () => {
       setProcessingPayment(false);
     }
   };
+
+  if (cartLoading || paymentLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (items.length === 0 && step !== "confirmed") {
     navigate("/cart");
