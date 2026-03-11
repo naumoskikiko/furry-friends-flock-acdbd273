@@ -350,6 +350,17 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
       {/* Likes List Modal */}
       <LikesListModal open={likesListOpen} onOpenChange={setLikesListOpen} postId={post.id} />
 
+      {/* Share Post Modal */}
+      {shareModalOpen && (
+        <SharePostModal
+          postId={post.id}
+          imageUrl={post.image_url}
+          caption={post.caption}
+          username={post.username}
+          onClose={() => setShareModalOpen(false)}
+        />
+      )}
+
       {/* Comments Dialog */}
       <Dialog open={commentsOpen} onOpenChange={setCommentsOpen}>
         <DialogContent className="max-w-md p-0 overflow-hidden max-h-[80vh]">
