@@ -67,10 +67,14 @@ const MarketplacePage = () => {
           <div className="flex items-center gap-2">
             {canManageStore && (
               <button
-                onClick={() => setShowDashboard(true)}
+                onClick={() => hasStore ? navigate(`/store/${myBusiness!.id}`) : setShowDashboard(true)}
                 className="flex items-center gap-1.5 rounded-xl petkeep-gradient text-primary-foreground px-3 py-2 text-xs font-bold"
               >
-                <Plus className="h-3.5 w-3.5" /> Store
+                {hasStore ? (
+                  <><Store className="h-3.5 w-3.5" /> Manage Store</>
+                ) : (
+                  <><Plus className="h-3.5 w-3.5" /> Add Store</>
+                )}
               </button>
             )}
           </div>
