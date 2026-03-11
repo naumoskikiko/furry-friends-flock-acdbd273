@@ -49,7 +49,7 @@ const CartPage = () => {
               return (
                 <div key={item.id} className="rounded-2xl bg-card border border-border p-3 flex gap-3">
                   {item.product?.image_url ? (
-                    <img src={item.product.image_url} alt={item.product.name} className="h-20 w-20 rounded-xl object-cover shrink-0" />
+                    <img src={item.product.image_url} alt={item.product.name} loading="lazy" className="h-20 w-20 rounded-xl object-cover aspect-square shrink-0" />
                   ) : (
                     <div className="h-20 w-20 rounded-xl bg-secondary flex items-center justify-center text-2xl shrink-0">
                       {catInfo?.icon || "📦"}
