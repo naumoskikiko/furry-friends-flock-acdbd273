@@ -1,6 +1,6 @@
 import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
-import { Star, BadgeCheck, MapPin, ChevronRight, Search, Briefcase, AlertTriangle, Clock, History } from "lucide-react";
+import { Star, BadgeCheck, MapPin, ChevronRight, Search, Briefcase, Clock, History } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCareProviders, useMyProvider, useMyBookings, useProviderAvailability, CATEGORIES, type CareProvider } from "@/hooks/useCare";
 import ProviderDetail from "@/components/care/ProviderDetail";
