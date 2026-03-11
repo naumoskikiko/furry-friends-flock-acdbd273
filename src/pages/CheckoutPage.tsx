@@ -177,8 +177,8 @@ const CheckoutPage = () => {
         {step === "confirmed" && (
           <div className="px-4 py-12 text-center space-y-4">
             <div className="flex justify-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-                <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-400" />
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+                <CheckCircle2 className="h-10 w-10 text-primary" />
               </div>
             </div>
             <h2 className="font-display text-xl font-extrabold">Order Confirmed! 🎉</h2>
