@@ -170,6 +170,72 @@ export type Database = {
           },
         ]
       }
+      boost_pricing: {
+        Row: {
+          boost_type: string
+          created_at: string
+          duration_hours: number
+          duration_label: string
+          id: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          boost_type: string
+          created_at?: string
+          duration_hours: number
+          duration_label: string
+          id?: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          boost_type?: string
+          created_at?: string
+          duration_hours?: number
+          duration_label?: string
+          id?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      boosts: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          owner_id: string
+          price_paid: number
+          start_date: string
+          status: string
+          target_id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          owner_id: string
+          price_paid?: number
+          start_date?: string
+          status?: string
+          target_id: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          owner_id?: string
+          price_paid?: number
+          start_date?: string
+          status?: string
+          target_id?: string
+          type?: string
+        }
+        Relationships: []
+      }
       business_profiles: {
         Row: {
           avg_rating: number
