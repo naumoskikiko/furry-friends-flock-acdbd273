@@ -8,6 +8,7 @@ import BusinessDashboard from "@/components/business/BusinessDashboard";
 
 const MarketplacePage = () => {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [activeTab, setActiveTab] = useState<"products" | "businesses">("products");
