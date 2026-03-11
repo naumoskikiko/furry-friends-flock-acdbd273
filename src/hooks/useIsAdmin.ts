@@ -13,12 +13,14 @@ export function useIsAdmin() {
       setLoading(false);
       return;
     }
-    supabase
-      .rpc("has_role", { _user_id: user.id, _role: "admin" })
-      .then(({ data }) => {
-        setIsAdmin(!!data);
-        setLoading(false);
-      });
+    // Owner inherits admin privileges
+    Promise.all([
+      supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }),
+      supabase.rpc("has_role", { _user_id: user.id, _role: "owner" }),
+    ]).then(([adminRes, ownerRes]) => {
+      setIsAdmin(!!adminRes.data || !!ownerRes.data);
+      setLoading(false);
+    });
   }, [user]);
 
   return { isAdmin, loading };
