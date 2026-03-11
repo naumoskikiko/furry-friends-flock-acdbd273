@@ -1,32 +1,67 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { z } from "zod";
 import AppLayout from "@/components/AppLayout";
-import { ArrowLeft, CheckCircle2, Truck, Store, Package } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Truck, Store, CreditCard } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCart } from "@/hooks/useCart";
 import { useCreateOrder, type ShippingInfo } from "@/hooks/useOrders";
 import { useToast } from "@/hooks/use-toast";
 import SlideToPayButton from "@/components/marketplace/SlideToPayButton";
+import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 
 const DELIVERY_FEE = 120; // MKD flat rate
+
+const shippingSchema = z.object({
+  name: z.string().trim().min(2, "Full name is required").max(100),
+  phone: z.string().trim().min(6, "Phone number is required").max(30),
+  address: z.string().trim().min(5, "Address is required").max(200),
+  city: z.string().trim().min(2, "City is required").max(80),
+  postalCode: z.string().trim().max(20),
+  country: z.string().trim().min(2, "Country is required").max(80),
+});
+
+const cardSchema = z.object({
+  cardNumber: z.string().trim().regex(/^\d{13,19}$/, "Enter a valid card number"),
+  expiry: z.string().trim().regex(/^(0[1-9]|1[0-2])\/(\d{2})$/, "Use MM/YY"),
+  cvv: z.string().trim().regex(/^\d{3,4}$/, "Enter a valid CVV"),
+  cardholderName: z.string().trim().min(2, "Cardholder name is required").max(80),
+});
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { items, totalPrice, itemCount } = useCart();
   const { createOrder } = useCreateOrder();
+  const { defaultMethod, saveCard, loading: paymentLoading } = usePaymentMethods();
 
   const [step, setStep] = useState<"checkout" | "confirmed">("checkout");
   const [shipping, setShipping] = useState<ShippingInfo>({
     name: "", phone: "", address: "", city: "", postalCode: "", country: "",
   });
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const [cardForm, setCardForm] = useState({
+    cardNumber: "",
+    expiry: "",
+    cvv: "",
+    cardholderName: "",
+  });
 
   const platformFee = Math.round(totalPrice * 0.10 * 100) / 100;
   const grandTotal = totalPrice + DELIVERY_FEE;
 
-  const canPay = shipping.name && shipping.phone && shipping.address && shipping.city && shipping.country;
+  const shippingValid = useMemo(() => shippingSchema.safeParse(shipping).success, [shipping]);
+  const hasSavedCard = !!defaultMethod;
+  const cardValid = useMemo(() => hasSavedCard || cardSchema.safeParse({
+    cardNumber: cardForm.cardNumber.replace(/\s+/g, ""),
+    expiry: cardForm.expiry,
+    cvv: cardForm.cvv,
+    cardholderName: cardForm.cardholderName,
+  }).success, [hasSavedCard, cardForm]);
+
+  const canPay = shippingValid && cardValid && !paymentLoading && !processingPayment && items.length > 0;
 
   // Group items by store
   const storeGroups = items.reduce<Record<string, typeof items>>((acc, item) => {
@@ -36,18 +71,54 @@ const CheckoutPage = () => {
     return acc;
   }, {});
 
-  const handlePlaceOrder = async () => {
-    const cartItems = items.map((item) => ({
-      product_id: item.product_id,
-      quantity: item.quantity,
-      price: item.product?.price || 0,
-      business_id: item.product?.business_id || "",
-    }));
+  const simulateCardCharge = async () => {
+    await new Promise((resolve) => setTimeout(resolve, 650));
+  };
 
-    const id = await createOrder(cartItems, shipping);
-    setOrderId(id);
-    setStep("confirmed");
-    toast({ title: "Order placed successfully!" });
+  const handlePlaceOrder = async () => {
+    if (!shippingValid) {
+      const message = shippingSchema.safeParse(shipping);
+      const firstIssue = message.success ? "Enter valid shipping details" : message.error.issues[0]?.message;
+      toast({ title: "Missing details", description: firstIssue, variant: "destructive" });
+      throw new Error(firstIssue);
+    }
+
+    setProcessingPayment(true);
+    try {
+      let method = defaultMethod;
+
+      if (!method) {
+        method = await saveCard({
+          cardNumber: cardForm.cardNumber,
+          expiry: cardForm.expiry,
+          cvv: cardForm.cvv,
+          cardholderName: cardForm.cardholderName,
+        });
+      }
+
+      if (!method) {
+        throw new Error("Add a payment method first");
+      }
+
+      await simulateCardCharge();
+
+      const cartItems = items.map((item) => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: item.product?.price || 0,
+        business_id: item.product?.business_id || "",
+      }));
+
+      const id = await createOrder(cartItems, shipping);
+      setOrderId(id);
+      setStep("confirmed");
+      toast({ title: "Payment successful", description: "Your order is confirmed" });
+    } catch (error: any) {
+      toast({ title: "Payment failed", description: error?.message || "Try again", variant: "destructive" });
+      throw error;
+    } finally {
+      setProcessingPayment(false);
+    }
   };
 
   if (items.length === 0 && step !== "confirmed") {
@@ -57,7 +128,7 @@ const CheckoutPage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg pb-32">
+      <div className="mx-auto max-w-lg pb-56">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center gap-3">
           <button onClick={() => step === "confirmed" ? navigate("/marketplace") : navigate(-1)} className="rounded-full p-1.5 hover:bg-secondary">
@@ -84,9 +155,9 @@ const CheckoutPage = () => {
                     {storeItems.map((item) => (
                       <div key={item.id} className="flex items-center gap-2 py-2 border-t border-border first:border-0">
                         {item.product?.image_url ? (
-                          <img src={item.product.image_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                          <img src={item.product.image_url} alt={item.product.name} className="h-10 w-10 rounded-lg object-cover" />
                         ) : (
-                          <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center text-sm">📦</div>
+                          <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center text-sm" aria-hidden="true">📦</div>
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold truncate">{item.product?.name}</p>
@@ -136,7 +207,67 @@ const CheckoutPage = () => {
               </div>
             </div>
 
-            {/* Price breakdown - Wolt style */}
+            {/* Payment method */}
+            <div className="rounded-2xl bg-card border border-border p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <CreditCard className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-bold">Payment Method</h3>
+              </div>
+
+              {hasSavedCard ? (
+                <div className="rounded-xl bg-secondary p-3">
+                  <p className="text-xs font-semibold capitalize">{defaultMethod?.card_brand} •••• {defaultMethod?.card_last4}</p>
+                  <p className="text-[10px] text-muted-foreground">Expires {String(defaultMethod?.exp_month).padStart(2, "0")}/{String(defaultMethod?.exp_year).slice(-2)} · {defaultMethod?.cardholder_name}</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">Add Payment Method</p>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Card number</Label>
+                    <Input
+                      inputMode="numeric"
+                      autoComplete="cc-number"
+                      value={cardForm.cardNumber}
+                      onChange={(e) => setCardForm((prev) => ({ ...prev, cardNumber: e.target.value.replace(/[^\d\s]/g, "") }))}
+                      placeholder="4242 4242 4242 4242"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Expiration</Label>
+                      <Input
+                        autoComplete="cc-exp"
+                        value={cardForm.expiry}
+                        onChange={(e) => setCardForm((prev) => ({ ...prev, expiry: e.target.value.replace(/[^\d/]/g, "") }))}
+                        placeholder="MM/YY"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">CVV</Label>
+                      <Input
+                        inputMode="numeric"
+                        autoComplete="cc-csc"
+                        type="password"
+                        value={cardForm.cvv}
+                        onChange={(e) => setCardForm((prev) => ({ ...prev, cvv: e.target.value.replace(/\D/g, "") }))}
+                        placeholder="123"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Card holder name</Label>
+                    <Input
+                      autoComplete="cc-name"
+                      value={cardForm.cardholderName}
+                      onChange={(e) => setCardForm((prev) => ({ ...prev, cardholderName: e.target.value }))}
+                      placeholder="Card holder name"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Price breakdown */}
             <div className="rounded-2xl bg-card border border-border p-4">
               <h3 className="text-sm font-bold mb-3">Price Breakdown</h3>
               <div className="space-y-2">
@@ -158,19 +289,23 @@ const CheckoutPage = () => {
                 </div>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Slide to pay */}
-            <SlideToPayButton
-              amount={grandTotal}
-              disabled={!canPay}
-              onConfirm={handlePlaceOrder}
-            />
-
-            {!canPay && (
-              <p className="text-xs text-muted-foreground text-center">
-                Fill in all required delivery fields to pay
-              </p>
-            )}
+        {step === "checkout" && (
+          <div className="fixed left-0 right-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] px-4">
+            <div className="mx-auto max-w-lg rounded-2xl bg-background/95 backdrop-blur-sm border border-border p-3 space-y-2">
+              <SlideToPayButton
+                amount={grandTotal}
+                disabled={!canPay}
+                onConfirm={handlePlaceOrder}
+              />
+              {!canPay && (
+                <p className="text-[11px] text-muted-foreground text-center">
+                  Complete delivery and payment details to unlock Slide to Pay
+                </p>
+              )}
+            </div>
           </div>
         )}
 
