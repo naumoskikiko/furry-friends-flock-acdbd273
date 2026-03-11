@@ -3,8 +3,9 @@ import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users } fr
 import SettingsMapManagement from "./SettingsMapManagement";
 import CareVerificationPanel from "./CareVerificationPanel";
 import CareManagementPanel from "./CareManagementPanel";
+import MarketplaceManagementPanel from "./MarketplaceManagementPanel";
 
-type SubSection = "dashboard" | "map-management" | "care-verification" | "care-management";
+type SubSection = "dashboard" | "map-management" | "care-verification" | "care-management" | "marketplace-control";
 
 const futureSections = [
   { id: "analytics", label: "Platform Analytics", icon: BarChart3, description: "User stats, growth metrics", coming: true },
