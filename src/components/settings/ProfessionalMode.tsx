@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users } from "lucide-react";
+import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown } from "lucide-react";
 import SettingsMapManagement from "./SettingsMapManagement";
 import CareVerificationPanel from "./CareVerificationPanel";
 import CareManagementPanel from "./CareManagementPanel";
 import MarketplaceManagementPanel from "./MarketplaceManagementPanel";
+import RoleManagementPanel from "./RoleManagementPanel";
+import { useIsOwner } from "@/hooks/useIsOwner";
 
-type SubSection = "dashboard" | "map-management" | "care-verification" | "care-management" | "marketplace-control";
+type SubSection = "dashboard" | "map-management" | "care-verification" | "care-management" | "marketplace-control" | "role-management";
 
 const futureSections = [
   { id: "analytics", label: "Platform Analytics", icon: BarChart3, description: "User stats, growth metrics", coming: true },
@@ -13,8 +15,9 @@ const futureSections = [
 
 const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
+  const { isOwner } = useIsOwner();
 
-  if (sub === "map-management" || sub === "care-verification" || sub === "care-management" || sub === "marketplace-control") {
+  if (sub !== "dashboard") {
     return (
       <div>
         <button
@@ -27,6 +30,7 @@ const ProfessionalMode = () => {
         {sub === "care-verification" && <CareVerificationPanel />}
         {sub === "care-management" && <CareManagementPanel />}
         {sub === "marketplace-control" && <MarketplaceManagementPanel />}
+        {sub === "role-management" && <RoleManagementPanel />}
       </div>
     );
   }
@@ -99,6 +103,23 @@ const ProfessionalMode = () => {
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </button>
+
+      {/* Role Management - Owner Only */}
+      {isOwner && (
+        <button
+          onClick={() => setSub("role-management")}
+          className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
+        >
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/10">
+            <Crown className="h-4.5 w-4.5 text-amber-600" />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="text-sm font-semibold">Role Management</p>
+            <p className="text-xs text-muted-foreground">Assign roles, promote & demote admins</p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </button>
+      )}
 
       {/* Future sections */}
       {futureSections.map((s) => (
