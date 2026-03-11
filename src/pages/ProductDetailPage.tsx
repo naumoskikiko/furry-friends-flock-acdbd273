@@ -10,6 +10,7 @@ import { useProductReviews } from "@/hooks/useProductReviews";
 import { useToast } from "@/hooks/use-toast";
 import { PRODUCT_CATEGORIES } from "@/hooks/useBusiness";
 import { Input } from "@/components/ui/input";
+import ProductImage from "@/components/marketplace/ProductImage";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
