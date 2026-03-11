@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   ArrowLeft, Send, Check, CheckCheck, Search, X, MoreVertical,
   Pencil, Trash2, Flag, ChevronUp, Reply, Forward, Mic, Calendar,
-  WifiOff, RefreshCw, ExternalLink, Link2,
+  WifiOff, RefreshCw, ExternalLink, Link2, Image,
 } from "lucide-react";
 import {
   useChatMessages, useTypingIndicator, useActivityTracking,
