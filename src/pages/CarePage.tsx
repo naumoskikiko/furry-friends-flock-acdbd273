@@ -38,6 +38,7 @@ const CarePage = () => {
   const [selectedProvider, setSelectedProvider] = useState<CareProvider | null>(null);
   const [showDashboard, setShowDashboard] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const boostedProviderIds = useBoostedIds("provider");
 
   const handleSearch = (q: string) => {
     setSearchInput(q);
