@@ -32,7 +32,7 @@ const cardSchema = z.object({
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { items, totalPrice, itemCount } = useCart();
+  const { items, totalPrice, itemCount, loading: cartLoading } = useCart();
   const { createOrder } = useCreateOrder();
   const { defaultMethod, saveCard, loading: paymentLoading } = usePaymentMethods();
 
