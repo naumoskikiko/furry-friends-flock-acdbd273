@@ -111,7 +111,7 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
 
         {!business ? (
           /* Setup form */
-          <div className="px-4 py-6 space-y-4">
+          <div className="px-4 py-6 pb-24 space-y-4">
             <div className="text-center mb-4">
               <span className="text-4xl">🏪</span>
               <h2 className="font-display text-xl font-bold mt-2">Set up your business</h2>
