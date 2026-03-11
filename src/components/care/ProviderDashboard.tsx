@@ -100,10 +100,9 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
 
   const handleSaveSettings = async () => {
     await updateProvider({
-      emergency_available: emergencyAvail,
       cancellation_policy: cancelPolicy,
       cancellation_hours: Number(cancelHours) || 24,
-      service_radius_km: serviceRadius ? Number(serviceRadius) : null,
+      location: serviceTowns.join(", "),
       booking_mode: bookingMode,
     } as any);
     toast({ title: "Settings saved!" });
