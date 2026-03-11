@@ -126,7 +126,7 @@ const MarketplacePage = () => {
                   <span className="text-4xl mb-2">📦</span>
                   <p className="text-sm font-semibold">No products yet</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {isBusiness ? "Add products from your dashboard" : "Products from businesses will appear here"}
+                    {canManageStore ? "Add products from your store dashboard" : "Products from businesses will appear here"}
                   </p>
                 </div>
               ) : (
