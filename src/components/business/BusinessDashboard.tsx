@@ -207,19 +207,36 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
     setProdSaving(false);
   };
 
-  const handleProductImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingImage(true);
+  const uploadImage = async (file: File): Promise<string | null> => {
     const filePath = `${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from("product-images").upload(filePath, file);
     if (error) {
       toast({ title: "Upload failed", description: error.message, variant: "destructive" });
-      setUploadingImage(false);
-      return;
+      return null;
     }
     const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(filePath);
-    setProdImageUrl(publicUrl);
+    return publicUrl;
+  };
+
+  const handleProductImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    const url = await uploadImage(file);
+    if (url) setProdImageUrl(url);
+    setUploadingImage(false);
+  };
+
+  const handleExtraImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    setUploadingImage(true);
+    const newUrls: string[] = [];
+    for (const file of Array.from(files)) {
+      const url = await uploadImage(file);
+      if (url) newUrls.push(url);
+    }
+    setProdExtraImages((prev) => [...prev, ...newUrls]);
     setUploadingImage(false);
   };
 
