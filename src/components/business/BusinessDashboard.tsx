@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import {
   ChevronLeft, Plus, Package, Store, Trash2, Edit2, ShoppingBag, Truck,
   CheckCircle, BarChart3, Users, Bell, AlertTriangle, Copy, Save, X,
-  TrendingUp, DollarSign, Star, Clock, Image as ImageIcon, Zap
+  TrendingUp, DollarSign, Star, Clock, Image as ImageIcon, Zap, Eye, EyeOff,
+  Boxes, MessageSquareText
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,10 @@ import ProductImage from "@/components/marketplace/ProductImage";
 import BoostModal from "@/components/marketplace/BoostModal";
 import BoostBadge from "@/components/marketplace/BoostBadge";
 import { useBoostedIds } from "@/hooks/useBoosts";
+import DashboardOverviewTab from "./tabs/DashboardOverviewTab";
+import DashboardCustomersTab from "./tabs/DashboardCustomersTab";
+import DashboardReviewsTab from "./tabs/DashboardReviewsTab";
+import DashboardInventoryTab from "./tabs/DashboardInventoryTab";
 
 interface BusinessDashboardProps {
   onClose: () => void;
@@ -31,13 +36,15 @@ const statusColors: Record<string, string> = {
   cancelled: "bg-destructive/10 text-destructive",
 };
 
+type TabKey = "overview" | "products" | "orders" | "inventory" | "store" | "customers" | "reviews" | "analytics";
+
 const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
   const { business, createBusiness, updateBusiness, refresh } = useMyBusiness();
   const { products, addProduct, updateProduct, deleteProduct } = useBusinessProducts(business?.id || null);
   const { orders: storeOrders, loading: ordersLoading, updateOrderStatus } = useStoreOrders(business?.id || null);
   const { toast } = useToast();
 
-  const [tab, setTab] = useState<"overview" | "products" | "orders" | "store" | "analytics">("overview");
+  const [tab, setTab] = useState<TabKey>("overview");
   const [boostModal, setBoostModal] = useState<{ type: "product" | "store" | "provider"; id: string; name: string } | null>(null);
   const boostedProductIds = useBoostedIds("product");
   const boostedStoreIds = useBoostedIds("store");
@@ -87,7 +94,6 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
     const lowStockProducts = products.filter((p) => p.stock !== null && p.stock !== undefined && p.stock <= 5 && p.stock > 0);
     const outOfStockProducts = products.filter((p) => p.stock !== null && p.stock !== undefined && p.stock <= 0);
 
-    // Top products by quantity sold
     const prodSales: Record<string, { name: string; qty: number; revenue: number }> = {};
     storeOrders.forEach((item) => {
       const pid = item.product_id;
@@ -97,7 +103,6 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
     });
     const topProducts = Object.values(prodSales).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 
-    // Orders by day (last 7 days)
     const dayMap: Record<string, number> = {};
     const now = new Date();
     for (let i = 6; i >= 0; i--) {
@@ -122,12 +127,8 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
     setCreating(true);
     try {
       await createBusiness({
-        business_name: setupName,
-        category: setupCategory,
-        description: setupDesc,
-        location: setupLocation,
-        website: setupWebsite,
-        phone: setupPhone,
+        business_name: setupName, category: setupCategory, description: setupDesc,
+        location: setupLocation, website: setupWebsite, phone: setupPhone,
       });
       toast({ title: "Business profile created!" });
     } catch (e: any) {
@@ -142,30 +143,26 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
   };
 
   const startEditProduct = async (p: any) => {
-    setProdName(p.name);
-    setProdDesc(p.description || "");
-    setProdPrice(String(p.price));
-    setProdCategory(p.category);
-    setProdStock(p.stock !== null && p.stock !== undefined ? String(p.stock) : "");
-    setProdImageUrl(p.image_url || "");
-    setEditingProduct(p.id);
-    setAddingProduct(true);
-    // Load extra images
+    setProdName(p.name); setProdDesc(p.description || ""); setProdPrice(String(p.price));
+    setProdCategory(p.category); setProdStock(p.stock !== null && p.stock !== undefined ? String(p.stock) : "");
+    setProdImageUrl(p.image_url || ""); setEditingProduct(p.id); setAddingProduct(true);
     const { data } = await (supabase as any).from("product_images").select("image_url").eq("product_id", p.id).order("display_order");
     setProdExtraImages((data || []).map((d: any) => d.image_url));
   };
 
   const handleDuplicateProduct = async (p: any) => {
     try {
-      await addProduct({
-        name: `${p.name} (Copy)`,
-        description: p.description,
-        price: p.price,
-        category: p.category,
-        image_url: p.image_url,
-        stock: p.stock,
-      });
+      await addProduct({ name: `${p.name} (Copy)`, description: p.description, price: p.price, category: p.category, image_url: p.image_url, stock: p.stock });
       toast({ title: "Product duplicated!" });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const handleToggleVisibility = async (p: any) => {
+    try {
+      await updateProduct(p.id, { is_active: !p.is_active } as any);
+      toast({ title: p.is_active ? "Product hidden" : "Product visible" });
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     }
@@ -176,34 +173,23 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
     setProdSaving(true);
     try {
       const fields: any = {
-        name: prodName,
-        description: prodDesc,
-        price: parseFloat(prodPrice),
-        category: prodCategory,
-        image_url: prodImageUrl || null,
+        name: prodName, description: prodDesc, price: parseFloat(prodPrice),
+        category: prodCategory, image_url: prodImageUrl || null,
         stock: prodStock ? parseInt(prodStock) : null,
       };
       let productId = editingProduct;
       if (editingProduct) {
         await updateProduct(editingProduct, fields);
-        // Update extra images: delete old, insert new
         await (supabase as any).from("product_images").delete().eq("product_id", editingProduct);
         toast({ title: "Product updated!" });
       } else {
-        // addProduct doesn't return ID, so we need to get it after
         await addProduct(fields);
-        // Find the newly created product
         const { data: newProds } = await (supabase as any).from("products").select("id").eq("business_id", business?.id).order("created_at", { ascending: false }).limit(1);
         productId = newProds?.[0]?.id;
         toast({ title: "Product added!" });
       }
-      // Save extra images
       if (productId && prodExtraImages.length > 0) {
-        const rows = prodExtraImages.map((url, i) => ({
-          product_id: productId,
-          image_url: url,
-          display_order: i,
-        }));
+        const rows = prodExtraImages.map((url, i) => ({ product_id: productId, image_url: url, display_order: i }));
         await (supabase as any).from("product_images").insert(rows);
       }
       resetProductForm();
@@ -216,32 +202,23 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
   const uploadImage = async (file: File): Promise<string | null> => {
     const filePath = `${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from("product-images").upload(filePath, file);
-    if (error) {
-      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
-      return null;
-    }
+    if (error) { toast({ title: "Upload failed", description: error.message, variant: "destructive" }); return null; }
     const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(filePath);
     return publicUrl;
   };
 
   const handleProductImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const file = e.target.files?.[0]; if (!file) return;
     setUploadingImage(true);
-    const url = await uploadImage(file);
-    if (url) setProdImageUrl(url);
+    const url = await uploadImage(file); if (url) setProdImageUrl(url);
     setUploadingImage(false);
   };
 
   const handleExtraImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
+    const files = e.target.files; if (!files) return;
     setUploadingImage(true);
     const newUrls: string[] = [];
-    for (const file of Array.from(files)) {
-      const url = await uploadImage(file);
-      if (url) newUrls.push(url);
-    }
+    for (const file of Array.from(files)) { const url = await uploadImage(file); if (url) newUrls.push(url); }
     setProdExtraImages((prev) => [...prev, ...newUrls]);
     setUploadingImage(false);
   };
@@ -249,42 +226,39 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
   const handleSaveStore = async () => {
     try {
       await updateBusiness(storeForm as any);
-      toast({ title: "Store updated!" });
-      setEditingStore(false);
-      await refresh();
+      toast({ title: "Store updated!" }); setEditingStore(false); await refresh();
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     }
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const file = e.target.files?.[0]; if (!file) return;
     const filePath = `logos/${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from("product-images").upload(filePath, file);
     if (error) { toast({ title: "Upload failed", variant: "destructive" }); return; }
     const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(filePath);
     await updateBusiness({ logo_url: publicUrl } as any);
-    toast({ title: "Logo updated!" });
-    await refresh();
+    toast({ title: "Logo updated!" }); await refresh();
   };
 
   const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const file = e.target.files?.[0]; if (!file) return;
     const filePath = `banners/${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from("product-images").upload(filePath, file);
     if (error) { toast({ title: "Upload failed", variant: "destructive" }); return; }
     const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(filePath);
     await updateBusiness({ banner_url: publicUrl } as any);
-    toast({ title: "Banner updated!" });
-    await refresh();
+    toast({ title: "Banner updated!" }); await refresh();
   };
 
   const tabs = [
     { key: "overview" as const, label: "Overview", icon: BarChart3 },
     { key: "products" as const, label: "Products", icon: Package },
     { key: "orders" as const, label: "Orders", icon: ShoppingBag },
+    { key: "inventory" as const, label: "Inventory", icon: Boxes },
+    { key: "customers" as const, label: "Customers", icon: Users },
+    { key: "reviews" as const, label: "Reviews", icon: MessageSquareText },
     { key: "store" as const, label: "Store", icon: Store },
     { key: "analytics" as const, label: "Analytics", icon: TrendingUp },
   ];
@@ -310,30 +284,22 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
               <h2 className="font-display text-xl font-bold mt-2">Set up your store</h2>
               <p className="text-sm text-muted-foreground">Start selling pet products on PetKeep</p>
             </div>
-
             <div className="space-y-2">
               <Label>Business Name *</Label>
               <Input value={setupName} onChange={(e) => setSetupName(e.target.value)} placeholder="Happy Paws Pet Shop" />
             </div>
-
             <div className="space-y-2">
               <Label>Category</Label>
               <div className="grid grid-cols-2 gap-2">
                 {BUSINESS_CATEGORIES.map((c) => (
-                  <button
-                    key={c.value}
-                    onClick={() => setSetupCategory(c.value)}
-                    className={`rounded-xl border-2 p-2.5 text-left transition-all ${
-                      setupCategory === c.value ? "border-primary bg-primary/5" : "border-border"
-                    }`}
-                  >
+                  <button key={c.value} onClick={() => setSetupCategory(c.value)}
+                    className={`rounded-xl border-2 p-2.5 text-left transition-all ${setupCategory === c.value ? "border-primary bg-primary/5" : "border-border"}`}>
                     <span className="text-lg">{c.icon}</span>
                     <p className="text-xs font-bold mt-0.5">{c.label}</p>
                   </button>
                 ))}
               </div>
             </div>
-
             <div className="space-y-2">
               <Label>Description</Label>
               <Textarea value={setupDesc} onChange={(e) => setSetupDesc(e.target.value)} placeholder="Tell customers about your business..." rows={3} />
@@ -361,140 +327,27 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
             {/* Tabs */}
             <div className="flex overflow-x-auto border-b border-border scrollbar-hide">
               {tabs.map((t) => (
-                <button
-                  key={t.key}
-                  onClick={() => setTab(t.key)}
-                  className={`flex-shrink-0 py-3 px-4 text-xs font-bold flex items-center gap-1.5 whitespace-nowrap ${
+                <button key={t.key} onClick={() => setTab(t.key)}
+                  className={`flex-shrink-0 py-3 px-3 text-[10px] font-bold flex items-center gap-1 whitespace-nowrap ${
                     tab === t.key ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
-                  }`}
-                >
+                  }`}>
                   <t.icon className="h-3.5 w-3.5" /> {t.label}
                 </button>
               ))}
             </div>
 
             <div className="px-4 py-4">
-              {/* ========== OVERVIEW TAB ========== */}
+              {/* OVERVIEW */}
               {tab === "overview" && (
-                <div className="space-y-4">
-                  {/* Store header card */}
-                  <div className="rounded-2xl bg-card border border-border p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 text-2xl shrink-0 overflow-hidden">
-                        {business.logo_url ? (
-                          <img src={business.logo_url} alt="" className="h-full w-full object-cover rounded-xl" />
-                        ) : (
-                          BUSINESS_CATEGORIES.find((c) => c.value === business.category)?.icon || "🏪"
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-display text-lg font-bold truncate">{business.business_name}</h3>
-                        <p className="text-xs text-muted-foreground capitalize">{business.category.replace("_", " ")}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Stats grid */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl bg-primary/5 border border-primary/10 p-3">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <DollarSign className="h-3.5 w-3.5 text-primary" />
-                        <p className="text-[10px] font-bold text-primary">Revenue</p>
-                      </div>
-                      <p className="font-display text-xl font-extrabold">{analytics.totalRevenue.toLocaleString()}</p>
-                      <p className="text-[10px] text-muted-foreground">MKD earned</p>
-                    </div>
-                    <div className="rounded-2xl bg-accent/5 border border-accent/10 p-3">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <ShoppingBag className="h-3.5 w-3.5 text-accent" />
-                        <p className="text-[10px] font-bold text-accent">Orders</p>
-                      </div>
-                      <p className="font-display text-xl font-extrabold">{analytics.totalOrders}</p>
-                      <p className="text-[10px] text-muted-foreground">total orders</p>
-                    </div>
-                    <div className="rounded-2xl bg-secondary p-3">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <Package className="h-3.5 w-3.5" />
-                        <p className="text-[10px] font-bold">Products Sold</p>
-                      </div>
-                      <p className="font-display text-xl font-extrabold">{analytics.productsSold}</p>
-                      <p className="text-[10px] text-muted-foreground">items sold</p>
-                    </div>
-                    <div className="rounded-2xl bg-secondary p-3">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <Star className="h-3.5 w-3.5 text-primary" />
-                        <p className="text-[10px] font-bold">Rating</p>
-                      </div>
-                      <p className="font-display text-xl font-extrabold">
-                        {business.avg_rating > 0 ? Number(business.avg_rating).toFixed(1) : "—"}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">{business.total_reviews} reviews</p>
-                    </div>
-                  </div>
-
-                  {/* Alerts */}
-                  {analytics.pendingOrders > 0 && (
-                    <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3 flex items-center gap-3">
-                      <Clock className="h-5 w-5 text-amber-600 shrink-0" />
-                      <div>
-                        <p className="text-xs font-bold text-amber-700 dark:text-amber-400">{analytics.pendingOrders} pending orders</p>
-                        <p className="text-[10px] text-amber-600 dark:text-amber-500">Require your attention</p>
-                      </div>
-                      <button onClick={() => setTab("orders")} className="ml-auto text-[10px] font-bold text-amber-700 dark:text-amber-400">View →</button>
-                    </div>
-                  )}
-
-                  {analytics.lowStockProducts.length > 0 && (
-                    <div className="rounded-2xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 p-3 flex items-center gap-3">
-                      <AlertTriangle className="h-5 w-5 text-orange-600 shrink-0" />
-                      <div>
-                        <p className="text-xs font-bold text-orange-700 dark:text-orange-400">{analytics.lowStockProducts.length} low stock</p>
-                        <p className="text-[10px] text-orange-600 dark:text-orange-500">
-                          {analytics.lowStockProducts.map((p) => p.name).join(", ")}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {analytics.outOfStockProducts.length > 0 && (
-                    <div className="rounded-2xl bg-destructive/5 border border-destructive/20 p-3 flex items-center gap-3">
-                      <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
-                      <div>
-                        <p className="text-xs font-bold text-destructive">{analytics.outOfStockProducts.length} out of stock</p>
-                        <p className="text-[10px] text-destructive/70">
-                          {analytics.outOfStockProducts.map((p) => p.name).join(", ")}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Quick orders chart */}
-                  <div className="rounded-2xl bg-card border border-border p-4">
-                    <h4 className="text-xs font-bold mb-3">Orders (Last 7 Days)</h4>
-                    <div className="flex items-end gap-1 h-20">
-                      {analytics.ordersPerDay.map((d, i) => {
-                        const max = Math.max(...analytics.ordersPerDay.map((x) => x.count), 1);
-                        const h = Math.max(4, (d.count / max) * 100);
-                        return (
-                          <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                            <div className="w-full rounded-t-md petkeep-gradient" style={{ height: `${h}%` }} />
-                            <span className="text-[8px] text-muted-foreground">{d.label}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
+                <DashboardOverviewTab business={business} analytics={analytics} onTabChange={(t) => setTab(t as TabKey)} />
               )}
 
-              {/* ========== PRODUCTS TAB ========== */}
+              {/* PRODUCTS */}
               {tab === "products" && (
                 <div className="space-y-3">
                   {!addingProduct ? (
-                    <button
-                      onClick={() => { resetProductForm(); setAddingProduct(true); }}
-                      className="w-full rounded-xl border-2 border-dashed border-border py-4 text-sm font-bold text-primary hover:bg-secondary/30 transition-colors flex items-center justify-center gap-2"
-                    >
+                    <button onClick={() => { resetProductForm(); setAddingProduct(true); }}
+                      className="w-full rounded-xl border-2 border-dashed border-border py-4 text-sm font-bold text-primary hover:bg-secondary/30 transition-colors flex items-center justify-center gap-2">
                       <Plus className="h-4 w-4" /> Add Product
                     </button>
                   ) : (
@@ -522,21 +375,15 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                         </div>
                         <div className="space-y-2">
                           <Label className="text-xs">Category</Label>
-                          <select
-                            value={prodCategory}
-                            onChange={(e) => setProdCategory(e.target.value)}
-                            className="w-full rounded-xl bg-secondary px-2 py-2 text-xs outline-none"
-                          >
-                            {PRODUCT_CATEGORIES.map((c) => (
-                              <option key={c.value} value={c.value}>{c.icon} {c.label}</option>
-                            ))}
+                          <select value={prodCategory} onChange={(e) => setProdCategory(e.target.value)}
+                            className="w-full rounded-xl bg-secondary px-2 py-2 text-xs outline-none">
+                            {PRODUCT_CATEGORIES.map((c) => (<option key={c.value} value={c.value}>{c.icon} {c.label}</option>))}
                           </select>
                         </div>
                       </div>
                       <div className="space-y-2">
                         <Label className="text-xs">Product Images</Label>
                         <div className="flex flex-wrap items-center gap-2">
-                          {/* Main image */}
                           {prodImageUrl && (
                             <div className="relative">
                               <img src={prodImageUrl} alt="" className="h-14 w-14 rounded-lg object-cover" />
@@ -546,7 +393,6 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                               </button>
                             </div>
                           )}
-                          {/* Extra images */}
                           {prodExtraImages.map((url, i) => (
                             <div key={i} className="relative">
                               <img src={url} alt="" className="h-14 w-14 rounded-lg object-cover" />
@@ -555,7 +401,6 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                               </button>
                             </div>
                           ))}
-                          {/* Upload buttons */}
                           <div className="flex flex-col gap-1">
                             {!prodImageUrl && (
                               <label className="flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-xs font-bold cursor-pointer hover:bg-secondary/80">
@@ -586,11 +431,16 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                     const isLowStock = p.stock !== null && p.stock !== undefined && p.stock <= 5 && p.stock > 0;
                     const isOutOfStock = p.stock !== null && p.stock !== undefined && p.stock <= 0;
                     return (
-                      <div key={p.id} className="rounded-2xl bg-card border border-border p-3">
+                      <div key={p.id} className={`rounded-2xl bg-card border border-border p-3 ${!p.is_active ? "opacity-60" : ""}`}>
                         <div className="flex items-start gap-3">
                           <ProductImage src={p.image_url} alt={p.name} category={p.category} size="md" className="rounded-xl shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-bold truncate">{p.name}</h4>
+                            <div className="flex items-center gap-1.5">
+                              <h4 className="text-sm font-bold truncate">{p.name}</h4>
+                              {!p.is_active && (
+                                <span className="text-[8px] font-bold bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full shrink-0">Hidden</span>
+                              )}
+                            </div>
                             {p.description && <p className="text-[10px] text-muted-foreground line-clamp-1">{p.description}</p>}
                             <div className="flex items-center gap-2 mt-1">
                               <p className="text-sm font-bold text-primary">{p.price} MKD</p>
@@ -606,19 +456,21 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-1.5 mt-2 pt-2 border-t border-border">
+                        <div className="flex gap-1.5 mt-2 pt-2 border-t border-border flex-wrap">
                           <button onClick={() => startEditProduct(p)} className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold bg-secondary hover:bg-secondary/80">
                             <Edit2 className="h-3 w-3" /> Edit
                           </button>
                           <button onClick={() => handleDuplicateProduct(p)} className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold bg-secondary hover:bg-secondary/80">
                             <Copy className="h-3 w-3" /> Duplicate
                           </button>
+                          <button onClick={() => handleToggleVisibility(p)} className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold bg-secondary hover:bg-secondary/80">
+                            {p.is_active ? <><EyeOff className="h-3 w-3" /> Hide</> : <><Eye className="h-3 w-3" /> Show</>}
+                          </button>
                           <button
                             onClick={() => setBoostModal({ type: "product", id: p.id, name: p.name })}
                             className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold ${
                               boostedProductIds.has(p.id) ? "bg-amber-500/10 text-amber-600" : "bg-secondary hover:bg-secondary/80"
-                            }`}
-                          >
+                            }`}>
                             <Zap className="h-3 w-3" /> {boostedProductIds.has(p.id) ? "Boosted" : "Boost"}
                           </button>
                           <button onClick={() => deleteProduct(p.id)} className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold hover:bg-destructive/10 text-muted-foreground hover:text-destructive ml-auto">
@@ -639,7 +491,7 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                 </div>
               )}
 
-              {/* ========== ORDERS TAB ========== */}
+              {/* ORDERS */}
               {tab === "orders" && (
                 <div className="space-y-3">
                   {ordersLoading ? (
@@ -658,7 +510,6 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                       const status = order?.status || "pending";
                       return (
                         <div key={item.id} className="rounded-2xl bg-card border border-border p-4 space-y-3">
-                          {/* Order header */}
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <ProductImage src={(item as any).product?.image_url} alt="" category="" size="sm" className="rounded-lg" />
@@ -672,7 +523,6 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                             </span>
                           </div>
 
-                          {/* Customer & shipping */}
                           {order && (
                             <div className="rounded-xl bg-secondary/50 p-2.5 space-y-1">
                               <div className="flex items-center gap-1.5">
@@ -689,13 +539,11 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                             </div>
                           )}
 
-                          {/* Earnings */}
                           <div className="flex items-center gap-4 text-[10px]">
                             <span className="text-muted-foreground">Earnings: <span className="font-bold text-foreground">{Number(item.store_earnings).toLocaleString()} MKD</span></span>
                             <span className="text-muted-foreground">Fee: {Number(item.platform_fee).toLocaleString()} MKD</span>
                           </div>
 
-                          {/* Status actions */}
                           {["paid", "processing", "shipped"].includes(status) && (
                             <div className="flex gap-2 flex-wrap">
                               {status === "paid" && (
@@ -727,10 +575,24 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                 </div>
               )}
 
-              {/* ========== STORE TAB ========== */}
+              {/* INVENTORY */}
+              {tab === "inventory" && (
+                <DashboardInventoryTab products={products} onUpdateProduct={updateProduct} />
+              )}
+
+              {/* CUSTOMERS */}
+              {tab === "customers" && business && (
+                <DashboardCustomersTab businessId={business.id} />
+              )}
+
+              {/* REVIEWS */}
+              {tab === "reviews" && business && (
+                <DashboardReviewsTab businessId={business.id} products={products} />
+              )}
+
+              {/* STORE */}
               {tab === "store" && (
                 <div className="space-y-4">
-                  {/* Logo & Banner */}
                   <div className="rounded-2xl bg-card border border-border overflow-hidden">
                     <div className="relative h-28 bg-gradient-to-br from-primary/20 to-accent/20">
                       {(business as any).banner_url && (
@@ -758,36 +620,18 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                     </div>
                   </div>
 
-                  {/* Store details form */}
                   {editingStore ? (
                     <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
                       <h3 className="text-sm font-bold">Edit Store Details</h3>
-                      <div className="space-y-2">
-                        <Label className="text-xs">Store Name</Label>
-                        <Input value={storeForm.business_name} onChange={(e) => setStoreForm((f) => ({ ...f, business_name: e.target.value }))} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs">Description</Label>
-                        <Textarea value={storeForm.description} onChange={(e) => setStoreForm((f) => ({ ...f, description: e.target.value }))} rows={3} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs">Location</Label>
-                        <Input value={storeForm.location} onChange={(e) => setStoreForm((f) => ({ ...f, location: e.target.value }))} />
-                      </div>
+                      <div className="space-y-2"><Label className="text-xs">Store Name</Label><Input value={storeForm.business_name} onChange={(e) => setStoreForm((f) => ({ ...f, business_name: e.target.value }))} /></div>
+                      <div className="space-y-2"><Label className="text-xs">Description</Label><Textarea value={storeForm.description} onChange={(e) => setStoreForm((f) => ({ ...f, description: e.target.value }))} rows={3} /></div>
+                      <div className="space-y-2"><Label className="text-xs">Location</Label><Input value={storeForm.location} onChange={(e) => setStoreForm((f) => ({ ...f, location: e.target.value }))} /></div>
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                          <Label className="text-xs">Website</Label>
-                          <Input value={storeForm.website} onChange={(e) => setStoreForm((f) => ({ ...f, website: e.target.value }))} />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-xs">Phone</Label>
-                          <Input value={storeForm.phone} onChange={(e) => setStoreForm((f) => ({ ...f, phone: e.target.value }))} />
-                        </div>
+                        <div className="space-y-2"><Label className="text-xs">Website</Label><Input value={storeForm.website} onChange={(e) => setStoreForm((f) => ({ ...f, website: e.target.value }))} /></div>
+                        <div className="space-y-2"><Label className="text-xs">Phone</Label><Input value={storeForm.phone} onChange={(e) => setStoreForm((f) => ({ ...f, phone: e.target.value }))} /></div>
                       </div>
                       <div className="flex gap-2">
-                        <Button onClick={handleSaveStore} className="flex-1 petkeep-gradient text-primary-foreground font-bold">
-                          <Save className="h-3.5 w-3.5 mr-1.5" /> Save Changes
-                        </Button>
+                        <Button onClick={handleSaveStore} className="flex-1 petkeep-gradient text-primary-foreground font-bold"><Save className="h-3.5 w-3.5 mr-1.5" /> Save Changes</Button>
                         <Button variant="outline" onClick={() => setEditingStore(false)}>Cancel</Button>
                       </div>
                     </div>
@@ -796,28 +640,14 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-bold">Store Details</h3>
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setBoostModal({ type: "store", id: business.id, name: business.business_name })}
-                            className={`flex items-center gap-1 text-[10px] font-bold ${
-                              boostedStoreIds.has(business.id) ? "text-amber-600" : "text-muted-foreground hover:text-amber-600"
-                            }`}
-                          >
+                          <button onClick={() => setBoostModal({ type: "store", id: business.id, name: business.business_name })}
+                            className={`flex items-center gap-1 text-[10px] font-bold ${boostedStoreIds.has(business.id) ? "text-amber-600" : "text-muted-foreground hover:text-amber-600"}`}>
                             <Zap className="h-3 w-3" /> {boostedStoreIds.has(business.id) ? "Boosted" : "Boost"}
                           </button>
-                          <button
-                            onClick={() => {
-                              setStoreForm({
-                                business_name: business.business_name,
-                                description: business.description || "",
-                                location: business.location || "",
-                                website: business.website || "",
-                                phone: business.phone || "",
-                                category: business.category,
-                              });
-                              setEditingStore(true);
-                            }}
-                            className="flex items-center gap-1 text-[10px] font-bold text-primary"
-                          >
+                          <button onClick={() => {
+                            setStoreForm({ business_name: business.business_name, description: business.description || "", location: business.location || "", website: business.website || "", phone: business.phone || "", category: business.category });
+                            setEditingStore(true);
+                          }} className="flex items-center gap-1 text-[10px] font-bold text-primary">
                             <Edit2 className="h-3 w-3" /> Edit
                           </button>
                         </div>
@@ -842,10 +672,9 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                 </div>
               )}
 
-              {/* ========== ANALYTICS TAB ========== */}
+              {/* ANALYTICS */}
               {tab === "analytics" && (
                 <div className="space-y-4">
-                  {/* Top selling products */}
                   <div className="rounded-2xl bg-card border border-border p-4">
                     <h4 className="text-xs font-bold mb-3">🏆 Top Selling Products</h4>
                     {analytics.topProducts.length === 0 ? (
@@ -866,7 +695,6 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                     )}
                   </div>
 
-                  {/* Orders per day chart */}
                   <div className="rounded-2xl bg-card border border-border p-4">
                     <h4 className="text-xs font-bold mb-3">📊 Orders Per Day</h4>
                     <div className="flex items-end gap-1 h-24">
@@ -884,7 +712,6 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                     </div>
                   </div>
 
-                  {/* Inventory overview */}
                   <div className="rounded-2xl bg-card border border-border p-4">
                     <h4 className="text-xs font-bold mb-3">📦 Inventory Overview</h4>
                     <div className="grid grid-cols-3 gap-3">
@@ -909,14 +736,8 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
         )}
       </div>
 
-      {/* Boost Modal */}
       {boostModal && (
-        <BoostModal
-          type={boostModal.type}
-          targetId={boostModal.id}
-          targetName={boostModal.name}
-          onClose={() => setBoostModal(null)}
-        />
+        <BoostModal type={boostModal.type} targetId={boostModal.id} targetName={boostModal.name} onClose={() => setBoostModal(null)} />
       )}
     </div>
   );
