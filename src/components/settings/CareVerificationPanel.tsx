@@ -236,6 +236,49 @@ const CareVerificationPanel = () => {
                         </div>
                       </>
                     )}
+
+                    {/* Allow changing decisions for approved/rejected */}
+                    {r.status === "approved" && (
+                      <div className="space-y-2">
+                        <div>
+                          <label className="text-xs text-muted-foreground">Notes (optional)</label>
+                          <textarea
+                            value={reviewNotes[r.id] || ""}
+                            onChange={e => setReviewNotes(prev => ({ ...prev, [r.id]: e.target.value }))}
+                            rows={2}
+                            placeholder="Reason for revoking..."
+                            className="mt-1 w-full rounded-xl bg-secondary px-3 py-2 text-sm outline-none resize-none"
+                          />
+                        </div>
+                        <button
+                          onClick={() => handleAction(r.id, "rejected")}
+                          className="w-full flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                        >
+                          <XCircle className="h-4 w-4" /> Revoke Approval
+                        </button>
+                      </div>
+                    )}
+
+                    {r.status === "rejected" && (
+                      <div className="space-y-2">
+                        <div>
+                          <label className="text-xs text-muted-foreground">Notes (optional)</label>
+                          <textarea
+                            value={reviewNotes[r.id] || ""}
+                            onChange={e => setReviewNotes(prev => ({ ...prev, [r.id]: e.target.value }))}
+                            rows={2}
+                            placeholder="Reason for approving..."
+                            className="mt-1 w-full rounded-xl bg-secondary px-3 py-2 text-sm outline-none resize-none"
+                          />
+                        </div>
+                        <button
+                          onClick={() => handleAction(r.id, "approved")}
+                          className="w-full flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+                        >
+                          <CheckCircle2 className="h-4 w-4" /> Approve Instead
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
