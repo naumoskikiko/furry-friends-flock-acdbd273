@@ -87,19 +87,10 @@ export const useFeed = () => {
 
     setLoading(true);
 
-    // Get followed user IDs
-    const { data: follows } = await supabase
-      .from("followers")
-      .select("following_id")
-      .eq("follower_id", user.id);
-
-    const followedIds = follows?.map((f) => f.following_id) || [];
-    const feedUserIds = [...followedIds, user.id];
-
+    // Load all public posts from all users
     const { data: rawPosts } = await supabase
       .from("posts")
       .select("*")
-      .in("user_id", feedUserIds)
       .order("created_at", { ascending: false })
       .range(offsetRef.current, offsetRef.current + BATCH_SIZE - 1);
 
