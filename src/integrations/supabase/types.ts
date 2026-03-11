@@ -332,6 +332,7 @@ export type Database = {
       care_providers: {
         Row: {
           avg_rating: number
+          booking_mode: string
           business_name: string
           cancellation_hours: number | null
           cancellation_policy: string | null
@@ -348,6 +349,7 @@ export type Database = {
           phone: string | null
           photo_url: string | null
           response_time_minutes: number | null
+          service_radius_km: number | null
           total_bookings: number
           total_reviews: number
           updated_at: string
@@ -356,6 +358,7 @@ export type Database = {
         }
         Insert: {
           avg_rating?: number
+          booking_mode?: string
           business_name: string
           cancellation_hours?: number | null
           cancellation_policy?: string | null
@@ -372,6 +375,7 @@ export type Database = {
           phone?: string | null
           photo_url?: string | null
           response_time_minutes?: number | null
+          service_radius_km?: number | null
           total_bookings?: number
           total_reviews?: number
           updated_at?: string
@@ -380,6 +384,7 @@ export type Database = {
         }
         Update: {
           avg_rating?: number
+          booking_mode?: string
           business_name?: string
           cancellation_hours?: number | null
           cancellation_policy?: string | null
@@ -396,6 +401,7 @@ export type Database = {
           phone?: string | null
           photo_url?: string | null
           response_time_minutes?: number | null
+          service_radius_km?: number | null
           total_bookings?: number
           total_reviews?: number
           updated_at?: string
@@ -1192,6 +1198,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "provider_gallery_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "care_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_verifications: {
+        Row: {
+          document_name: string
+          document_url: string
+          id: string
+          provider_id: string
+          reviewed_at: string | null
+          reviewer_notes: string | null
+          status: string
+          submitted_at: string
+          verification_type: string
+        }
+        Insert: {
+          document_name?: string
+          document_url: string
+          id?: string
+          provider_id: string
+          reviewed_at?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          submitted_at?: string
+          verification_type?: string
+        }
+        Update: {
+          document_name?: string
+          document_url?: string
+          id?: string
+          provider_id?: string
+          reviewed_at?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          submitted_at?: string
+          verification_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_verifications_provider_id_fkey"
             columns: ["provider_id"]
             isOneToOne: false
             referencedRelation: "care_providers"
