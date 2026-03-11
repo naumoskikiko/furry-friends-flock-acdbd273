@@ -16,6 +16,7 @@ interface BusinessDashboardProps {
 const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
   const { business, createBusiness, updateBusiness, refresh } = useMyBusiness();
   const { products, addProduct, deleteProduct } = useBusinessProducts(business?.id || null);
+  const { orders: storeOrders, loading: ordersLoading, updateOrderStatus } = useStoreOrders(business?.id || null);
   const { toast } = useToast();
 
   const [tab, setTab] = useState<"profile" | "products">("profile");
