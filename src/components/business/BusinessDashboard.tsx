@@ -38,6 +38,9 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
   const { toast } = useToast();
 
   const [tab, setTab] = useState<"overview" | "products" | "orders" | "store" | "analytics">("overview");
+  const [boostModal, setBoostModal] = useState<{ type: "product" | "store" | "provider"; id: string; name: string } | null>(null);
+  const boostedProductIds = useBoostedIds("product");
+  const boostedStoreIds = useBoostedIds("store");
 
   // Setup form
   const [setupName, setSetupName] = useState("");
