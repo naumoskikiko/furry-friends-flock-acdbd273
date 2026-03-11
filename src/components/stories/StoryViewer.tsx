@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { X, ChevronLeft, ChevronRight, MapPin, Pause, Play, Heart, MessageCircle, Send } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, MapPin, Pause, Play, Heart, MessageCircle, Send, Eye, BarChart3, ChevronDown } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export interface StoryItem {
   id: string;
@@ -33,7 +34,7 @@ interface StoryViewerProps {
   onClose: () => void;
   onLike?: (storyId: string) => void;
   onUnlike?: (storyId: string) => void;
-  onReply?: (storyId: string, storyOwnerId: string, mediaUrl: string) => void;
+  onReply?: (storyId: string, storyOwnerId: string, mediaUrl: string, replyText: string) => void;
   onShare?: (storyId: string, mediaUrl: string) => void;
   onView?: (storyId: string) => void;
 }
@@ -159,7 +160,7 @@ const StoryViewer = ({
 
   const handleReplySend = () => {
     if (!replyText.trim() || !story || !group) return;
-    onReply?.(story.id, group.user_id, story.media_url);
+    onReply?.(story.id, group.user_id, story.media_url, replyText.trim());
     setReplyText("");
     setShowReply(false);
     setPaused(false);
@@ -308,13 +309,135 @@ const StoryViewer = ({
         </div>
       )}
 
-      {/* Own story: show like count */}
-      {isMine && story.likes_count > 0 && (
-        <div className="absolute bottom-6 left-0 right-0 z-50 flex justify-center">
-          <div className="flex items-center gap-1.5 rounded-full bg-black/50 px-4 py-2 text-white">
-            <Heart className="h-4 w-4 fill-red-500 text-red-500" />
-            <span className="text-xs font-semibold">{story.likes_count} {story.likes_count === 1 ? "like" : "likes"}</span>
-          </div>
+      {/* Own story: analytics panel */}
+      {isMine && (
+        <StoryAnalyticsPanel storyId={story.id} likesCount={story.likes_count} />
+      )}
+    </div>
+  );
+};
+
+const fromTable = (table: string) => (supabase as any).from(table);
+
+// --- Story Analytics Panel (for own stories) ---
+interface AnalyticsData {
+  views: { user_id: string; full_name: string; avatar_url: string | null; viewed_at: string }[];
+  likesCount: number;
+  viewsCount: number;
+}
+
+const StoryAnalyticsPanel = ({ storyId, likesCount }: { storyId: string; likesCount: number }) => {
+  const [expanded, setExpanded] = useState(false);
+  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchAnalytics = async () => {
+    if (data) { setExpanded(!expanded); return; }
+    setLoading(true);
+    setExpanded(true);
+
+    // Fetch views with profile info
+    const { data: views } = await fromTable("story_views")
+      .select("user_id, viewed_at")
+      .eq("story_id", storyId)
+      .order("viewed_at", { ascending: false });
+
+    const viewerIds = (views || []).map((v: any) => v.user_id);
+    let profileMap = new Map<string, any>();
+    if (viewerIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, avatar_url")
+        .in("user_id", viewerIds);
+      profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
+    }
+
+    const enrichedViews = (views || []).map((v: any) => {
+      const p = profileMap.get(v.user_id);
+      return {
+        user_id: v.user_id,
+        full_name: p?.full_name || "User",
+        avatar_url: p?.avatar_url || null,
+        viewed_at: v.viewed_at,
+      };
+    });
+
+    setData({
+      views: enrichedViews,
+      likesCount,
+      viewsCount: enrichedViews.length,
+    });
+    setLoading(false);
+  };
+
+  return (
+    <div className="absolute bottom-0 left-0 right-0 z-50">
+      {/* Toggle button */}
+      <button
+        onClick={fetchAnalytics}
+        className="mx-auto mb-2 flex items-center gap-2 rounded-full bg-black/60 px-4 py-2 text-white backdrop-blur-sm"
+      >
+        <BarChart3 className="h-4 w-4" />
+        <span className="text-xs font-semibold">Story Insights</span>
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expanded ? "rotate-180" : ""}`} />
+      </button>
+
+      {/* Analytics panel */}
+      {expanded && (
+        <div className="mx-2 mb-2 rounded-2xl bg-black/80 p-4 backdrop-blur-md text-white max-h-60 overflow-y-auto">
+          {loading ? (
+            <div className="flex justify-center py-4">
+              <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
+            </div>
+          ) : data ? (
+            <>
+              {/* Stats row */}
+              <div className="flex justify-around mb-4">
+                <div className="flex flex-col items-center gap-0.5">
+                  <Eye className="h-5 w-5 text-white/80" />
+                  <span className="text-lg font-bold">{data.viewsCount}</span>
+                  <span className="text-[10px] text-white/60">Views</span>
+                </div>
+                <div className="flex flex-col items-center gap-0.5">
+                  <Heart className="h-5 w-5 text-red-400" />
+                  <span className="text-lg font-bold">{data.likesCount}</span>
+                  <span className="text-[10px] text-white/60">Likes</span>
+                </div>
+              </div>
+
+              {/* Viewer list */}
+              {data.views.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold text-white/60 uppercase mb-2">Viewed by</p>
+                  <div className="space-y-2">
+                    {data.views.map((v) => {
+                      const initials = v.full_name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+                      return (
+                        <div key={v.user_id} className="flex items-center gap-2.5">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={v.avatar_url || undefined} />
+                            <AvatarFallback className="bg-white/20 text-[10px] font-bold text-white">
+                              {initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold truncate">{v.full_name}</p>
+                          </div>
+                          <span className="text-[10px] text-white/40">
+                            {formatDistanceToNow(new Date(v.viewed_at), { addSuffix: true })}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {data.views.length === 0 && (
+                <p className="text-center text-xs text-white/50 py-2">No views yet</p>
+              )}
+            </>
+          ) : null}
         </div>
       )}
     </div>

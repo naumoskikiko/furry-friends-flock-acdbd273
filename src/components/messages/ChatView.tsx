@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   ArrowLeft, Send, Check, CheckCheck, Search, X, MoreVertical,
   Pencil, Trash2, Flag, ChevronUp, Reply, Forward, Mic, Calendar,
-  WifiOff, RefreshCw, ExternalLink, Link2,
+  WifiOff, RefreshCw, ExternalLink, Link2, Image,
 } from "lucide-react";
 import {
   useChatMessages, useTypingIndicator, useActivityTracking,
@@ -285,6 +285,79 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
                     <span className="text-[11px] text-muted-foreground bg-secondary/50 rounded-full px-3 py-1">
                       {msg.message_text}
                     </span>
+                  </div>
+                );
+              }
+
+              // Story reply card
+              if (msg.message_type === "story_reply" && msg.metadata) {
+                return (
+                  <div
+                    key={msg.id}
+                    ref={(el) => { if (el) messageRefs.current.set(msg.id, el); }}
+                    className={`group flex items-end gap-1.5 ${isMine ? "justify-end" : "justify-start"}`}
+                  >
+                    <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 ${
+                      isMine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-secondary text-secondary-foreground rounded-bl-md"
+                    }`}>
+                      {/* Story preview */}
+                      <div className={`mb-2 rounded-xl overflow-hidden border ${
+                        isMine ? "border-primary-foreground/20" : "border-border"
+                      }`}>
+                        {msg.metadata.media_url && (
+                          <img src={msg.metadata.media_url} alt="" className="w-full h-24 object-cover" />
+                        )}
+                        <div className={`px-2.5 py-1.5 ${isMine ? "bg-primary-foreground/10" : "bg-card"}`}>
+                          <p className={`text-[10px] font-semibold flex items-center gap-1 ${isMine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                            <Reply className="h-3 w-3" /> Replied to story
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap break-words">{msg.message_text}</p>
+                      <div className={`flex items-center gap-1 mt-0.5 ${isMine ? "justify-end" : ""}`}>
+                        <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                          {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                        </span>
+                        {isMine && (msg.is_read
+                          ? <CheckCheck className="h-3 w-3 text-primary-foreground/60" />
+                          : <Check className="h-3 w-3 text-primary-foreground/60" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Story share card
+              if (msg.message_type === "story_share" && msg.metadata) {
+                return (
+                  <div
+                    key={msg.id}
+                    ref={(el) => { if (el) messageRefs.current.set(msg.id, el); }}
+                    className={`group flex items-end gap-1.5 ${isMine ? "justify-end" : "justify-start"}`}
+                  >
+                    <div className={`max-w-[75%] rounded-2xl overflow-hidden ${
+                      isMine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-secondary text-secondary-foreground rounded-bl-md"
+                    }`}>
+                      {msg.metadata.media_url && (
+                        <img src={msg.metadata.media_url} alt="" className="w-full h-32 object-cover" />
+                      )}
+                      <div className="px-3.5 py-2">
+                        <p className={`text-[11px] font-semibold flex items-center gap-1 ${isMine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                          <Image className="h-3 w-3" /> Shared a story
+                        </p>
+                        <p className={`text-[10px] mt-0.5 ${isMine ? "text-primary-foreground/50" : "text-muted-foreground"}`}>Tap to view</p>
+                        <div className={`flex items-center gap-1 mt-1 ${isMine ? "justify-end" : ""}`}>
+                          <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                            {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                          </span>
+                          {isMine && (msg.is_read
+                            ? <CheckCheck className="h-3 w-3 text-primary-foreground/60" />
+                            : <Check className="h-3 w-3 text-primary-foreground/60" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 );
               }
