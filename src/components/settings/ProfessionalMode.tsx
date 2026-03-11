@@ -13,7 +13,7 @@ const futureSections = [
 const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
 
-  if (sub === "map-management") {
+  if (sub === "map-management" || sub === "care-verification") {
     return (
       <div>
         <button
@@ -22,7 +22,7 @@ const ProfessionalMode = () => {
         >
           <ArrowLeft className="h-4 w-4" /> Back to Professional Mode
         </button>
-        <SettingsMapManagement />
+        {sub === "map-management" ? <SettingsMapManagement /> : <CareVerificationPanel />}
       </div>
     );
   }
