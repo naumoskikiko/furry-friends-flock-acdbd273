@@ -35,6 +35,7 @@ const MarketplacePage = () => {
   const featured = businesses.filter((b) => b.avg_rating >= 4.0).slice(0, 5);
   const isBusiness = profile?.role === "business";
   const { isAdmin } = useIsAdmin();
+  const { itemCount } = useCart();
   const canManageStore = isBusiness || isAdmin;
 
   return (
