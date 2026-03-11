@@ -8,7 +8,7 @@ import {
 import {
   useChatMessages, useTypingIndicator, useActivityTracking,
   useConnectionStatus, getActivityStatus, extractLinks,
-  saveDraft, loadDraft,
+  saveDraft, loadDraft, updateBookingFromChat,
   type Conversation, type Message, type PendingMessage,
 } from "@/hooks/useMessages";
 import { useAuth } from "@/contexts/AuthContext";
