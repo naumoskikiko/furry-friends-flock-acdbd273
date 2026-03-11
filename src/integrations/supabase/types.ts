@@ -600,6 +600,27 @@ export type Database = {
         }
         Relationships: []
       }
+      deleted_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       followers: {
         Row: {
           created_at: string
@@ -621,10 +642,39 @@ export type Database = {
         }
         Relationships: []
       }
+      message_reports: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          message_id: string
+          reason: string
+          reporter_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          message_id: string
+          reason?: string
+          reporter_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          message_id?: string
+          reason?: string
+          reporter_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           conversation_id: string
           created_at: string
+          deleted_at: string | null
+          edited_at: string | null
           forwarded_from_id: string | null
           id: string
           is_read: boolean
@@ -637,6 +687,8 @@ export type Database = {
         Insert: {
           conversation_id: string
           created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
           forwarded_from_id?: string | null
           id?: string
           is_read?: boolean
@@ -649,6 +701,8 @@ export type Database = {
         Update: {
           conversation_id?: string
           created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
           forwarded_from_id?: string | null
           id?: string
           is_read?: boolean
@@ -1066,6 +1120,7 @@ export type Database = {
           full_name: string
           id: string
           is_student: boolean
+          last_active_at: string | null
           location: string | null
           role: Database["public"]["Enums"]["user_role_type"]
           updated_at: string
@@ -1079,6 +1134,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_student?: boolean
+          last_active_at?: string | null
           location?: string | null
           role?: Database["public"]["Enums"]["user_role_type"]
           updated_at?: string
@@ -1092,6 +1148,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_student?: boolean
+          last_active_at?: string | null
           location?: string | null
           role?: Database["public"]["Enums"]["user_role_type"]
           updated_at?: string
