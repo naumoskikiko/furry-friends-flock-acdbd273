@@ -283,7 +283,7 @@ const ProductDetailPage = () => {
                       className="min-w-[140px] rounded-2xl bg-card border border-border overflow-hidden shrink-0 petkeep-card-hover cursor-pointer"
                     >
                       {rp.image_url ? (
-                        <img src={rp.image_url} alt={rp.name} className="h-24 w-full object-cover" />
+                        <img src={rp.image_url} alt={rp.name} loading="lazy" className="h-24 w-full object-cover" />
                       ) : (
                         <div className="h-24 w-full bg-secondary flex items-center justify-center text-2xl">
                           {ci?.icon || "📦"}
