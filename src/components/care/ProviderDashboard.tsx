@@ -694,23 +694,6 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
 
           {tab === "settings" && (
             <div className="space-y-5">
-              {/* Emergency */}
-              <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                  <h3 className="text-sm font-bold">Emergency Care</h3>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">Accept emergency / urgent visits</p>
-                  <button
-                    onClick={() => setEmergencyAvail(!emergencyAvail)}
-                    className={`rounded-full px-3 py-1 text-[10px] font-bold transition-colors ${emergencyAvail ? "bg-destructive/10 text-destructive" : "bg-secondary text-muted-foreground"}`}
-                  >
-                    {emergencyAvail ? "Enabled" : "Disabled"}
-                  </button>
-                </div>
-              </div>
-
               {/* Cancellation */}
               <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
                 <div className="flex items-center gap-2">
@@ -729,28 +712,34 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
                 </div>
               </div>
 
-              {/* Service Area */}
+              {/* Service Area - North Macedonia Towns */}
               <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-primary" />
                   <h3 className="text-sm font-bold">Service Area</h3>
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Service radius (km)</label>
-                  <div className="mt-1 flex flex-wrap gap-2">
-                    {[null, 5, 10, 25, 50].map((r) => (
+                <p className="text-xs text-muted-foreground">Select the towns where you offer services</p>
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                  {NORTH_MACEDONIA_TOWNS.map((town) => {
+                    const selected = serviceTowns.includes(town);
+                    return (
                       <button
-                        key={String(r)}
-                        onClick={() => setServiceRadius(r ? String(r) : "")}
+                        key={town}
+                        onClick={() => setServiceTowns(prev =>
+                          selected ? prev.filter(t => t !== town) : [...prev, town]
+                        )}
                         className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                          serviceRadius === String(r || "") ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                          selected ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"
                         }`}
                       >
-                        {r ? `${r} km` : "No limit"}
+                        {town}
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
+                {serviceTowns.length > 0 && (
+                  <p className="text-[10px] text-muted-foreground">{serviceTowns.length} town{serviceTowns.length !== 1 ? "s" : ""} selected</p>
+                )}
               </div>
 
               {/* Booking Mode */}
