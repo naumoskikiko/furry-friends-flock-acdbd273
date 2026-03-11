@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import {
   ChevronLeft, Plus, Package, Store, Trash2, Edit2, ShoppingBag, Truck,
   CheckCircle, BarChart3, Users, Bell, AlertTriangle, Copy, Save, X,
-  TrendingUp, DollarSign, Star, Clock, Image as ImageIcon
+  TrendingUp, DollarSign, Star, Clock, Image as ImageIcon, Zap
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,9 @@ import { useMyBusiness, useBusinessProducts, BUSINESS_CATEGORIES, PRODUCT_CATEGO
 import { useStoreOrders } from "@/hooks/useOrders";
 import { supabase } from "@/integrations/supabase/client";
 import ProductImage from "@/components/marketplace/ProductImage";
+import BoostModal from "@/components/marketplace/BoostModal";
+import BoostBadge from "@/components/marketplace/BoostBadge";
+import { useBoostedIds } from "@/hooks/useBoosts";
 
 interface BusinessDashboardProps {
   onClose: () => void;
@@ -35,6 +38,9 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
   const { toast } = useToast();
 
   const [tab, setTab] = useState<"overview" | "products" | "orders" | "store" | "analytics">("overview");
+  const [boostModal, setBoostModal] = useState<{ type: "product" | "store" | "provider"; id: string; name: string } | null>(null);
+  const boostedProductIds = useBoostedIds("product");
+  const boostedStoreIds = useBoostedIds("store");
 
   // Setup form
   const [setupName, setSetupName] = useState("");
@@ -607,6 +613,14 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                           <button onClick={() => handleDuplicateProduct(p)} className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold bg-secondary hover:bg-secondary/80">
                             <Copy className="h-3 w-3" /> Duplicate
                           </button>
+                          <button
+                            onClick={() => setBoostModal({ type: "product", id: p.id, name: p.name })}
+                            className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold ${
+                              boostedProductIds.has(p.id) ? "bg-amber-500/10 text-amber-600" : "bg-secondary hover:bg-secondary/80"
+                            }`}
+                          >
+                            <Zap className="h-3 w-3" /> {boostedProductIds.has(p.id) ? "Boosted" : "Boost"}
+                          </button>
                           <button onClick={() => deleteProduct(p.id)} className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold hover:bg-destructive/10 text-muted-foreground hover:text-destructive ml-auto">
                             <Trash2 className="h-3 w-3" /> Delete
                           </button>
@@ -781,22 +795,32 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                     <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-bold">Store Details</h3>
-                        <button
-                          onClick={() => {
-                            setStoreForm({
-                              business_name: business.business_name,
-                              description: business.description || "",
-                              location: business.location || "",
-                              website: business.website || "",
-                              phone: business.phone || "",
-                              category: business.category,
-                            });
-                            setEditingStore(true);
-                          }}
-                          className="flex items-center gap-1 text-[10px] font-bold text-primary"
-                        >
-                          <Edit2 className="h-3 w-3" /> Edit
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setBoostModal({ type: "store", id: business.id, name: business.business_name })}
+                            className={`flex items-center gap-1 text-[10px] font-bold ${
+                              boostedStoreIds.has(business.id) ? "text-amber-600" : "text-muted-foreground hover:text-amber-600"
+                            }`}
+                          >
+                            <Zap className="h-3 w-3" /> {boostedStoreIds.has(business.id) ? "Boosted" : "Boost"}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setStoreForm({
+                                business_name: business.business_name,
+                                description: business.description || "",
+                                location: business.location || "",
+                                website: business.website || "",
+                                phone: business.phone || "",
+                                category: business.category,
+                              });
+                              setEditingStore(true);
+                            }}
+                            className="flex items-center gap-1 text-[10px] font-bold text-primary"
+                          >
+                            <Edit2 className="h-3 w-3" /> Edit
+                          </button>
+                        </div>
                       </div>
                       <div className="space-y-2">
                         {[
@@ -884,6 +908,16 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
           </>
         )}
       </div>
+
+      {/* Boost Modal */}
+      {boostModal && (
+        <BoostModal
+          type={boostModal.type}
+          targetId={boostModal.id}
+          targetName={boostModal.name}
+          onClose={() => setBoostModal(null)}
+        />
+      )}
     </div>
   );
 };

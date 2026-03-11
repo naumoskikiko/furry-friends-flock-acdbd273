@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown } from "lucide-react";
+import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap } from "lucide-react";
 import SettingsMapManagement from "./SettingsMapManagement";
 import CareVerificationPanel from "./CareVerificationPanel";
 import CareManagementPanel from "./CareManagementPanel";
 import MarketplaceManagementPanel from "./MarketplaceManagementPanel";
 import RoleManagementPanel from "./RoleManagementPanel";
+import PromotionManagementPanel from "./PromotionManagementPanel";
 import { useIsOwner } from "@/hooks/useIsOwner";
 
-type SubSection = "dashboard" | "map-management" | "care-verification" | "care-management" | "marketplace-control" | "role-management";
+type SubSection = "dashboard" | "map-management" | "care-verification" | "care-management" | "marketplace-control" | "role-management" | "promotions";
 
 const futureSections = [
   { id: "analytics", label: "Platform Analytics", icon: BarChart3, description: "User stats, growth metrics", coming: true },
@@ -31,6 +32,7 @@ const ProfessionalMode = () => {
         {sub === "care-management" && <CareManagementPanel />}
         {sub === "marketplace-control" && <MarketplaceManagementPanel />}
         {sub === "role-management" && <RoleManagementPanel />}
+        {sub === "promotions" && <PromotionManagementPanel />}
       </div>
     );
   }
@@ -100,6 +102,21 @@ const ProfessionalMode = () => {
         <div className="flex-1 text-left">
           <p className="text-sm font-semibold">Marketplace Control</p>
           <p className="text-xs text-muted-foreground">Manage stores, products & listings</p>
+        </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </button>
+
+      {/* Promotion Management */}
+      <button
+        onClick={() => setSub("promotions")}
+        className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
+      >
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/10">
+          <Zap className="h-4.5 w-4.5 text-amber-500" />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="text-sm font-semibold">Promotion Management</p>
+          <p className="text-xs text-muted-foreground">Boosts, pricing & revenue tracking</p>
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </button>

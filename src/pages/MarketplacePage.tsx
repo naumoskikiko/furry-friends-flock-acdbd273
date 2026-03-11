@@ -9,6 +9,8 @@ import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import BusinessDashboard from "@/components/business/BusinessDashboard";
 import ProductImage from "@/components/marketplace/ProductImage";
+import BoostBadge from "@/components/marketplace/BoostBadge";
+import { useBoostedIds } from "@/hooks/useBoosts";
 
 const MarketplacePage = () => {
   const { profile } = useAuth();
@@ -43,6 +45,8 @@ const MarketplacePage = () => {
   const { business: myBusiness, loading: myBizLoading } = useMyBusiness();
   const hasStore = !!myBusiness;
   const canManageStore = isBusiness || isAdmin;
+  const boostedProductIds = useBoostedIds("product");
+  const boostedStoreIds = useBoostedIds("store");
 
   const handleQuickAdd = async (productId: string, productName: string) => {
     try {
@@ -162,6 +166,7 @@ const MarketplacePage = () => {
                           <div className="flex items-center gap-1">
                             <p className="text-xs font-bold truncate">{b.business_name}</p>
                             {b.is_verified && <BadgeCheck className="h-3 w-3 text-primary shrink-0" />}
+                            {boostedStoreIds.has(b.id) && <BoostBadge />}
                           </div>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
@@ -190,6 +195,7 @@ const MarketplacePage = () => {
                     <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
                       <div className="relative cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
                         <ProductImage src={p.image_url} alt={p.name} category={p.category} size="lg" aspectRatio="square" className="rounded-none" />
+                        {boostedProductIds.has(p.id) && <div className="absolute top-2 left-2"><BoostBadge /></div>}
                       </div>
                       <div className="p-2.5">
                         <h4 className="text-xs font-bold truncate cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>{p.name}</h4>
@@ -320,6 +326,7 @@ const MarketplacePage = () => {
                       <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
                         <div className="relative cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
                           <ProductImage src={p.image_url} alt={p.name} category={p.category} size="lg" aspectRatio="square" className="rounded-none" />
+                          {boostedProductIds.has(p.id) && <div className="absolute top-2 left-2"><BoostBadge /></div>}
                           {outOfStock && (
                             <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
                               <span className="text-xs font-bold text-destructive">Out of stock</span>
