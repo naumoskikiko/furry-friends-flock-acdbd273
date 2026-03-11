@@ -17,7 +17,7 @@ const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
   const { isOwner } = useIsOwner();
 
-  if (sub === "map-management" || sub === "care-verification" || sub === "care-management" || sub === "marketplace-control") {
+  if (sub !== "dashboard") {
     return (
       <div>
         <button
@@ -30,6 +30,7 @@ const ProfessionalMode = () => {
         {sub === "care-verification" && <CareVerificationPanel />}
         {sub === "care-management" && <CareManagementPanel />}
         {sub === "marketplace-control" && <MarketplaceManagementPanel />}
+        {sub === "role-management" && <RoleManagementPanel />}
       </div>
     );
   }
