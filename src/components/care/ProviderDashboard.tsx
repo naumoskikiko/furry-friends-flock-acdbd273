@@ -713,7 +713,54 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
                 </div>
               </div>
 
-              {/* Gallery */}
+              {/* Service Area */}
+              <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-bold">Service Area</h3>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Service radius (km)</label>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {[null, 5, 10, 25, 50].map((r) => (
+                      <button
+                        key={String(r)}
+                        onClick={() => setServiceRadius(r ? String(r) : "")}
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                          serviceRadius === String(r || "") ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                        }`}
+                      >
+                        {r ? `${r} km` : "No limit"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Booking Mode */}
+              <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-bold">Booking Mode</h3>
+                </div>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setBookingMode("instant")}
+                    className={`w-full rounded-xl p-3 text-left transition-colors ${bookingMode === "instant" ? "bg-primary/10 border border-primary/30" : "bg-secondary"}`}
+                  >
+                    <p className="text-xs font-bold">⚡ Instant Booking</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Bookings are confirmed immediately</p>
+                  </button>
+                  <button
+                    onClick={() => setBookingMode("request")}
+                    className={`w-full rounded-xl p-3 text-left transition-colors ${bookingMode === "request" ? "bg-primary/10 border border-primary/30" : "bg-secondary"}`}
+                  >
+                    <p className="text-xs font-bold">📋 Request Booking</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">You review and approve each booking manually</p>
+                  </button>
+                </div>
+              </div>
+
               <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <ImageIcon className="h-4 w-4 text-primary" />
