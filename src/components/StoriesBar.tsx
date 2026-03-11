@@ -2,15 +2,23 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useStories } from "@/hooks/useStories";
 import { useAuth } from "@/contexts/AuthContext";
+import { getOrCreateConversation } from "@/hooks/useMessages";
+import { supabase } from "@/integrations/supabase/client";
 import StoryViewer from "@/components/stories/StoryViewer";
 import CreateStoryModal from "@/components/stories/CreateStoryModal";
+import ShareStoryModal from "@/components/stories/ShareStoryModal";
+import { useToast } from "@/hooks/use-toast";
+
+const fromTable = (table: string) => (supabase as any).from(table);
 
 const StoriesBar = () => {
   const { user, profile } = useAuth();
-  const { storyGroups, hasOwnStory, refreshStories } = useStories();
+  const { storyGroups, hasOwnStory, refreshStories, likeStory, unlikeStory, recordView } = useStories();
+  const { toast } = useToast();
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
+  const [shareModal, setShareModal] = useState<{ storyId: string; mediaUrl: string } | null>(null);
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "You";
   const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
@@ -18,6 +26,27 @@ const StoriesBar = () => {
   const openStory = (index: number) => {
     setViewerIndex(index);
     setViewerOpen(true);
+  };
+
+  const handleReply = async (storyId: string, storyOwnerId: string, mediaUrl: string) => {
+    if (!user) return;
+    try {
+      const convId = await getOrCreateConversation(storyOwnerId);
+      await fromTable("messages").insert({
+        conversation_id: convId,
+        sender_id: user.id,
+        message_text: "Replied to your story ❤️",
+        message_type: "story_reply",
+        metadata: { story_id: storyId, media_url: mediaUrl },
+      });
+      toast({ title: "Reply sent!" });
+    } catch {
+      toast({ title: "Failed to send reply", variant: "destructive" });
+    }
+  };
+
+  const handleShare = (storyId: string, mediaUrl: string) => {
+    setShareModal({ storyId, mediaUrl });
   };
 
   return (
@@ -86,6 +115,19 @@ const StoriesBar = () => {
           initialGroupIndex={viewerIndex}
           open={viewerOpen}
           onClose={() => setViewerOpen(false)}
+          onLike={likeStory}
+          onUnlike={unlikeStory}
+          onReply={handleReply}
+          onShare={handleShare}
+          onView={recordView}
+        />
+      )}
+
+      {shareModal && (
+        <ShareStoryModal
+          storyId={shareModal.storyId}
+          mediaUrl={shareModal.mediaUrl}
+          onClose={() => setShareModal(null)}
         />
       )}
 
