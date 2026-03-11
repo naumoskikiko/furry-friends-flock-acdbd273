@@ -19,6 +19,7 @@ import UserProfilePage from "./pages/UserProfilePage";
 import SearchResultsPage from "./pages/SearchResultsPage";
 import PlaceDetailPage from "./pages/PlaceDetailPage";
 import FindMyPetPage from "./pages/FindMyPetPage";
+import StorePage from "./pages/StorePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
