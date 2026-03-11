@@ -99,8 +99,24 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
       emergency_available: emergencyAvail,
       cancellation_policy: cancelPolicy,
       cancellation_hours: Number(cancelHours) || 24,
+      service_radius_km: serviceRadius ? Number(serviceRadius) : null,
+      booking_mode: bookingMode,
     } as any);
     toast({ title: "Settings saved!" });
+  };
+
+  const handleVerDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingVerDoc(true);
+    try {
+      await submitVerification(verDocType, file);
+      toast({ title: "Document submitted for verification!" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    }
+    setUploadingVerDoc(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleAddGalleryImage = async () => {
