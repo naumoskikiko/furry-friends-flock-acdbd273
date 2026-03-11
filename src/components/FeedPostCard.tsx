@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import HeartAnimation from "@/components/feed/HeartAnimation";
 import LikesListModal from "@/components/feed/LikesListModal";
+import SharePostModal from "@/components/messages/SharePostModal";
 import type { FeedPostData } from "@/hooks/useFeed";
 
 interface FeedPostCardProps {
