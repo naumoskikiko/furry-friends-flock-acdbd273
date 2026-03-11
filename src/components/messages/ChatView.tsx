@@ -693,6 +693,15 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
           </button>
         </div>
       </div>
+      {/* Story viewer from chat */}
+      {storyViewerData?.open && (
+        <StoryViewer
+          groups={storyViewerData.groups}
+          initialGroupIndex={0}
+          open={true}
+          onClose={() => setStoryViewerData(null)}
+        />
+      )}
     </div>
   );
 };
