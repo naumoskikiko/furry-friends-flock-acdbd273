@@ -53,6 +53,8 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const [emergencyAvail, setEmergencyAvail] = useState(provider?.emergency_available || false);
   const [cancelPolicy, setCancelPolicy] = useState(provider?.cancellation_policy || "Free cancellation up to 24 hours before appointment");
   const [cancelHours, setCancelHours] = useState(String(provider?.cancellation_hours || 24));
+  const [serviceRadius, setServiceRadius] = useState(String((provider as any)?.service_radius_km || ""));
+  const [bookingMode, setBookingMode] = useState((provider as any)?.booking_mode || "instant");
 
   // Gallery upload
   const [galleryUrl, setGalleryUrl] = useState("");
