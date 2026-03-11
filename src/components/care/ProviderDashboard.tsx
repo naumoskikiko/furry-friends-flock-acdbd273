@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { X, Plus, Trash2, Clock, DollarSign, Save, Image as ImageIcon, Upload, Wallet, ArrowUpRight } from "lucide-react";
+import { useState, useRef } from "react";
+import { X, Plus, Trash2, Clock, DollarSign, Save, Image as ImageIcon, Upload, Wallet, ArrowUpRight, MapPin, Zap } from "lucide-react";
 import { useMyProvider, useProviderServices, useProviderAvailability, useProviderBookings, useProviderReviews, useProviderGallery, CATEGORIES, DAY_NAMES, type CareService } from "@/hooks/useCare";
 import { useProviderBalance, useProviderPayments, useProviderPayouts } from "@/hooks/usePayments";
+import { useProviderVerifications, VERIFICATION_TYPES } from "@/hooks/useVerification";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, BadgeCheck, Calendar, CheckCircle2, XCircle, MessageSquare, AlertTriangle, Shield } from "lucide-react";
+import { Star, BadgeCheck, Calendar, CheckCircle2, XCircle, MessageSquare, AlertTriangle, Shield, FileCheck, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
