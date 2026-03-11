@@ -898,6 +898,16 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
           </>
         )}
       </div>
+
+      {/* Boost Modal */}
+      {boostModal && (
+        <BoostModal
+          type={boostModal.type}
+          targetId={boostModal.id}
+          targetName={boostModal.name}
+          onClose={() => setBoostModal(null)}
+        />
+      )}
     </div>
   );
 };
