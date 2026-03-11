@@ -251,7 +251,8 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={sharePost}>Share</DropdownMenuItem>
+            <DropdownMenuItem onClick={sharePost}>Send to chat</DropdownMenuItem>
+            <DropdownMenuItem onClick={copyPostLink}>Copy link</DropdownMenuItem>
             {isOwner ? (
               <>
                 <DropdownMenuSeparator />
