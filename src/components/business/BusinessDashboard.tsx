@@ -131,7 +131,7 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
   };
 
   const resetProductForm = () => {
-    setProdName(""); setProdDesc(""); setProdPrice(""); setProdCategory("general"); setProdStock(""); setProdImageUrl("");
+    setProdName(""); setProdDesc(""); setProdPrice(""); setProdCategory("general"); setProdStock(""); setProdImageUrl(""); setProdExtraImages([]);
     setAddingProduct(false); setEditingProduct(null);
   };
 
