@@ -223,7 +223,7 @@ const ProfilePage = () => {
         </div>
 
         {/* Stats cards */}
-        <div className="grid grid-cols-2 gap-3 px-4 py-4">
+        <div className="grid grid-cols-3 gap-3 px-4 py-4">
           <div className="rounded-2xl bg-petkeep-mint-light p-3">
             <div className="flex items-center gap-2">
               <CreditCard className="h-4 w-4 text-accent" />
@@ -240,6 +240,14 @@ const ProfilePage = () => {
             <p className="mt-1 font-display text-xl font-extrabold">—</p>
             <p className="text-[10px] text-muted-foreground">⭐ No reviews yet</p>
           </div>
+          <button onClick={() => navigate("/orders")} className="rounded-2xl bg-primary/5 p-3 text-left">
+            <div className="flex items-center gap-2">
+              <ShoppingBag className="h-4 w-4 text-primary" />
+              <span className="text-xs font-bold text-primary">Orders</span>
+            </div>
+            <p className="mt-1 font-display text-xl font-extrabold">→</p>
+            <p className="text-[10px] text-muted-foreground">📦 My Orders</p>
+          </button>
         </div>
 
         {/* My Pets */}
