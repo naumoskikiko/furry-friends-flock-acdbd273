@@ -13,6 +13,9 @@ import { useMyBusiness, useBusinessProducts, BUSINESS_CATEGORIES, PRODUCT_CATEGO
 import { useStoreOrders } from "@/hooks/useOrders";
 import { supabase } from "@/integrations/supabase/client";
 import ProductImage from "@/components/marketplace/ProductImage";
+import BoostModal from "@/components/marketplace/BoostModal";
+import BoostBadge from "@/components/marketplace/BoostBadge";
+import { useBoostedIds } from "@/hooks/useBoosts";
 
 interface BusinessDashboardProps {
   onClose: () => void;
