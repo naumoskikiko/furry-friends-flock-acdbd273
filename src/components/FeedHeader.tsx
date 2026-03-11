@@ -20,7 +20,7 @@ const FeedHeader = () => {
         {/* Right: Bell with badge */}
         <button
           onClick={() => navigate("/notifications")}
-          className="absolute right-4 relative rounded-full p-2 text-foreground transition-colors hover:bg-secondary"
+          className="absolute right-4 rounded-full p-2 text-foreground transition-colors hover:bg-secondary"
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
