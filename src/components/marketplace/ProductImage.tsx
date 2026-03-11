@@ -13,8 +13,14 @@ interface ProductImageProps {
 const sizeMap = {
   sm: "h-10 w-10",
   md: "h-16 w-16",
-  lg: "h-28 w-full",
-  xl: "h-72 w-full",
+  lg: "w-full",
+  xl: "w-full",
+};
+
+const aspectMap = {
+  square: "aspect-square",
+  landscape: "aspect-[4/3]",
+  auto: "",
 };
 
 const ProductImage = ({
@@ -22,14 +28,14 @@ const ProductImage = ({
   alt,
   category,
   className = "",
-  aspectRatio = "auto",
+  aspectRatio = "square",
   size = "lg",
 }: ProductImageProps) => {
   const [error, setError] = useState(false);
   const catInfo = PRODUCT_CATEGORIES.find((c) => c.value === category);
   const fallbackIcon = catInfo?.icon || "📦";
   const sizeClass = sizeMap[size] || sizeMap.lg;
-  const aspectClass = aspectRatio === "square" ? "aspect-square" : "";
+  const aspectClass = aspectMap[aspectRatio] || "";
 
   if (!src || error) {
     return (
@@ -45,13 +51,15 @@ const ProductImage = ({
   }
 
   return (
-    <img
-      src={src}
-      alt={alt}
-      loading="lazy"
-      onError={() => setError(true)}
-      className={`object-cover ${sizeClass} ${aspectClass} ${className}`}
-    />
+    <div className={`overflow-hidden ${sizeClass} ${aspectClass} ${className}`}>
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        onError={() => setError(true)}
+        className="h-full w-full object-cover"
+      />
+    </div>
   );
 };
 

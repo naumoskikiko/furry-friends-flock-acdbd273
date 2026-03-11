@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { BUSINESS_CATEGORIES, PRODUCT_CATEGORIES, type BusinessProfile, type Product } from "@/hooks/useBusiness";
+import ProductImage from "@/components/marketplace/ProductImage";
 
 const fromTable = (table: string) => supabase.from(table as any);
 
@@ -91,12 +92,14 @@ const StorePage = () => {
   return (
     <AppLayout>
       <div className="mx-auto max-w-lg pb-24">
-        {/* Header */}
+        {/* Banner */}
         <div className="relative">
           {business.banner_url ? (
-            <img src={business.banner_url} alt="" className="h-36 w-full object-cover" />
+            <div className="w-full aspect-[3/1] overflow-hidden">
+              <img src={business.banner_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+            </div>
           ) : (
-            <div className="h-36 w-full bg-gradient-to-br from-primary/20 to-accent/20" />
+            <div className="w-full aspect-[3/1] bg-gradient-to-br from-primary/20 to-accent/20" />
           )}
           <button
             onClick={() => navigate("/marketplace")}
@@ -109,9 +112,9 @@ const StorePage = () => {
         {/* Store info */}
         <div className="px-4 -mt-8 relative z-10">
           <div className="flex items-end gap-3">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-card border-4 border-background text-2xl shadow-sm">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-card border-4 border-background text-2xl shadow-sm overflow-hidden shrink-0">
               {business.logo_url ? (
-                <img src={business.logo_url} alt="" className="h-full w-full rounded-xl object-cover" />
+                <img src={business.logo_url} alt="" className="h-full w-full object-cover" />
               ) : (
                 catInfo?.icon || "🏪"
               )}
@@ -206,7 +209,7 @@ const StorePage = () => {
           )}
         </div>
 
-        {/* Product grid - Wolt style with quick add */}
+        {/* Product list */}
         <div className="px-4 mt-3">
           {filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -216,18 +219,11 @@ const StorePage = () => {
           ) : (
             <div className="space-y-2">
               {filteredProducts.map((p) => {
-                const ci = PRODUCT_CATEGORIES.find((c) => c.value === p.category);
                 const outOfStock = p.stock !== null && p.stock !== undefined && p.stock <= 0;
                 return (
                   <div key={p.id} className="flex items-center gap-3 rounded-2xl bg-card border border-border p-3 petkeep-card-hover">
                     <div className="cursor-pointer shrink-0" onClick={() => navigate(`/product/${p.id}`)}>
-                      {p.image_url ? (
-                        <img src={p.image_url} alt={p.name} loading="lazy" className="h-16 w-16 rounded-xl object-cover aspect-square" />
-                      ) : (
-                        <div className="h-16 w-16 rounded-xl bg-secondary flex items-center justify-center text-xl aspect-square">
-                          {ci?.icon || "📦"}
-                        </div>
-                      )}
+                      <ProductImage src={p.image_url} alt={p.name} category={p.category} size="md" aspectRatio="square" className="rounded-xl" />
                     </div>
                     <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
                       <h4 className="text-sm font-bold truncate">{p.name}</h4>
@@ -252,7 +248,7 @@ const StorePage = () => {
         </div>
       </div>
 
-      {/* Floating cart - Wolt style */}
+      {/* Floating cart */}
       {itemCount > 0 && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-2rem)] max-w-[358px]">
           <button
