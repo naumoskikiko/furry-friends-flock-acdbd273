@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft } from "lucide-react";
+import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users } from "lucide-react";
 import SettingsMapManagement from "./SettingsMapManagement";
 import CareVerificationPanel from "./CareVerificationPanel";
+import CareManagementPanel from "./CareManagementPanel";
 
-type SubSection = "dashboard" | "map-management" | "care-verification";
+type SubSection = "dashboard" | "map-management" | "care-verification" | "care-management";
 
 const futureSections = [
   { id: "analytics", label: "Platform Analytics", icon: BarChart3, description: "User stats, growth metrics", coming: true },
@@ -13,7 +14,7 @@ const futureSections = [
 const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
 
-  if (sub === "map-management" || sub === "care-verification") {
+  if (sub === "map-management" || sub === "care-verification" || sub === "care-management") {
     return (
       <div>
         <button
@@ -22,7 +23,9 @@ const ProfessionalMode = () => {
         >
           <ArrowLeft className="h-4 w-4" /> Back to Professional Mode
         </button>
-        {sub === "map-management" ? <SettingsMapManagement /> : <CareVerificationPanel />}
+        {sub === "map-management" && <SettingsMapManagement />}
+        {sub === "care-verification" && <CareVerificationPanel />}
+        {sub === "care-management" && <CareManagementPanel />}
       </div>
     );
   }
@@ -65,6 +68,22 @@ const ProfessionalMode = () => {
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </button>
+
+      {/* Care Management */}
+      <button
+        onClick={() => setSub("care-management")}
+        className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
+      >
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+          <Users className="h-4.5 w-4.5 text-primary" />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="text-sm font-semibold">Care Management</p>
+          <p className="text-xs text-muted-foreground">Manage providers, reviews & reports</p>
+        </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </button>
+
       {/* Future sections */}
       {futureSections.map((s) => (
         <div

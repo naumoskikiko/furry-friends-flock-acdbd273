@@ -331,7 +331,9 @@ export type Database = {
       }
       care_providers: {
         Row: {
+          admin_notes: string | null
           avg_rating: number
+          banned_at: string | null
           booking_mode: string
           business_name: string
           cancellation_hours: number | null
@@ -341,6 +343,8 @@ export type Database = {
           description: string | null
           emergency_available: boolean | null
           id: string
+          is_banned: boolean
+          is_suspended: boolean
           is_verified: boolean
           latitude: number | null
           location: string | null
@@ -350,6 +354,7 @@ export type Database = {
           photo_url: string | null
           response_time_minutes: number | null
           service_radius_km: number | null
+          suspended_at: string | null
           total_bookings: number
           total_reviews: number
           updated_at: string
@@ -357,7 +362,9 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          admin_notes?: string | null
           avg_rating?: number
+          banned_at?: string | null
           booking_mode?: string
           business_name: string
           cancellation_hours?: number | null
@@ -367,6 +374,8 @@ export type Database = {
           description?: string | null
           emergency_available?: boolean | null
           id?: string
+          is_banned?: boolean
+          is_suspended?: boolean
           is_verified?: boolean
           latitude?: number | null
           location?: string | null
@@ -376,6 +385,7 @@ export type Database = {
           photo_url?: string | null
           response_time_minutes?: number | null
           service_radius_km?: number | null
+          suspended_at?: string | null
           total_bookings?: number
           total_reviews?: number
           updated_at?: string
@@ -383,7 +393,9 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          admin_notes?: string | null
           avg_rating?: number
+          banned_at?: string | null
           booking_mode?: string
           business_name?: string
           cancellation_hours?: number | null
@@ -393,6 +405,8 @@ export type Database = {
           description?: string | null
           emergency_available?: boolean | null
           id?: string
+          is_banned?: boolean
+          is_suspended?: boolean
           is_verified?: boolean
           latitude?: number | null
           location?: string | null
@@ -402,6 +416,7 @@ export type Database = {
           photo_url?: string | null
           response_time_minutes?: number | null
           service_radius_km?: number | null
+          suspended_at?: string | null
           total_bookings?: number
           total_reviews?: number
           updated_at?: string
@@ -1255,6 +1270,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "provider_gallery_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "care_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_reports: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          provider_id: string
+          reason: string
+          reporter_id: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          provider_id: string
+          reason?: string
+          reporter_id: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          provider_id?: string
+          reason?: string
+          reporter_id?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_reports_provider_id_fkey"
             columns: ["provider_id"]
             isOneToOne: false
             referencedRelation: "care_providers"
