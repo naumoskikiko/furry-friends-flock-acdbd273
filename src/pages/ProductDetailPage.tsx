@@ -120,13 +120,7 @@ const ProductDetailPage = () => {
       <div className="mx-auto max-w-lg pb-56">
         {/* Image */}
         <div className="relative">
-          {product.image_url ? (
-            <img src={product.image_url} alt={product.name} className="h-72 w-full object-cover" />
-          ) : (
-            <div className="h-72 w-full bg-secondary flex items-center justify-center text-6xl">
-              {catInfo?.icon || "📦"}
-            </div>
-          )}
+          <ProductImage src={product.image_url} alt={product.name} category={product.category} size="xl" className="w-full" />
           <button
             onClick={() => navigate(-1)}
             className="absolute top-3 left-3 rounded-full bg-background/80 backdrop-blur-sm p-2"
