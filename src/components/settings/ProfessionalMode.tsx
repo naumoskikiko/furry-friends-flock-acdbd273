@@ -15,6 +15,7 @@ const futureSections = [
 
 const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
+  const { isOwner } = useIsOwner();
 
   if (sub === "map-management" || sub === "care-verification" || sub === "care-management" || sub === "marketplace-control") {
     return (
