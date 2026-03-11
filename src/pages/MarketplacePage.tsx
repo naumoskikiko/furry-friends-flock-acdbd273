@@ -184,13 +184,16 @@ const MarketplacePage = () => {
                   {featured.map((b) => {
                     const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
                     return (
-                      <div key={b.id} className="min-w-[180px] rounded-2xl bg-card border border-border p-3 shrink-0 petkeep-card-hover">
+                      <div key={b.id} onClick={() => navigate(`/store/${b.id}`)} className="min-w-[180px] rounded-2xl bg-card border border-border p-3 shrink-0 petkeep-card-hover cursor-pointer">
                         <div className="flex items-center gap-2">
                           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-xl">
                             {catInfo?.icon || "🏪"}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-bold truncate">{b.business_name}</p>
+                            <div className="flex items-center gap-1">
+                              <p className="text-xs font-bold truncate">{b.business_name}</p>
+                              {b.is_verified && <BadgeCheck className="h-3 w-3 text-primary shrink-0" />}
+                            </div>
                             <p className="text-[10px] text-muted-foreground flex items-center gap-0.5">
                               <Star className="h-3 w-3 fill-primary text-primary" />
                               {Number(b.avg_rating).toFixed(1)}
