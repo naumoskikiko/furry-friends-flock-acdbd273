@@ -804,22 +804,23 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                           >
                             <Zap className="h-3 w-3" /> {boostedStoreIds.has(business.id) ? "Boosted" : "Boost"}
                           </button>
-                        <button
-                          onClick={() => {
-                            setStoreForm({
-                              business_name: business.business_name,
-                              description: business.description || "",
-                              location: business.location || "",
-                              website: business.website || "",
-                              phone: business.phone || "",
-                              category: business.category,
-                            });
-                            setEditingStore(true);
-                          }}
-                          className="flex items-center gap-1 text-[10px] font-bold text-primary"
-                        >
-                          <Edit2 className="h-3 w-3" /> Edit
-                        </button>
+                          <button
+                            onClick={() => {
+                              setStoreForm({
+                                business_name: business.business_name,
+                                description: business.description || "",
+                                location: business.location || "",
+                                website: business.website || "",
+                                phone: business.phone || "",
+                                category: business.category,
+                              });
+                              setEditingStore(true);
+                            }}
+                            className="flex items-center gap-1 text-[10px] font-bold text-primary"
+                          >
+                            <Edit2 className="h-3 w-3" /> Edit
+                          </button>
+                        </div>
                       </div>
                       <div className="space-y-2">
                         {[
