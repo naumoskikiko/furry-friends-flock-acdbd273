@@ -29,7 +29,9 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [tab, setTab] = useState<"overview" | "services" | "bookings" | "hours" | "reviews" | "earnings" | "settings">("overview");
+  const [tab, setTab] = useState<"overview" | "services" | "bookings" | "hours" | "reviews" | "earnings" | "verification" | "settings">("overview");
+  const [verDocType, setVerDocType] = useState("license");
+  const [uploadingVerDoc, setUploadingVerDoc] = useState(false);
   const [payoutAmount, setPayoutAmount] = useState("");
   const [creating, setCreating] = useState(!provider && !loading);
 
