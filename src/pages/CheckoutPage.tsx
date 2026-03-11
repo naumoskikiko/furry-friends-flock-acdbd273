@@ -61,7 +61,7 @@ const CheckoutPage = () => {
     cardholderName: cardForm.cardholderName,
   }).success, [hasSavedCard, cardForm]);
 
-  const canPay = shippingValid && cardValid && !paymentLoading && !processingPayment && items.length > 0;
+  const canPay = shippingValid && cardValid && items.length > 0;
 
   // Group items by store
   const storeGroups = items.reduce<Record<string, typeof items>>((acc, item) => {
@@ -307,12 +307,12 @@ const CheckoutPage = () => {
             <div className="mx-auto max-w-lg rounded-2xl bg-background/95 backdrop-blur-sm border border-border p-3 space-y-2">
               <SlideToPayButton
                 amount={grandTotal}
-                disabled={!canPay}
+                disabled={processingPayment || items.length === 0}
                 onConfirm={handlePlaceOrder}
               />
               {!canPay && (
                 <p className="text-[11px] text-muted-foreground text-center">
-                  Complete delivery and payment details to unlock Slide to Pay
+                  You can slide now — payment runs after required details are valid
                 </p>
               )}
             </div>
