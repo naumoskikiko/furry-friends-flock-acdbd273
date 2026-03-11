@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
-import { ArrowLeft, Star, MapPin, Globe, Phone, MessageCircle, Store, BadgeCheck } from "lucide-react";
+import { ArrowLeft, Star, MapPin, Globe, Phone, MessageCircle, BadgeCheck, Plus, ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/hooks/useCart";
+import { useToast } from "@/hooks/use-toast";
 import { BUSINESS_CATEGORIES, PRODUCT_CATEGORIES, type BusinessProfile, type Product } from "@/hooks/useBusiness";
 
 const fromTable = (table: string) => supabase.from(table as any);
@@ -12,6 +14,8 @@ const StorePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const { addToCart, itemCount, totalPrice } = useCart();
   const [business, setBusiness] = useState<(BusinessProfile & { banner_url?: string }) | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,11 +42,18 @@ const StorePage = () => {
       const { data: convId } = await supabase.rpc("create_conversation_with_participant", {
         _other_user_id: business.user_id,
       });
-      if (convId) {
-        navigate(`/messages?conversation=${convId}&userId=${business.user_id}`);
-      }
+      if (convId) navigate(`/messages?conversation=${convId}&userId=${business.user_id}`);
     } catch {
       navigate("/messages");
+    }
+  };
+
+  const handleQuickAdd = async (productId: string, productName: string) => {
+    try {
+      await addToCart(productId, 1);
+      toast({ title: "Added!", description: `${productName} added to cart` });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
     }
   };
 
@@ -79,7 +90,7 @@ const StorePage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg pb-20">
+      <div className="mx-auto max-w-lg pb-24">
         {/* Header */}
         <div className="relative">
           {business.banner_url ? (
@@ -108,7 +119,7 @@ const StorePage = () => {
             <div className="flex-1 min-w-0 pb-1">
               <div className="flex items-center gap-1.5">
                 <h1 className="font-display text-lg font-extrabold truncate">{business.business_name}</h1>
-                {business.is_verified && <BadgeCheck className="h-4.5 w-4.5 text-primary shrink-0" />}
+                {business.is_verified && <BadgeCheck className="h-4 w-4 text-primary shrink-0" />}
               </div>
               <p className="text-xs text-muted-foreground capitalize">{business.category.replace("_", " ")}</p>
             </div>
@@ -118,7 +129,6 @@ const StorePage = () => {
             <p className="text-sm text-muted-foreground mt-3">{business.description}</p>
           )}
 
-          {/* Stats & actions */}
           <div className="flex items-center gap-3 mt-3">
             {business.avg_rating > 0 && (
               <span className="flex items-center gap-1 text-xs font-semibold">
@@ -132,9 +142,9 @@ const StorePage = () => {
                 <MapPin className="h-3.5 w-3.5" /> {business.location}
               </span>
             )}
+            <span className="text-xs text-muted-foreground">{products.length} products</span>
           </div>
 
-          {/* Contact row */}
           <div className="flex gap-2 mt-3">
             {user?.id !== business.user_id && (
               <button
@@ -167,7 +177,7 @@ const StorePage = () => {
 
         {/* Product categories */}
         <div className="mt-5 px-4">
-          <h3 className="font-display text-base font-bold mb-2">Products ({products.length})</h3>
+          <h3 className="font-display text-base font-bold mb-2">Menu ({products.length})</h3>
           {productCategories.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               <button
@@ -196,7 +206,7 @@ const StorePage = () => {
           )}
         </div>
 
-        {/* Product grid */}
+        {/* Product grid - Wolt style with quick add */}
         <div className="px-4 mt-3">
           {filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -204,28 +214,36 @@ const StorePage = () => {
               <p className="text-sm font-semibold">No products yet</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
               {filteredProducts.map((p) => {
                 const ci = PRODUCT_CATEGORIES.find((c) => c.value === p.category);
+                const outOfStock = p.stock !== null && p.stock !== undefined && p.stock <= 0;
                 return (
-                  <div key={p.id} onClick={() => navigate(`/product/${p.id}`)} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover cursor-pointer">
-                    {p.image_url ? (
-                      <img src={p.image_url} alt={p.name} className="h-32 w-full object-cover" />
-                    ) : (
-                      <div className="h-32 w-full bg-secondary flex items-center justify-center text-3xl">
-                        {ci?.icon || "📦"}
-                      </div>
-                    )}
-                    <div className="p-3">
-                      <h4 className="text-xs font-bold truncate">{p.name}</h4>
-                      {p.description && <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{p.description}</p>}
-                      <p className="text-sm font-bold text-primary mt-1">{p.price} MKD</p>
-                      {p.stock !== null && p.stock !== undefined && (
-                        <p className={`text-[10px] mt-0.5 ${p.stock > 0 ? "text-muted-foreground" : "text-destructive font-bold"}`}>
-                          {p.stock > 0 ? `${p.stock} in stock` : "Out of stock"}
-                        </p>
+                  <div key={p.id} className="flex items-center gap-3 rounded-2xl bg-card border border-border p-3 petkeep-card-hover">
+                    <div className="cursor-pointer shrink-0" onClick={() => navigate(`/product/${p.id}`)}>
+                      {p.image_url ? (
+                        <img src={p.image_url} alt={p.name} className="h-16 w-16 rounded-xl object-cover" />
+                      ) : (
+                        <div className="h-16 w-16 rounded-xl bg-secondary flex items-center justify-center text-xl">
+                          {ci?.icon || "📦"}
+                        </div>
                       )}
                     </div>
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
+                      <h4 className="text-sm font-bold truncate">{p.name}</h4>
+                      {p.description && <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{p.description}</p>}
+                      <p className="text-sm font-extrabold text-primary mt-1">{p.price} MKD</p>
+                    </div>
+                    {!outOfStock ? (
+                      <button
+                        onClick={() => handleQuickAdd(p.id, p.name)}
+                        className="flex h-9 w-9 items-center justify-center rounded-full petkeep-gradient text-primary-foreground shrink-0"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <span className="text-[10px] font-bold text-destructive shrink-0">Sold out</span>
+                    )}
                   </div>
                 );
               })}
@@ -233,6 +251,24 @@ const StorePage = () => {
           )}
         </div>
       </div>
+
+      {/* Floating cart - Wolt style */}
+      {itemCount > 0 && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-2rem)] max-w-[358px]">
+          <button
+            onClick={() => navigate("/cart")}
+            className="w-full flex items-center justify-between rounded-2xl petkeep-gradient text-primary-foreground px-5 py-4 shadow-lg"
+          >
+            <div className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-xs font-bold">
+                {itemCount}
+              </div>
+              <span className="text-sm font-bold">View Cart</span>
+            </div>
+            <span className="text-sm font-extrabold">{totalPrice.toLocaleString()} MKD</span>
+          </button>
+        </div>
+      )}
     </AppLayout>
   );
 };
