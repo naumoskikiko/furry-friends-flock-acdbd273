@@ -59,7 +59,7 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const [svcDuration, setSvcDuration] = useState("30");
 
   // Settings
-  const [emergencyAvail, setEmergencyAvail] = useState(provider?.emergency_available || false);
+  // Settings
   const [cancelPolicy, setCancelPolicy] = useState(provider?.cancellation_policy || "Free cancellation up to 24 hours before appointment");
   const [cancelHours, setCancelHours] = useState(String(provider?.cancellation_hours || 24));
   const [serviceTowns, setServiceTowns] = useState<string[]>(() => {
