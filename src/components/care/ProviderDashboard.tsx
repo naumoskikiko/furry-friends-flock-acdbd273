@@ -558,6 +558,124 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
             </div>
           )}
 
+          {/* Verification */}
+          {tab === "verification" && (
+            <div className="space-y-4">
+              {/* Verification Status */}
+              <div className={`rounded-2xl p-4 ${isFullyVerified ? "bg-accent/10 border border-accent/30" : "bg-card border border-border"}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-full ${isFullyVerified ? "bg-accent/20" : "bg-secondary"}`}>
+                    {isFullyVerified ? <BadgeCheck className="h-6 w-6 text-accent" /> : <ShieldCheck className="h-6 w-6 text-muted-foreground" />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold">{isFullyVerified ? "✅ Verified Provider" : "Verification Required"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {isFullyVerified
+                        ? "Your profile displays the verified badge"
+                        : `Submit at least 2 documents to get verified (${approvedCount}/2 approved)`}
+                    </p>
+                  </div>
+                </div>
+                {approvedCount > 0 && !isFullyVerified && (
+                  <div className="mt-3 w-full bg-secondary rounded-full h-2">
+                    <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${Math.min(100, (approvedCount / 2) * 100)}%` }} />
+                  </div>
+                )}
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-xl bg-card border border-border p-3 text-center">
+                  <p className="font-display text-lg font-bold text-primary">{approvedCount}</p>
+                  <p className="text-[10px] text-muted-foreground">Approved</p>
+                </div>
+                <div className="rounded-xl bg-card border border-border p-3 text-center">
+                  <p className="font-display text-lg font-bold text-amber-600">{pendingCount}</p>
+                  <p className="text-[10px] text-muted-foreground">Pending</p>
+                </div>
+                <div className="rounded-xl bg-card border border-border p-3 text-center">
+                  <p className="font-display text-lg font-bold text-destructive">{rejectedCount}</p>
+                  <p className="text-[10px] text-muted-foreground">Rejected</p>
+                </div>
+              </div>
+
+              {/* Upload New */}
+              <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <FileCheck className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-bold">Submit Document</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {VERIFICATION_TYPES.map((t) => (
+                    <button
+                      key={t.value}
+                      onClick={() => setVerDocType(t.value)}
+                      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        verDocType === t.value ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                      }`}
+                    >
+                      {t.icon} {t.label}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={handleVerDocUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingVerDoc}
+                  className="w-full petkeep-gradient rounded-xl py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  {uploadingVerDoc ? "Uploading..." : "Upload Document"}
+                </button>
+              </div>
+
+              {/* Submitted Documents */}
+              {verifications.length > 0 && (
+                <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                  <h3 className="text-sm font-bold">Submitted Documents</h3>
+                  {verifications.map((v) => {
+                    const typeInfo = VERIFICATION_TYPES.find((t) => t.value === v.verification_type);
+                    const statusStyle: Record<string, string> = {
+                      pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+                      approved: "bg-accent/10 text-accent",
+                      rejected: "bg-destructive/10 text-destructive",
+                    };
+                    return (
+                      <div key={v.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-lg">{typeInfo?.icon || "📄"}</span>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold truncate">{v.document_name || typeInfo?.label}</p>
+                            <p className="text-[10px] text-muted-foreground">{typeInfo?.label}</p>
+                            {v.reviewer_notes && (
+                              <p className="text-[10px] text-muted-foreground italic mt-0.5">📝 {v.reviewer_notes}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusStyle[v.status] || "bg-secondary"}`}>
+                            {v.status}
+                          </span>
+                          {v.status === "pending" && (
+                            <button onClick={() => deleteVerification(v.id)} className="rounded-full p-1 hover:bg-destructive/10 text-destructive">
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           {tab === "settings" && (
             <div className="space-y-5">
               {/* Emergency */}
