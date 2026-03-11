@@ -86,17 +86,19 @@ const CareVerificationPanel = () => {
 
     // If approved, check if provider should get verified badge
     const req = requests.find(r => r.id === id);
-    if (action === "approved" && req) {
+    if (req) {
       const { data: allVer } = await fromTable("provider_verifications")
-        .select("status")
+        .select("id, status")
         .eq("provider_id", req.provider_id);
       
-      const approvedCount = (allVer || []).filter((v: any) => v.status === "approved" || (v.id === id)).length;
-      if (approvedCount >= 2) {
-        await fromTable("care_providers")
-          .update({ is_verified: true })
-          .eq("id", req.provider_id);
-      }
+      const approvedCount = (allVer || []).filter((v: any) => 
+        v.status === "approved" || (v.id === id && action === "approved")
+      ).filter((v: any) => !(v.id === id && action === "rejected")).length;
+      
+      // Update provider verified status based on approved count
+      await fromTable("care_providers")
+        .update({ is_verified: approvedCount >= 2 })
+        .eq("id", req.provider_id);
     }
 
     toast({ title: `Verification ${action}` });
