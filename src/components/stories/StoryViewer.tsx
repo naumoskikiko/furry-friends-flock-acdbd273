@@ -183,12 +183,24 @@ const StoryViewer = ({
       {/* Left/Right tap zones */}
       {!showReply && (
         <>
-          <button onClick={goPrev} className="absolute left-0 top-0 z-40 h-full w-1/3" />
-          <button onClick={goNext} className="absolute right-0 top-0 z-40 h-full w-1/3" />
-          <button
-            onMouseDown={handlePauseToggle}
-            onTouchStart={handlePauseToggle}
-            className="absolute left-1/3 top-0 z-40 h-[calc(100%-120px)] w-1/3"
+          <button onClick={goPrev} className="absolute left-0 top-0 z-40 h-full w-1/4" />
+          <button onClick={goNext} className="absolute right-0 top-0 z-40 h-full w-1/4" />
+          {/* Center hold-to-pause zone */}
+          <div
+            onMouseDown={() => {
+              elapsedRef.current += Date.now() - startTimeRef.current;
+              cancelAnimationFrame(timerRef.current);
+              setPaused(true);
+            }}
+            onMouseUp={() => setPaused(false)}
+            onMouseLeave={() => { if (paused) setPaused(false); }}
+            onTouchStart={() => {
+              elapsedRef.current += Date.now() - startTimeRef.current;
+              cancelAnimationFrame(timerRef.current);
+              setPaused(true);
+            }}
+            onTouchEnd={() => setPaused(false)}
+            className="absolute left-1/4 top-0 z-40 h-[calc(100%-120px)] w-1/2 cursor-pointer"
           />
         </>
       )}

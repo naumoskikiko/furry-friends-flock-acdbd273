@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import HeartAnimation from "@/components/feed/HeartAnimation";
 import LikesListModal from "@/components/feed/LikesListModal";
+import SharePostModal from "@/components/messages/SharePostModal";
 import type { FeedPostData } from "@/hooks/useFeed";
 
 interface FeedPostCardProps {
@@ -60,6 +61,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   const [showHeartAnim, setShowHeartAnim] = useState(false);
   const [likesListOpen, setLikesListOpen] = useState(false);
   const [muted, setMuted] = useState(true);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const lastTapRef = useRef(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaContainerRef = useRef<HTMLDivElement>(null);
@@ -139,13 +141,13 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   };
 
   const sharePost = () => {
+    setShareModalOpen(true);
+  };
+
+  const copyPostLink = () => {
     const url = `${window.location.origin}/post/${post.id}`;
-    if (navigator.share) {
-      navigator.share({ title: post.caption || "PetKeep Post", url }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(url);
-      toast({ title: "Link copied!" });
-    }
+    navigator.clipboard.writeText(url);
+    toast({ title: "Link copied!" });
   };
 
   const openComments = async () => {
@@ -249,7 +251,8 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={sharePost}>Share</DropdownMenuItem>
+            <DropdownMenuItem onClick={sharePost}>Send to chat</DropdownMenuItem>
+            <DropdownMenuItem onClick={copyPostLink}>Copy link</DropdownMenuItem>
             {isOwner ? (
               <>
                 <DropdownMenuSeparator />
@@ -346,6 +349,17 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
 
       {/* Likes List Modal */}
       <LikesListModal open={likesListOpen} onOpenChange={setLikesListOpen} postId={post.id} />
+
+      {/* Share Post Modal */}
+      {shareModalOpen && (
+        <SharePostModal
+          postId={post.id}
+          imageUrl={post.image_url}
+          caption={post.caption}
+          username={post.username}
+          onClose={() => setShareModalOpen(false)}
+        />
+      )}
 
       {/* Comments Dialog */}
       <Dialog open={commentsOpen} onOpenChange={setCommentsOpen}>
