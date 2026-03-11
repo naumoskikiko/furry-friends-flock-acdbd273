@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { ChevronRight, Check, Loader2 } from "lucide-react";
 
 interface SlideToPayProps {
@@ -15,57 +15,84 @@ const SlideToPayButton = ({ amount, currency = "MKD", disabled, onConfirm }: Sli
   const [processing, setProcessing] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
+  const draggingRef = useRef(false);
+  const offsetRef = useRef(0);
 
   const THUMB_SIZE = 56;
-  const getTrackWidth = () => (trackRef.current?.clientWidth || 300) - THUMB_SIZE;
+  const getTrackWidth = useCallback(() => (trackRef.current?.clientWidth || 300) - THUMB_SIZE, []);
 
   const handleStart = useCallback((clientX: number) => {
     if (disabled || confirmed || processing) return;
-    startXRef.current = clientX - offset;
+    startXRef.current = clientX - offsetRef.current;
     setDragging(true);
-  }, [disabled, confirmed, processing, offset]);
+    draggingRef.current = true;
+  }, [disabled, confirmed, processing]);
 
   const handleMove = useCallback((clientX: number) => {
-    if (!dragging) return;
+    if (!draggingRef.current) return;
     const maxOffset = getTrackWidth();
     const newOffset = Math.min(Math.max(0, clientX - startXRef.current), maxOffset);
+    offsetRef.current = newOffset;
     setOffset(newOffset);
-  }, [dragging]);
+  }, [getTrackWidth]);
 
   const handleEnd = useCallback(async () => {
-    if (!dragging) return;
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
     setDragging(false);
     const maxOffset = getTrackWidth();
-    const threshold = maxOffset * 0.85;
+    const currentOffset = offsetRef.current;
+    const threshold = maxOffset * 0.75; // Lower threshold for easier triggering
 
-    if (offset >= threshold) {
+    if (currentOffset >= threshold) {
+      offsetRef.current = maxOffset;
       setOffset(maxOffset);
       setProcessing(true);
       try {
         await onConfirm();
         setConfirmed(true);
       } catch {
+        offsetRef.current = 0;
         setOffset(0);
       }
       setProcessing(false);
     } else {
+      offsetRef.current = 0;
       setOffset(0);
     }
-  }, [dragging, offset, onConfirm]);
+  }, [onConfirm, getTrackWidth]);
 
-  const progress = offset / getTrackWidth();
+  // Global mouse/touch listeners to prevent losing drag outside element
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => handleMove(e.clientX);
+    const onMouseUp = () => handleEnd();
+    const onTouchMove = (e: TouchEvent) => handleMove(e.touches[0].clientX);
+    const onTouchEnd = () => handleEnd();
+
+    if (dragging) {
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mouseup", onMouseUp);
+      window.addEventListener("touchmove", onTouchMove, { passive: true });
+      window.addEventListener("touchend", onTouchEnd);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [dragging, handleMove, handleEnd]);
+
+  const progress = getTrackWidth() > 0 ? offset / getTrackWidth() : 0;
 
   return (
     <div
       ref={trackRef}
-      className={`relative h-16 rounded-2xl overflow-hidden select-none touch-none transition-colors ${
+      className={`relative h-16 rounded-2xl overflow-hidden select-none transition-colors ${
         disabled ? "bg-muted opacity-50" : confirmed ? "bg-green-500 dark:bg-green-600" : "petkeep-gradient"
       }`}
-      onMouseMove={(e) => handleMove(e.clientX)}
-      onMouseUp={handleEnd}
-      onMouseLeave={() => { if (dragging) handleEnd(); }}
-      onTouchMove={(e) => handleMove(e.touches[0].clientX)}
-      onTouchEnd={handleEnd}
+      style={{ touchAction: "none" }}
     >
       {/* Track label */}
       <div
@@ -85,11 +112,11 @@ const SlideToPayButton = ({ amount, currency = "MKD", disabled, onConfirm }: Sli
       {/* Thumb */}
       {!confirmed && (
         <div
-          className={`absolute top-1 left-1 h-14 w-14 rounded-xl bg-white dark:bg-background shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing transition-transform ${
+          className={`absolute top-1 left-1 h-14 w-14 rounded-xl bg-white dark:bg-background shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing ${
             !dragging && !processing ? "transition-all duration-300" : ""
           }`}
           style={{ transform: `translateX(${offset}px)` }}
-          onMouseDown={(e) => handleStart(e.clientX)}
+          onMouseDown={(e) => { e.preventDefault(); handleStart(e.clientX); }}
           onTouchStart={(e) => handleStart(e.touches[0].clientX)}
         >
           {processing ? (
