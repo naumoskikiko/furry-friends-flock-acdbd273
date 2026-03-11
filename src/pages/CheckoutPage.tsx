@@ -61,7 +61,7 @@ const CheckoutPage = () => {
     cardholderName: cardForm.cardholderName,
   }).success, [hasSavedCard, cardForm]);
 
-  const canPay = shippingValid && cardValid && !paymentLoading && !processingPayment && items.length > 0;
+  const canPay = shippingValid && cardValid && items.length > 0;
 
   // Group items by store
   const storeGroups = items.reduce<Record<string, typeof items>>((acc, item) => {
