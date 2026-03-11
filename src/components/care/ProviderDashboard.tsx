@@ -251,7 +251,19 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
                 </div>
               </div>
 
-              {pendingBookings.length > 0 && (
+              {/* Verification status */}
+              {!isFullyVerified && (
+                <button onClick={() => setTab("verification")} className="w-full rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 text-left">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-amber-600" />
+                    <div>
+                      <p className="text-xs font-bold text-amber-800 dark:text-amber-400">Get Verified</p>
+                      <p className="text-[10px] text-muted-foreground">Submit documents to earn a verified badge</p>
+                    </div>
+                  </div>
+                </button>
+              )}
+
                 <div className="rounded-2xl bg-card border border-border p-4">
                   <h3 className="text-sm font-bold mb-2">Pending Bookings ({pendingBookings.length})</h3>
                   {pendingBookings.slice(0, 3).map((b) => (
