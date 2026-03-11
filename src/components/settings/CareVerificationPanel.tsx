@@ -51,7 +51,7 @@ const CareVerificationPanel = () => {
         .in("id", providerIds);
 
       const provMap = new Map((providers || []).map((p: any) => [p.id, p]));
-      const userIds = [...new Set((providers || []).map((p: any) => p.user_id))];
+      const userIds = [...new Set((providers || []).map((p: any) => p.user_id))] as string[];
 
       const { data: profiles } = await supabase
         .from("profiles")
