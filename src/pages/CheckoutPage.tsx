@@ -10,8 +10,9 @@ import { useCreateOrder, type ShippingInfo } from "@/hooks/useOrders";
 import { useToast } from "@/hooks/use-toast";
 import SlideToPayButton from "@/components/marketplace/SlideToPayButton";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
+import ProductImage from "@/components/marketplace/ProductImage";
 
-const DELIVERY_FEE = 120; // MKD flat rate
+const DELIVERY_FEE = 120;
 
 const shippingSchema = z.object({
   name: z.string().trim().min(2, "Full name is required").max(100),
@@ -43,10 +44,7 @@ const CheckoutPage = () => {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [cardForm, setCardForm] = useState({
-    cardNumber: "",
-    expiry: "",
-    cvv: "",
-    cardholderName: "",
+    cardNumber: "", expiry: "", cvv: "", cardholderName: "",
   });
 
   const platformFee = Math.round(totalPrice * 0.10 * 100) / 100;
@@ -63,7 +61,6 @@ const CheckoutPage = () => {
 
   const canPay = shippingValid && cardValid && items.length > 0;
 
-  // Group items by store
   const storeGroups = items.reduce<Record<string, typeof items>>((acc, item) => {
     const storeId = item.product?.business_id || "unknown";
     if (!acc[storeId]) acc[storeId] = [];
@@ -86,19 +83,13 @@ const CheckoutPage = () => {
     setProcessingPayment(true);
     try {
       let method = defaultMethod;
-
       if (!method) {
         method = await saveCard({
-          cardNumber: cardForm.cardNumber,
-          expiry: cardForm.expiry,
-          cvv: cardForm.cvv,
-          cardholderName: cardForm.cardholderName,
+          cardNumber: cardForm.cardNumber, expiry: cardForm.expiry,
+          cvv: cardForm.cvv, cardholderName: cardForm.cardholderName,
         });
       }
-
-      if (!method) {
-        throw new Error("Add a payment method first");
-      }
+      if (!method) throw new Error("Add a payment method first");
 
       await simulateCardCharge();
 
@@ -139,7 +130,6 @@ const CheckoutPage = () => {
   return (
     <AppLayout>
       <div className="mx-auto max-w-lg pb-56">
-        {/* Header */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center gap-3">
           <button onClick={() => step === "confirmed" ? navigate("/marketplace") : navigate(-1)} className="rounded-full p-1.5 hover:bg-secondary">
             <ArrowLeft className="h-5 w-5" />
@@ -151,7 +141,6 @@ const CheckoutPage = () => {
 
         {step === "checkout" && (
           <div className="px-4 py-4 space-y-4">
-            {/* Order summary by store */}
             <div className="space-y-3">
               {Object.entries(storeGroups).map(([storeId, storeItems]) => {
                 const storeName = storeItems[0]?.product?.business?.business_name || "Store";
@@ -164,11 +153,7 @@ const CheckoutPage = () => {
                     </div>
                     {storeItems.map((item) => (
                       <div key={item.id} className="flex items-center gap-2 py-2 border-t border-border first:border-0">
-                        {item.product?.image_url ? (
-                          <img src={item.product.image_url} alt={item.product.name} className="h-10 w-10 rounded-lg object-cover" />
-                        ) : (
-                          <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center text-sm" aria-hidden="true">📦</div>
-                        )}
+                        <ProductImage src={item.product?.image_url} alt={item.product?.name || ""} size="sm" aspectRatio="square" className="rounded-lg" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold truncate">{item.product?.name}</p>
                           <p className="text-[10px] text-muted-foreground">{item.quantity}x {item.product?.price} MKD</p>
@@ -223,7 +208,6 @@ const CheckoutPage = () => {
                 <CreditCard className="h-4 w-4 text-primary" />
                 <h3 className="text-sm font-bold">Payment Method</h3>
               </div>
-
               {hasSavedCard ? (
                 <div className="rounded-xl bg-secondary p-3">
                   <p className="text-xs font-semibold capitalize">{defaultMethod?.card_brand} •••• {defaultMethod?.card_last4}</p>
@@ -234,44 +218,21 @@ const CheckoutPage = () => {
                   <p className="text-xs text-muted-foreground">Add Payment Method</p>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Card number</Label>
-                    <Input
-                      inputMode="numeric"
-                      autoComplete="cc-number"
-                      value={cardForm.cardNumber}
-                      onChange={(e) => setCardForm((prev) => ({ ...prev, cardNumber: e.target.value.replace(/[^\d\s]/g, "") }))}
-                      placeholder="4242 4242 4242 4242"
-                    />
+                    <Input inputMode="numeric" autoComplete="cc-number" value={cardForm.cardNumber} onChange={(e) => setCardForm((p) => ({ ...p, cardNumber: e.target.value.replace(/[^\d\s]/g, "") }))} placeholder="4242 4242 4242 4242" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label className="text-xs">Expiration</Label>
-                      <Input
-                        autoComplete="cc-exp"
-                        value={cardForm.expiry}
-                        onChange={(e) => setCardForm((prev) => ({ ...prev, expiry: e.target.value.replace(/[^\d/]/g, "") }))}
-                        placeholder="MM/YY"
-                      />
+                      <Input autoComplete="cc-exp" value={cardForm.expiry} onChange={(e) => setCardForm((p) => ({ ...p, expiry: e.target.value.replace(/[^\d/]/g, "") }))} placeholder="MM/YY" />
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs">CVV</Label>
-                      <Input
-                        inputMode="numeric"
-                        autoComplete="cc-csc"
-                        type="password"
-                        value={cardForm.cvv}
-                        onChange={(e) => setCardForm((prev) => ({ ...prev, cvv: e.target.value.replace(/\D/g, "") }))}
-                        placeholder="123"
-                      />
+                      <Input inputMode="numeric" autoComplete="cc-csc" type="password" value={cardForm.cvv} onChange={(e) => setCardForm((p) => ({ ...p, cvv: e.target.value.replace(/\D/g, "") }))} placeholder="123" />
                     </div>
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs">Card holder name</Label>
-                    <Input
-                      autoComplete="cc-name"
-                      value={cardForm.cardholderName}
-                      onChange={(e) => setCardForm((prev) => ({ ...prev, cardholderName: e.target.value }))}
-                      placeholder="Card holder name"
-                    />
+                    <Input autoComplete="cc-name" value={cardForm.cardholderName} onChange={(e) => setCardForm((p) => ({ ...p, cardholderName: e.target.value }))} placeholder="Card holder name" />
                   </div>
                 </div>
               )}
@@ -305,11 +266,7 @@ const CheckoutPage = () => {
         {step === "checkout" && (
           <div className="fixed left-0 right-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] px-4">
             <div className="mx-auto max-w-lg rounded-2xl bg-background/95 backdrop-blur-sm border border-border p-3 space-y-2">
-              <SlideToPayButton
-                amount={grandTotal}
-                disabled={processingPayment || items.length === 0}
-                onConfirm={handlePlaceOrder}
-              />
+              <SlideToPayButton amount={grandTotal} disabled={processingPayment || items.length === 0} onConfirm={handlePlaceOrder} />
               {!canPay && (
                 <p className="text-[11px] text-muted-foreground text-center">
                   You can slide now — payment runs after required details are valid
@@ -339,16 +296,10 @@ const CheckoutPage = () => {
               </div>
             )}
             <div className="flex gap-3 pt-4">
-              <button
-                onClick={() => navigate("/orders")}
-                className="flex-1 rounded-xl petkeep-gradient text-primary-foreground py-3 text-xs font-bold"
-              >
+              <button onClick={() => navigate("/orders")} className="flex-1 rounded-xl petkeep-gradient text-primary-foreground py-3 text-xs font-bold">
                 View My Orders
               </button>
-              <button
-                onClick={() => navigate("/marketplace")}
-                className="flex-1 rounded-xl bg-secondary text-secondary-foreground py-3 text-xs font-bold"
-              >
+              <button onClick={() => navigate("/marketplace")} className="flex-1 rounded-xl bg-secondary text-secondary-foreground py-3 text-xs font-bold">
                 Continue Shopping
               </button>
             </div>

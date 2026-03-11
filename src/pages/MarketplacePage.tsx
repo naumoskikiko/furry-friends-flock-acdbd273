@@ -8,6 +8,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import BusinessDashboard from "@/components/business/BusinessDashboard";
+import ProductImage from "@/components/marketplace/ProductImage";
 
 const MarketplacePage = () => {
   const { profile } = useAuth();
@@ -52,7 +53,6 @@ const MarketplacePage = () => {
     }
   };
 
-  // If searching, switch to relevant tab
   const isSearching = searchQuery.length >= 2;
 
   return (
@@ -153,7 +153,7 @@ const MarketplacePage = () => {
                       >
                         <div className="h-16 bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
                           {b.logo_url ? (
-                            <img src={b.logo_url} alt="" className="h-10 w-10 rounded-xl object-cover" />
+                            <img src={b.logo_url} alt="" loading="lazy" className="h-10 w-10 rounded-xl object-cover" />
                           ) : (
                             <span className="text-2xl">{catInfo?.icon || "🏪"}</span>
                           )}
@@ -178,7 +178,7 @@ const MarketplacePage = () => {
               </div>
             )}
 
-            {/* Popular Products - Wolt-style quick add */}
+            {/* Popular Products */}
             {popularProducts.length > 0 && (
               <div>
                 <div className="flex items-center justify-between px-4 mb-2">
@@ -186,34 +186,25 @@ const MarketplacePage = () => {
                   <button onClick={() => setActiveTab("products")} className="text-xs font-bold text-primary">See all</button>
                 </div>
                 <div className="px-4 grid grid-cols-2 gap-3">
-                  {popularProducts.map((p) => {
-                    const catInfo = PRODUCT_CATEGORIES.find((c) => c.value === p.category);
-                    return (
-                      <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
-                        <div className="relative cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
-                          {p.image_url ? (
-                            <img src={p.image_url} alt={p.name} loading="lazy" className="h-28 w-full object-cover aspect-square" />
-                          ) : (
-                            <div className="h-28 w-full bg-secondary flex items-center justify-center text-3xl aspect-square">
-                              {catInfo?.icon || "📦"}
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-2.5">
-                          <h4 className="text-xs font-bold truncate cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>{p.name}</h4>
-                          <div className="flex items-center justify-between mt-1.5">
-                            <p className="text-sm font-extrabold text-primary">{p.price} MKD</p>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleQuickAdd(p.id, p.name); }}
-                              className="flex h-7 w-7 items-center justify-center rounded-full petkeep-gradient text-primary-foreground"
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
+                  {popularProducts.map((p) => (
+                    <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
+                      <div className="relative cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
+                        <ProductImage src={p.image_url} alt={p.name} category={p.category} size="lg" aspectRatio="square" className="rounded-none" />
+                      </div>
+                      <div className="p-2.5">
+                        <h4 className="text-xs font-bold truncate cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>{p.name}</h4>
+                        <div className="flex items-center justify-between mt-1.5">
+                          <p className="text-sm font-extrabold text-primary">{p.price} MKD</p>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleQuickAdd(p.id, p.name); }}
+                            className="flex h-7 w-7 items-center justify-center rounded-full petkeep-gradient text-primary-foreground"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -234,9 +225,9 @@ const MarketplacePage = () => {
                         onClick={() => navigate(`/store/${b.id}`)}
                         className="flex items-center gap-3 rounded-2xl bg-card p-3 border border-border petkeep-card-hover cursor-pointer"
                       >
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-xl shrink-0">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-xl shrink-0 overflow-hidden">
                           {b.logo_url ? (
-                            <img src={b.logo_url} alt="" className="h-full w-full rounded-xl object-cover" />
+                            <img src={b.logo_url} alt="" loading="lazy" className="h-full w-full object-cover" />
                           ) : (
                             catInfo?.icon || "🏪"
                           )}
@@ -264,7 +255,6 @@ const MarketplacePage = () => {
               </div>
             )}
 
-            {/* Empty state */}
             {!bizLoading && !prodLoading && businesses.length === 0 && products.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center px-4">
                 <span className="text-4xl mb-2">🏪</span>
@@ -277,10 +267,9 @@ const MarketplacePage = () => {
           </div>
         )}
 
-        {/* ========== PRODUCTS TAB (or search mode on discover) ========== */}
+        {/* ========== PRODUCTS TAB ========== */}
         {(activeTab === "products" || (activeTab === "discover" && isSearching)) && (
           <>
-            {/* Product categories */}
             {activeTab === "products" && (
               <div className="flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-hide">
                 <button
@@ -313,7 +302,6 @@ const MarketplacePage = () => {
               </div>
             )}
 
-            {/* Products grid with quick-add */}
             <div className="px-4 pb-4">
               {prodLoading ? (
                 <div className="flex justify-center py-10">
@@ -327,18 +315,11 @@ const MarketplacePage = () => {
               ) : (
                 <div className="grid grid-cols-2 gap-3">
                   {products.map((p) => {
-                    const catInfo = PRODUCT_CATEGORIES.find((c) => c.value === p.category);
                     const outOfStock = p.stock !== null && p.stock !== undefined && p.stock <= 0;
                     return (
                       <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
                         <div className="relative cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
-                          {p.image_url ? (
-                            <img src={p.image_url} alt={p.name} loading="lazy" className="h-28 w-full object-cover aspect-square" />
-                          ) : (
-                            <div className="h-28 w-full bg-secondary flex items-center justify-center text-3xl aspect-square">
-                              {catInfo?.icon || "📦"}
-                            </div>
-                          )}
+                          <ProductImage src={p.image_url} alt={p.name} category={p.category} size="lg" aspectRatio="square" className="rounded-none" />
                           {outOfStock && (
                             <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
                               <span className="text-xs font-bold text-destructive">Out of stock</span>
@@ -366,34 +347,6 @@ const MarketplacePage = () => {
                 </div>
               )}
             </div>
-
-            {/* Show matching stores when searching */}
-            {isSearching && businesses.length > 0 && activeTab === "discover" && (
-              <div className="px-4 pb-4">
-                <h3 className="font-display text-base font-bold mb-2">Matching Stores</h3>
-                <div className="space-y-2">
-                  {businesses.map((b) => {
-                    const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
-                    return (
-                      <div
-                        key={b.id}
-                        onClick={() => navigate(`/store/${b.id}`)}
-                        className="flex items-center gap-3 rounded-2xl bg-card p-3 border border-border petkeep-card-hover cursor-pointer"
-                      >
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-xl shrink-0">
-                          {catInfo?.icon || "🏪"}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-bold truncate">{b.business_name}</h4>
-                          <p className="text-[10px] text-muted-foreground capitalize">{b.category.replace("_", " ")}</p>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </>
         )}
 
@@ -421,7 +374,6 @@ const MarketplacePage = () => {
                 </button>
               ))}
             </div>
-
             <div className="px-4 pb-4">
               {bizLoading ? (
                 <div className="flex justify-center py-10">
@@ -433,34 +385,33 @@ const MarketplacePage = () => {
                   <p className="text-sm font-semibold">No stores found</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {businesses.map((b) => {
                     const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
                     return (
                       <div
                         key={b.id}
                         onClick={() => navigate(`/store/${b.id}`)}
-                        className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover cursor-pointer"
+                        className="flex items-center gap-3 rounded-2xl bg-card p-3 border border-border petkeep-card-hover cursor-pointer"
                       >
-                        <div className="h-20 bg-gradient-to-br from-primary/10 to-accent/10 relative">
-                          {b.logo_url && (
-                            <img src={b.logo_url} alt="" className="absolute bottom-0 left-3 h-12 w-12 rounded-xl object-cover border-2 border-background translate-y-1/3" />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-xl shrink-0 overflow-hidden">
+                          {b.logo_url ? (
+                            <img src={b.logo_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                          ) : (
+                            catInfo?.icon || "🏪"
                           )}
                         </div>
-                        <div className={`p-3 ${b.logo_url ? "pt-5" : ""}`}>
-                          <div className="flex items-center gap-1.5">
-                            {!b.logo_url && (
-                              <span className="text-lg">{catInfo?.icon || "🏪"}</span>
-                            )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1">
                             <h4 className="text-sm font-bold truncate">{b.business_name}</h4>
-                            {b.is_verified && <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />}
+                            {b.is_verified && <BadgeCheck className="h-3 w-3 text-primary shrink-0" />}
                           </div>
-                          <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
+                          <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
                             <span className="capitalize">{b.category.replace("_", " ")}</span>
                             {b.avg_rating > 0 && (
                               <span className="flex items-center gap-0.5">
                                 <Star className="h-2.5 w-2.5 fill-primary text-primary" />
-                                {Number(b.avg_rating).toFixed(1)}
+                                {Number(b.avg_rating).toFixed(1)} ({b.total_reviews})
                               </span>
                             )}
                             {b.location && (
@@ -469,10 +420,8 @@ const MarketplacePage = () => {
                               </span>
                             )}
                           </div>
-                          {b.description && (
-                            <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">{b.description}</p>
-                          )}
                         </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                       </div>
                     );
                   })}
@@ -483,7 +432,7 @@ const MarketplacePage = () => {
         )}
       </div>
 
-      {/* Floating cart indicator - Wolt style */}
+      {/* Floating cart */}
       {itemCount > 0 && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-2rem)] max-w-[358px]">
           <button

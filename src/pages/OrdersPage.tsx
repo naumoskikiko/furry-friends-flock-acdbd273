@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { ArrowLeft, Package } from "lucide-react";
 import { useMyOrders } from "@/hooks/useOrders";
+import ProductImage from "@/components/marketplace/ProductImage";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
@@ -57,15 +58,10 @@ const OrdersPage = () => {
                     {new Date(order.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                   </p>
 
-                  {/* Items */}
                   <div className="mt-3 space-y-2">
                     {order.items?.map((item) => (
                       <div key={item.id} className="flex items-center gap-2">
-                        {item.product?.image_url ? (
-                          <img src={item.product.image_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                        ) : (
-                          <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center text-sm">📦</div>
-                        )}
+                        <ProductImage src={item.product?.image_url} alt={item.product?.name || ""} size="sm" aspectRatio="square" className="rounded-lg" />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold truncate">{item.product?.name || "Product"}</p>
                           <p className="text-[10px] text-muted-foreground">{item.store?.business_name} · Qty: {item.quantity}</p>
@@ -75,7 +71,6 @@ const OrdersPage = () => {
                     ))}
                   </div>
 
-                  {/* Shipping */}
                   <div className="mt-3 pt-3 border-t border-border">
                     <p className="text-[10px] text-muted-foreground">Ship to: {order.shipping_name}, {order.shipping_city}</p>
                     <div className="flex items-center justify-between mt-1">

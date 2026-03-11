@@ -55,6 +55,7 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
   const [prodStock, setProdStock] = useState("");
   const [prodSaving, setProdSaving] = useState(false);
   const [prodImageUrl, setProdImageUrl] = useState("");
+  const [prodExtraImages, setProdExtraImages] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
 
   // Store edit form
@@ -130,11 +131,11 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
   };
 
   const resetProductForm = () => {
-    setProdName(""); setProdDesc(""); setProdPrice(""); setProdCategory("general"); setProdStock(""); setProdImageUrl("");
+    setProdName(""); setProdDesc(""); setProdPrice(""); setProdCategory("general"); setProdStock(""); setProdImageUrl(""); setProdExtraImages([]);
     setAddingProduct(false); setEditingProduct(null);
   };
 
-  const startEditProduct = (p: any) => {
+  const startEditProduct = async (p: any) => {
     setProdName(p.name);
     setProdDesc(p.description || "");
     setProdPrice(String(p.price));
@@ -143,6 +144,9 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
     setProdImageUrl(p.image_url || "");
     setEditingProduct(p.id);
     setAddingProduct(true);
+    // Load extra images
+    const { data } = await (supabase as any).from("product_images").select("image_url").eq("product_id", p.id).order("display_order");
+    setProdExtraImages((data || []).map((d: any) => d.image_url));
   };
 
   const handleDuplicateProduct = async (p: any) => {
@@ -173,12 +177,28 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
         image_url: prodImageUrl || null,
         stock: prodStock ? parseInt(prodStock) : null,
       };
+      let productId = editingProduct;
       if (editingProduct) {
         await updateProduct(editingProduct, fields);
+        // Update extra images: delete old, insert new
+        await (supabase as any).from("product_images").delete().eq("product_id", editingProduct);
         toast({ title: "Product updated!" });
       } else {
+        // addProduct doesn't return ID, so we need to get it after
         await addProduct(fields);
+        // Find the newly created product
+        const { data: newProds } = await (supabase as any).from("products").select("id").eq("business_id", business?.id).order("created_at", { ascending: false }).limit(1);
+        productId = newProds?.[0]?.id;
         toast({ title: "Product added!" });
+      }
+      // Save extra images
+      if (productId && prodExtraImages.length > 0) {
+        const rows = prodExtraImages.map((url, i) => ({
+          product_id: productId,
+          image_url: url,
+          display_order: i,
+        }));
+        await (supabase as any).from("product_images").insert(rows);
       }
       resetProductForm();
     } catch (e: any) {
@@ -187,19 +207,36 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
     setProdSaving(false);
   };
 
-  const handleProductImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingImage(true);
+  const uploadImage = async (file: File): Promise<string | null> => {
     const filePath = `${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from("product-images").upload(filePath, file);
     if (error) {
       toast({ title: "Upload failed", description: error.message, variant: "destructive" });
-      setUploadingImage(false);
-      return;
+      return null;
     }
     const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(filePath);
-    setProdImageUrl(publicUrl);
+    return publicUrl;
+  };
+
+  const handleProductImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    const url = await uploadImage(file);
+    if (url) setProdImageUrl(url);
+    setUploadingImage(false);
+  };
+
+  const handleExtraImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    setUploadingImage(true);
+    const newUrls: string[] = [];
+    for (const file of Array.from(files)) {
+      const url = await uploadImage(file);
+      if (url) newUrls.push(url);
+    }
+    setProdExtraImages((prev) => [...prev, ...newUrls]);
     setUploadingImage(false);
   };
 
@@ -491,21 +528,41 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-xs">Product Image</Label>
-                        <div className="flex items-center gap-3">
-                          <label className="flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-xs font-bold cursor-pointer hover:bg-secondary/80">
-                            <ImageIcon className="h-3.5 w-3.5" /> Upload
-                            <input type="file" accept="image/*" onChange={handleProductImage} className="hidden" />
-                          </label>
-                          {uploadingImage && <span className="text-xs text-muted-foreground">Uploading...</span>}
+                        <Label className="text-xs">Product Images</Label>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {/* Main image */}
                           {prodImageUrl && (
                             <div className="relative">
-                              <img src={prodImageUrl} alt="" className="h-12 w-12 rounded-lg object-cover" />
+                              <img src={prodImageUrl} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                              <span className="absolute top-0 left-0 bg-primary text-primary-foreground text-[8px] px-1 rounded-tl-lg rounded-br-lg font-bold">Main</span>
                               <button onClick={() => setProdImageUrl("")} className="absolute -top-1 -right-1 rounded-full bg-destructive text-destructive-foreground h-4 w-4 flex items-center justify-center">
                                 <X className="h-2.5 w-2.5" />
                               </button>
                             </div>
                           )}
+                          {/* Extra images */}
+                          {prodExtraImages.map((url, i) => (
+                            <div key={i} className="relative">
+                              <img src={url} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                              <button onClick={() => setProdExtraImages((imgs) => imgs.filter((_, j) => j !== i))} className="absolute -top-1 -right-1 rounded-full bg-destructive text-destructive-foreground h-4 w-4 flex items-center justify-center">
+                                <X className="h-2.5 w-2.5" />
+                              </button>
+                            </div>
+                          ))}
+                          {/* Upload buttons */}
+                          <div className="flex flex-col gap-1">
+                            {!prodImageUrl && (
+                              <label className="flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-xs font-bold cursor-pointer hover:bg-secondary/80">
+                                <ImageIcon className="h-3.5 w-3.5" /> Main Image
+                                <input type="file" accept="image/*" onChange={handleProductImage} className="hidden" />
+                              </label>
+                            )}
+                            <label className="flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-xs font-bold cursor-pointer hover:bg-secondary/80">
+                              <Plus className="h-3.5 w-3.5" /> Add More
+                              <input type="file" accept="image/*" multiple onChange={handleExtraImages} className="hidden" />
+                            </label>
+                          </div>
+                          {uploadingImage && <span className="text-xs text-muted-foreground">Uploading...</span>}
                         </div>
                       </div>
                       <div className="flex gap-2">

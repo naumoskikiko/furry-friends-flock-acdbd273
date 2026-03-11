@@ -10,7 +10,7 @@ import { useProductReviews } from "@/hooks/useProductReviews";
 import { useToast } from "@/hooks/use-toast";
 import { PRODUCT_CATEGORIES } from "@/hooks/useBusiness";
 import { Input } from "@/components/ui/input";
-import ProductImage from "@/components/marketplace/ProductImage";
+import ProductImageGallery from "@/components/marketplace/ProductImageGallery";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
@@ -48,7 +48,6 @@ const ProductDetailPage = () => {
           .single();
         setBusiness(biz);
 
-        // Related products
         const { data: related } = await fromTable("products")
           .select("id, name, price, image_url, category")
           .eq("category", (prod as any).category)
@@ -86,7 +85,6 @@ const ProductDetailPage = () => {
     setSubmittingReview(false);
   };
 
-  const catInfo = product ? PRODUCT_CATEGORIES.find((c) => c.value === product.category) : null;
   const inStock = product?.stock === null || product?.stock === undefined || product?.stock > 0;
   const maxQty = product?.stock ?? 99;
   const wishlisted = id ? isWishlisted(id) : false;
@@ -118,18 +116,23 @@ const ProductDetailPage = () => {
   return (
     <AppLayout>
       <div className="mx-auto max-w-lg pb-56">
-        {/* Image */}
+        {/* Image Gallery */}
         <div className="relative">
-          <ProductImage src={product.image_url} alt={product.name} category={product.category} size="xl" className="w-full" />
+          <ProductImageGallery
+            productId={product.id}
+            mainImageUrl={product.image_url}
+            category={product.category}
+            alt={product.name}
+          />
           <button
             onClick={() => navigate(-1)}
-            className="absolute top-3 left-3 rounded-full bg-background/80 backdrop-blur-sm p-2"
+            className="absolute top-3 left-3 rounded-full bg-background/80 backdrop-blur-sm p-2 z-10"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
           <button
             onClick={() => id && toggleWishlist(id)}
-            className="absolute top-3 right-3 rounded-full bg-background/80 backdrop-blur-sm p-2"
+            className="absolute top-3 right-3 rounded-full bg-background/80 backdrop-blur-sm p-2 z-10"
           >
             <Heart className={`h-4 w-4 ${wishlisted ? "fill-red-500 text-red-500" : ""}`} />
           </button>
@@ -161,9 +164,9 @@ const ProductDetailPage = () => {
               onClick={() => navigate(`/store/${business.id}`)}
               className="flex items-center gap-3 rounded-2xl bg-card border border-border p-3 w-full text-left"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-lg">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-lg overflow-hidden">
                 {business.logo_url ? (
-                  <img src={business.logo_url} alt="" className="h-full w-full rounded-xl object-cover" />
+                  <img src={business.logo_url} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <Store className="h-4 w-4" />
                 )}
@@ -212,7 +215,6 @@ const ProductDetailPage = () => {
           <div>
             <h3 className="text-sm font-bold mb-3">Reviews ({reviews.length})</h3>
 
-            {/* Review form */}
             {user && !myReview && (
               <div className="rounded-2xl bg-card border border-border p-3 mb-3 space-y-2">
                 <div className="flex items-center gap-1">
@@ -283,9 +285,11 @@ const ProductDetailPage = () => {
                       className="min-w-[140px] rounded-2xl bg-card border border-border overflow-hidden shrink-0 petkeep-card-hover cursor-pointer"
                     >
                       {rp.image_url ? (
-                        <img src={rp.image_url} alt={rp.name} loading="lazy" className="h-24 w-full object-cover" />
+                        <div className="aspect-square overflow-hidden">
+                          <img src={rp.image_url} alt={rp.name} loading="lazy" className="h-full w-full object-cover" />
+                        </div>
                       ) : (
-                        <div className="h-24 w-full bg-secondary flex items-center justify-center text-2xl">
+                        <div className="aspect-square bg-secondary flex items-center justify-center text-2xl">
                           {ci?.icon || "📦"}
                         </div>
                       )}
