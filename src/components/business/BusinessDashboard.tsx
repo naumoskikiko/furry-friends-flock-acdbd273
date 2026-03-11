@@ -795,6 +795,15 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                     <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-bold">Store Details</h3>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setBoostModal({ type: "store", id: business.id, name: business.business_name })}
+                            className={`flex items-center gap-1 text-[10px] font-bold ${
+                              boostedStoreIds.has(business.id) ? "text-amber-600" : "text-muted-foreground hover:text-amber-600"
+                            }`}
+                          >
+                            <Zap className="h-3 w-3" /> {boostedStoreIds.has(business.id) ? "Boosted" : "Boost"}
+                          </button>
                         <button
                           onClick={() => {
                             setStoreForm({
