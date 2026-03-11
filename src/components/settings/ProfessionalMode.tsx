@@ -14,7 +14,7 @@ const futureSections = [
 const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
 
-  if (sub === "map-management" || sub === "care-verification" || sub === "care-management") {
+  if (sub === "map-management" || sub === "care-verification" || sub === "care-management" || sub === "marketplace-control") {
     return (
       <div>
         <button
