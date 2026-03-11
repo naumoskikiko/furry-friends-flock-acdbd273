@@ -112,6 +112,58 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
     setSearchResults(results.map((m) => m.id));
   };
 
+  const openStoryFromMessage = async (metadata: any) => {
+    if (!metadata?.story_id) return;
+    const fromTable = (table: string) => (supabase as any).from(table);
+    const { data: story } = await fromTable("stories")
+      .select("*")
+      .eq("id", metadata.story_id)
+      .maybeSingle();
+
+    if (!story) {
+      toast({ title: "This story is no longer available", variant: "destructive" });
+      return;
+    }
+
+    const isExpired = new Date(story.expires_at) < new Date();
+    if (isExpired) {
+      toast({ title: "This story has expired", variant: "destructive" });
+      return;
+    }
+
+    // Fetch profile for the story owner
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("user_id, full_name, avatar_url, username")
+      .eq("user_id", story.user_id)
+      .maybeSingle();
+
+    const name = profile?.full_name || "User";
+    const storyItem: StoryItem = {
+      id: story.id,
+      user_id: story.user_id,
+      media_url: story.media_url,
+      media_type: story.media_type || "image",
+      caption: story.caption || "",
+      location: story.location || "",
+      text_overlay: story.text_overlay || "",
+      sticker: story.sticker || "",
+      created_at: story.created_at,
+      likes_count: 0,
+      is_liked: false,
+    };
+
+    const group: StoryGroup = {
+      user_id: story.user_id,
+      username: name,
+      avatar_url: profile?.avatar_url || null,
+      initials: name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2),
+      stories: [storyItem],
+    };
+
+    setStoryViewerData({ groups: [group], open: true });
+  };
+
   const other = conversation.other_user;
   const initials = other.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
   const activity = getActivityStatus(other.last_active_at);
