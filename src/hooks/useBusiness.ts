@@ -114,7 +114,7 @@ export function useBusinessProducts(businessId: string | null) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  const addProduct = async (fields: { name: string; description?: string; price: number; category: string; image_url?: string }) => {
+  const addProduct = async (fields: { name: string; description?: string; price: number; category: string; image_url?: string; stock?: number | null }) => {
     if (!businessId) return;
     const { error } = await fromTable("products")
       .insert({ business_id: businessId, ...fields } as any);
