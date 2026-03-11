@@ -264,6 +264,7 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
                 </button>
               )}
 
+              {pendingBookings.length > 0 && (
                 <div className="rounded-2xl bg-card border border-border p-4">
                   <h3 className="text-sm font-bold mb-2">Pending Bookings ({pendingBookings.length})</h3>
                   {pendingBookings.slice(0, 3).map((b) => (
