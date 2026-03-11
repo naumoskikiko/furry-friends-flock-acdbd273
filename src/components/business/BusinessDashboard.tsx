@@ -528,21 +528,41 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-xs">Product Image</Label>
-                        <div className="flex items-center gap-3">
-                          <label className="flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-xs font-bold cursor-pointer hover:bg-secondary/80">
-                            <ImageIcon className="h-3.5 w-3.5" /> Upload
-                            <input type="file" accept="image/*" onChange={handleProductImage} className="hidden" />
-                          </label>
-                          {uploadingImage && <span className="text-xs text-muted-foreground">Uploading...</span>}
+                        <Label className="text-xs">Product Images</Label>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {/* Main image */}
                           {prodImageUrl && (
                             <div className="relative">
-                              <img src={prodImageUrl} alt="" className="h-12 w-12 rounded-lg object-cover" />
+                              <img src={prodImageUrl} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                              <span className="absolute top-0 left-0 bg-primary text-primary-foreground text-[8px] px-1 rounded-tl-lg rounded-br-lg font-bold">Main</span>
                               <button onClick={() => setProdImageUrl("")} className="absolute -top-1 -right-1 rounded-full bg-destructive text-destructive-foreground h-4 w-4 flex items-center justify-center">
                                 <X className="h-2.5 w-2.5" />
                               </button>
                             </div>
                           )}
+                          {/* Extra images */}
+                          {prodExtraImages.map((url, i) => (
+                            <div key={i} className="relative">
+                              <img src={url} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                              <button onClick={() => setProdExtraImages((imgs) => imgs.filter((_, j) => j !== i))} className="absolute -top-1 -right-1 rounded-full bg-destructive text-destructive-foreground h-4 w-4 flex items-center justify-center">
+                                <X className="h-2.5 w-2.5" />
+                              </button>
+                            </div>
+                          ))}
+                          {/* Upload buttons */}
+                          <div className="flex flex-col gap-1">
+                            {!prodImageUrl && (
+                              <label className="flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-xs font-bold cursor-pointer hover:bg-secondary/80">
+                                <ImageIcon className="h-3.5 w-3.5" /> Main Image
+                                <input type="file" accept="image/*" onChange={handleProductImage} className="hidden" />
+                              </label>
+                            )}
+                            <label className="flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-xs font-bold cursor-pointer hover:bg-secondary/80">
+                              <Plus className="h-3.5 w-3.5" /> Add More
+                              <input type="file" accept="image/*" multiple onChange={handleExtraImages} className="hidden" />
+                            </label>
+                          </div>
+                          {uploadingImage && <span className="text-xs text-muted-foreground">Uploading...</span>}
                         </div>
                       </div>
                       <div className="flex gap-2">
