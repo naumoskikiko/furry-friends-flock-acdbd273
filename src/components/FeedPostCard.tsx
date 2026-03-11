@@ -141,13 +141,13 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   };
 
   const sharePost = () => {
+    setShareModalOpen(true);
+  };
+
+  const copyPostLink = () => {
     const url = `${window.location.origin}/post/${post.id}`;
-    if (navigator.share) {
-      navigator.share({ title: post.caption || "PetKeep Post", url }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(url);
-      toast({ title: "Link copied!" });
-    }
+    navigator.clipboard.writeText(url);
+    toast({ title: "Link copied!" });
   };
 
   const openComments = async () => {
