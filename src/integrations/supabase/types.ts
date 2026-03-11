@@ -170,6 +170,63 @@ export type Database = {
           },
         ]
       }
+      business_profiles: {
+        Row: {
+          avg_rating: number
+          banner_url: string | null
+          business_name: string
+          category: string
+          created_at: string
+          description: string
+          id: string
+          is_suspended: boolean
+          is_verified: boolean
+          location: string
+          logo_url: string | null
+          phone: string
+          total_reviews: number
+          updated_at: string
+          user_id: string
+          website: string
+        }
+        Insert: {
+          avg_rating?: number
+          banner_url?: string | null
+          business_name: string
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_suspended?: boolean
+          is_verified?: boolean
+          location?: string
+          logo_url?: string | null
+          phone?: string
+          total_reviews?: number
+          updated_at?: string
+          user_id: string
+          website?: string
+        }
+        Update: {
+          avg_rating?: number
+          banner_url?: string | null
+          business_name?: string
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_suspended?: boolean
+          is_verified?: boolean
+          location?: string
+          logo_url?: string | null
+          phone?: string
+          total_reviews?: number
+          updated_at?: string
+          user_id?: string
+          website?: string
+        }
+        Relationships: []
+      }
       care_bookings: {
         Row: {
           booking_date: string
@@ -1123,6 +1180,56 @@ export type Database = {
             columns: ["pet_id"]
             isOneToOne: false
             referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          business_id: string
+          category: string
+          created_at: string
+          description: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          price: number
+          stock: number | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          price?: number
+          stock?: number | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          price?: number
+          stock?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
             referencedColumns: ["id"]
           },
         ]
