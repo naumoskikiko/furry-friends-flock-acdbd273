@@ -116,7 +116,7 @@ const ProductDetailPage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg pb-44">
+      <div className="mx-auto max-w-lg pb-56">
         {/* Image */}
         <div className="relative">
           {product.image_url ? (
