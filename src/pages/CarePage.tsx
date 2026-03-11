@@ -105,7 +105,7 @@ const CarePage = () => {
         </div>
 
         {/* Featured section */}
-        {featured.length > 0 && !searchQuery && !emergencyOnly && (
+        {featured.length > 0 && !searchQuery && (
           <div className="px-4 pb-4">
             <h3 className="font-display text-base font-bold mb-2">⭐ Top Rated</h3>
             <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
