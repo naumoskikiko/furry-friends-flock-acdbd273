@@ -61,6 +61,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   const [showHeartAnim, setShowHeartAnim] = useState(false);
   const [likesListOpen, setLikesListOpen] = useState(false);
   const [muted, setMuted] = useState(true);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const lastTapRef = useRef(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaContainerRef = useRef<HTMLDivElement>(null);
