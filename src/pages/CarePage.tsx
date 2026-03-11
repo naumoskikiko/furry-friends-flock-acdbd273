@@ -6,6 +6,8 @@ import { useCareProviders, useMyProvider, useMyBookings, useProviderAvailability
 import ProviderDetail from "@/components/care/ProviderDetail";
 import ProviderDashboard from "@/components/care/ProviderDashboard";
 import BookingHistory from "@/components/care/BookingHistory";
+import BoostBadge from "@/components/marketplace/BoostBadge";
+import { useBoostedIds } from "@/hooks/useBoosts";
 
 const ProviderStatusBadge = ({ providerId }: { providerId: string }) => {
   const availability = useProviderAvailability(providerId);

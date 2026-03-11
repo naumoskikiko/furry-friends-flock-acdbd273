@@ -326,6 +326,7 @@ const MarketplacePage = () => {
                       <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
                         <div className="relative cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
                           <ProductImage src={p.image_url} alt={p.name} category={p.category} size="lg" aspectRatio="square" className="rounded-none" />
+                          {boostedProductIds.has(p.id) && <div className="absolute top-2 left-2"><BoostBadge /></div>}
                           {outOfStock && (
                             <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
                               <span className="text-xs font-bold text-destructive">Out of stock</span>
