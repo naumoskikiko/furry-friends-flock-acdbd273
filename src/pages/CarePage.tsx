@@ -88,18 +88,8 @@ const CarePage = () => {
           </div>
         </div>
 
-        {/* Emergency + Category filters */}
+        {/* Category filters */}
         <div className="flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-hide">
-          <button
-            onClick={() => setEmergencyOnly(!emergencyOnly)}
-            className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1 ${
-              emergencyOnly
-                ? "bg-destructive text-destructive-foreground"
-                : "bg-destructive/10 text-destructive"
-            }`}
-          >
-            <AlertTriangle className="h-3 w-3" /> Emergency
-          </button>
           {allCategories.map((c) => (
             <button
               key={c.value}
