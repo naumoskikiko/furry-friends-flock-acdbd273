@@ -177,12 +177,28 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
         image_url: prodImageUrl || null,
         stock: prodStock ? parseInt(prodStock) : null,
       };
+      let productId = editingProduct;
       if (editingProduct) {
         await updateProduct(editingProduct, fields);
+        // Update extra images: delete old, insert new
+        await (supabase as any).from("product_images").delete().eq("product_id", editingProduct);
         toast({ title: "Product updated!" });
       } else {
+        // addProduct doesn't return ID, so we need to get it after
         await addProduct(fields);
+        // Find the newly created product
+        const { data: newProds } = await (supabase as any).from("products").select("id").eq("business_id", business?.id).order("created_at", { ascending: false }).limit(1);
+        productId = newProds?.[0]?.id;
         toast({ title: "Product added!" });
+      }
+      // Save extra images
+      if (productId && prodExtraImages.length > 0) {
+        const rows = prodExtraImages.map((url, i) => ({
+          product_id: productId,
+          image_url: url,
+          display_order: i,
+        }));
+        await (supabase as any).from("product_images").insert(rows);
       }
       resetProductForm();
     } catch (e: any) {
