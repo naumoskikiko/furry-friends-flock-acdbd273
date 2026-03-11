@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { ChevronLeft, Plus, Package, Store, Trash2, Edit2 } from "lucide-react";
+import { ChevronLeft, Plus, Package, Store, Trash2, Edit2, ShoppingBag, Truck, CheckCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useMyBusiness, useBusinessProducts, BUSINESS_CATEGORIES, PRODUCT_CATEGORIES } from "@/hooks/useBusiness";
+import { useStoreOrders } from "@/hooks/useOrders";
 import { supabase } from "@/integrations/supabase/client";
 
 interface BusinessDashboardProps {
