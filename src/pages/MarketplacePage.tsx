@@ -4,6 +4,7 @@ import AppLayout from "@/components/AppLayout";
 import { Search, ChevronRight, Star, MapPin, Store, Package, Plus, BadgeCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAllBusinesses, useAllProducts, BUSINESS_CATEGORIES, PRODUCT_CATEGORIES } from "@/hooks/useBusiness";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import BusinessDashboard from "@/components/business/BusinessDashboard";
 
 const MarketplacePage = () => {
