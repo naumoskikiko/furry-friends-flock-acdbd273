@@ -4,7 +4,7 @@ import { useMyProvider, useProviderServices, useProviderAvailability, useProvide
 import { useProviderBalance, useProviderPayments, useProviderPayouts } from "@/hooks/usePayments";
 import { useProviderVerifications, VERIFICATION_TYPES } from "@/hooks/useVerification";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, BadgeCheck, Calendar, CheckCircle2, XCircle, MessageSquare, AlertTriangle, Shield, FileCheck, ShieldCheck } from "lucide-react";
+import { Star, BadgeCheck, Calendar, CheckCircle2, XCircle, MessageSquare, Shield, FileCheck, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
