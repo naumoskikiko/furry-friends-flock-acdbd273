@@ -3,11 +3,12 @@ import {
   ArrowLeft, Send, Check, CheckCheck, Search, X, MoreVertical,
   Pencil, Trash2, Flag, ChevronUp, Reply, Forward, Mic, Calendar,
   WifiOff, RefreshCw, ExternalLink, Link2, Image, AlertCircle,
+  CheckCircle2, XCircle, Ban,
 } from "lucide-react";
 import {
   useChatMessages, useTypingIndicator, useActivityTracking,
   useConnectionStatus, getActivityStatus, extractLinks,
-  saveDraft, loadDraft,
+  saveDraft, loadDraft, updateBookingFromChat,
   type Conversation, type Message, type PendingMessage,
 } from "@/hooks/useMessages";
 import { useAuth } from "@/contexts/AuthContext";
@@ -307,7 +308,7 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
               const canEdit = isMine && Date.now() - new Date(msg.created_at).getTime() < 15 * 60 * 1000;
               const replyPreview = getReplyPreview(msg.reply_to_id);
 
-              // Appointment card
+              // Appointment card (legacy)
               if (msg.message_type === "appointment" && msg.metadata) {
                 return (
                   <div key={msg.id} ref={(el) => { if (el) messageRefs.current.set(msg.id, el); }} className="flex justify-center">
@@ -323,6 +324,89 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
                       {msg.metadata.service && (
                         <p className="text-xs text-muted-foreground">{msg.metadata.service}</p>
                       )}
+                      <div className="flex items-center gap-1 mt-2">
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Booking request card with actions
+              if (msg.message_type === "booking_request" && msg.metadata) {
+                const meta = msg.metadata;
+                const bookingStatus = meta.status || "pending";
+                const isProvider = !isMine; // provider receives the request
+                const statusColors: Record<string, string> = {
+                  pending: "text-amber-600 dark:text-amber-400",
+                  confirmed: "text-green-600 dark:text-green-400",
+                  rejected: "text-destructive",
+                  cancelled: "text-muted-foreground",
+                };
+
+                const handleBookingAction = async (action: "confirmed" | "rejected" | "cancelled") => {
+                  try {
+                    await updateBookingFromChat(meta.booking_id, action, conversation.id);
+                    // Update local metadata
+                    const updatedMeta = { ...meta, status: action };
+                    const fromTable = (table: string) => (supabase as any).from(table);
+                    await fromTable("messages")
+                      .update({ metadata: updatedMeta })
+                      .eq("id", msg.id);
+                    toast({ title: `Booking ${action}` });
+                  } catch (e: any) {
+                    toast({ title: "Action failed", description: e.message, variant: "destructive" });
+                  }
+                };
+
+                return (
+                  <div key={msg.id} ref={(el) => { if (el) messageRefs.current.set(msg.id, el); }} className="flex justify-center">
+                    <div className="w-[85%] rounded-2xl border border-border bg-card p-3.5 shadow-sm">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <span className="text-xs font-bold text-primary">Booking Request</span>
+                        <span className={`ml-auto text-[10px] font-bold capitalize ${statusColors[bookingStatus] || ""}`}>
+                          {bookingStatus}
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold">{meta.service_name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        📅 {meta.date} · 🕐 {meta.time}
+                      </p>
+                      {meta.pet_name && (
+                        <p className="text-xs text-muted-foreground">🐾 {meta.pet_name}</p>
+                      )}
+                      <p className="text-xs font-semibold mt-1">{meta.price} MKD</p>
+
+                      {/* Actions */}
+                      {bookingStatus === "pending" && isProvider && (
+                        <div className="flex gap-2 mt-3">
+                          <button
+                            onClick={() => handleBookingAction("confirmed")}
+                            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Accept
+                          </button>
+                          <button
+                            onClick={() => handleBookingAction("rejected")}
+                            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                          >
+                            <XCircle className="h-3.5 w-3.5" /> Reject
+                          </button>
+                        </div>
+                      )}
+
+                      {bookingStatus === "confirmed" && (
+                        <button
+                          onClick={() => handleBookingAction("cancelled")}
+                          className="w-full mt-3 flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                        >
+                          <Ban className="h-3.5 w-3.5" /> Cancel Appointment
+                        </button>
+                      )}
+
                       <div className="flex items-center gap-1 mt-2">
                         <span className="text-[10px] text-muted-foreground">
                           {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}

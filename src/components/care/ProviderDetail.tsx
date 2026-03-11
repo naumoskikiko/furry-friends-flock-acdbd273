@@ -78,6 +78,22 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
       // Process simulated payment with 10% platform fee
       if (result?.id) {
         await processPayment(result.id, provider.id, selectedService.price);
+        // Send booking request card to chat
+        try {
+          const convId = await getOrCreateConversation(provider.user_id);
+          const { sendBookingMessage } = await import("@/hooks/useMessages");
+          await sendBookingMessage(convId, {
+            booking_id: result.id,
+            service_name: selectedService.service_name,
+            date: bookingDate,
+            time: bookingTime,
+            price: selectedService.price,
+            pet_name: userPets.find(p => p.id === selectedPetId)?.name || undefined,
+            status: "pending",
+          });
+        } catch (e) {
+          console.error("Failed to send booking message", e);
+        }
       }
       const fees = calculateFees(selectedService.price);
       toast({ title: "Booking & Payment confirmed!", description: `${selectedService.service_name} — ${fees.totalAmount} MKD ${(provider as any).booking_mode === 'request' ? '(pending approval)' : 'paid'}` });

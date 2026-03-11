@@ -758,6 +758,50 @@ export function useTypingIndicator(conversationId: string | null) {
   return { typingUsers, setTyping };
 }
 
+// --- Send booking message ---
+export async function sendBookingMessage(conversationId: string, bookingData: {
+  booking_id: string;
+  service_name: string;
+  date: string;
+  time: string;
+  price: number;
+  pet_name?: string;
+  status: string;
+}) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+  await fromTable("messages").insert({
+    conversation_id: conversationId,
+    sender_id: user.id,
+    message_text: `Booking request: ${bookingData.service_name}`,
+    message_type: "booking_request",
+    metadata: bookingData,
+  });
+}
+
+// --- Update booking status via chat ---
+export async function updateBookingFromChat(bookingId: string, newStatus: string, conversationId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+  
+  await fromTable("care_bookings")
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .eq("id", bookingId);
+
+  const statusLabels: Record<string, string> = {
+    confirmed: "✅ Booking confirmed",
+    rejected: "❌ Booking rejected",
+    cancelled: "🚫 Booking cancelled",
+  };
+
+  await fromTable("messages").insert({
+    conversation_id: conversationId,
+    sender_id: user.id,
+    message_text: statusLabels[newStatus] || `Booking ${newStatus}`,
+    message_type: "system",
+  });
+}
+
 // --- Get or create conversation ---
 export async function getOrCreateConversation(otherUserId: string): Promise<string> {
   const { data, error } = await supabase.rpc("create_conversation_with_participant" as any, {
