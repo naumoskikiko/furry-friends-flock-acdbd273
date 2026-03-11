@@ -175,6 +175,7 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
               {[
                 { key: "profile" as const, label: "Profile", icon: Store },
                 { key: "products" as const, label: "Products", icon: Package },
+                { key: "orders" as const, label: "Orders", icon: ShoppingBag },
               ].map((t) => (
                 <button
                   key={t.key}
