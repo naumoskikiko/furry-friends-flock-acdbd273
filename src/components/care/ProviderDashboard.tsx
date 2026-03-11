@@ -10,6 +10,15 @@ import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
+const NORTH_MACEDONIA_TOWNS = [
+  "Skopje", "Bitola", "Kumanovo", "Tetovo", "Ohrid", "Prilep", "Veles", "Štip",
+  "Strumica", "Gostivar", "Kavadarci", "Kočani", "Kičevo", "Struga", "Radoviš",
+  "Gevgelija", "Debar", "Kriva Palanka", "Sveti Nikole", "Negotino", "Delčevo",
+  "Vinica", "Resen", "Probištip", "Berovo", "Kratovo", "Bogdanci", "Kruševo",
+  "Makedonski Brod", "Valandovo", "Demir Hisar", "Pehčevo", "Demir Kapija",
+  "Makedonska Kamenica", "Star Dojran",
+];
+
 interface ProviderDashboardProps {
   onClose: () => void;
 }
