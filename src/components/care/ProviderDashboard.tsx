@@ -198,6 +198,7 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
     { key: "hours" as const, label: "Hours" },
     { key: "reviews" as const, label: `Reviews (${reviews.length})` },
     { key: "earnings" as const, label: "Earnings" },
+    { key: "verification" as const, label: `Verify${pendingCount > 0 ? ` (${pendingCount})` : ""}` },
     { key: "settings" as const, label: "Settings" },
   ];
 
