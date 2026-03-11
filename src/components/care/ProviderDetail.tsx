@@ -120,7 +120,18 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
           </button>
           <h1 className="font-display text-lg font-bold truncate flex-1">Provider Profile</h1>
           {!isOwnProfile && (
-            <button onClick={() => navigate("/messages")} className="rounded-full p-1.5 hover:bg-secondary">
+            <button
+              onClick={async () => {
+                try {
+                  const convId = await getOrCreateConversation(provider.user_id);
+                  navigate(`/messages?conversation=${convId}&userId=${provider.user_id}`);
+                } catch (e) {
+                  console.error("Failed to create conversation", e);
+                  navigate("/messages");
+                }
+              }}
+              className="rounded-full p-1.5 hover:bg-secondary"
+            >
               <MessageSquare className="h-5 w-5" />
             </button>
           )}
