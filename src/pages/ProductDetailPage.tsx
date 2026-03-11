@@ -10,6 +10,7 @@ import { useProductReviews } from "@/hooks/useProductReviews";
 import { useToast } from "@/hooks/use-toast";
 import { PRODUCT_CATEGORIES } from "@/hooks/useBusiness";
 import { Input } from "@/components/ui/input";
+import ProductImage from "@/components/marketplace/ProductImage";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
@@ -119,13 +120,7 @@ const ProductDetailPage = () => {
       <div className="mx-auto max-w-lg pb-56">
         {/* Image */}
         <div className="relative">
-          {product.image_url ? (
-            <img src={product.image_url} alt={product.name} className="h-72 w-full object-cover" />
-          ) : (
-            <div className="h-72 w-full bg-secondary flex items-center justify-center text-6xl">
-              {catInfo?.icon || "📦"}
-            </div>
-          )}
+          <ProductImage src={product.image_url} alt={product.name} category={product.category} size="xl" className="w-full" />
           <button
             onClick={() => navigate(-1)}
             className="absolute top-3 left-3 rounded-full bg-background/80 backdrop-blur-sm p-2"
@@ -288,7 +283,7 @@ const ProductDetailPage = () => {
                       className="min-w-[140px] rounded-2xl bg-card border border-border overflow-hidden shrink-0 petkeep-card-hover cursor-pointer"
                     >
                       {rp.image_url ? (
-                        <img src={rp.image_url} alt={rp.name} className="h-24 w-full object-cover" />
+                        <img src={rp.image_url} alt={rp.name} loading="lazy" className="h-24 w-full object-cover" />
                       ) : (
                         <div className="h-24 w-full bg-secondary flex items-center justify-center text-2xl">
                           {ci?.icon || "📦"}

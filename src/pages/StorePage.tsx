@@ -222,9 +222,9 @@ const StorePage = () => {
                   <div key={p.id} className="flex items-center gap-3 rounded-2xl bg-card border border-border p-3 petkeep-card-hover">
                     <div className="cursor-pointer shrink-0" onClick={() => navigate(`/product/${p.id}`)}>
                       {p.image_url ? (
-                        <img src={p.image_url} alt={p.name} className="h-16 w-16 rounded-xl object-cover" />
+                        <img src={p.image_url} alt={p.name} loading="lazy" className="h-16 w-16 rounded-xl object-cover aspect-square" />
                       ) : (
-                        <div className="h-16 w-16 rounded-xl bg-secondary flex items-center justify-center text-xl">
+                        <div className="h-16 w-16 rounded-xl bg-secondary flex items-center justify-center text-xl aspect-square">
                           {ci?.icon || "📦"}
                         </div>
                       )}

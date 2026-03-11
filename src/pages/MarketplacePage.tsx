@@ -192,9 +192,9 @@ const MarketplacePage = () => {
                       <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
                         <div className="relative cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
                           {p.image_url ? (
-                            <img src={p.image_url} alt={p.name} className="h-28 w-full object-cover" />
+                            <img src={p.image_url} alt={p.name} loading="lazy" className="h-28 w-full object-cover aspect-square" />
                           ) : (
-                            <div className="h-28 w-full bg-secondary flex items-center justify-center text-3xl">
+                            <div className="h-28 w-full bg-secondary flex items-center justify-center text-3xl aspect-square">
                               {catInfo?.icon || "📦"}
                             </div>
                           )}
@@ -333,9 +333,9 @@ const MarketplacePage = () => {
                       <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
                         <div className="relative cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
                           {p.image_url ? (
-                            <img src={p.image_url} alt={p.name} className="h-28 w-full object-cover" />
+                            <img src={p.image_url} alt={p.name} loading="lazy" className="h-28 w-full object-cover aspect-square" />
                           ) : (
-                            <div className="h-28 w-full bg-secondary flex items-center justify-center text-3xl">
+                            <div className="h-28 w-full bg-secondary flex items-center justify-center text-3xl aspect-square">
                               {catInfo?.icon || "📦"}
                             </div>
                           )}
