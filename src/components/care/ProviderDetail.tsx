@@ -79,7 +79,7 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
         await processPayment(result.id, provider.id, selectedService.price);
       }
       const fees = calculateFees(selectedService.price);
-      toast({ title: "Booking & Payment confirmed!", description: `${selectedService.service_name} — ${fees.totalAmount} MKD paid` });
+      toast({ title: "Booking & Payment confirmed!", description: `${selectedService.service_name} — ${fees.totalAmount} MKD ${(provider as any).booking_mode === 'request' ? '(pending approval)' : 'paid'}` });
       setSelectedService(null);
       setBookingDate("");
       setBookingTime("");

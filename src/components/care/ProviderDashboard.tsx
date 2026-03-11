@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { X, Plus, Trash2, Clock, DollarSign, Save, Image as ImageIcon, Upload, Wallet, ArrowUpRight } from "lucide-react";
+import { useState, useRef } from "react";
+import { X, Plus, Trash2, Clock, DollarSign, Save, Image as ImageIcon, Upload, Wallet, ArrowUpRight, MapPin, Zap } from "lucide-react";
 import { useMyProvider, useProviderServices, useProviderAvailability, useProviderBookings, useProviderReviews, useProviderGallery, CATEGORIES, DAY_NAMES, type CareService } from "@/hooks/useCare";
 import { useProviderBalance, useProviderPayments, useProviderPayouts } from "@/hooks/usePayments";
+import { useProviderVerifications, VERIFICATION_TYPES } from "@/hooks/useVerification";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, BadgeCheck, Calendar, CheckCircle2, XCircle, MessageSquare, AlertTriangle, Shield } from "lucide-react";
+import { Star, BadgeCheck, Calendar, CheckCircle2, XCircle, MessageSquare, AlertTriangle, Shield, FileCheck, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -23,10 +24,14 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const { balance } = useProviderBalance(provider?.id || null);
   const { payments: providerPayments } = useProviderPayments(provider?.id || null);
   const { payouts, requestPayout } = useProviderPayouts(provider?.id || null);
+  const { verifications, submitVerification, deleteVerification, pendingCount, approvedCount, rejectedCount, isFullyVerified } = useProviderVerifications(provider?.id || null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [tab, setTab] = useState<"overview" | "services" | "bookings" | "hours" | "reviews" | "earnings" | "settings">("overview");
+  const [tab, setTab] = useState<"overview" | "services" | "bookings" | "hours" | "reviews" | "earnings" | "verification" | "settings">("overview");
+  const [verDocType, setVerDocType] = useState("license");
+  const [uploadingVerDoc, setUploadingVerDoc] = useState(false);
   const [payoutAmount, setPayoutAmount] = useState("");
   const [creating, setCreating] = useState(!provider && !loading);
 
@@ -48,6 +53,8 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const [emergencyAvail, setEmergencyAvail] = useState(provider?.emergency_available || false);
   const [cancelPolicy, setCancelPolicy] = useState(provider?.cancellation_policy || "Free cancellation up to 24 hours before appointment");
   const [cancelHours, setCancelHours] = useState(String(provider?.cancellation_hours || 24));
+  const [serviceRadius, setServiceRadius] = useState(String((provider as any)?.service_radius_km || ""));
+  const [bookingMode, setBookingMode] = useState((provider as any)?.booking_mode || "instant");
 
   // Gallery upload
   const [galleryUrl, setGalleryUrl] = useState("");
@@ -92,8 +99,24 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
       emergency_available: emergencyAvail,
       cancellation_policy: cancelPolicy,
       cancellation_hours: Number(cancelHours) || 24,
+      service_radius_km: serviceRadius ? Number(serviceRadius) : null,
+      booking_mode: bookingMode,
     } as any);
     toast({ title: "Settings saved!" });
+  };
+
+  const handleVerDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingVerDoc(true);
+    try {
+      await submitVerification(verDocType, file);
+      toast({ title: "Document submitted for verification!" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    }
+    setUploadingVerDoc(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleAddGalleryImage = async () => {
@@ -175,6 +198,7 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
     { key: "hours" as const, label: "Hours" },
     { key: "reviews" as const, label: `Reviews (${reviews.length})` },
     { key: "earnings" as const, label: "Earnings" },
+    { key: "verification" as const, label: `Verify${pendingCount > 0 ? ` (${pendingCount})` : ""}` },
     { key: "settings" as const, label: "Settings" },
   ];
 
@@ -226,6 +250,19 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
                   <p className="text-[10px] text-muted-foreground">Bookings</p>
                 </div>
               </div>
+
+              {/* Verification status */}
+              {!isFullyVerified && (
+                <button onClick={() => setTab("verification")} className="w-full rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 text-left">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-amber-600" />
+                    <div>
+                      <p className="text-xs font-bold text-amber-800 dark:text-amber-400">Get Verified</p>
+                      <p className="text-[10px] text-muted-foreground">Submit documents to earn a verified badge</p>
+                    </div>
+                  </div>
+                </button>
+              )}
 
               {pendingBookings.length > 0 && (
                 <div className="rounded-2xl bg-card border border-border p-4">
@@ -534,6 +571,124 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
             </div>
           )}
 
+          {/* Verification */}
+          {tab === "verification" && (
+            <div className="space-y-4">
+              {/* Verification Status */}
+              <div className={`rounded-2xl p-4 ${isFullyVerified ? "bg-accent/10 border border-accent/30" : "bg-card border border-border"}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-full ${isFullyVerified ? "bg-accent/20" : "bg-secondary"}`}>
+                    {isFullyVerified ? <BadgeCheck className="h-6 w-6 text-accent" /> : <ShieldCheck className="h-6 w-6 text-muted-foreground" />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold">{isFullyVerified ? "✅ Verified Provider" : "Verification Required"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {isFullyVerified
+                        ? "Your profile displays the verified badge"
+                        : `Submit at least 2 documents to get verified (${approvedCount}/2 approved)`}
+                    </p>
+                  </div>
+                </div>
+                {approvedCount > 0 && !isFullyVerified && (
+                  <div className="mt-3 w-full bg-secondary rounded-full h-2">
+                    <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${Math.min(100, (approvedCount / 2) * 100)}%` }} />
+                  </div>
+                )}
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-xl bg-card border border-border p-3 text-center">
+                  <p className="font-display text-lg font-bold text-primary">{approvedCount}</p>
+                  <p className="text-[10px] text-muted-foreground">Approved</p>
+                </div>
+                <div className="rounded-xl bg-card border border-border p-3 text-center">
+                  <p className="font-display text-lg font-bold text-amber-600">{pendingCount}</p>
+                  <p className="text-[10px] text-muted-foreground">Pending</p>
+                </div>
+                <div className="rounded-xl bg-card border border-border p-3 text-center">
+                  <p className="font-display text-lg font-bold text-destructive">{rejectedCount}</p>
+                  <p className="text-[10px] text-muted-foreground">Rejected</p>
+                </div>
+              </div>
+
+              {/* Upload New */}
+              <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <FileCheck className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-bold">Submit Document</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {VERIFICATION_TYPES.map((t) => (
+                    <button
+                      key={t.value}
+                      onClick={() => setVerDocType(t.value)}
+                      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        verDocType === t.value ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                      }`}
+                    >
+                      {t.icon} {t.label}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={handleVerDocUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingVerDoc}
+                  className="w-full petkeep-gradient rounded-xl py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  {uploadingVerDoc ? "Uploading..." : "Upload Document"}
+                </button>
+              </div>
+
+              {/* Submitted Documents */}
+              {verifications.length > 0 && (
+                <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                  <h3 className="text-sm font-bold">Submitted Documents</h3>
+                  {verifications.map((v) => {
+                    const typeInfo = VERIFICATION_TYPES.find((t) => t.value === v.verification_type);
+                    const statusStyle: Record<string, string> = {
+                      pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+                      approved: "bg-accent/10 text-accent",
+                      rejected: "bg-destructive/10 text-destructive",
+                    };
+                    return (
+                      <div key={v.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-lg">{typeInfo?.icon || "📄"}</span>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold truncate">{v.document_name || typeInfo?.label}</p>
+                            <p className="text-[10px] text-muted-foreground">{typeInfo?.label}</p>
+                            {v.reviewer_notes && (
+                              <p className="text-[10px] text-muted-foreground italic mt-0.5">📝 {v.reviewer_notes}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusStyle[v.status] || "bg-secondary"}`}>
+                            {v.status}
+                          </span>
+                          {v.status === "pending" && (
+                            <button onClick={() => deleteVerification(v.id)} className="rounded-full p-1 hover:bg-destructive/10 text-destructive">
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           {tab === "settings" && (
             <div className="space-y-5">
               {/* Emergency */}
@@ -571,7 +726,54 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
                 </div>
               </div>
 
-              {/* Gallery */}
+              {/* Service Area */}
+              <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-bold">Service Area</h3>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Service radius (km)</label>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {[null, 5, 10, 25, 50].map((r) => (
+                      <button
+                        key={String(r)}
+                        onClick={() => setServiceRadius(r ? String(r) : "")}
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                          serviceRadius === String(r || "") ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                        }`}
+                      >
+                        {r ? `${r} km` : "No limit"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Booking Mode */}
+              <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-bold">Booking Mode</h3>
+                </div>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setBookingMode("instant")}
+                    className={`w-full rounded-xl p-3 text-left transition-colors ${bookingMode === "instant" ? "bg-primary/10 border border-primary/30" : "bg-secondary"}`}
+                  >
+                    <p className="text-xs font-bold">⚡ Instant Booking</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Bookings are confirmed immediately</p>
+                  </button>
+                  <button
+                    onClick={() => setBookingMode("request")}
+                    className={`w-full rounded-xl p-3 text-left transition-colors ${bookingMode === "request" ? "bg-primary/10 border border-primary/30" : "bg-secondary"}`}
+                  >
+                    <p className="text-xs font-bold">📋 Request Booking</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">You review and approve each booking manually</p>
+                  </button>
+                </div>
+              </div>
+
               <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <ImageIcon className="h-4 w-4 text-primary" />
