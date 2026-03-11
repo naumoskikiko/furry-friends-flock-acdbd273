@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown } from "lucide-react";
+import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap } from "lucide-react";
 import SettingsMapManagement from "./SettingsMapManagement";
 import CareVerificationPanel from "./CareVerificationPanel";
 import CareManagementPanel from "./CareManagementPanel";
 import MarketplaceManagementPanel from "./MarketplaceManagementPanel";
 import RoleManagementPanel from "./RoleManagementPanel";
+import PromotionManagementPanel from "./PromotionManagementPanel";
 import { useIsOwner } from "@/hooks/useIsOwner";
 
-type SubSection = "dashboard" | "map-management" | "care-verification" | "care-management" | "marketplace-control" | "role-management";
+type SubSection = "dashboard" | "map-management" | "care-verification" | "care-management" | "marketplace-control" | "role-management" | "promotions";
 
 const futureSections = [
   { id: "analytics", label: "Platform Analytics", icon: BarChart3, description: "User stats, growth metrics", coming: true },
