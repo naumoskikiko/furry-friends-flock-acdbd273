@@ -33,6 +33,8 @@ const MarketplacePage = () => {
 
   const featured = businesses.filter((b) => b.avg_rating >= 4.0).slice(0, 5);
   const isBusiness = profile?.role === "business";
+  const { isAdmin } = useIsAdmin();
+  const canManageStore = isBusiness || isAdmin;
 
   return (
     <AppLayout>
@@ -43,14 +45,16 @@ const MarketplacePage = () => {
             <h1 className="font-display text-2xl font-extrabold">Pet Vault</h1>
             <p className="text-sm text-muted-foreground">Your local pet marketplace</p>
           </div>
-          {isBusiness && (
-            <button
-              onClick={() => setShowDashboard(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-secondary transition-colors"
-            >
-              <Store className="h-3.5 w-3.5" /> Dashboard
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {canManageStore && (
+              <button
+                onClick={() => setShowDashboard(true)}
+                className="flex items-center gap-1.5 rounded-xl petkeep-gradient text-primary-foreground px-3 py-2 text-xs font-bold transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" /> Add Store
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Search */}
