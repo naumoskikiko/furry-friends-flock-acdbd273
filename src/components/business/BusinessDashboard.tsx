@@ -38,7 +38,7 @@ const statusColors: Record<string, string> = {
   cancelled: "bg-destructive/10 text-destructive",
 };
 
-type TabKey = "overview" | "products" | "orders" | "inventory" | "store" | "customers" | "reviews" | "analytics";
+type TabKey = "overview" | "products" | "orders" | "inventory" | "coupons" | "delivery" | "store" | "customers" | "reviews" | "analytics";
 
 const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
   const { business, createBusiness, updateBusiness, refresh } = useMyBusiness();
