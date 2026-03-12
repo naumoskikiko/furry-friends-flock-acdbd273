@@ -21,6 +21,8 @@ import DashboardOverviewTab from "./tabs/DashboardOverviewTab";
 import DashboardCustomersTab from "./tabs/DashboardCustomersTab";
 import DashboardReviewsTab from "./tabs/DashboardReviewsTab";
 import DashboardInventoryTab from "./tabs/DashboardInventoryTab";
+import DashboardCouponsTab from "./tabs/DashboardCouponsTab";
+import DashboardDeliveryTab from "./tabs/DashboardDeliveryTab";
 
 interface BusinessDashboardProps {
   onClose: () => void;
@@ -36,7 +38,7 @@ const statusColors: Record<string, string> = {
   cancelled: "bg-destructive/10 text-destructive",
 };
 
-type TabKey = "overview" | "products" | "orders" | "inventory" | "store" | "customers" | "reviews" | "analytics";
+type TabKey = "overview" | "products" | "orders" | "inventory" | "coupons" | "delivery" | "store" | "customers" | "reviews" | "analytics";
 
 const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
   const { business, createBusiness, updateBusiness, refresh } = useMyBusiness();
@@ -257,6 +259,8 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
     { key: "products" as const, label: "Products", icon: Package },
     { key: "orders" as const, label: "Orders", icon: ShoppingBag },
     { key: "inventory" as const, label: "Inventory", icon: Boxes },
+    { key: "coupons" as const, label: "Coupons", icon: Star },
+    { key: "delivery" as const, label: "Delivery", icon: Truck },
     { key: "customers" as const, label: "Customers", icon: Users },
     { key: "reviews" as const, label: "Reviews", icon: MessageSquareText },
     { key: "store" as const, label: "Store", icon: Store },
@@ -578,6 +582,16 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
               {/* INVENTORY */}
               {tab === "inventory" && (
                 <DashboardInventoryTab products={products} onUpdateProduct={updateProduct} />
+              )}
+
+              {/* COUPONS */}
+              {tab === "coupons" && business && (
+                <DashboardCouponsTab businessId={business.id} />
+              )}
+
+              {/* DELIVERY */}
+              {tab === "delivery" && business && (
+                <DashboardDeliveryTab business={business as any} onUpdate={updateBusiness} />
               )}
 
               {/* CUSTOMERS */}

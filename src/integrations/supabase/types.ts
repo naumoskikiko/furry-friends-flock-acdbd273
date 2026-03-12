@@ -243,13 +243,18 @@ export type Database = {
           business_name: string
           category: string
           created_at: string
+          delivery_available: boolean
+          delivery_fee: number
+          delivery_radius_km: number | null
           description: string
+          free_delivery_above: number | null
           id: string
           is_suspended: boolean
           is_verified: boolean
           location: string
           logo_url: string | null
           phone: string
+          pickup_available: boolean
           total_reviews: number
           updated_at: string
           user_id: string
@@ -261,13 +266,18 @@ export type Database = {
           business_name: string
           category?: string
           created_at?: string
+          delivery_available?: boolean
+          delivery_fee?: number
+          delivery_radius_km?: number | null
           description?: string
+          free_delivery_above?: number | null
           id?: string
           is_suspended?: boolean
           is_verified?: boolean
           location?: string
           logo_url?: string | null
           phone?: string
+          pickup_available?: boolean
           total_reviews?: number
           updated_at?: string
           user_id: string
@@ -279,13 +289,18 @@ export type Database = {
           business_name?: string
           category?: string
           created_at?: string
+          delivery_available?: boolean
+          delivery_fee?: number
+          delivery_radius_km?: number | null
           description?: string
+          free_delivery_above?: number | null
           id?: string
           is_suspended?: boolean
           is_verified?: boolean
           location?: string
           logo_url?: string | null
           phone?: string
+          pickup_available?: boolean
           total_reviews?: number
           updated_at?: string
           user_id?: string
@@ -724,6 +739,59 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      coupons: {
+        Row: {
+          business_id: string
+          code: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          min_order_amount: number
+          updated_at: string
+          used_count: number
+        }
+        Insert: {
+          business_id: string
+          code: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          min_order_amount?: number
+          updated_at?: string
+          used_count?: number
+        }
+        Update: {
+          business_id?: string
+          code?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          min_order_amount?: number
+          updated_at?: string
+          used_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupons_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       credit_transactions: {
         Row: {
@@ -1503,6 +1571,50 @@ export type Database = {
           },
         ]
       }
+      product_variants: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string | null
+          price_modifier: number
+          product_id: string
+          stock: number | null
+          variant_label: string
+          variant_value: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          price_modifier?: number
+          product_id: string
+          stock?: number | null
+          variant_label?: string
+          variant_value: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          price_modifier?: number
+          product_id?: string
+          stock?: number | null
+          variant_label?: string
+          variant_value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_wishlist: {
         Row: {
           created_at: string
@@ -1541,6 +1653,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          is_featured: boolean
           name: string
           price: number
           stock: number | null
@@ -1554,6 +1667,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_featured?: boolean
           name: string
           price?: number
           stock?: number | null
@@ -1567,6 +1681,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_featured?: boolean
           name?: string
           price?: number
           stock?: number | null
@@ -1937,6 +2052,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      store_followers: {
+        Row: {
+          created_at: string
+          id: string
+          store_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          store_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          store_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_followers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stories: {
         Row: {

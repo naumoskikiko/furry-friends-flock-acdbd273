@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
-import { ArrowLeft, Star, MapPin, Globe, Phone, MessageCircle, BadgeCheck, Plus, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Star, MapPin, Globe, Phone, MessageCircle, BadgeCheck, Plus, ShoppingCart, Heart, Flame, Truck, Store as StoreIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { BUSINESS_CATEGORIES, PRODUCT_CATEGORIES, type BusinessProfile, type Product } from "@/hooks/useBusiness";
 import ProductImage from "@/components/marketplace/ProductImage";
+import { useStoreFollowers } from "@/hooks/useStoreFollowers";
+import BoostBadge from "@/components/marketplace/BoostBadge";
+import { useBoostedIds } from "@/hooks/useBoosts";
 
 const fromTable = (table: string) => supabase.from(table as any);
 
@@ -17,10 +20,15 @@ const StorePage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { addToCart, itemCount, totalPrice } = useCart();
-  const [business, setBusiness] = useState<(BusinessProfile & { banner_url?: string }) | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [business, setBusiness] = useState<(BusinessProfile & { banner_url?: string; delivery_available?: boolean; pickup_available?: boolean; delivery_fee?: number; free_delivery_above?: number | null }) | null>(null);
+  const [products, setProducts] = useState<(Product & { is_featured?: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("all");
+  const { followerCount, isFollowing, toggleFollow } = useStoreFollowers(id || null);
+  const boostedProductIds = useBoostedIds("product");
+
+  // Best seller: products that appear in order_items most
+  const [bestSellerIds, setBestSellerIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!id) return;
@@ -31,7 +39,26 @@ const StorePage = () => {
         fromTable("products").select("*").eq("business_id", id).eq("is_active", true).order("created_at", { ascending: false }),
       ]);
       setBusiness(bizRes.data as any);
-      setProducts((prodRes.data as any) || []);
+      const prods = (prodRes.data as any) || [];
+      setProducts(prods);
+
+      // Fetch best sellers from order_items
+      if (prods.length > 0) {
+        const prodIds = prods.map((p: any) => p.id);
+        const { data: orderItems } = await (supabase as any).from("order_items")
+          .select("product_id, quantity")
+          .in("product_id", prodIds);
+        if (orderItems && orderItems.length > 0) {
+          const salesMap: Record<string, number> = {};
+          (orderItems as any[]).forEach((i: any) => {
+            salesMap[i.product_id] = (salesMap[i.product_id] || 0) + i.quantity;
+          });
+          const sorted = Object.entries(salesMap).sort((a, b) => b[1] - a[1]);
+          const topIds = sorted.slice(0, 3).map(([id]) => id);
+          setBestSellerIds(new Set(topIds));
+        }
+      }
+
       setLoading(false);
     };
     load();
@@ -58,6 +85,7 @@ const StorePage = () => {
     }
   };
 
+  const featuredProducts = products.filter((p) => (p as any).is_featured);
   const filteredProducts = activeCategory === "all"
     ? products
     : products.filter((p) => p.category === activeCategory);
@@ -101,10 +129,8 @@ const StorePage = () => {
           ) : (
             <div className="w-full aspect-[3/1] bg-gradient-to-br from-primary/20 to-accent/20" />
           )}
-          <button
-            onClick={() => navigate("/marketplace")}
-            className="absolute top-3 left-3 rounded-full bg-background/80 backdrop-blur-sm p-2"
-          >
+          <button onClick={() => navigate("/marketplace")}
+            className="absolute top-3 left-3 rounded-full bg-background/80 backdrop-blur-sm p-2">
             <ArrowLeft className="h-4 w-4" />
           </button>
         </div>
@@ -132,7 +158,7 @@ const StorePage = () => {
             <p className="text-sm text-muted-foreground mt-3">{business.description}</p>
           )}
 
-          <div className="flex items-center gap-3 mt-3">
+          <div className="flex items-center gap-3 mt-3 flex-wrap">
             {business.avg_rating > 0 && (
               <span className="flex items-center gap-1 text-xs font-semibold">
                 <Star className="h-3.5 w-3.5 fill-primary text-primary" />
@@ -146,61 +172,99 @@ const StorePage = () => {
               </span>
             )}
             <span className="text-xs text-muted-foreground">{products.length} products</span>
+            <span className="text-xs text-muted-foreground">{followerCount} followers</span>
           </div>
+
+          {/* Delivery info */}
+          {(business.delivery_available || business.pickup_available) && (
+            <div className="flex items-center gap-3 mt-2">
+              {business.delivery_available && (
+                <span className="flex items-center gap-1 text-[10px] font-bold bg-primary/10 text-primary px-2 py-1 rounded-full">
+                  <Truck className="h-3 w-3" />
+                  Delivery {business.delivery_fee ? `${business.delivery_fee} MKD` : "Free"}
+                  {business.free_delivery_above && ` · Free over ${business.free_delivery_above} MKD`}
+                </span>
+              )}
+              {business.pickup_available && (
+                <span className="flex items-center gap-1 text-[10px] font-bold bg-secondary text-muted-foreground px-2 py-1 rounded-full">
+                  <StoreIcon className="h-3 w-3" /> Pickup
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-2 mt-3">
             {user?.id !== business.user_id && (
-              <button
-                onClick={handleMessage}
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-primary text-primary-foreground py-2.5 text-xs font-bold"
-              >
-                <MessageCircle className="h-3.5 w-3.5" /> Message Store
-              </button>
+              <>
+                <button onClick={handleMessage}
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-primary text-primary-foreground py-2.5 text-xs font-bold">
+                  <MessageCircle className="h-3.5 w-3.5" /> Message
+                </button>
+                <button onClick={toggleFollow}
+                  className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 px-4 text-xs font-bold ${
+                    isFollowing ? "bg-secondary text-foreground" : "border border-primary text-primary"
+                  }`}>
+                  <Heart className={`h-3.5 w-3.5 ${isFollowing ? "fill-primary text-primary" : ""}`} />
+                  {isFollowing ? "Following" : "Follow"}
+                </button>
+              </>
             )}
             {business.website && (
-              <a
-                href={business.website.startsWith("http") ? business.website : `https://${business.website}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1 rounded-xl border border-border px-3 py-2.5 text-xs font-bold hover:bg-secondary"
-              >
+              <a href={business.website.startsWith("http") ? business.website : `https://${business.website}`}
+                target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1 rounded-xl border border-border px-3 py-2.5 text-xs font-bold hover:bg-secondary">
                 <Globe className="h-3.5 w-3.5" />
               </a>
             )}
             {business.phone && (
-              <a
-                href={`tel:${business.phone}`}
-                className="flex items-center justify-center gap-1 rounded-xl border border-border px-3 py-2.5 text-xs font-bold hover:bg-secondary"
-              >
+              <a href={`tel:${business.phone}`}
+                className="flex items-center justify-center gap-1 rounded-xl border border-border px-3 py-2.5 text-xs font-bold hover:bg-secondary">
                 <Phone className="h-3.5 w-3.5" />
               </a>
             )}
           </div>
         </div>
 
+        {/* Featured products */}
+        {featuredProducts.length > 0 && (
+          <div className="mt-5 px-4">
+            <h3 className="font-display text-base font-bold mb-2 flex items-center gap-1.5">⭐ Featured Products</h3>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {featuredProducts.map((p) => (
+                <div key={p.id} onClick={() => navigate(`/product/${p.id}`)}
+                  className="min-w-[140px] rounded-2xl bg-card border border-border overflow-hidden shrink-0 petkeep-card-hover cursor-pointer">
+                  <div className="relative">
+                    <ProductImage src={p.image_url} alt={p.name} category={p.category} size="lg" aspectRatio="square" className="rounded-t-2xl" />
+                    {boostedProductIds.has(p.id) && <div className="absolute top-1.5 left-1.5"><BoostBadge /></div>}
+                  </div>
+                  <div className="p-2">
+                    <p className="text-[10px] font-bold truncate">{p.name}</p>
+                    <p className="text-xs font-extrabold text-primary mt-0.5">{p.price} MKD</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Product categories */}
         <div className="mt-5 px-4">
-          <h3 className="font-display text-base font-bold mb-2">Menu ({products.length})</h3>
+          <h3 className="font-display text-base font-bold mb-2">Products ({products.length})</h3>
           {productCategories.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              <button
-                onClick={() => setActiveCategory("all")}
+              <button onClick={() => setActiveCategory("all")}
                 className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                   activeCategory === "all" ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"
-                }`}
-              >
+                }`}>
                 All
               </button>
               {productCategories.map((cat) => {
                 const ci = PRODUCT_CATEGORIES.find((c) => c.value === cat);
                 return (
-                  <button
-                    key={cat}
-                    onClick={() => setActiveCategory(cat)}
+                  <button key={cat} onClick={() => setActiveCategory(cat)}
                     className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                       activeCategory === cat ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"
-                    }`}
-                  >
+                    }`}>
                     {ci?.icon} {ci?.label || cat}
                   </button>
                 );
@@ -220,10 +284,16 @@ const StorePage = () => {
             <div className="space-y-2">
               {filteredProducts.map((p) => {
                 const outOfStock = p.stock !== null && p.stock !== undefined && p.stock <= 0;
+                const isBestSeller = bestSellerIds.has(p.id);
                 return (
                   <div key={p.id} className="flex items-center gap-3 rounded-2xl bg-card border border-border p-3 petkeep-card-hover">
-                    <div className="cursor-pointer shrink-0" onClick={() => navigate(`/product/${p.id}`)}>
+                    <div className="cursor-pointer shrink-0 relative" onClick={() => navigate(`/product/${p.id}`)}>
                       <ProductImage src={p.image_url} alt={p.name} category={p.category} size="md" aspectRatio="square" className="rounded-xl" />
+                      {isBestSeller && (
+                        <span className="absolute -top-1 -left-1 flex items-center gap-0.5 bg-amber-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">
+                          <Flame className="h-2.5 w-2.5" /> Best Seller
+                        </span>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
                       <h4 className="text-sm font-bold truncate">{p.name}</h4>
@@ -231,10 +301,8 @@ const StorePage = () => {
                       <p className="text-sm font-extrabold text-primary mt-1">{p.price} MKD</p>
                     </div>
                     {!outOfStock ? (
-                      <button
-                        onClick={() => handleQuickAdd(p.id, p.name)}
-                        className="flex h-9 w-9 items-center justify-center rounded-full petkeep-gradient text-primary-foreground shrink-0"
-                      >
+                      <button onClick={() => handleQuickAdd(p.id, p.name)}
+                        className="flex h-9 w-9 items-center justify-center rounded-full petkeep-gradient text-primary-foreground shrink-0">
                         <Plus className="h-4 w-4" />
                       </button>
                     ) : (
@@ -251,14 +319,10 @@ const StorePage = () => {
       {/* Floating cart */}
       {itemCount > 0 && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-2rem)] max-w-[358px]">
-          <button
-            onClick={() => navigate("/cart")}
-            className="w-full flex items-center justify-between rounded-2xl petkeep-gradient text-primary-foreground px-5 py-4 shadow-lg"
-          >
+          <button onClick={() => navigate("/cart")}
+            className="w-full flex items-center justify-between rounded-2xl petkeep-gradient text-primary-foreground px-5 py-4 shadow-lg">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-xs font-bold">
-                {itemCount}
-              </div>
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-xs font-bold">{itemCount}</div>
               <span className="text-sm font-bold">View Cart</span>
             </div>
             <span className="text-sm font-extrabold">{totalPrice.toLocaleString()} MKD</span>
