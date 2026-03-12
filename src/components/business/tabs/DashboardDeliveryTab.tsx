@@ -76,7 +76,7 @@ const DashboardDeliveryTab = ({ business, onUpdate }: Props) => {
 
             <div className="space-y-2">
               <Label className="text-xs">Delivery Fee (MKD)</Label>
-              <Input type="number" value={form.delivery_fee} onChange={(e) => setForm({ ...form, delivery_fee: e.target.value })} placeholder="120" min="0" />
+              <Input type="number" value={form.delivery_fee} onChange={(e) => setForm({ ...form, delivery_fee: e.target.value as any })} placeholder="120" min="0" />
             </div>
 
             <div className="space-y-2">
