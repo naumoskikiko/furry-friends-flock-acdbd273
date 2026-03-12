@@ -584,6 +584,16 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
                 <DashboardInventoryTab products={products} onUpdateProduct={updateProduct} />
               )}
 
+              {/* COUPONS */}
+              {tab === "coupons" && business && (
+                <DashboardCouponsTab businessId={business.id} />
+              )}
+
+              {/* DELIVERY */}
+              {tab === "delivery" && business && (
+                <DashboardDeliveryTab business={business as any} onUpdate={updateBusiness} />
+              )}
+
               {/* CUSTOMERS */}
               {tab === "customers" && business && (
                 <DashboardCustomersTab businessId={business.id} />
