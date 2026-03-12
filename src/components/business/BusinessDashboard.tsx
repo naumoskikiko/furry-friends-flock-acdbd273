@@ -21,6 +21,8 @@ import DashboardOverviewTab from "./tabs/DashboardOverviewTab";
 import DashboardCustomersTab from "./tabs/DashboardCustomersTab";
 import DashboardReviewsTab from "./tabs/DashboardReviewsTab";
 import DashboardInventoryTab from "./tabs/DashboardInventoryTab";
+import DashboardCouponsTab from "./tabs/DashboardCouponsTab";
+import DashboardDeliveryTab from "./tabs/DashboardDeliveryTab";
 
 interface BusinessDashboardProps {
   onClose: () => void;
