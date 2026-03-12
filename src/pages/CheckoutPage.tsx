@@ -2,11 +2,13 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import AppLayout from "@/components/AppLayout";
-import { ArrowLeft, CheckCircle2, Truck, Store, CreditCard } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Truck, Store, CreditCard, Tag, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
 import { useCreateOrder, type ShippingInfo } from "@/hooks/useOrders";
+import { useApplyCoupon } from "@/hooks/useCoupons";
 import { useToast } from "@/hooks/use-toast";
 import SlideToPayButton from "@/components/marketplace/SlideToPayButton";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
@@ -35,6 +37,7 @@ const CheckoutPage = () => {
   const { toast } = useToast();
   const { items, totalPrice, itemCount, loading: cartLoading } = useCart();
   const { createOrder } = useCreateOrder();
+  const { applyCoupon, incrementUsage, applying } = useApplyCoupon();
   const { defaultMethod, saveCard, loading: paymentLoading } = usePaymentMethods();
 
   const [step, setStep] = useState<"checkout" | "confirmed">("checkout");
@@ -47,8 +50,14 @@ const CheckoutPage = () => {
     cardNumber: "", expiry: "", cvv: "", cardholderName: "",
   });
 
+  // Coupon state
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ coupon: any; discount: number } | null>(null);
+  const [couponError, setCouponError] = useState("");
+
   const platformFee = Math.round(totalPrice * 0.10 * 100) / 100;
-  const grandTotal = totalPrice + DELIVERY_FEE;
+  const discount = appliedCoupon?.discount || 0;
+  const grandTotal = Math.max(0, totalPrice + DELIVERY_FEE - discount);
 
   const shippingValid = useMemo(() => shippingSchema.safeParse(shipping).success, [shipping]);
   const hasSavedCard = !!defaultMethod;
@@ -67,6 +76,31 @@ const CheckoutPage = () => {
     acc[storeId].push(item);
     return acc;
   }, {});
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponError("");
+    // Try applying coupon to each store
+    const storeIds = Object.keys(storeGroups);
+    for (const storeId of storeIds) {
+      try {
+        const storeTotal = storeGroups[storeId].reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
+        const result = await applyCoupon(couponCode, storeId, storeTotal);
+        setAppliedCoupon(result);
+        toast({ title: "Coupon applied!", description: `You saved ${result.discount} MKD` });
+        return;
+      } catch {
+        // Try next store
+      }
+    }
+    setCouponError("Invalid coupon code");
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError("");
+  };
 
   const simulateCardCharge = async () => {
     await new Promise((resolve) => setTimeout(resolve, 650));
@@ -101,6 +135,12 @@ const CheckoutPage = () => {
       }));
 
       const id = await createOrder(cartItems, shipping);
+      
+      // Increment coupon usage
+      if (appliedCoupon?.coupon) {
+        await incrementUsage(appliedCoupon.coupon.id, appliedCoupon.coupon.used_count);
+      }
+
       setOrderId(id);
       setStep("confirmed");
       toast({ title: "Payment successful", description: "Your order is confirmed" });
@@ -164,6 +204,34 @@ const CheckoutPage = () => {
                   </div>
                 );
               })}
+            </div>
+
+            {/* Coupon Code */}
+            <div className="rounded-2xl bg-card border border-border p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Tag className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-bold">Promo Code</h3>
+              </div>
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between rounded-xl bg-primary/5 border border-primary/20 p-3">
+                  <div>
+                    <p className="text-xs font-bold text-primary">{appliedCoupon.coupon.code}</p>
+                    <p className="text-[10px] text-muted-foreground">-{appliedCoupon.discount} MKD saved</p>
+                  </div>
+                  <button onClick={removeCoupon} className="rounded-full p-1 hover:bg-secondary">
+                    <X className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input value={couponCode} onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }}
+                    placeholder="Enter promo code" className="text-xs" />
+                  <Button variant="outline" size="sm" onClick={handleApplyCoupon} disabled={applying || !couponCode.trim()} className="text-xs font-bold shrink-0">
+                    {applying ? "..." : "Apply"}
+                  </Button>
+                </div>
+              )}
+              {couponError && <p className="text-[10px] text-destructive mt-1">{couponError}</p>}
             </div>
 
             {/* Delivery info */}
@@ -250,6 +318,12 @@ const CheckoutPage = () => {
                   <span className="text-muted-foreground">Delivery fee</span>
                   <span className="font-semibold">{DELIVERY_FEE.toLocaleString()} MKD</span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-primary font-bold">Discount</span>
+                    <span className="font-bold text-primary">-{discount.toLocaleString()} MKD</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Platform fee</span>
                   <span className="font-semibold">{platformFee.toLocaleString()} MKD</span>
@@ -291,6 +365,12 @@ const CheckoutPage = () => {
                 <p className="text-sm font-bold font-mono">#{orderId.slice(0, 8).toUpperCase()}</p>
                 <p className="text-xs text-muted-foreground">Total paid</p>
                 <p className="text-sm font-bold text-primary">{grandTotal.toLocaleString()} MKD</p>
+                {discount > 0 && (
+                  <>
+                    <p className="text-xs text-muted-foreground">Discount applied</p>
+                    <p className="text-sm font-bold text-primary">-{discount.toLocaleString()} MKD</p>
+                  </>
+                )}
                 <p className="text-xs text-muted-foreground">Estimated delivery</p>
                 <p className="text-sm font-bold">2-5 business days</p>
               </div>
