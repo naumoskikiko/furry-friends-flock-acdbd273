@@ -259,6 +259,8 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
     { key: "products" as const, label: "Products", icon: Package },
     { key: "orders" as const, label: "Orders", icon: ShoppingBag },
     { key: "inventory" as const, label: "Inventory", icon: Boxes },
+    { key: "coupons" as const, label: "Coupons", icon: Star },
+    { key: "delivery" as const, label: "Delivery", icon: Truck },
     { key: "customers" as const, label: "Customers", icon: Users },
     { key: "reviews" as const, label: "Reviews", icon: MessageSquareText },
     { key: "store" as const, label: "Store", icon: Store },
