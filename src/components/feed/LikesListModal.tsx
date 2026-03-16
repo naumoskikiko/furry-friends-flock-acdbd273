@@ -91,14 +91,16 @@ const LikesListModal = ({ open, onOpenChange, postId }: LikesListModalProps) => 
           )}
           {users.map((u) => (
             <div key={u.user_id} className="flex items-center gap-3">
-              {u.avatar_url ? (
-                <img src={u.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
-              ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-petkeep-orange-light text-xs font-bold text-primary-foreground">
-                  {u.full_name?.[0]?.toUpperCase() || "U"}
-                </div>
-              )}
-              <span className="flex-1 text-sm font-semibold truncate">{u.full_name}</span>
+              <button onClick={() => { onOpenChange(false); navigate(user?.id === u.user_id ? "/profile" : `/user/${u.user_id}`); }} className="shrink-0">
+                {u.avatar_url ? (
+                  <img src={u.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-petkeep-orange-light text-xs font-bold text-primary-foreground">
+                    {u.full_name?.[0]?.toUpperCase() || "U"}
+                  </div>
+                )}
+              </button>
+              <button onClick={() => { onOpenChange(false); navigate(user?.id === u.user_id ? "/profile" : `/user/${u.user_id}`); }} className="flex-1 text-left text-sm font-semibold truncate">{u.full_name}</button>
               {user && u.user_id !== user.id && (
                 <Button
                   size="sm"

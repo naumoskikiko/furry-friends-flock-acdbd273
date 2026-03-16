@@ -436,16 +436,18 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
             )}
             {comments.map((c) => (
               <div key={c.id} className="flex items-start gap-2">
-                {c.avatar_url ? (
-                  <img src={c.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover shrink-0" />
-                ) : (
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-[9px] font-bold">
-                    {c.username[0]?.toUpperCase()}
-                  </div>
-                )}
+                <button onClick={() => { setCommentsOpen(false); goToProfile(c.user_id); }} className="shrink-0">
+                  {c.avatar_url ? (
+                    <img src={c.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                  ) : (
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-[9px] font-bold">
+                      {c.username[0]?.toUpperCase()}
+                    </div>
+                  )}
+                </button>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm">
-                    <span className="font-bold">{c.username}</span> {c.content}
+                    <button onClick={() => { setCommentsOpen(false); goToProfile(c.user_id); }} className="font-bold hover:underline">{c.username}</button> {c.content}
                   </p>
                   <p className="text-[10px] text-muted-foreground">
                     {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
