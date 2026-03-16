@@ -250,6 +250,24 @@ const CarePage = () => {
       {showHistory && (
         <BookingHistory onClose={() => setShowHistory(false)} />
       )}
+
+      {/* PetMatch fullscreen modal for normal users */}
+      {showPetMatch && (
+        <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+          <div className="mx-auto max-w-lg min-h-screen">
+            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center gap-3">
+              <button onClick={() => setShowPetMatch(false)} className="rounded-full p-1.5 hover:bg-secondary">
+                <ChevronRight className="h-5 w-5 rotate-180" />
+              </button>
+              <Heart className="h-5 w-5 text-pink-500" />
+              <h1 className="font-display text-lg font-bold">PetMatch</h1>
+            </div>
+            <div className="px-4 py-4">
+              <PetMatchTab />
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 };
