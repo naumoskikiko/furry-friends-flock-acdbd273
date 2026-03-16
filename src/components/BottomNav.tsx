@@ -19,7 +19,7 @@ interface BottomNavProps {
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
-const BottomNav = () => {
+const BottomNav = ({ onBeforeNavigate }: BottomNavProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
