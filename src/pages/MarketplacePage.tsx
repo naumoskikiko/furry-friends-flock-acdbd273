@@ -215,51 +215,6 @@ const MarketplacePage = () => {
               </div>
             )}
 
-            {/* All stores preview */}
-            {businesses.length > 0 && (
-              <div className="px-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-display text-base font-bold">🏪 All Stores</h3>
-                  <button onClick={() => setActiveTab("stores")} className="text-xs font-bold text-primary">See all</button>
-                </div>
-                <div className="space-y-2">
-                  {rankedBusinesses.slice(0, 4).map((b) => {
-                    const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
-                    return (
-                      <div
-                        key={b.id}
-                        onClick={() => navigate(`/store/${b.id}`)}
-                        className="flex items-center gap-3 rounded-2xl bg-card p-3 border border-border petkeep-card-hover cursor-pointer"
-                      >
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-xl shrink-0 overflow-hidden">
-                          {b.logo_url ? (
-                            <img src={b.logo_url} alt="" loading="lazy" className="h-full w-full object-cover" />
-                          ) : (
-                            catInfo?.icon || "🏪"
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1">
-                            <h4 className="text-sm font-bold truncate">{b.business_name}</h4>
-                            {b.is_verified && <BadgeCheck className="h-3 w-3 text-primary shrink-0" />}
-                          </div>
-                          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                            <span className="capitalize">{b.category.replace("_", " ")}</span>
-                            {b.avg_rating > 0 && (
-                              <span className="flex items-center gap-0.5">
-                                <Star className="h-2.5 w-2.5 fill-primary text-primary" />
-                                {Number(b.avg_rating).toFixed(1)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
             {!bizLoading && !prodLoading && businesses.length === 0 && products.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center px-4">
