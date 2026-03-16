@@ -36,8 +36,8 @@ const MarketplacePage = () => {
     if (q.length >= 2 || q.length === 0) setSearchQuery(q);
   };
 
-  const featured = businesses.filter((b) => b.avg_rating >= 4.0).slice(0, 6);
-  const popularProducts = [...products].sort((a, b) => b.price - a.price).slice(0, 6);
+  const featured = rankedBusinesses.filter((b) => b.avg_rating >= 4.0).slice(0, 6);
+  const popularProducts = rankedProducts.slice(0, 6);
   const isBusiness = profile?.role === "business";
   const { isAdmin } = useIsAdmin();
   const { itemCount, totalPrice, addToCart } = useCart();
