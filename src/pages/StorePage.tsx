@@ -24,7 +24,7 @@ const StorePage = () => {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("all");
   const { followerCount, isFollowing, toggleFollow } = useStoreFollowers(id || null);
-  const boostedProductIds = useBoostedIds("product");
+  
 
   // Best seller: products that appear in order_items most
   const [bestSellerIds, setBestSellerIds] = useState<Set<string>>(new Set());
