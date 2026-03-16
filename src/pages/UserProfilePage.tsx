@@ -145,14 +145,7 @@ const UserProfilePage = () => {
   };
 
   const handleShare = () => {
-    const uname = profile?.username || profile?.user_id;
-    const url = `${window.location.origin}/user/${uname}`;
-    if (navigator.share) {
-      navigator.share({ title: profile?.full_name, url }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(url);
-      toast({ title: "Profile link copied!" });
-    }
+    setShareOpen(true);
   };
 
   const openFollowList = (type: "followers" | "following") => {
