@@ -1415,6 +1415,59 @@ export type Database = {
           },
         ]
       }
+      petmatch_reports: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          description: string | null
+          evidence_url: string | null
+          id: string
+          listing_id: string
+          reason: string
+          reported_user_id: string
+          reporter_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          description?: string | null
+          evidence_url?: string | null
+          id?: string
+          listing_id: string
+          reason?: string
+          reported_user_id: string
+          reporter_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          description?: string | null
+          evidence_url?: string | null
+          id?: string
+          listing_id?: string
+          reason?: string
+          reported_user_id?: string
+          reporter_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "petmatch_reports_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "petmatch_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pets: {
         Row: {
           age: string | null

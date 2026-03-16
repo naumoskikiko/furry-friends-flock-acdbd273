@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap, DollarSign, Sliders, TrendingUp, UserCog } from "lucide-react";
+import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap, DollarSign, Sliders, TrendingUp, UserCog, Heart } from "lucide-react";
 import SettingsMapManagement from "./SettingsMapManagement";
 import CareVerificationPanel from "./CareVerificationPanel";
 import CareManagementPanel from "./CareManagementPanel";
@@ -11,6 +11,7 @@ import UserManagementPanel from "./UserManagementPanel";
 import PlatformAnalyticsPanel from "./PlatformAnalyticsPanel";
 import AlgorithmControlPanel from "./AlgorithmControlPanel";
 import FinancialControlPanel from "./FinancialControlPanel";
+import PetMatchManagementPanel from "./PetMatchManagementPanel";
 import { useIsOwner } from "@/hooks/useIsOwner";
 
 type SubSection =
@@ -24,7 +25,8 @@ type SubSection =
   | "user-management"
   | "analytics"
   | "algorithm"
-  | "financial";
+  | "financial"
+  | "petmatch";
 
 const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
@@ -49,6 +51,7 @@ const ProfessionalMode = () => {
         {sub === "analytics" && <PlatformAnalyticsPanel />}
         {sub === "algorithm" && <AlgorithmControlPanel />}
         {sub === "financial" && <FinancialControlPanel />}
+        {sub === "petmatch" && <PetMatchManagementPanel />}
       </div>
     );
   }
@@ -58,6 +61,7 @@ const ProfessionalMode = () => {
     { id: "care-verification" as const, label: "Care Verification", desc: "Review provider verification requests", icon: ShieldCheck, color: "bg-primary/10 text-primary" },
     { id: "care-management" as const, label: "Care Management", desc: "Manage providers, reviews & reports", icon: Users, color: "bg-primary/10 text-primary" },
     { id: "marketplace-control" as const, label: "Marketplace Control", desc: "Manage stores, products & listings", icon: Store, color: "bg-primary/10 text-primary" },
+    { id: "petmatch" as const, label: "PetMatch Management", desc: "Verify breeders, reports & analytics", icon: Heart, color: "bg-pink-500/10 text-pink-500" },
     { id: "user-management" as const, label: "User Management", desc: "View users, manage accounts & content", icon: UserCog, color: "bg-blue-500/10 text-blue-500" },
     { id: "promotions" as const, label: "Promotion Management", desc: "Boosts, pricing & revenue tracking", icon: Zap, color: "bg-amber-500/10 text-amber-500" },
     { id: "financial" as const, label: "Financial Control", desc: "Revenue, commissions & transactions", icon: DollarSign, color: "bg-emerald-500/10 text-emerald-600" },
