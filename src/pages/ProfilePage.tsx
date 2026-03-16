@@ -225,7 +225,7 @@ const ProfilePage = () => {
 
         {/* Stats cards */}
         <div className="grid grid-cols-3 gap-3 px-4 py-4">
-          <button onClick={() => setActiveTab("credits")} className="rounded-2xl bg-petkeep-mint-light p-3 text-left">
+          <button onClick={() => navigate("/credits")} className="rounded-2xl bg-petkeep-mint-light p-3 text-left">
             <div className="flex items-center gap-2">
               <CreditCard className="h-4 w-4 text-accent" />
               <span className="text-xs font-bold text-accent">Credits</span>
@@ -305,7 +305,7 @@ const ProfilePage = () => {
         {activeTab === "posts" && <PostGrid posts={posts} onRefresh={fetchData} />}
         {activeTab === "saved" && <SavedPostsGrid />}
         {activeTab === "liked" && <LikedPostsGrid />}
-        {activeTab === "credits" && <CreditsPanel />}
+        
         {activeTab === "tagged" && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <span className="text-4xl">🏷️</span>
