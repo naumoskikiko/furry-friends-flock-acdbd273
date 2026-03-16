@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, PawPrint } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
 
 const FeedHeader = () => {
@@ -9,12 +9,10 @@ const FeedHeader = () => {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-md">
       <div className="relative mx-auto flex max-w-lg items-center justify-center px-4 py-3">
-        {/* Center: Logo + Title */}
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg petkeep-gradient">
-            <PawPrint className="h-4.5 w-4.5 text-primary-foreground" />
-          </div>
-          <h1 className="font-display text-xl font-extrabold text-foreground">PetKeep</h1>
+        {/* Center: Logo Text */}
+        <div className="flex items-center gap-1">
+          <span className="font-display text-xl font-extrabold uppercase tracking-tight" style={{ color: 'hsl(25, 90%, 55%)' }}>Pet</span>
+          <span className="font-display text-xl font-extrabold uppercase tracking-tight" style={{ color: 'hsl(85, 45%, 38%)' }}>Keep</span>
         </div>
 
         {/* Right: Bell with badge */}
