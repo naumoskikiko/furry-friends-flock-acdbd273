@@ -320,7 +320,7 @@ const MarketplacePage = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
-                  {products.map((p) => {
+                  {rankedProducts.map((p) => {
                     const outOfStock = p.stock !== null && p.stock !== undefined && p.stock <= 0;
                     return (
                       <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
