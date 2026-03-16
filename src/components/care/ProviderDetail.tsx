@@ -36,6 +36,7 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   const { processPayment } = useProcessPayment();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { balance: creditBalance, applyCreditsToPayment } = useCredits();
 
   const [tab, setTab] = useState<"services" | "reviews" | "hours" | "gallery">("services");
   const [selectedService, setSelectedService] = useState<CareService | null>(null);
