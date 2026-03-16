@@ -12,6 +12,7 @@ import PostGrid from "@/components/profile/PostGrid";
 import PetCard from "@/components/profile/PetCard";
 import PetProfileModal from "@/components/profile/PetProfileModal";
 import FollowListModal from "@/components/profile/FollowListModal";
+import ProfileShareModal from "@/components/profile/ProfileShareModal";
 import { getOrCreateConversation } from "@/hooks/useMessages";
 import { createNotification } from "@/hooks/useNotifications";
 import { animalTypes } from "@/data/petBreeds";
