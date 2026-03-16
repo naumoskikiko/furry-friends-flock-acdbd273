@@ -25,6 +25,7 @@ interface TopProduct {
   name: string;
   price: number;
   category: string;
+  business_id?: string;
   business_name?: string;
 }
 
