@@ -36,8 +36,6 @@ const MarketplacePage = () => {
     if (q.length >= 2 || q.length === 0) setSearchQuery(q);
   };
 
-  const featured = rankedBusinesses.filter((b) => b.avg_rating >= 4.0).slice(0, 6);
-  const popularProducts = rankedProducts.slice(0, 6);
   const isBusiness = profile?.role === "business";
   const { isAdmin } = useIsAdmin();
   const { itemCount, totalPrice, addToCart } = useCart();
@@ -48,6 +46,9 @@ const MarketplacePage = () => {
   // Apply ranking algorithm (boost affects order, not visual)
   const rankedBusinesses = useRankedBusinesses(businesses);
   const rankedProducts = useRankedProducts(products);
+
+  const featured = rankedBusinesses.filter((b) => b.avg_rating >= 4.0).slice(0, 6);
+  const popularProducts = rankedProducts.slice(0, 6);
 
   const handleQuickAdd = async (productId: string, productName: string) => {
     try {
