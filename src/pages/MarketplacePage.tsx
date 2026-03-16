@@ -223,7 +223,7 @@ const MarketplacePage = () => {
                   <button onClick={() => setActiveTab("stores")} className="text-xs font-bold text-primary">See all</button>
                 </div>
                 <div className="space-y-2">
-                  {businesses.slice(0, 4).map((b) => {
+                  {rankedBusinesses.slice(0, 4).map((b) => {
                     const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
                     return (
                       <div
