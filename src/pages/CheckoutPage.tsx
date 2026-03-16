@@ -57,10 +57,13 @@ const CheckoutPage = () => {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{ coupon: any; discount: number } | null>(null);
   const [couponError, setCouponError] = useState("");
+  const [useCreditsToggle, setUseCreditsToggle] = useState(true);
 
   const platformFee = Math.round(totalPrice * 0.10 * 100) / 100;
   const discount = appliedCoupon?.discount || 0;
-  const grandTotal = Math.max(0, totalPrice + DELIVERY_FEE - discount);
+  const subtotalAfterDiscount = Math.max(0, totalPrice + DELIVERY_FEE - discount);
+  const creditsApplied = useCreditsToggle ? Math.min(creditBalance, subtotalAfterDiscount) : 0;
+  const grandTotal = Math.max(0, subtotalAfterDiscount - creditsApplied);
 
   const shippingValid = useMemo(() => shippingSchema.safeParse(shipping).success, [shipping]);
   const hasSavedCard = !!defaultMethod;
