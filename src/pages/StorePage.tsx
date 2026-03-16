@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BUSINESS_CATEGORIES, PRODUCT_CATEGORIES, type BusinessProfile, type Product } from "@/hooks/useBusiness";
 import ProductImage from "@/components/marketplace/ProductImage";
 import { useStoreFollowers } from "@/hooks/useStoreFollowers";
-import { useBoostedIds } from "@/hooks/useBoosts";
+
 
 const fromTable = (table: string) => supabase.from(table as any);
 
