@@ -360,10 +360,6 @@ const CheckoutPage = () => {
                     <span className="font-bold text-primary">-{creditsApplied.toFixed(2)} MKD</span>
                   </div>
                 )}
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Platform fee</span>
-                  <span className="font-semibold">{platformFee.toLocaleString()} MKD</span>
-                </div>
                 <div className="border-t border-border pt-2 flex justify-between">
                   <span className="text-sm font-bold">Total</span>
                   <span className="text-lg font-extrabold text-primary">{grandTotal.toLocaleString()} MKD</span>

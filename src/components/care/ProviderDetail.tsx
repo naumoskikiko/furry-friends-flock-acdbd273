@@ -382,10 +382,6 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
                                   <span className="text-muted-foreground">Service price</span>
                                   <span className="font-semibold">{s.price} MKD</span>
                                 </div>
-                                <div className="flex justify-between text-xs">
-                                  <span className="text-muted-foreground">Platform fee (10%)</span>
-                                  <span className="font-semibold">{calculateFees(s.price).platformFee} MKD</span>
-                                </div>
                                 {careCreditsApplied > 0 && (
                                   <div className="flex justify-between text-xs">
                                     <span className="text-primary font-bold flex items-center gap-1"><Coins className="h-3 w-3" /> Credits</span>
