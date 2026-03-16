@@ -8,6 +8,7 @@ import { Camera, MapPin, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useCredits } from "@/hooks/useCredits";
 
 interface CreatePostModalProps {
   open: boolean;
@@ -19,6 +20,7 @@ interface CreatePostModalProps {
 const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePostModalProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { earnCredits } = useCredits();
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
   const [petId, setPetId] = useState<string | null>(null);
@@ -83,6 +85,7 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Posted!" });
+      earnCredits("create_post");
       setCaption(""); setLocation(""); setPetId(null); setMediaUrl(""); setMediaType("image");
       onPostCreated();
       onOpenChange(false);

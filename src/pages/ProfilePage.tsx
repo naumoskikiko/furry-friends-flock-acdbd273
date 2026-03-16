@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Settings, Grid3X3, Bookmark, Heart, Tag, MapPin, CreditCard, Camera, Plus, Star, Link as LinkIcon, ShoppingBag } from "lucide-react";
+import { Settings, Grid3X3, Bookmark, Heart, Tag, MapPin, CreditCard, Camera, Plus, Star, Link as LinkIcon, ShoppingBag, Coins } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -22,6 +22,7 @@ import FollowListModal from "@/components/profile/FollowListModal";
 import CreateStoryModal from "@/components/stories/CreateStoryModal";
 import StoryViewer from "@/components/stories/StoryViewer";
 import { useStories } from "@/hooks/useStories";
+import CreditsPanel from "@/components/credits/CreditsPanel";
 
 const ProfilePage = () => {
   const { user, profile, refreshProfile } = useAuth();
@@ -45,7 +46,7 @@ const ProfilePage = () => {
   const [addPetOpen, setAddPetOpen] = useState(false);
   const [editPet, setEditPet] = useState<any>(null);
   const [createPostOpen, setCreatePostOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"posts" | "saved" | "liked" | "tagged">("posts");
+  const [activeTab, setActiveTab] = useState<"posts" | "saved" | "liked" | "tagged" | "credits">("posts");
 
   const [viewPet, setViewPet] = useState<any>(null);
   const [createStoryOpen, setCreateStoryOpen] = useState(false);
@@ -288,6 +289,7 @@ const ProfilePage = () => {
             { key: "posts" as const, icon: Grid3X3 },
             { key: "saved" as const, icon: Bookmark },
             { key: "liked" as const, icon: Heart },
+            { key: "credits" as const, icon: Coins },
             { key: "tagged" as const, icon: Tag },
           ]).map(({ key, icon: Icon }) => (
             <button
@@ -304,6 +306,7 @@ const ProfilePage = () => {
         {activeTab === "posts" && <PostGrid posts={posts} onRefresh={fetchData} />}
         {activeTab === "saved" && <SavedPostsGrid />}
         {activeTab === "liked" && <LikedPostsGrid />}
+        {activeTab === "credits" && <CreditsPanel />}
         {activeTab === "tagged" && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <span className="text-4xl">🏷️</span>
