@@ -120,6 +120,10 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
       await supabase.from("post_likes").insert({ post_id: post.id, user_id: user.id });
       await supabase.from("posts").update({ likes_count: likesCount + 1 }).eq("id", post.id);
       createNotification(user.id, post.user_id, "like", "post", post.id, "liked your post");
+      // Credit reward to post owner (not self-like)
+      if (user.id !== post.user_id) {
+        earnCredits("post_like_received", post.id);
+      }
     } else {
       await supabase.from("post_likes").delete().eq("post_id", post.id).eq("user_id", user.id);
       await supabase.from("posts").update({ likes_count: Math.max(0, likesCount - 1) }).eq("id", post.id);
