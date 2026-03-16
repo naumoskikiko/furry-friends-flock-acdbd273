@@ -210,18 +210,18 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
             {cat.icon} {cat.label}
           </span>
         </div>
-        
+        <div className="flex items-center gap-2">
+          <button onClick={toggleSave} className="transition-transform active:scale-90">
+            {saved ?
+            <BookmarkCheck className="h-5 w-5 text-primary fill-primary" /> :
 
-
-
-
-
-
-
-
-
-
-        
+            <Bookmark className="h-5 w-5 text-foreground" />
+            }
+          </button>
+          <button onClick={handleShareArticle} className="transition-transform active:scale-90">
+            <Share2 className="h-5 w-5 text-foreground" />
+          </button>
+        </div>
       </div>
 
       {/* Scrollable content */}
