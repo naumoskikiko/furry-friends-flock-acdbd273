@@ -36,7 +36,7 @@ const BoostModal = ({ type, targetId, targetName, onClose }: BoostModalProps) =>
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="w-full max-w-md max-h-[85vh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-card border border-border animate-in slide-in-from-bottom-4"
+        className="w-full max-w-md max-h-[85vh] flex min-h-0 flex-col rounded-t-3xl sm:rounded-3xl bg-card border border-border animate-in slide-in-from-bottom-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Scrollable content */}
