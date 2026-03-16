@@ -12,7 +12,7 @@ const CATEGORY_TYPE_MAP: Record<string, string> = {
   park: "Park",
   sitter: "Pet Sitter",
   grooming: "Grooming Salon",
-  walker: "Dog Walker",
+  walker: "Pet Walker",
   cafe: "Pet Friendly Cafe",
   "pet-service": "Pet Service",
   other: "Place",
@@ -108,7 +108,7 @@ export function useExplore() {
         lat: SKOPJE[0] + (Math.random() - 0.5) * 0.01,
         lng: SKOPJE[1] + (Math.random() - 0.5) * 0.01,
         name: s.profile?.full_name || "Pet Sitter",
-        type: (s.services || []).includes("walking") ? "Dog Walker" : "Pet Sitter",
+        type: (s.services || []).includes("walking") ? "Pet Walker" : "Pet Sitter",
         emoji: (s.services || []).includes("walking") ? "🐕‍🦺" : "🐾",
         rating: Number(s.avg_rating) || 0,
         distance: `${(0.2 + Math.random() * 2).toFixed(1)} km`,
@@ -122,7 +122,7 @@ export function useExplore() {
     if (activeFilter !== "All") {
       const filterMap: Record<string, string[]> = {
         Sitters: ["Pet Sitter"],
-        Walkers: ["Dog Walker"],
+        Walkers: ["Pet Walker"],
         Vets: ["Vet Clinic"],
         Stores: ["Pet Shop"],
         Grooming: ["Grooming Salon"],
