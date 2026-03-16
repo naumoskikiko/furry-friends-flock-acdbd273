@@ -59,7 +59,7 @@ const CheckoutPage = () => {
   const [couponError, setCouponError] = useState("");
   const [useCreditsToggle, setUseCreditsToggle] = useState(true);
 
-  const platformFee = Math.round(totalPrice * 0.10 * 100) / 100;
+  // Platform fee is deducted server-side, not shown to users
   const discount = appliedCoupon?.discount || 0;
   const subtotalAfterDiscount = Math.max(0, totalPrice + DELIVERY_FEE - discount);
   const creditsApplied = useCreditsToggle ? Math.min(creditBalance, subtotalAfterDiscount) : 0;
@@ -360,10 +360,6 @@ const CheckoutPage = () => {
                     <span className="font-bold text-primary">-{creditsApplied.toFixed(2)} MKD</span>
                   </div>
                 )}
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Platform fee</span>
-                  <span className="font-semibold">{platformFee.toLocaleString()} MKD</span>
-                </div>
                 <div className="border-t border-border pt-2 flex justify-between">
                   <span className="text-sm font-bold">Total</span>
                   <span className="text-lg font-extrabold text-primary">{grandTotal.toLocaleString()} MKD</span>
