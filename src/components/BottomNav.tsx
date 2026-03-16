@@ -69,7 +69,7 @@ const BottomNav = ({ onBeforeNavigate }: BottomNavProps) => {
           return (
             <button
               key={path}
-              onClick={() => navigate(path)}
+              onClick={() => { onBeforeNavigate?.(); navigate(path); }}
               className={`relative flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 transition-colors ${
                 isActive
                   ? "text-primary"
