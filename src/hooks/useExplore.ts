@@ -108,7 +108,7 @@ export function useExplore() {
         lat: SKOPJE[0] + (Math.random() - 0.5) * 0.01,
         lng: SKOPJE[1] + (Math.random() - 0.5) * 0.01,
         name: s.profile?.full_name || "Pet Sitter",
-        type: (s.services || []).includes("walking") ? "Dog Walker" : "Pet Sitter",
+        type: (s.services || []).includes("walking") ? "Pet Walker" : "Pet Sitter",
         emoji: (s.services || []).includes("walking") ? "🐕‍🦺" : "🐾",
         rating: Number(s.avg_rating) || 0,
         distance: `${(0.2 + Math.random() * 2).toFixed(1)} km`,
