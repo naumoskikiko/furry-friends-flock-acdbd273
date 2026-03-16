@@ -1,12 +1,13 @@
 import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
-import { Star, BadgeCheck, MapPin, ChevronRight, Search, Briefcase, Clock, History } from "lucide-react";
+import { Star, BadgeCheck, MapPin, ChevronRight, Search, Briefcase, Clock, History, Heart } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCareProviders, useMyProvider, useMyBookings, useProviderAvailability, CATEGORIES, type CareProvider } from "@/hooks/useCare";
 import ProviderDetail from "@/components/care/ProviderDetail";
 import ProviderDashboard from "@/components/care/ProviderDashboard";
 import BookingHistory from "@/components/care/BookingHistory";
 import { useBoostedIds } from "@/hooks/useBoosts";
+import PetMatchTab from "@/components/care/tabs/PetMatchTab";
 
 const ProviderStatusBadge = ({ providerId }: { providerId: string }) => {
   const availability = useProviderAvailability(providerId);
@@ -37,6 +38,7 @@ const CarePage = () => {
   const [selectedProvider, setSelectedProvider] = useState<CareProvider | null>(null);
   const [showDashboard, setShowDashboard] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showPetMatch, setShowPetMatch] = useState(false);
   const boostedProviderIds = useBoostedIds("provider");
 
   const handleSearch = (q: string) => {
@@ -66,13 +68,24 @@ const CarePage = () => {
             >
               <History className="h-3.5 w-3.5" />
             </button>
-            <button
-              onClick={() => setShowDashboard(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-secondary transition-colors"
-            >
-              <Briefcase className="h-3.5 w-3.5" />
-              {myProvider ? "Dashboard" : "Become Provider"}
-            </button>
+            {!myProvider && (
+              <button
+                onClick={() => setShowPetMatch(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-pink-300 dark:border-pink-700 bg-pink-50 dark:bg-pink-900/20 px-3 py-2 text-xs font-bold text-pink-700 dark:text-pink-300 hover:bg-pink-100 dark:hover:bg-pink-900/30 transition-colors"
+              >
+                <Heart className="h-3.5 w-3.5" />
+                PetMatch
+              </button>
+            )}
+            {myProvider && (
+              <button
+                onClick={() => setShowDashboard(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-secondary transition-colors"
+              >
+                <Briefcase className="h-3.5 w-3.5" />
+                Dashboard
+              </button>
+            )}
           </div>
         </div>
 
@@ -236,6 +249,24 @@ const CarePage = () => {
       {/* Booking history */}
       {showHistory && (
         <BookingHistory onClose={() => setShowHistory(false)} />
+      )}
+
+      {/* PetMatch fullscreen modal for normal users */}
+      {showPetMatch && (
+        <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+          <div className="mx-auto max-w-lg min-h-screen">
+            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center gap-3">
+              <button onClick={() => setShowPetMatch(false)} className="rounded-full p-1.5 hover:bg-secondary">
+                <ChevronRight className="h-5 w-5 rotate-180" />
+              </button>
+              <Heart className="h-5 w-5 text-pink-500" />
+              <h1 className="font-display text-lg font-bold">PetMatch</h1>
+            </div>
+            <div className="px-4 py-4">
+              <PetMatchTab />
+            </div>
+          </div>
+        </div>
       )}
     </AppLayout>
   );
