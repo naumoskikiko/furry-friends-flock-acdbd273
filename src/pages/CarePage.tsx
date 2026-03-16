@@ -68,13 +68,24 @@ const CarePage = () => {
             >
               <History className="h-3.5 w-3.5" />
             </button>
-            <button
-              onClick={() => setShowDashboard(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-secondary transition-colors"
-            >
-              <Briefcase className="h-3.5 w-3.5" />
-              {myProvider ? "Dashboard" : "Become Provider"}
-            </button>
+            {!myProvider && (
+              <button
+                onClick={() => setShowPetMatch(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-pink-300 dark:border-pink-700 bg-pink-50 dark:bg-pink-900/20 px-3 py-2 text-xs font-bold text-pink-700 dark:text-pink-300 hover:bg-pink-100 dark:hover:bg-pink-900/30 transition-colors"
+              >
+                <Heart className="h-3.5 w-3.5" />
+                PetMatch
+              </button>
+            )}
+            {myProvider && (
+              <button
+                onClick={() => setShowDashboard(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-secondary transition-colors"
+              >
+                <Briefcase className="h-3.5 w-3.5" />
+                Dashboard
+              </button>
+            )}
           </div>
         </div>
 
