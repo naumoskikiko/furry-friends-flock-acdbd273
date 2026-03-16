@@ -235,6 +235,8 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
         return <CareAnalyticsTab provider={provider} bookings={bookings} reviews={reviews} payments={providerPayments} />;
       case "notifications":
         return <CareNotificationsTab bookings={bookings} reviews={reviews} isFullyVerified={isFullyVerified} pendingVerifications={pendingCount} />;
+      case "petmatch":
+        return <PetMatchTab />;
 
       case "hours":
         return (
