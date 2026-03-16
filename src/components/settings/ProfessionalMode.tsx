@@ -27,7 +27,8 @@ type SubSection =
   | "analytics"
   | "algorithm"
   | "financial"
-  | "petmatch";
+  | "petmatch"
+  | "credits";
 
 const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
