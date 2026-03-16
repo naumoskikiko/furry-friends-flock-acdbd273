@@ -20,6 +20,7 @@ interface CreatePostModalProps {
 const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePostModalProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { earnCredits } = useCredits();
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
   const [petId, setPetId] = useState<string | null>(null);
