@@ -12,7 +12,7 @@ const CATEGORY_TYPE_MAP: Record<string, string> = {
   park: "Park",
   sitter: "Pet Sitter",
   grooming: "Grooming Salon",
-  walker: "Dog Walker",
+  walker: "Pet Walker",
   cafe: "Pet Friendly Cafe",
   "pet-service": "Pet Service",
   other: "Place",
