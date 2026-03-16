@@ -64,7 +64,7 @@ const NotificationsPage = () => {
         }`}
       >
         {/* Actor avatar */}
-        <div className="relative shrink-0">
+        <button onClick={(e) => handleActorTap(e, n.actor_id)} className="relative shrink-0">
           {n.actor_avatar ? (
             <img src={n.actor_avatar} alt="" className="h-11 w-11 rounded-full object-cover" />
           ) : (
