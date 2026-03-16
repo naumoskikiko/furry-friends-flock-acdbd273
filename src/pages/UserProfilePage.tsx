@@ -462,6 +462,19 @@ const UserProfilePage = () => {
           type={followListType}
         />
       )}
+
+      {/* Share modal */}
+      {shareOpen && profile && (
+        <ProfileShareModal
+          profile={{
+            user_id: profile.user_id,
+            full_name: profile.full_name,
+            username: profile.username,
+            avatar_url: profile.avatar_url,
+          }}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
     </AppLayout>
   );
 };
