@@ -56,9 +56,15 @@ export function useCredits() {
     // Check monthly limit
     if (monthlyEarned + amount > CREDIT_LIMITS.monthly_max) return false;
 
-    // Anti-abuse: no credits from self-likes
-    if (action === "post_like_received" && sourceId) {
-      // sourceId here is the post_id — caller should verify it's not self-like
+    // Prevent double-reward: check if this exact action+source was already credited
+    if (sourceId) {
+      const { data: existing } = await fromTable("credit_daily_log")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("action_type", action)
+        .eq("source_id", sourceId)
+        .limit(1);
+      if (existing && existing.length > 0) return false; // Already credited
     }
 
     // Log the earning
