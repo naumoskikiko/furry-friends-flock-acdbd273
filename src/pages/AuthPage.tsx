@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { PawPrint, Mail, Lock, User, ArrowLeft, Store, Briefcase } from "lucide-react";
-import petkeepIcon from "@/assets/petkeep-icon.png";
+import petkeepIcon from "@/assets/petkeep-icon-transparent.png";
 
 type AuthView = "login" | "signup" | "forgot";
 type AccountRole = "user" | "provider" | "business";
@@ -79,8 +79,8 @@ const AuthPage = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center">
-            <img src={petkeepIcon} alt="PetKeep" className="h-20 w-20 object-contain" />
+          <div className="mx-auto mb-3 flex h-28 w-28 items-center justify-center">
+            <img src={petkeepIcon} alt="PetKeep" className="h-28 w-28 object-contain" />
           </div>
           <h1 className="font-display text-3xl font-extrabold uppercase tracking-tight">
             <span style={{ color: 'hsl(25, 90%, 55%)' }}>Pet</span>
