@@ -45,6 +45,7 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   const [bookingNotes, setBookingNotes] = useState("");
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
   const [booking, setBooking] = useState(false);
+  const [useCareCredits, setUseCareCredits] = useState(true);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
