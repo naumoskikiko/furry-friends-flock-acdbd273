@@ -289,7 +289,6 @@ const ProfilePage = () => {
             { key: "posts" as const, icon: Grid3X3 },
             { key: "saved" as const, icon: Bookmark },
             { key: "liked" as const, icon: Heart },
-            { key: "credits" as const, icon: Coins },
             { key: "tagged" as const, icon: Tag },
           ]).map(({ key, icon: Icon }) => (
             <button
