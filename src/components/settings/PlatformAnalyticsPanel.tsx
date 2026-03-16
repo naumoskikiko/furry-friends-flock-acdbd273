@@ -74,7 +74,7 @@ const PlatformAnalyticsPanel = () => {
           const { data: bizNames } = await fromTable("business_profiles")
             .select("id, business_name")
             .in("id", bizIds);
-          const nameMap = new Map((bizNames || []).map((b: any) => [b.id, b.business_name]));
+          const nameMap = new Map<string, string>((bizNames || []).map((b: any) => [b.id, b.business_name]));
           prods.forEach(p => { p.business_name = nameMap.get(p.business_id!) || "Unknown"; });
         }
       }
