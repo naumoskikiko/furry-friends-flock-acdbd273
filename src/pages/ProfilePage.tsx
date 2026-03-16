@@ -232,14 +232,25 @@ const ProfilePage = () => {
             <p className="mt-1 font-display text-xl font-extrabold">{creditBalance.toLocaleString()}</p>
             <p className="text-[10px] text-muted-foreground">💎 PetKeep Points</p>
           </div>
-          <div className="rounded-2xl bg-petkeep-cream p-3">
-            <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-primary" />
-              <span className="text-xs font-bold text-primary">Rating</span>
+          {(profile?.role === "business" || profile?.role === "provider") ? (
+            <div className="rounded-2xl bg-petkeep-cream p-3">
+              <div className="flex items-center gap-2">
+                <Star className="h-4 w-4 text-primary" />
+                <span className="text-xs font-bold text-primary">Rating</span>
+              </div>
+              <p className="mt-1 font-display text-xl font-extrabold">—</p>
+              <p className="text-[10px] text-muted-foreground">⭐ No reviews yet</p>
             </div>
-            <p className="mt-1 font-display text-xl font-extrabold">—</p>
-            <p className="text-[10px] text-muted-foreground">⭐ No reviews yet</p>
-          </div>
+          ) : (
+            <div className="rounded-2xl bg-petkeep-cream p-3">
+              <div className="flex items-center gap-2">
+                <Heart className="h-4 w-4 text-primary" />
+                <span className="text-xs font-bold text-primary">Pets</span>
+              </div>
+              <p className="mt-1 font-display text-xl font-extrabold">{pets.length}</p>
+              <p className="text-[10px] text-muted-foreground">🐾 My Pets</p>
+            </div>
+          )}
           <button onClick={() => navigate("/orders")} className="rounded-2xl bg-primary/5 p-3 text-left">
             <div className="flex items-center gap-2">
               <ShoppingBag className="h-4 w-4 text-primary" />
