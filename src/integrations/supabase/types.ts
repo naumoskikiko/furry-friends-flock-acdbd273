@@ -793,6 +793,33 @@ export type Database = {
           },
         ]
       }
+      credit_daily_log: {
+        Row: {
+          action_type: string
+          created_at: string
+          credits_earned: number
+          id: string
+          source_id: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          credits_earned?: number
+          id?: string
+          source_id?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          credits_earned?: number
+          id?: string
+          source_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number
