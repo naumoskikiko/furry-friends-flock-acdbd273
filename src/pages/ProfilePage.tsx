@@ -46,7 +46,7 @@ const ProfilePage = () => {
   const [addPetOpen, setAddPetOpen] = useState(false);
   const [editPet, setEditPet] = useState<any>(null);
   const [createPostOpen, setCreatePostOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"posts" | "saved" | "liked" | "tagged">("posts");
+  const [activeTab, setActiveTab] = useState<"posts" | "saved" | "liked" | "tagged" | "credits">("posts");
 
   const [viewPet, setViewPet] = useState<any>(null);
   const [createStoryOpen, setCreateStoryOpen] = useState(false);
