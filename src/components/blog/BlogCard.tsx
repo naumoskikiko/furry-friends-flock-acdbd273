@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Heart, MessageCircle, Send, Bookmark, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +41,7 @@ interface BlogCardProps {
 
 const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [liked, setLiked] = useState(post.is_liked);
   const [likesCount, setLikesCount] = useState(post.likes_count);
@@ -118,7 +120,7 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
         <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{post.preview_text}</p>
 
         {/* Author row */}
-        <div className="mt-3 flex items-center gap-2">
+        <button onClick={(e) => { e.stopPropagation(); navigate(user?.id === post.user_id ? "/profile" : `/user/${post.user_id}`); }} className="mt-3 flex items-center gap-2">
           {post.avatar_url ? (
             <img src={post.avatar_url} alt="" className="h-6 w-6 rounded-full object-cover" />
           ) : (
@@ -130,7 +132,7 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
           <span className="text-[10px] text-muted-foreground">
             {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
           </span>
-        </div>
+        </button>
 
         {/* Tags */}
         {post.tags && post.tags.length > 0 && (

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Heart,
   MessageCircle,
@@ -52,6 +53,15 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   const { user } = useAuth();
   const { toast } = useToast();
   const { earnCredits } = useCredits();
+  const navigate = useNavigate();
+
+  const goToProfile = (userId: string) => {
+    if (user?.id === userId) {
+      navigate("/profile");
+    } else {
+      navigate(`/user/${userId}`);
+    }
+  };
 
   const [liked, setLiked] = useState(post.is_liked);
   const [likesCount, setLikesCount] = useState(post.likes_count);
@@ -280,7 +290,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     <article className="border-b border-border bg-card">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-3">
+        <button className="flex items-center gap-3" onClick={() => goToProfile(post.user_id)}>
           {post.avatar_url ? (
             <img src={post.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
           ) : (
@@ -288,7 +298,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
               {initials}
             </div>
           )}
-          <div>
+          <div className="text-left">
             <span className="text-sm font-bold">{post.username}</span>
             {post.pet_name && (
               <p className="text-xs text-muted-foreground">
@@ -296,7 +306,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
               </p>
             )}
           </div>
-        </div>
+        </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-1 text-muted-foreground">
@@ -426,16 +436,18 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
             )}
             {comments.map((c) => (
               <div key={c.id} className="flex items-start gap-2">
-                {c.avatar_url ? (
-                  <img src={c.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover shrink-0" />
-                ) : (
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-[9px] font-bold">
-                    {c.username[0]?.toUpperCase()}
-                  </div>
-                )}
+                <button onClick={() => { setCommentsOpen(false); goToProfile(c.user_id); }} className="shrink-0">
+                  {c.avatar_url ? (
+                    <img src={c.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                  ) : (
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-[9px] font-bold">
+                      {c.username[0]?.toUpperCase()}
+                    </div>
+                  )}
+                </button>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm">
-                    <span className="font-bold">{c.username}</span> {c.content}
+                    <button onClick={() => { setCommentsOpen(false); goToProfile(c.user_id); }} className="font-bold hover:underline">{c.username}</button> {c.content}
                   </p>
                   <p className="text-[10px] text-muted-foreground">
                     {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}

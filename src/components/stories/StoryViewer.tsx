@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { X, ChevronLeft, ChevronRight, MapPin, Pause, Play, Heart, MessageCircle, Send, Eye, BarChart3, ChevronDown } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
@@ -46,6 +47,7 @@ const StoryViewer = ({
   onLike, onUnlike, onReply, onShare, onView,
 }: StoryViewerProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [groupIndex, setGroupIndex] = useState(initialGroupIndex);
   const [storyIndex, setStoryIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -221,14 +223,16 @@ const StoryViewer = ({
 
       {/* User info */}
       <div className="absolute left-0 right-0 top-4 z-50 flex items-center gap-3 px-4 pt-4">
-        {group.avatar_url ? (
-          <img src={group.avatar_url} className="h-8 w-8 rounded-full object-cover ring-2 ring-white/50" />
-        ) : (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-            {group.initials}
-          </div>
-        )}
-        <span className="text-sm font-bold text-white">{group.username}</span>
+        <button onClick={() => { onClose(); navigate(user?.id === group.user_id ? "/profile" : `/user/${group.user_id}`); }} className="flex items-center gap-3">
+          {group.avatar_url ? (
+            <img src={group.avatar_url} className="h-8 w-8 rounded-full object-cover ring-2 ring-white/50" />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+              {group.initials}
+            </div>
+          )}
+          <span className="text-sm font-bold text-white">{group.username}</span>
+        </button>
         <span className="text-xs text-white/60">{formatDistanceToNow(new Date(story.created_at), { addSuffix: true })}</span>
         {paused && !showReply && <Pause className="ml-auto h-4 w-4 text-white/60" />}
       </div>

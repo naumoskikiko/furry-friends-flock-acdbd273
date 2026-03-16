@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Send, Check, CheckCheck, Search, X, MoreVertical,
   Pencil, Trash2, Flag, ChevronUp, Reply, Forward, Mic, Calendar,
@@ -34,6 +35,7 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
   const { typingUsers, setTyping } = useTypingIndicator(conversation.id);
   const isOnline = useConnectionStatus();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useActivityTracking();
 
@@ -244,23 +246,25 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
         <button onClick={onBack} className="rounded-full p-1.5 hover:bg-secondary">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <div className="relative">
-          <Avatar className="h-9 w-9">
-            <AvatarImage src={other.avatar_url || undefined} />
-            <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-xs font-bold text-primary-foreground">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          {activity.isOnline && (
-            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-card" />
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold leading-tight truncate">{other.full_name}</p>
-          <p className="text-[10px] text-muted-foreground">
-            {other.username && `@${other.username} · `}{activity.label}
-          </p>
-        </div>
+        <button onClick={() => navigate(user?.id === other.user_id ? "/profile" : `/user/${other.user_id}`)} className="flex items-center gap-3 min-w-0">
+          <div className="relative">
+            <Avatar className="h-9 w-9">
+              <AvatarImage src={other.avatar_url || undefined} />
+              <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-xs font-bold text-primary-foreground">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            {activity.isOnline && (
+              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-card" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-sm font-bold leading-tight truncate">{other.full_name}</p>
+            <p className="text-[10px] text-muted-foreground">
+              {other.username && `@${other.username} · `}{activity.label}
+            </p>
+          </div>
+        </button>
         <button onClick={() => setShowSearch(!showSearch)} className="rounded-full p-1.5 hover:bg-secondary">
           {showSearch ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
         </button>
