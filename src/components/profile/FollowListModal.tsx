@@ -22,6 +22,7 @@ interface FollowListModalProps {
 
 const FollowListModal = ({ open, onOpenChange, userId, type }: FollowListModalProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [users, setUsers] = useState<FollowUser[]>([]);
   const [loading, setLoading] = useState(true);
 
