@@ -11,6 +11,7 @@ import UserManagementPanel from "./UserManagementPanel";
 import PlatformAnalyticsPanel from "./PlatformAnalyticsPanel";
 import AlgorithmControlPanel from "./AlgorithmControlPanel";
 import FinancialControlPanel from "./FinancialControlPanel";
+import PetMatchManagementPanel from "./PetMatchManagementPanel";
 import { useIsOwner } from "@/hooks/useIsOwner";
 
 type SubSection =
