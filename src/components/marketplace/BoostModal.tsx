@@ -98,7 +98,7 @@ const BoostModal = ({ type, targetId, targetName, onClose }: BoostModalProps) =>
         </div>
 
         {/* Fixed bottom button */}
-        <div className="shrink-0 border-t border-border p-4 bg-card rounded-b-3xl">
+        <div className="shrink-0 border-t border-border bg-card rounded-b-3xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <button
             onClick={handleBoost}
             disabled={!selected || purchasing}
