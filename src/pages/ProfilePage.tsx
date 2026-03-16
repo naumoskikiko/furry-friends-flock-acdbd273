@@ -289,6 +289,7 @@ const ProfilePage = () => {
             { key: "posts" as const, icon: Grid3X3 },
             { key: "saved" as const, icon: Bookmark },
             { key: "liked" as const, icon: Heart },
+            { key: "credits" as const, icon: Coins },
             { key: "tagged" as const, icon: Tag },
           ]).map(({ key, icon: Icon }) => (
             <button
@@ -305,6 +306,7 @@ const ProfilePage = () => {
         {activeTab === "posts" && <PostGrid posts={posts} onRefresh={fetchData} />}
         {activeTab === "saved" && <SavedPostsGrid />}
         {activeTab === "liked" && <LikedPostsGrid />}
+        {activeTab === "credits" && <CreditsPanel />}
         {activeTab === "tagged" && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <span className="text-4xl">🏷️</span>
