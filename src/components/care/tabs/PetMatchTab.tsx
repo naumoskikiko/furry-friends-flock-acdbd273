@@ -1,10 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
-import { Heart, Plus, PawPrint, Shield, Upload, Trash2, Search, MapPin, BadgeCheck } from "lucide-react";
+import {
+  Heart, Plus, PawPrint, Shield, Upload, Trash2, Search, BadgeCheck,
+  Star, AlertTriangle, ChevronDown, ChevronUp, MessageCircle, Flame,
+  Eye, Flag, X, Syringe, Calendar, Dog
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { calculateCompatibility, getBreederTrustScore, isSafeForBreeding } from "@/lib/petMatchAlgorithm";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
@@ -17,6 +22,8 @@ interface Pet {
   age: string | null;
   photo_url: string | null;
   neutered: boolean | null;
+  vaccinated: boolean | null;
+  weight: string | null;
 }
 
 interface PetMatchListing {
@@ -34,6 +41,202 @@ interface PetMatchListing {
   profile?: { full_name: string; avatar_url: string | null; username: string | null };
 }
 
+// ─── Compatibility Badge ────────────────────────────────────────────────────
+const CompatibilityBadge = ({ score, label, color }: { score: number; label: string; color: string }) => {
+  const bgColor = score >= 85 ? "bg-green-500" : score >= 70 ? "bg-green-400" : score >= 55 ? "bg-amber-400" : score >= 40 ? "bg-orange-400" : "bg-muted-foreground";
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="relative h-9 w-9">
+        <svg className="h-9 w-9 -rotate-90" viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r="15.5" fill="none" strokeWidth="3" className="stroke-muted/30" />
+          <circle cx="18" cy="18" r="15.5" fill="none" strokeWidth="3" className={`${bgColor.replace("bg-", "stroke-")}`}
+            strokeDasharray={`${(score / 100) * 97.4} 97.4`} strokeLinecap="round" />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black">{score}%</span>
+      </div>
+      <span className={`text-[10px] font-bold ${color}`}>{label}</span>
+    </div>
+  );
+};
+
+// ─── Trust Score ─────────────────────────────────────────────────────────────
+const TrustScoreBadge = ({ listing }: { listing: PetMatchListing }) => {
+  const { score, badges } = getBreederTrustScore(listing);
+  return (
+    <div className="flex items-center gap-1">
+      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+      <span className="text-[10px] font-bold">{score.toFixed(1)}</span>
+      {badges.includes("Verified Breed") && <BadgeCheck className="h-3 w-3 text-accent" />}
+      {badges.includes("Verified Owner") && <Shield className="h-3 w-3 text-primary" />}
+    </div>
+  );
+};
+
+// ─── Safety Indicators ──────────────────────────────────────────────────────
+const SafetyIndicators = ({ pet }: { pet: Pet }) => {
+  const safety = isSafeForBreeding({
+    animal_type: pet.animal_type,
+    breed: pet.breed,
+    gender: pet.gender,
+    age: pet.age,
+    neutered: pet.neutered,
+    vaccinated: pet.vaccinated,
+    weight: pet.weight,
+  });
+
+  return (
+    <div className="flex flex-wrap gap-1 mt-1.5">
+      {pet.vaccinated === true && (
+        <span className="inline-flex items-center gap-0.5 rounded-full bg-green-100 dark:bg-green-900/20 px-1.5 py-0.5 text-[9px] font-semibold text-green-700 dark:text-green-400">
+          <Syringe className="h-2.5 w-2.5" /> Vaccinated
+        </span>
+      )}
+      {pet.neutered === false && (
+        <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-100 dark:bg-blue-900/20 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700 dark:text-blue-400">
+          ✓ Fertile
+        </span>
+      )}
+      {!safety.safe && safety.warnings.map((w, i) => (
+        <span key={i} className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 dark:bg-amber-900/20 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 dark:text-amber-400">
+          <AlertTriangle className="h-2.5 w-2.5" /> {w}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+// ─── Premium Pet Card ───────────────────────────────────────────────────────
+const PetMatchCard = ({
+  listing,
+  myPet,
+  onContact,
+  onReport,
+}: {
+  listing: PetMatchListing;
+  myPet: Pet | null;
+  onContact: () => void;
+  onReport: () => void;
+}) => {
+  const [expanded, setExpanded] = useState(false);
+  const navigate = useNavigate();
+  const pet = listing.pet;
+  if (!pet) return null;
+
+  const compatibility = myPet
+    ? calculateCompatibility(
+        { animal_type: myPet.animal_type, breed: myPet.breed, gender: myPet.gender, age: myPet.age, neutered: myPet.neutered, vaccinated: myPet.vaccinated, weight: myPet.weight },
+        { animal_type: pet.animal_type, breed: pet.breed, gender: pet.gender, age: pet.age, neutered: pet.neutered, vaccinated: pet.vaccinated, weight: pet.weight }
+      )
+    : null;
+
+  return (
+    <div className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover transition-all">
+      {/* Photo header */}
+      <div className="relative aspect-[4/3] bg-gradient-to-br from-primary/10 to-accent/10">
+        {pet.photo_url ? (
+          <img src={pet.photo_url} alt={pet.name} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <PawPrint className="h-16 w-16 text-muted-foreground/20" />
+          </div>
+        )}
+        {/* Overlay badges */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
+          {listing.breed_document_url && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-accent/90 backdrop-blur-sm px-2 py-0.5 text-[10px] font-bold text-accent-foreground">
+              <BadgeCheck className="h-3 w-3" /> Verified Breed
+            </span>
+          )}
+        </div>
+        <div className="absolute top-2 right-2">
+          <TrustScoreBadge listing={listing} />
+        </div>
+        {/* Gradient overlay at bottom */}
+        <div className="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between">
+          <div>
+            <h3 className="font-display text-lg font-extrabold text-white drop-shadow-md">{pet.name}</h3>
+            <p className="text-[11px] text-white/80 font-medium drop-shadow-sm">
+              {pet.breed || pet.animal_type} · {pet.gender} · {pet.age || "Age unknown"}
+            </p>
+          </div>
+          {compatibility && <CompatibilityBadge score={compatibility.score} label={compatibility.label} color={compatibility.color} />}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-3.5">
+        {/* Safety indicators */}
+        <SafetyIndicators pet={pet} />
+
+        {/* Looking for */}
+        {listing.looking_for && (
+          <div className="mt-2 rounded-xl bg-secondary/60 px-3 py-2">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Looking for</p>
+            <p className="text-xs font-medium mt-0.5">{listing.looking_for}</p>
+          </div>
+        )}
+
+        {/* Compatibility breakdown (expandable) */}
+        {compatibility && (
+          <button onClick={() => setExpanded(!expanded)} className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-primary">
+            {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            {expanded ? "Hide" : "View"} compatibility breakdown
+          </button>
+        )}
+        {expanded && compatibility && (
+          <div className="mt-2 space-y-1.5 rounded-xl bg-secondary/40 p-2.5">
+            {compatibility.factors.map((f) => (
+              <div key={f.name} className="flex items-center gap-2">
+                <span className="text-xs">{f.icon}</span>
+                <span className="text-[10px] font-semibold flex-1">{f.name}</span>
+                <div className="h-1.5 w-16 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${f.score >= 70 ? "bg-green-500" : f.score >= 50 ? "bg-amber-400" : "bg-orange-400"}`}
+                    style={{ width: `${f.score}%` }}
+                  />
+                </div>
+                <span className="text-[9px] font-bold w-6 text-right">{f.score}%</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Description */}
+        {listing.description && (
+          <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{listing.description}</p>
+        )}
+
+        {/* Owner & actions */}
+        <div className="mt-3 flex items-center justify-between">
+          <button
+            onClick={() => listing.profile?.username ? navigate(`/user/${listing.profile.username}`) : null}
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+          >
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={listing.profile?.avatar_url || undefined} />
+              <AvatarFallback className="text-[9px] bg-primary/10 font-bold">{listing.profile?.full_name?.[0]}</AvatarFallback>
+            </Avatar>
+            <span className="text-[11px] font-semibold">{listing.profile?.full_name}</span>
+          </button>
+          <div className="flex items-center gap-1.5">
+            <button onClick={onReport} className="rounded-full p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+              <Flag className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={onContact}
+              className="flex items-center gap-1 rounded-xl petkeep-gradient px-3 py-1.5 text-[10px] font-bold text-primary-foreground"
+            >
+              <MessageCircle className="h-3 w-3" /> Contact
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Main PetMatch Tab ──────────────────────────────────────────────────────
 const PetMatchTab = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -42,34 +245,37 @@ const PetMatchTab = () => {
   const [myListings, setMyListings] = useState<PetMatchListing[]>([]);
   const [allListings, setAllListings] = useState<PetMatchListing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"browse" | "my">("browse");
+  const [view, setView] = useState<"browse" | "my" | "matches">("browse");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedPet, setSelectedPet] = useState("");
+  const [activePetFilter, setActivePetFilter] = useState<string | null>(null);
   const [lookingFor, setLookingFor] = useState("");
   const [description, setDescription] = useState("");
   const [uploading, setUploading] = useState(false);
   const [filterType, setFilterType] = useState("all");
+  const [sortBy, setSortBy] = useState<"compatibility" | "recent" | "trust">("compatibility");
 
   const fetchData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
 
     const [petsRes, myRes, allRes] = await Promise.all([
-      supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered").eq("owner_id", user.id),
+      supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight").eq("owner_id", user.id),
       fromTable("petmatch_listings").select("*").eq("user_id", user.id),
       fromTable("petmatch_listings").select("*").eq("is_active", true).neq("user_id", user.id),
     ]);
 
-    setPets(petsRes.data || []);
+    const myPets = (petsRes.data || []) as Pet[];
+    setPets(myPets);
     setMyListings((myRes.data || []) as PetMatchListing[]);
+    if (!activePetFilter && myPets.length > 0) setActivePetFilter(myPets[0].id);
 
-    // Enrich all listings with pet + profile data
     const listings = (allRes.data || []) as PetMatchListing[];
     if (listings.length > 0) {
       const petIds = listings.map((l) => l.pet_id);
       const userIds = [...new Set(listings.map((l) => l.user_id))];
       const [petsData, profilesData] = await Promise.all([
-        supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered").in("id", petIds),
+        supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight").in("id", petIds),
         supabase.from("profiles").select("user_id, full_name, avatar_url, username").in("user_id", userIds),
       ]);
       const petsMap = Object.fromEntries((petsData.data || []).map((p: any) => [p.id, p]));
@@ -91,13 +297,13 @@ const PetMatchTab = () => {
       user_id: user.id,
       pet_id: selectedPet,
       looking_for: lookingFor,
-      description: description,
+      description,
     });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "PetMatch listing created!", description: "It will be reviewed before going live." });
+    toast({ title: "Listing created!", description: "It will be reviewed before going live." });
     setShowCreate(false);
     setSelectedPet("");
     setLookingFor("");
@@ -131,11 +337,35 @@ const PetMatchTab = () => {
     fetchData();
   };
 
+  const handleContact = (listing: PetMatchListing) => {
+    if (listing.profile?.username) navigate(`/user/${listing.profile.username}`);
+    else toast({ title: "Cannot contact this user" });
+  };
+
+  const handleReport = (listing: PetMatchListing) => {
+    toast({ title: "Report submitted", description: "We'll review this listing shortly." });
+  };
+
   const listedPetIds = myListings.map((l) => l.pet_id);
   const availablePets = pets.filter((p) => !listedPetIds.includes(p.id));
-  const filteredListings = filterType === "all" ? allListings : allListings.filter((l) => l.pet?.animal_type === filterType);
+  const activePet = pets.find((p) => p.id === activePetFilter) || pets[0] || null;
 
-  // No pets state
+  // Filter & sort listings
+  let filteredListings = filterType === "all" ? allListings : allListings.filter((l) => l.pet?.animal_type === filterType);
+
+  if (sortBy === "compatibility" && activePet) {
+    filteredListings = [...filteredListings].sort((a, b) => {
+      const scoreA = a.pet ? calculateCompatibility(activePet as any, a.pet as any).score : 0;
+      const scoreB = b.pet ? calculateCompatibility(activePet as any, b.pet as any).score : 0;
+      return scoreB - scoreA;
+    });
+  } else if (sortBy === "recent") {
+    filteredListings = [...filteredListings].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  } else if (sortBy === "trust") {
+    filteredListings = [...filteredListings].sort((a, b) => getBreederTrustScore(b).score - getBreederTrustScore(a).score);
+  }
+
+  // No pets
   if (!loading && pets.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -162,51 +392,170 @@ const PetMatchTab = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="rounded-2xl bg-gradient-to-br from-pink-500/10 to-primary/10 border border-primary/20 p-4">
+      <div className="rounded-2xl bg-gradient-to-br from-pink-500/10 via-primary/5 to-accent/10 border border-primary/20 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
-            <Heart className="h-6 w-6 text-primary" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-primary">
+            <Heart className="h-6 w-6 text-white" />
           </div>
-          <div>
+          <div className="flex-1">
             <h3 className="font-display text-base font-bold">PetMatch</h3>
-            <p className="text-xs text-muted-foreground">Find verified breeding partners for your pet</p>
+            <p className="text-xs text-muted-foreground">Find verified breeding partners</p>
           </div>
+          {myListings.length > 0 && (
+            <div className="text-right">
+              <p className="text-lg font-extrabold text-primary">{myListings.length}</p>
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Listings</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* View Toggle */}
-      <div className="flex gap-2">
-        <button onClick={() => setView("browse")} className={`flex-1 rounded-xl py-2 text-xs font-bold transition-colors ${view === "browse" ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
-          <Search className="h-3.5 w-3.5 inline mr-1" /> Browse Matches
-        </button>
-        <button onClick={() => setView("my")} className={`flex-1 rounded-xl py-2 text-xs font-bold transition-colors ${view === "my" ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
-          <PawPrint className="h-3.5 w-3.5 inline mr-1" /> My Listings ({myListings.length})
-        </button>
+      {/* View Toggle (3 tabs) */}
+      <div className="flex gap-1.5 rounded-xl bg-secondary/50 p-1">
+        {([
+          { key: "browse", label: "Browse", icon: <Search className="h-3 w-3" /> },
+          { key: "my", label: "My Pets", icon: <PawPrint className="h-3 w-3" /> },
+          { key: "matches", label: "Activity", icon: <Heart className="h-3 w-3" /> },
+        ] as const).map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setView(tab.key)}
+            className={`flex flex-1 items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-bold transition-all ${
+              view === tab.key ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
+            }`}
+          >
+            {tab.icon} {tab.label}
+          </button>
+        ))}
       </div>
 
-      {view === "my" ? (
+      {/* ─── BROWSE VIEW ────────────────────────────────────────────────────── */}
+      {view === "browse" && (
+        <div className="space-y-3">
+          {/* Pet selector for comparison */}
+          {pets.length > 0 && (
+            <div>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Matching for</p>
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+                {pets.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => setActivePetFilter(p.id)}
+                    className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                      activePetFilter === p.id
+                        ? "bg-gradient-to-r from-pink-500 to-primary text-white shadow-sm"
+                        : "bg-secondary text-secondary-foreground"
+                    }`}
+                  >
+                    {p.photo_url ? (
+                      <img src={p.photo_url} className="h-4 w-4 rounded-full object-cover" />
+                    ) : (
+                      <PawPrint className="h-3 w-3" />
+                    )}
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Filters row */}
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide flex-1">
+              {["all", "dog", "cat", "bird", "rabbit", "other"].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setFilterType(t)}
+                  className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors ${
+                    filterType === t ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                  }`}
+                >
+                  {t === "all" ? "🐾 All" : t === "dog" ? "🐕 Dogs" : t === "cat" ? "🐈 Cats" : t === "bird" ? "🐦 Birds" : t === "rabbit" ? "🐇 Rabbits" : "🐾 Other"}
+                </button>
+              ))}
+            </div>
+            {/* Sort */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="rounded-lg bg-secondary px-2 py-1 text-[10px] font-semibold outline-none"
+            >
+              <option value="compatibility">Best Match</option>
+              <option value="recent">Newest</option>
+              <option value="trust">Trust Score</option>
+            </select>
+          </div>
+
+          {/* Cards */}
+          {filteredListings.length === 0 ? (
+            <div className="text-center py-12">
+              <Heart className="h-10 w-10 mx-auto text-muted-foreground/30 mb-2" />
+              <p className="text-sm font-semibold">No matches available</p>
+              <p className="text-xs text-muted-foreground mt-1">Check back later or list your pet!</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredListings.map((listing) => (
+                <PetMatchCard
+                  key={listing.id}
+                  listing={listing}
+                  myPet={activePet}
+                  onContact={() => handleContact(listing)}
+                  onReport={() => handleReport(listing)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── MY LISTINGS VIEW ───────────────────────────────────────────────── */}
+      {view === "my" && (
         <div className="space-y-3">
           {availablePets.length > 0 && !showCreate && (
             <button onClick={() => setShowCreate(true)} className="w-full rounded-2xl border-2 border-dashed border-primary/30 p-4 text-center hover:bg-primary/5 transition-colors">
               <Plus className="h-5 w-5 mx-auto text-primary mb-1" />
               <p className="text-sm font-bold text-primary">List a Pet for Matching</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Requires breed verification for approval</p>
             </button>
           )}
 
           {showCreate && (
             <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
-              <h4 className="text-sm font-bold">New PetMatch Listing</h4>
+              <h4 className="text-sm font-bold flex items-center gap-2">
+                <Plus className="h-4 w-4 text-primary" /> New PetMatch Listing
+              </h4>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground">Select Pet</label>
                 <div className="flex flex-wrap gap-2 mt-1">
-                  {availablePets.map((p) => (
-                    <button key={p.id} onClick={() => setSelectedPet(p.id)}
-                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${selectedPet === p.id ? "petkeep-gradient text-primary-foreground" : "bg-secondary"}`}>
-                      {p.photo_url ? <img src={p.photo_url} className="h-6 w-6 rounded-full object-cover" /> : <PawPrint className="h-4 w-4" />}
-                      {p.name}
-                    </button>
-                  ))}
+                  {availablePets.map((p) => {
+                    const safety = isSafeForBreeding({ animal_type: p.animal_type, breed: p.breed, gender: p.gender, age: p.age, neutered: p.neutered, vaccinated: p.vaccinated, weight: p.weight });
+                    return (
+                      <button key={p.id} onClick={() => setSelectedPet(p.id)}
+                        className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${selectedPet === p.id ? "petkeep-gradient text-primary-foreground" : "bg-secondary"}`}>
+                        {p.photo_url ? <img src={p.photo_url} className="h-6 w-6 rounded-full object-cover" /> : <PawPrint className="h-4 w-4" />}
+                        {p.name}
+                        {!safety.safe && <AlertTriangle className="h-3 w-3 text-amber-500" />}
+                      </button>
+                    );
+                  })}
                 </div>
+                {selectedPet && (() => {
+                  const selPet = availablePets.find(p => p.id === selectedPet);
+                  if (!selPet) return null;
+                  const safety = isSafeForBreeding({ animal_type: selPet.animal_type, breed: selPet.breed, gender: selPet.gender, age: selPet.age, neutered: selPet.neutered, vaccinated: selPet.vaccinated, weight: selPet.weight });
+                  if (safety.safe) return null;
+                  return (
+                    <div className="mt-2 rounded-xl bg-amber-50 dark:bg-amber-900/10 p-2.5">
+                      <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" /> Safety Warnings
+                      </p>
+                      {safety.warnings.map((w, i) => (
+                        <p key={i} className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">• {w}</p>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground">Looking For</label>
@@ -214,7 +563,7 @@ const PetMatchTab = () => {
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground">Description</label>
-                <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Tell others about your pet and what you're looking for..." className="mt-1 w-full rounded-xl bg-secondary px-3 py-2.5 text-sm outline-none resize-none" />
+                <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Tell others about your pet..." className="mt-1 w-full rounded-xl bg-secondary px-3 py-2.5 text-sm outline-none resize-none" />
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setShowCreate(false)} className="flex-1 rounded-xl bg-secondary py-2.5 text-sm font-bold">Cancel</button>
@@ -226,108 +575,135 @@ const PetMatchTab = () => {
           {myListings.length === 0 && !showCreate ? (
             <div className="text-center py-8">
               <Heart className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />
-              <p className="text-sm text-muted-foreground">No listings yet</p>
+              <p className="text-sm font-semibold">No listings yet</p>
+              <p className="text-xs text-muted-foreground mt-1">List your pet to find breeding matches</p>
             </div>
           ) : (
             myListings.map((listing) => {
               const pet = pets.find((p) => p.id === listing.pet_id);
-              const statusColors: Record<string, string> = {
-                pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
-                approved: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-                rejected: "bg-destructive/10 text-destructive",
+              const statusConfig: Record<string, { bg: string; label: string }> = {
+                pending: { bg: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400", label: "⏳ Pending Review" },
+                approved: { bg: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", label: "✅ Approved" },
+                rejected: { bg: "bg-destructive/10 text-destructive", label: "❌ Rejected" },
               };
+              const sc = statusConfig[listing.status] || { bg: "bg-secondary", label: listing.status };
               return (
-                <div key={listing.id} className="rounded-2xl bg-card border border-border p-4">
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={pet?.photo_url || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary font-bold">{pet?.name?.[0] || "P"}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold truncate">{pet?.name}</p>
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColors[listing.status] || "bg-secondary"}`}>{listing.status}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{pet?.breed} · {pet?.gender} · {pet?.age}</p>
-                      {listing.looking_for && <p className="text-xs mt-1"><span className="font-semibold">Looking for:</span> {listing.looking_for}</p>}
+                <div key={listing.id} className="rounded-2xl bg-card border border-border overflow-hidden">
+                  {/* Pet photo strip */}
+                  {pet?.photo_url && (
+                    <div className="h-24 bg-gradient-to-br from-primary/10 to-accent/10">
+                      <img src={pet.photo_url} alt={pet.name} className="h-full w-full object-cover" />
                     </div>
-                    <button onClick={() => handleDelete(listing.id)} className="rounded-full p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                  {!listing.breed_document_url && (
-                    <div className="mt-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 p-3 flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-amber-600 shrink-0" />
+                  )}
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={pet?.photo_url || undefined} />
+                        <AvatarFallback className="bg-primary/10 text-primary font-bold">{pet?.name?.[0] || "P"}</AvatarFallback>
+                      </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-amber-800 dark:text-amber-400">Upload breed documents for verification</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold truncate">{pet?.name}</p>
+                          <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${sc.bg}`}>{sc.label}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{pet?.breed} · {pet?.gender} · {pet?.age}</p>
+                        {listing.looking_for && <p className="text-xs mt-1"><span className="font-semibold">Looking for:</span> {listing.looking_for}</p>}
                       </div>
-                      <label className="shrink-0 rounded-lg bg-amber-600 px-2.5 py-1 text-[10px] font-bold text-white cursor-pointer">
-                        <Upload className="h-3 w-3 inline mr-0.5" /> Upload
-                        <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadDoc(listing.id, f); }} />
-                      </label>
+                      <button onClick={() => handleDelete(listing.id)} className="rounded-full p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
-                  )}
-                  {listing.breed_document_url && (
-                    <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                      <Shield className="h-3.5 w-3.5 text-accent" />
-                      <span>Document: {listing.breed_document_name}</span>
-                    </div>
-                  )}
+
+                    {/* Safety check for own pet */}
+                    {pet && <SafetyIndicators pet={pet} />}
+
+                    {/* Verification docs */}
+                    {!listing.breed_document_url && (
+                      <div className="mt-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 p-3 flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-amber-600 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-amber-800 dark:text-amber-400">Upload breed documents</p>
+                          <p className="text-[9px] text-amber-600/70">Required for listing approval</p>
+                        </div>
+                        <label className="shrink-0 rounded-lg bg-amber-600 px-2.5 py-1 text-[10px] font-bold text-white cursor-pointer">
+                          <Upload className="h-3 w-3 inline mr-0.5" /> Upload
+                          <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadDoc(listing.id, f); }} />
+                        </label>
+                      </div>
+                    )}
+                    {listing.breed_document_url && (
+                      <div className="mt-2 flex items-center gap-2 text-xs">
+                        <BadgeCheck className="h-3.5 w-3.5 text-accent" />
+                        <span className="text-muted-foreground">{listing.breed_document_name}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })
           )}
         </div>
-      ) : (
+      )}
+
+      {/* ─── ACTIVITY VIEW ──────────────────────────────────────────────────── */}
+      {view === "matches" && (
         <div className="space-y-3">
-          {/* Filter by animal type */}
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-            {["all", "dog", "cat", "bird", "rabbit", "other"].map((t) => (
-              <button key={t} onClick={() => setFilterType(t)}
-                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${filterType === t ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>
-                {t === "all" ? "🐾 All" : t === "dog" ? "🐕 Dogs" : t === "cat" ? "🐈 Cats" : t === "bird" ? "🐦 Birds" : t === "rabbit" ? "🐇 Rabbits" : "🐾 Other"}
-              </button>
-            ))}
+          <div className="rounded-2xl bg-card border border-border p-6 text-center">
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500/20 to-primary/20">
+              <Heart className="h-7 w-7 text-primary" />
+            </div>
+            <h3 className="font-display text-base font-bold">Match Activity</h3>
+            <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">
+              When breeders contact you about your listings, their messages and match requests will appear here.
+            </p>
           </div>
 
-          {filteredListings.length === 0 ? (
-            <div className="text-center py-12">
-              <Heart className="h-10 w-10 mx-auto text-muted-foreground/30 mb-2" />
-              <p className="text-sm font-semibold">No matches available</p>
-              <p className="text-xs text-muted-foreground mt-1">Check back later or list your pet!</p>
+          {/* Quick stats */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-xl bg-card border border-border p-3 text-center">
+              <p className="text-lg font-extrabold text-primary">{myListings.filter(l => l.status === "approved").length}</p>
+              <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">Active</p>
             </div>
-          ) : (
-            filteredListings.map((listing) => (
-              <div key={listing.id} className="rounded-2xl bg-card border border-border p-4 petkeep-card-hover">
-                <div className="flex items-start gap-3">
-                  <Avatar className="h-14 w-14">
-                    <AvatarImage src={listing.pet?.photo_url || undefined} />
-                    <AvatarFallback className="bg-gradient-to-br from-pink-400 to-primary text-white font-bold text-lg">{listing.pet?.name?.[0] || "P"}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <h4 className="font-display text-sm font-bold truncate">{listing.pet?.name}</h4>
-                      <BadgeCheck className="h-3.5 w-3.5 text-accent shrink-0" />
-                    </div>
-                    <p className="text-xs text-muted-foreground">{listing.pet?.breed} · {listing.pet?.gender} · {listing.pet?.age}</p>
-                    {listing.looking_for && <p className="text-xs mt-1"><span className="font-semibold">Looking for:</span> {listing.looking_for}</p>}
-                    {listing.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{listing.description}</p>}
-                    <div className="mt-2 flex items-center gap-2">
-                      <button onClick={() => listing.profile?.username ? navigate(`/user/${listing.profile.username}`) : null}
-                        className="flex items-center gap-1.5 text-[10px] font-semibold text-primary hover:underline">
-                        <Avatar className="h-5 w-5">
-                          <AvatarImage src={listing.profile?.avatar_url || undefined} />
-                          <AvatarFallback className="text-[8px] bg-primary/10">{listing.profile?.full_name?.[0]}</AvatarFallback>
-                        </Avatar>
-                        {listing.profile?.full_name}
-                      </button>
-                    </div>
+            <div className="rounded-xl bg-card border border-border p-3 text-center">
+              <p className="text-lg font-extrabold text-amber-500">{myListings.filter(l => l.status === "pending").length}</p>
+              <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">Pending</p>
+            </div>
+            <div className="rounded-xl bg-card border border-border p-3 text-center">
+              <p className="text-lg font-extrabold text-muted-foreground">{allListings.length}</p>
+              <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">Available</p>
+            </div>
+          </div>
+
+          {/* Tips */}
+          <div className="rounded-2xl bg-gradient-to-br from-accent/10 to-primary/5 border border-accent/20 p-4">
+            <h4 className="text-xs font-bold flex items-center gap-1.5">
+              <Flame className="h-3.5 w-3.5 text-primary" /> Boost Your Listing
+            </h4>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Coming soon: boost your pet's profile to appear at the top of search results and get matched faster.
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-card border border-border p-4">
+            <h4 className="text-xs font-bold flex items-center gap-1.5 mb-2">
+              <Shield className="h-3.5 w-3.5 text-accent" /> Safety Checklist
+            </h4>
+            <div className="space-y-1.5">
+              {[
+                { label: "Breed documents uploaded", done: myListings.some(l => l.breed_document_url) },
+                { label: "At least one approved listing", done: myListings.some(l => l.status === "approved") },
+                { label: "Pet vaccination up to date", done: pets.some(p => p.vaccinated === true) },
+                { label: "Profile photo added", done: pets.some(p => p.photo_url) },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className={`h-4 w-4 rounded-full flex items-center justify-center text-[8px] font-bold ${item.done ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"}`}>
+                    {item.done ? "✓" : "○"}
                   </div>
-                  <Heart className="h-5 w-5 text-pink-400 shrink-0 mt-1" />
+                  <span className={`text-xs ${item.done ? "font-semibold" : "text-muted-foreground"}`}>{item.label}</span>
                 </div>
-              </div>
-            ))
-          )}
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>
