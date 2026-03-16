@@ -114,7 +114,7 @@ export const useFeed = () => {
     fetchFeed(true);
   }, [fetchFeed]);
 
-  // Realtime subscription
+  // Realtime subscription — listen to posts table for authoritative count updates
   useEffect(() => {
     if (!user) return;
 
@@ -123,33 +123,36 @@ export const useFeed = () => {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "posts" }, () => {
         fetchFeed(true);
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "post_likes" }, (payload) => {
-        // Update like count locally
-        const postId = (payload.new as any)?.post_id || (payload.old as any)?.post_id;
-        if (postId) {
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "posts" }, (payload) => {
+        // DB triggers update likes_count/comments_count — sync to local state
+        const updated = payload.new as any;
+        if (updated?.id) {
           setPosts((prev) =>
-            prev.map((p) => {
-              if (p.id !== postId) return p;
-              const delta = payload.eventType === "INSERT" ? 1 : payload.eventType === "DELETE" ? -1 : 0;
-              return {
-                ...p,
-                likes_count: Math.max(0, p.likes_count + delta),
-                is_liked: payload.eventType === "INSERT" && (payload.new as any).user_id === user.id ? true :
-                          payload.eventType === "DELETE" && (payload.old as any).user_id === user.id ? false : p.is_liked,
-              };
-            })
+            prev.map((p) =>
+              p.id === updated.id
+                ? { ...p, likes_count: updated.likes_count, comments_count: updated.comments_count }
+                : p
+            )
           );
         }
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "post_comments" }, (payload) => {
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "posts" }, (payload) => {
+        const deleted = payload.old as any;
+        if (deleted?.id) {
+          setPosts((prev) => prev.filter((p) => p.id !== deleted.id));
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "post_likes" }, (payload) => {
+        // Update is_liked for the current user only
         const postId = (payload.new as any)?.post_id || (payload.old as any)?.post_id;
-        if (postId) {
+        const userId = (payload.new as any)?.user_id || (payload.old as any)?.user_id;
+        if (postId && userId === user.id) {
           setPosts((prev) =>
-            prev.map((p) => {
-              if (p.id !== postId) return p;
-              const delta = payload.eventType === "INSERT" ? 1 : payload.eventType === "DELETE" ? -1 : 0;
-              return { ...p, comments_count: Math.max(0, p.comments_count + delta) };
-            })
+            prev.map((p) =>
+              p.id === postId
+                ? { ...p, is_liked: payload.eventType === "INSERT" }
+                : p
+            )
           );
         }
       })
