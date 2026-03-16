@@ -648,7 +648,7 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
                         {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
                       </span>
                       {isMine && (msg.is_read
-                        ? <CheckCheck className="h-3 w-3 text-primary-foreground/60" />
+                        ? <CheckCheck className="h-3 w-3 text-blue-400" />
                         : <Check className="h-3 w-3 text-primary-foreground/60" />
                       )}
                     </div>
