@@ -312,6 +312,25 @@ const CheckoutPage = () => {
               )}
             </div>
 
+            {/* Credits */}
+            {creditBalance > 0 && (
+              <div className="rounded-2xl bg-card border border-border p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Coins className="h-4 w-4 text-primary" />
+                    <div>
+                      <h3 className="text-sm font-bold">Use PetKeep Credits</h3>
+                      <p className="text-[10px] text-muted-foreground">Balance: {creditBalance.toFixed(2)} credits ({creditBalance.toFixed(2)} MKD)</p>
+                    </div>
+                  </div>
+                  <Switch checked={useCreditsToggle} onCheckedChange={setUseCreditsToggle} />
+                </div>
+                {useCreditsToggle && creditsApplied > 0 && (
+                  <p className="text-xs text-primary font-semibold mt-2">-{creditsApplied.toFixed(2)} MKD will be deducted</p>
+                )}
+              </div>
+            )}
+
             {/* Price breakdown */}
             <div className="rounded-2xl bg-card border border-border p-4">
               <h3 className="text-sm font-bold mb-3">Price Breakdown</h3>
@@ -326,8 +345,14 @@ const CheckoutPage = () => {
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-xs">
-                    <span className="text-primary font-bold">Discount</span>
+                    <span className="text-primary font-bold">Coupon Discount</span>
                     <span className="font-bold text-primary">-{discount.toLocaleString()} MKD</span>
+                  </div>
+                )}
+                {creditsApplied > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-primary font-bold flex items-center gap-1"><Coins className="h-3 w-3" /> Credits Applied</span>
+                    <span className="font-bold text-primary">-{creditsApplied.toFixed(2)} MKD</span>
                   </div>
                 )}
                 <div className="flex justify-between text-xs">
