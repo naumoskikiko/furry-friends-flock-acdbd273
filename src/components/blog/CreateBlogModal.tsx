@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { X, Image, Plus, Trash2 } from "lucide-react";
+import { X, Image, Plus, Trash2, MapPin, Calendar, Clock, Users, PawPrint } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,14 @@ const BLOG_CATEGORIES = [
   { value: "pet-lifestyle", label: "Pet Lifestyle", icon: "🐾" },
 ];
 
+const POST_TYPES = [
+  { value: "article", label: "Article", icon: "📝", desc: "Write a blog post" },
+  { value: "question", label: "Question", icon: "❓", desc: "Ask the community" },
+  { value: "meetup", label: "MeetUP", icon: "📍", desc: "Create a pet event" },
+];
+
+const PET_TYPES = ["Dogs", "Cats", "Birds", "Rabbits", "Fish", "Reptiles", "All Pets"];
+
 interface CreateBlogModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -30,6 +38,7 @@ const CreateBlogModal = ({ open, onOpenChange, onBlogCreated }: CreateBlogModalP
   const { toast } = useToast();
   const coverInputRef = useRef<HTMLInputElement>(null);
 
+  const [postType, setPostType] = useState<"article" | "question" | "meetup">("article");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("pet-lifestyle");
@@ -39,7 +48,16 @@ const CreateBlogModal = ({ open, onOpenChange, onBlogCreated }: CreateBlogModalP
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
 
+  // MeetUP fields
+  const [eventDate, setEventDate] = useState("");
+  const [eventStartTime, setEventStartTime] = useState("");
+  const [eventEndTime, setEventEndTime] = useState("");
+  const [eventLocation, setEventLocation] = useState("");
+  const [eventMaxParticipants, setEventMaxParticipants] = useState("");
+  const [selectedPetTypes, setSelectedPetTypes] = useState<string[]>([]);
+
   const resetForm = () => {
+    setPostType("article");
     setTitle("");
     setContent("");
     setCategory("pet-lifestyle");
@@ -47,6 +65,12 @@ const CreateBlogModal = ({ open, onOpenChange, onBlogCreated }: CreateBlogModalP
     setTagInput("");
     setCoverFile(null);
     setCoverPreview(null);
+    setEventDate("");
+    setEventStartTime("");
+    setEventEndTime("");
+    setEventLocation("");
+    setEventMaxParticipants("");
+    setSelectedPetTypes([]);
   };
 
   const handleCoverSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,9 +88,23 @@ const CreateBlogModal = ({ open, onOpenChange, onBlogCreated }: CreateBlogModalP
     }
   };
 
+  const togglePetType = (pt: string) => {
+    setSelectedPetTypes((prev) =>
+      prev.includes(pt) ? prev.filter((p) => p !== pt) : [...prev, pt]
+    );
+  };
+
+  const isFormValid = () => {
+    if (!title.trim() || !content.trim()) return false;
+    if (postType === "meetup") {
+      return !!(eventDate && eventStartTime && eventEndTime && eventLocation.trim());
+    }
+    return true;
+  };
+
   const handlePublish = async () => {
-    if (!user || !title.trim() || !content.trim()) {
-      toast({ title: "Please fill in title and content", variant: "destructive" });
+    if (!user || !isFormValid()) {
+      toast({ title: "Please fill in all required fields", variant: "destructive" });
       return;
     }
 
@@ -88,7 +126,7 @@ const CreateBlogModal = ({ open, onOpenChange, onBlogCreated }: CreateBlogModalP
 
     const previewText = content.slice(0, 150).replace(/\n/g, " ") + (content.length > 150 ? "..." : "");
 
-    const { error } = await (supabase as any).from("blog_posts").insert({
+    const insertData: any = {
       user_id: user.id,
       title: title.trim(),
       content: content.trim(),
@@ -96,18 +134,34 @@ const CreateBlogModal = ({ open, onOpenChange, onBlogCreated }: CreateBlogModalP
       preview_text: previewText,
       category,
       tags,
-    });
+      post_type: postType,
+    };
+
+    if (postType === "meetup") {
+      insertData.event_date = eventDate;
+      insertData.event_start_time = eventStartTime;
+      insertData.event_end_time = eventEndTime;
+      insertData.event_location = eventLocation.trim();
+      insertData.event_pet_types = selectedPetTypes;
+      if (eventMaxParticipants) {
+        insertData.event_max_participants = parseInt(eventMaxParticipants);
+      }
+    }
+
+    const { error } = await (supabase as any).from("blog_posts").insert(insertData);
 
     setPublishing(false);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Blog post published!" });
+      toast({ title: postType === "meetup" ? "MeetUP event created! 🎉" : "Blog post published!" });
       resetForm();
       onOpenChange(false);
       onBlogCreated();
     }
   };
+
+  const isMeetup = postType === "meetup";
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
@@ -116,21 +170,47 @@ const CreateBlogModal = ({ open, onOpenChange, onBlogCreated }: CreateBlogModalP
           <button onClick={() => onOpenChange(false)}>
             <X className="h-5 w-5" />
           </button>
-          <h2 className="font-display font-bold">New Blog Post</h2>
+          <h2 className="font-display font-bold">
+            {isMeetup ? "New MeetUP Event" : postType === "question" ? "Ask a Question" : "New Blog Post"}
+          </h2>
           <Button
             size="sm"
             onClick={handlePublish}
-            disabled={publishing || !title.trim() || !content.trim()}
+            disabled={publishing || !isFormValid()}
             className="petkeep-gradient text-primary-foreground font-bold"
           >
-            {publishing ? "..." : "Publish"}
+            {publishing ? "..." : isMeetup ? "Create" : "Publish"}
           </Button>
         </div>
 
         <div className="space-y-4 p-4">
+          {/* Post type selector */}
+          <div>
+            <Label className="text-xs font-bold text-muted-foreground">Post Type</Label>
+            <div className="mt-1 grid grid-cols-3 gap-2">
+              {POST_TYPES.map((pt) => (
+                <button
+                  key={pt.value}
+                  onClick={() => setPostType(pt.value as any)}
+                  className={`flex flex-col items-center gap-1 rounded-xl border-2 px-2 py-3 text-center transition-all ${
+                    postType === pt.value
+                      ? "border-primary bg-primary/5 shadow-sm"
+                      : "border-border hover:border-primary/40"
+                  }`}
+                >
+                  <span className="text-xl">{pt.icon}</span>
+                  <span className="text-[11px] font-bold">{pt.label}</span>
+                  <span className="text-[9px] text-muted-foreground leading-tight">{pt.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Cover image */}
           <div>
-            <Label className="text-xs font-bold text-muted-foreground">Cover Image</Label>
+            <Label className="text-xs font-bold text-muted-foreground">
+              {isMeetup ? "Event Image" : "Cover Image"}
+            </Label>
             {coverPreview ? (
               <div className="relative mt-1">
                 <img src={coverPreview} alt="" className="w-full h-40 rounded-xl object-cover" />
@@ -147,7 +227,7 @@ const CreateBlogModal = ({ open, onOpenChange, onBlogCreated }: CreateBlogModalP
                 className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border py-8 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
               >
                 <Image className="h-5 w-5" />
-                <span className="text-sm">Add cover image</span>
+                <span className="text-sm">Add {isMeetup ? "event" : "cover"} image</span>
               </button>
             )}
             <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverSelect} />
@@ -155,11 +235,13 @@ const CreateBlogModal = ({ open, onOpenChange, onBlogCreated }: CreateBlogModalP
 
           {/* Title */}
           <div>
-            <Label className="text-xs font-bold text-muted-foreground">Title</Label>
+            <Label className="text-xs font-bold text-muted-foreground">
+              {isMeetup ? "Event Title *" : "Title *"}
+            </Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Your blog post title..."
+              placeholder={isMeetup ? "Dog Owners Meetup at City Park" : "Your blog post title..."}
               className="mt-1 font-display text-lg font-bold"
             />
           </div>
@@ -184,14 +266,121 @@ const CreateBlogModal = ({ open, onOpenChange, onBlogCreated }: CreateBlogModalP
             </div>
           </div>
 
+          {/* MeetUP-specific fields */}
+          {isMeetup && (
+            <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-3">
+              <p className="text-xs font-bold text-primary flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5" /> Event Details
+              </p>
+
+              {/* Date */}
+              <div>
+                <Label className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+                  <Calendar className="h-3 w-3" /> Date *
+                </Label>
+                <Input
+                  type="date"
+                  value={eventDate}
+                  onChange={(e) => setEventDate(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="mt-1"
+                />
+              </div>
+
+              {/* Time */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> Start *
+                  </Label>
+                  <Input
+                    type="time"
+                    value={eventStartTime}
+                    onChange={(e) => setEventStartTime(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> End *
+                  </Label>
+                  <Input
+                    type="time"
+                    value={eventEndTime}
+                    onChange={(e) => setEventEndTime(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Location */}
+              <div>
+                <Label className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+                  <MapPin className="h-3 w-3" /> Location *
+                </Label>
+                <Input
+                  value={eventLocation}
+                  onChange={(e) => setEventLocation(e.target.value)}
+                  placeholder="City Park, Main St..."
+                  className="mt-1"
+                />
+              </div>
+
+              {/* Max Participants */}
+              <div>
+                <Label className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+                  <Users className="h-3 w-3" /> Max Participants (optional)
+                </Label>
+                <Input
+                  type="number"
+                  value={eventMaxParticipants}
+                  onChange={(e) => setEventMaxParticipants(e.target.value)}
+                  placeholder="No limit"
+                  min="2"
+                  className="mt-1"
+                />
+              </div>
+
+              {/* Pet Types */}
+              <div>
+                <Label className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+                  <PawPrint className="h-3 w-3" /> Pet Types Allowed
+                </Label>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {PET_TYPES.map((pt) => (
+                    <button
+                      key={pt}
+                      onClick={() => togglePetType(pt)}
+                      className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                        selectedPetTypes.includes(pt)
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary text-secondary-foreground"
+                      }`}
+                    >
+                      {pt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Content */}
           <div>
-            <Label className="text-xs font-bold text-muted-foreground">Content</Label>
+            <Label className="text-xs font-bold text-muted-foreground">
+              {isMeetup ? "Description *" : "Content *"}
+            </Label>
             <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Write your article here... Use paragraphs to organize your content."
-              className="mt-1 min-h-[200px] resize-none"
+              placeholder={
+                isMeetup
+                  ? "Describe your event, what to bring, meeting point details..."
+                  : postType === "question"
+                  ? "Describe your question in detail..."
+                  : "Write your article here... Use paragraphs to organize your content."
+              }
+              className="mt-1 min-h-[150px] resize-none"
             />
           </div>
 

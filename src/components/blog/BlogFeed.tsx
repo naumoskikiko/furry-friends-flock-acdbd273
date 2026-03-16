@@ -44,19 +44,44 @@ const BlogFeed = () => {
 
     const userIds = [...new Set(rawPosts.map((p: any) => p.user_id))];
     const postIds = rawPosts.map((p: any) => p.id);
+    const meetupIds = rawPosts.filter((p: any) => p.post_type === "meetup").map((p: any) => p.id);
 
-    const [profilesRes, likesRes, savesRes] = await Promise.all([
+    const batchPromises: Promise<any>[] = [
       supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds as string[]),
-      user ? (supabase as any).from("blog_likes").select("blog_post_id").eq("user_id", user.id).in("blog_post_id", postIds) : { data: [] },
-      user ? (supabase as any).from("blog_saves").select("blog_post_id").eq("user_id", user.id).in("blog_post_id", postIds) : { data: [] },
-    ]);
+      user ? (supabase as any).from("blog_likes").select("blog_post_id").eq("user_id", user.id).in("blog_post_id", postIds) : Promise.resolve({ data: [] }),
+      user ? (supabase as any).from("blog_saves").select("blog_post_id").eq("user_id", user.id).in("blog_post_id", postIds) : Promise.resolve({ data: [] }),
+    ];
 
-    const profileMap = new Map(profilesRes.data?.map((p) => [p.user_id, p]) || []);
+    // Fetch participant counts for meetup posts
+    if (meetupIds.length > 0) {
+      batchPromises.push(
+        (supabase as any).from("blog_event_participants").select("blog_post_id").in("blog_post_id", meetupIds)
+      );
+      if (user) {
+        batchPromises.push(
+          (supabase as any).from("blog_event_participants").select("blog_post_id").eq("user_id", user.id).in("blog_post_id", meetupIds)
+        );
+      }
+    }
+
+    const results = await Promise.all(batchPromises);
+    const [profilesRes, likesRes, savesRes] = results;
+    const participantsRes = meetupIds.length > 0 ? results[3] : { data: [] };
+    const joinedRes = meetupIds.length > 0 && user ? results[4] : { data: [] };
+
+    const profileMap = new Map(profilesRes.data?.map((p: any) => [p.user_id, p]) || []);
     const likedSet = new Set((likesRes.data || []).map((l: any) => l.blog_post_id));
     const savedSet = new Set((savesRes.data || []).map((s: any) => s.blog_post_id));
+    const joinedSet = new Set((joinedRes?.data || []).map((j: any) => j.blog_post_id));
+
+    // Count participants per post
+    const participantCounts = new Map<string, number>();
+    for (const p of (participantsRes?.data || [])) {
+      participantCounts.set(p.blog_post_id, (participantCounts.get(p.blog_post_id) || 0) + 1);
+    }
 
     const enriched: BlogPostData[] = rawPosts.map((p: any) => {
-      const profile = profileMap.get(p.user_id);
+      const profile = profileMap.get(p.user_id) as any;
       return {
         id: p.id,
         user_id: p.user_id,
@@ -73,6 +98,15 @@ const BlogFeed = () => {
         avatar_url: profile?.avatar_url || null,
         is_liked: likedSet.has(p.id),
         is_saved: savedSet.has(p.id),
+        post_type: p.post_type || "article",
+        event_date: p.event_date,
+        event_start_time: p.event_start_time,
+        event_end_time: p.event_end_time,
+        event_location: p.event_location,
+        event_max_participants: p.event_max_participants,
+        event_pet_types: p.event_pet_types,
+        participants_count: participantCounts.get(p.id) || 0,
+        is_joined: joinedSet.has(p.id),
       };
     });
 
@@ -114,8 +148,8 @@ const BlogFeed = () => {
           <PenSquare className="h-5 w-5 text-primary" />
         </div>
         <div className="text-left">
-          <p className="text-sm font-bold">Write a blog post</p>
-          <p className="text-[10px] text-muted-foreground">Share your pet knowledge with the community</p>
+          <p className="text-sm font-bold">Write a post or create a MeetUP</p>
+          <p className="text-[10px] text-muted-foreground">Share knowledge or organize a pet event</p>
         </div>
       </button>
 
@@ -130,7 +164,7 @@ const BlogFeed = () => {
         {!loading && posts.length === 0 && (
           <div className="flex flex-col items-center py-12 text-center">
             <span className="text-4xl">📝</span>
-            <p className="mt-3 font-display font-bold">No blog posts yet</p>
+            <p className="mt-3 font-display font-bold">No posts yet</p>
             <p className="mt-1 text-sm text-muted-foreground">Be the first to share your pet knowledge!</p>
           </div>
         )}

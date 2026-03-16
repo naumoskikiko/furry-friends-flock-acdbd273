@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Heart, MessageCircle, Share2, Bookmark, BookmarkCheck, MoreVertical, Link2, Send } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import {
+  ArrowLeft, Heart, MessageCircle, Share2, Bookmark, BookmarkCheck,
+  MoreVertical, Send, MapPin, Calendar, Clock, Users, PawPrint,
+} from "lucide-react";
+import { formatDistanceToNow, format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger } from
-"@/components/ui/dropdown-menu";
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,13 +18,13 @@ import type { BlogPostData } from "./BlogCard";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
-const CATEGORY_META: Record<string, {label: string;icon: string;}> = {
+const CATEGORY_META: Record<string, { label: string; icon: string }> = {
   "pet-training": { label: "Pet Training", icon: "🎓" },
   "pet-health": { label: "Pet Health", icon: "🏥" },
   "nutrition": { label: "Nutrition", icon: "🍖" },
   "grooming": { label: "Grooming", icon: "✂️" },
   "adoption": { label: "Adoption", icon: "🏠" },
-  "pet-lifestyle": { label: "Pet Lifestyle", icon: "🐾" }
+  "pet-lifestyle": { label: "Pet Lifestyle", icon: "🐾" },
 };
 
 interface Comment {
@@ -33,6 +33,12 @@ interface Comment {
   content: string;
   created_at: string;
   username: string;
+  avatar_url: string | null;
+}
+
+interface Participant {
+  user_id: string;
+  full_name: string;
   avatar_url: string | null;
 }
 
@@ -54,19 +60,28 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   const [saved, setSaved] = useState(false);
   const [readProgress, setReadProgress] = useState(0);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [joined, setJoined] = useState(false);
+  const [participantsCount, setParticipantsCount] = useState(0);
+  const [participants, setParticipants] = useState<Participant[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const isMeetup = post?.post_type === "meetup";
 
   useEffect(() => {
     if (post && open) {
       setLiked(post.is_liked);
       setLikesCount(post.likes_count);
+      setJoined(post.is_joined || false);
+      setParticipantsCount(post.participants_count || 0);
       loadComments();
       checkSaved();
       setReadProgress(0);
+      if (post.post_type === "meetup") {
+        loadParticipants();
+      }
     }
   }, [post, open]);
 
-  // Reading progress bar
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -77,26 +92,54 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
     }
   }, []);
 
+  const loadParticipants = async () => {
+    if (!post) return;
+    const { data } = await fromTable("blog_event_participants")
+      .select("user_id")
+      .eq("blog_post_id", post.id);
+    if (data && data.length > 0) {
+      const userIds = data.map((d: any) => d.user_id);
+      setParticipantsCount(userIds.length);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, avatar_url")
+        .in("user_id", userIds as string[]);
+      setParticipants(
+        (profiles || []).map((p) => ({
+          user_id: p.user_id,
+          full_name: p.full_name,
+          avatar_url: p.avatar_url,
+        }))
+      );
+    } else {
+      setParticipants([]);
+      setParticipantsCount(0);
+    }
+  };
+
   const checkSaved = async () => {
     if (!user || !post) return;
-    const { data } = await fromTable("blog_saves").
-    select("id").
-    eq("blog_post_id", post.id).
-    eq("user_id", user.id).
-    maybeSingle();
+    const { data } = await fromTable("blog_saves")
+      .select("id")
+      .eq("blog_post_id", post.id)
+      .eq("user_id", user.id)
+      .maybeSingle();
     setSaved(!!data);
   };
 
   const loadComments = async () => {
     if (!post) return;
-    const { data } = await fromTable("blog_comments").
-    select("*").
-    eq("blog_post_id", post.id).
-    order("created_at", { ascending: true });
+    const { data } = await fromTable("blog_comments")
+      .select("*")
+      .eq("blog_post_id", post.id)
+      .order("created_at", { ascending: true });
 
     if (data && data.length > 0) {
       const userIds = [...new Set(data.map((c: any) => c.user_id))];
-      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url, username").in("user_id", userIds as string[]);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, avatar_url, username")
+        .in("user_id", userIds as string[]);
       const pMap = new Map(profiles?.map((p) => [p.user_id, p]) || []);
       setComments(
         data.map((c: any) => ({
@@ -105,7 +148,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
           content: c.content,
           created_at: c.created_at,
           username: pMap.get(c.user_id)?.full_name || "User",
-          avatar_url: pMap.get(c.user_id)?.avatar_url || null
+          avatar_url: pMap.get(c.user_id)?.avatar_url || null,
         }))
       );
     } else {
@@ -155,8 +198,27 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
     } else {
       await fromTable("blog_saves").insert({ blog_post_id: post.id, user_id: user.id });
       setSaved(true);
-      toast({ title: "Article saved" });
+      toast({ title: "Saved" });
     }
+  };
+
+  const toggleJoin = async () => {
+    if (!user || !post) return;
+    if (post.event_max_participants && participantsCount >= post.event_max_participants && !joined) {
+      toast({ title: "Event is full", variant: "destructive" });
+      return;
+    }
+    const newJoined = !joined;
+    setJoined(newJoined);
+    setParticipantsCount((c) => newJoined ? c + 1 : Math.max(0, c - 1));
+    if (newJoined) {
+      await fromTable("blog_event_participants").insert({ blog_post_id: post.id, user_id: user.id });
+      toast({ title: "You joined the event! 🎉" });
+    } else {
+      await fromTable("blog_event_participants").delete().eq("blog_post_id", post.id).eq("user_id", user.id);
+      toast({ title: "Left the event" });
+    }
+    loadParticipants();
   };
 
   const handleShareArticle = () => {
@@ -165,7 +227,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
       navigator.share({ title: post?.title, url }).catch(() => {});
     } else {
       navigator.clipboard.writeText(url);
-      toast({ title: "Article link copied!" });
+      toast({ title: "Link copied!" });
     }
   };
 
@@ -196,8 +258,8 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
       <div className="fixed top-0 left-0 right-0 z-[110] h-[3px] bg-secondary">
         <div
           className="h-full bg-primary transition-[width] duration-100 ease-out"
-          style={{ width: `${readProgress * 100}%` }} />
-        
+          style={{ width: `${readProgress * 100}%` }}
+        />
       </div>
 
       {/* Sticky header */}
@@ -206,17 +268,18 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex items-center gap-1">
+          {isMeetup && (
+            <span className="text-[10px] font-bold text-primary-foreground px-2 py-0.5 rounded-full bg-primary mr-1">
+              📍 MeetUP
+            </span>
+          )}
           <span className="text-[10px] font-semibold text-primary px-2 py-0.5 rounded-full bg-primary/10">
             {cat.icon} {cat.label}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={toggleSave} className="transition-transform active:scale-90">
-            {saved ?
-            <BookmarkCheck className="h-5 w-5 text-primary fill-primary" /> :
-
-            <Bookmark className="h-5 w-5 text-foreground" />
-            }
+            {saved ? <BookmarkCheck className="h-5 w-5 text-primary fill-primary" /> : <Bookmark className="h-5 w-5 text-foreground" />}
           </button>
           <button onClick={handleShareArticle} className="transition-transform active:scale-90">
             <Share2 className="h-5 w-5 text-foreground" />
@@ -225,26 +288,14 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
       </div>
 
       {/* Scrollable content */}
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="h-[calc(100vh-53px)] overflow-y-auto overscroll-contain scroll-smooth">
-        
+      <div ref={scrollRef} onScroll={handleScroll} className="h-[calc(100vh-53px)] overflow-y-auto overscroll-contain scroll-smooth">
         {/* Cover image */}
-        {post.cover_image &&
-        <button
-          onClick={() => setFullscreenImage(post.cover_image)}
-          className="w-full">
-          
-            <img
-            src={post.cover_image}
-            alt={post.title}
-            className="w-full aspect-[16/9] object-cover" />
-          
+        {post.cover_image && (
+          <button onClick={() => setFullscreenImage(post.cover_image)} className="w-full">
+            <img src={post.cover_image} alt={post.title} className="w-full aspect-[16/9] object-cover" />
           </button>
-        }
+        )}
 
-        {/* Article body - centered, readable width */}
         <article className="px-5 pb-8 max-w-[640px] mx-auto">
           {/* Title */}
           <h1 className="mt-6 font-display text-[26px] sm:text-3xl font-extrabold leading-[1.25] tracking-tight text-foreground">
@@ -254,12 +305,13 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
           {/* Author meta */}
           <div className="mt-4 flex items-center gap-3">
             <button onClick={() => goToProfile(post.user_id)}>
-              {post.avatar_url ?
-              <img src={post.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" /> :
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-bold text-primary-foreground">
+              {post.avatar_url ? (
+                <img src={post.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-bold text-primary-foreground">
                   {initials}
                 </div>
-              }
+              )}
             </button>
             <div>
               <button onClick={() => goToProfile(post.user_id)} className="text-sm font-bold hover:underline">
@@ -271,28 +323,122 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
             </div>
           </div>
 
+          {/* MeetUP Event Info Card */}
+          {isMeetup && (
+            <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+              <p className="text-sm font-bold text-primary flex items-center gap-1.5">
+                <MapPin className="h-4 w-4" /> Event Details
+              </p>
+
+              {post.event_date && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="h-4 w-4 text-primary shrink-0" />
+                  <span className="font-semibold">
+                    {format(new Date(post.event_date), "EEEE, MMMM d, yyyy")}
+                  </span>
+                </div>
+              )}
+
+              {post.event_start_time && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-primary shrink-0" />
+                  <span>
+                    {post.event_start_time.slice(0, 5)} — {post.event_end_time?.slice(0, 5)}
+                  </span>
+                </div>
+              )}
+
+              {post.event_location && (
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="h-4 w-4 text-primary shrink-0" />
+                  <span>{post.event_location}</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 text-sm">
+                <Users className="h-4 w-4 text-primary shrink-0" />
+                <span className="font-semibold">{participantsCount}</span> going
+                {post.event_max_participants && (
+                  <span className="text-muted-foreground">· {post.event_max_participants} max</span>
+                )}
+              </div>
+
+              {post.event_pet_types && post.event_pet_types.length > 0 && (
+                <div className="flex items-start gap-2">
+                  <PawPrint className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <div className="flex flex-wrap gap-1">
+                    {post.event_pet_types.map((pt) => (
+                      <span key={pt} className="rounded-full bg-background px-2.5 py-0.5 text-[11px] font-medium border border-border">
+                        {pt}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Join button */}
+              <button
+                onClick={toggleJoin}
+                className={`w-full rounded-xl py-3 text-sm font-bold transition-all active:scale-[0.98] ${
+                  joined
+                    ? "bg-primary/10 text-primary border-2 border-primary"
+                    : "bg-primary text-primary-foreground shadow-md"
+                }`}
+              >
+                {joined ? "✓ You're Going — Tap to Leave" : "Join This Event"}
+              </button>
+            </div>
+          )}
+
           {/* Divider */}
           <div className="my-6 border-t border-border" />
 
-          {/* Content — mobile-optimized typography */}
+          {/* Content */}
           <div className="space-y-5">
-            {paragraphs.map((p, i) =>
-            <p key={i} className="text-[17px] sm:text-lg leading-[1.85] text-foreground/90 break-words">
+            {paragraphs.map((p, i) => (
+              <p key={i} className="text-[17px] sm:text-lg leading-[1.85] text-foreground/90 break-words">
                 {p}
               </p>
-            )}
+            ))}
           </div>
 
+          {/* Participants list (MeetUP only) */}
+          {isMeetup && participants.length > 0 && (
+            <div className="mt-8">
+              <h3 className="font-display text-base font-bold mb-3 flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" />
+                Participants ({participants.length})
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                {participants.map((p) => (
+                  <button
+                    key={p.user_id}
+                    onClick={() => goToProfile(p.user_id)}
+                    className="flex items-center gap-2.5 rounded-xl bg-secondary/50 px-3 py-2.5 hover:bg-secondary transition-colors"
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={p.avatar_url || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-[10px] font-bold text-primary">
+                        {p.full_name?.[0]?.toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs font-semibold truncate">{p.full_name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Tags */}
-          {post.tags && post.tags.length > 0 &&
-          <div className="mt-8 flex flex-wrap gap-2">
-              {post.tags.map((tag) =>
-            <span key={tag} className="rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-foreground/70">
+          {post.tags && post.tags.length > 0 && (
+            <div className="mt-8 flex flex-wrap gap-2">
+              {post.tags.map((tag) => (
+                <span key={tag} className="rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-foreground/70">
                   #{tag}
                 </span>
-            )}
+              ))}
             </div>
-          }
+          )}
 
           {/* Interaction bar */}
           <div className="mt-8 flex items-center gap-5 border-y border-border py-4">
@@ -306,11 +452,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
             </div>
             <div className="flex-1" />
             <button onClick={toggleSave} className="transition-transform active:scale-90">
-              {saved ?
-              <BookmarkCheck className="h-5 w-5 text-primary fill-primary" /> :
-
-              <Bookmark className="h-5 w-5 text-muted-foreground" />
-              }
+              {saved ? <BookmarkCheck className="h-5 w-5 text-primary fill-primary" /> : <Bookmark className="h-5 w-5 text-muted-foreground" />}
             </button>
             <button onClick={handleShareArticle} className="transition-transform active:scale-90">
               <Share2 className="h-5 w-5 text-muted-foreground" />
@@ -323,13 +465,13 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
               Comments ({comments.length})
             </h3>
 
-            {comments.length === 0 &&
-            <p className="text-sm text-muted-foreground py-4 text-center">No comments yet. Be the first to share your thoughts!</p>
-            }
+            {comments.length === 0 && (
+              <p className="text-sm text-muted-foreground py-4 text-center">No comments yet. Be the first to share your thoughts!</p>
+            )}
 
             <div className="space-y-4">
-              {comments.map((c) =>
-              <div key={c.id} className="flex items-start gap-3">
+              {comments.map((c) => (
+                <div key={c.id} className="flex items-start gap-3">
                   <button onClick={() => goToProfile(c.user_id)} className="shrink-0">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={c.avatar_url || undefined} />
@@ -349,8 +491,8 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                     </div>
                     <p className="mt-1 text-sm leading-relaxed">{c.content}</p>
                   </div>
-                  {canDeleteComment(c) &&
-                <DropdownMenu>
+                  {canDeleteComment(c) && (
+                    <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="shrink-0 p-1 text-muted-foreground hover:text-foreground mt-2">
                           <MoreVertical className="h-3.5 w-3.5" />
@@ -362,9 +504,9 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                }
+                  )}
                 </div>
-              )}
+              ))}
             </div>
 
             {/* Comment input */}
@@ -374,14 +516,9 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 className="flex-1 rounded-full text-sm"
-                onKeyDown={(e) => e.key === "Enter" && addComment()} />
-              
-              <Button
-                size="sm"
-                onClick={addComment}
-                disabled={!newComment.trim()}
-                className="rounded-full px-4">
-                
+                onKeyDown={(e) => e.key === "Enter" && addComment()}
+              />
+              <Button size="sm" onClick={addComment} disabled={!newComment.trim()} className="rounded-full px-4">
                 <Send className="h-4 w-4" />
               </Button>
             </div>
@@ -390,19 +527,16 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
       </div>
 
       {/* Fullscreen image viewer */}
-      {fullscreenImage &&
-      <div
-        className="fixed inset-0 z-[120] bg-black flex items-center justify-center"
-        onClick={() => setFullscreenImage(null)}>
-        
+      {fullscreenImage && (
+        <div className="fixed inset-0 z-[120] bg-black flex items-center justify-center" onClick={() => setFullscreenImage(null)}>
           <button className="absolute top-4 right-4 text-white z-10">
             <ArrowLeft className="h-6 w-6" />
           </button>
           <img src={fullscreenImage} alt="" className="max-h-full max-w-full object-contain" />
         </div>
-      }
-    </div>);
-
+      )}
+    </div>
+  );
 };
 
 export default BlogArticleViewer;

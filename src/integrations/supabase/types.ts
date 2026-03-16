@@ -67,6 +67,35 @@ export type Database = {
           },
         ]
       }
+      blog_event_participants: {
+        Row: {
+          blog_post_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          blog_post_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          blog_post_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_event_participants_blog_post_id_fkey"
+            columns: ["blog_post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_likes: {
         Row: {
           blog_post_id: string
@@ -103,8 +132,17 @@ export type Database = {
           content: string
           cover_image: string | null
           created_at: string
+          event_date: string | null
+          event_end_time: string | null
+          event_latitude: number | null
+          event_location: string | null
+          event_longitude: number | null
+          event_max_participants: number | null
+          event_pet_types: string[] | null
+          event_start_time: string | null
           id: string
           likes_count: number
+          post_type: string
           preview_text: string | null
           tags: string[] | null
           title: string
@@ -117,8 +155,17 @@ export type Database = {
           content?: string
           cover_image?: string | null
           created_at?: string
+          event_date?: string | null
+          event_end_time?: string | null
+          event_latitude?: number | null
+          event_location?: string | null
+          event_longitude?: number | null
+          event_max_participants?: number | null
+          event_pet_types?: string[] | null
+          event_start_time?: string | null
           id?: string
           likes_count?: number
+          post_type?: string
           preview_text?: string | null
           tags?: string[] | null
           title: string
@@ -131,8 +178,17 @@ export type Database = {
           content?: string
           cover_image?: string | null
           created_at?: string
+          event_date?: string | null
+          event_end_time?: string | null
+          event_latitude?: number | null
+          event_location?: string | null
+          event_longitude?: number | null
+          event_max_participants?: number | null
+          event_pet_types?: string[] | null
+          event_start_time?: string | null
           id?: string
           likes_count?: number
+          post_type?: string
           preview_text?: string | null
           tags?: string[] | null
           title?: string
