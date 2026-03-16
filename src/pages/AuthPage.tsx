@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { PawPrint, Mail, Lock, User, ArrowLeft, Store, Briefcase } from "lucide-react";
-import petkeepIcon from "@/assets/petkeep-icon.png";
+import petkeepIcon from "@/assets/petkeep-icon-transparent.png";
 
 type AuthView = "login" | "signup" | "forgot";
 type AccountRole = "user" | "provider" | "business";
