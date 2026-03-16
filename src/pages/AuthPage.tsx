@@ -80,7 +80,7 @@ const AuthPage = () => {
         {/* Logo */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-3 flex h-28 w-28 items-center justify-center">
-            <img src={petkeepIcon} alt="PetKeep" className="h-28 w-28 object-contain rounded-2xl" style={{ background: 'transparent', mixBlendMode: 'multiply' }} />
+            <img src={petkeepIcon} alt="PetKeep" className="h-28 w-28 object-contain" />
           </div>
           <h1 className="font-display text-3xl font-extrabold uppercase tracking-tight">
             <span style={{ color: 'hsl(25, 90%, 55%)' }}>Pet</span>
