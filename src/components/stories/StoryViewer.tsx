@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { X, ChevronLeft, ChevronRight, MapPin, Pause, Play, Heart, MessageCircle, Send, Eye, BarChart3, ChevronDown } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
