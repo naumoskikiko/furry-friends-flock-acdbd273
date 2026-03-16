@@ -6,7 +6,6 @@ import { useCareProviders, useMyProvider, useMyBookings, useProviderAvailability
 import ProviderDetail from "@/components/care/ProviderDetail";
 import ProviderDashboard from "@/components/care/ProviderDashboard";
 import BookingHistory from "@/components/care/BookingHistory";
-import BoostBadge from "@/components/marketplace/BoostBadge";
 import { useBoostedIds } from "@/hooks/useBoosts";
 
 const ProviderStatusBadge = ({ providerId }: { providerId: string }) => {
@@ -131,7 +130,7 @@ const CarePage = () => {
                         <div className="flex items-center gap-1">
                           <p className="text-xs font-bold truncate">{p.business_name}</p>
                           {p.is_verified && <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />}
-                          {boostedProviderIds.has(p.id) && <BoostBadge />}
+                          
                         </div>
                         <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                           <Star className="h-3 w-3 fill-primary text-primary" />
@@ -184,7 +183,7 @@ const CarePage = () => {
                         <div className="flex items-center gap-1.5">
                           <h3 className="font-display text-base font-bold truncate">{p.business_name}</h3>
                           {p.is_verified && <BadgeCheck className="h-4 w-4 text-primary shrink-0" />}
-                          {boostedProviderIds.has(p.id) && <BoostBadge size="md" />}
+                          
                         </div>
                         <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                           <span className="flex items-center gap-0.5">

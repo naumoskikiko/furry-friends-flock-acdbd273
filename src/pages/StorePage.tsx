@@ -9,8 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BUSINESS_CATEGORIES, PRODUCT_CATEGORIES, type BusinessProfile, type Product } from "@/hooks/useBusiness";
 import ProductImage from "@/components/marketplace/ProductImage";
 import { useStoreFollowers } from "@/hooks/useStoreFollowers";
-import BoostBadge from "@/components/marketplace/BoostBadge";
-import { useBoostedIds } from "@/hooks/useBoosts";
+
 
 const fromTable = (table: string) => supabase.from(table as any);
 
@@ -25,7 +24,7 @@ const StorePage = () => {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("all");
   const { followerCount, isFollowing, toggleFollow } = useStoreFollowers(id || null);
-  const boostedProductIds = useBoostedIds("product");
+  
 
   // Best seller: products that appear in order_items most
   const [bestSellerIds, setBestSellerIds] = useState<Set<string>>(new Set());
@@ -235,7 +234,6 @@ const StorePage = () => {
                   className="min-w-[140px] rounded-2xl bg-card border border-border overflow-hidden shrink-0 petkeep-card-hover cursor-pointer">
                   <div className="relative">
                     <ProductImage src={p.image_url} alt={p.name} category={p.category} size="lg" aspectRatio="square" className="rounded-t-2xl" />
-                    {boostedProductIds.has(p.id) && <div className="absolute top-1.5 left-1.5"><BoostBadge /></div>}
                   </div>
                   <div className="p-2">
                     <p className="text-[10px] font-bold truncate">{p.name}</p>

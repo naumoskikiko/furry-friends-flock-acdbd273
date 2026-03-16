@@ -9,8 +9,7 @@ import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import BusinessDashboard from "@/components/business/BusinessDashboard";
 import ProductImage from "@/components/marketplace/ProductImage";
-import BoostBadge from "@/components/marketplace/BoostBadge";
-import { useBoostedIds } from "@/hooks/useBoosts";
+import { useRankedBusinesses, useRankedProducts } from "@/hooks/useRankedBusinesses";
 
 const MarketplacePage = () => {
   const { profile } = useAuth();
@@ -37,16 +36,19 @@ const MarketplacePage = () => {
     if (q.length >= 2 || q.length === 0) setSearchQuery(q);
   };
 
-  const featured = businesses.filter((b) => b.avg_rating >= 4.0).slice(0, 6);
-  const popularProducts = [...products].sort((a, b) => b.price - a.price).slice(0, 6);
   const isBusiness = profile?.role === "business";
   const { isAdmin } = useIsAdmin();
   const { itemCount, totalPrice, addToCart } = useCart();
   const { business: myBusiness, loading: myBizLoading } = useMyBusiness();
   const hasStore = !!myBusiness;
   const canManageStore = isBusiness || isAdmin;
-  const boostedProductIds = useBoostedIds("product");
-  const boostedStoreIds = useBoostedIds("store");
+
+  // Apply ranking algorithm (boost affects order, not visual)
+  const rankedBusinesses = useRankedBusinesses(businesses);
+  const rankedProducts = useRankedProducts(products);
+
+  const featured = rankedBusinesses.filter((b) => b.avg_rating >= 4.0).slice(0, 6);
+  const popularProducts = rankedProducts.slice(0, 6);
 
   const handleQuickAdd = async (productId: string, productName: string) => {
     try {
@@ -166,7 +168,6 @@ const MarketplacePage = () => {
                           <div className="flex items-center gap-1">
                             <p className="text-xs font-bold truncate">{b.business_name}</p>
                             {b.is_verified && <BadgeCheck className="h-3 w-3 text-primary shrink-0" />}
-                            {boostedStoreIds.has(b.id) && <BoostBadge />}
                           </div>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
@@ -195,7 +196,6 @@ const MarketplacePage = () => {
                     <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
                       <div className="relative cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
                         <ProductImage src={p.image_url} alt={p.name} category={p.category} size="lg" aspectRatio="square" className="rounded-none" />
-                        {boostedProductIds.has(p.id) && <div className="absolute top-2 left-2"><BoostBadge /></div>}
                       </div>
                       <div className="p-2.5">
                         <h4 className="text-xs font-bold truncate cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>{p.name}</h4>
@@ -223,7 +223,7 @@ const MarketplacePage = () => {
                   <button onClick={() => setActiveTab("stores")} className="text-xs font-bold text-primary">See all</button>
                 </div>
                 <div className="space-y-2">
-                  {businesses.slice(0, 4).map((b) => {
+                  {rankedBusinesses.slice(0, 4).map((b) => {
                     const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
                     return (
                       <div
@@ -320,13 +320,12 @@ const MarketplacePage = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
-                  {products.map((p) => {
+                  {rankedProducts.map((p) => {
                     const outOfStock = p.stock !== null && p.stock !== undefined && p.stock <= 0;
                     return (
                       <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
                         <div className="relative cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
                           <ProductImage src={p.image_url} alt={p.name} category={p.category} size="lg" aspectRatio="square" className="rounded-none" />
-                          {boostedProductIds.has(p.id) && <div className="absolute top-2 left-2"><BoostBadge /></div>}
                           {outOfStock && (
                             <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
                               <span className="text-xs font-bold text-destructive">Out of stock</span>
@@ -393,7 +392,7 @@ const MarketplacePage = () => {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {businesses.map((b) => {
+                  {rankedBusinesses.map((b) => {
                     const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
                     return (
                       <div
