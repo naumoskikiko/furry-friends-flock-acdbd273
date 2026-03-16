@@ -41,6 +41,7 @@ interface BlogCardProps {
 
 const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [liked, setLiked] = useState(post.is_liked);
   const [likesCount, setLikesCount] = useState(post.likes_count);
