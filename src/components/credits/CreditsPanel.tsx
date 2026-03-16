@@ -117,32 +117,6 @@ const CreditsPanel = () => {
         </CardContent>
       </Card>
 
-      {/* Spend Credits */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Gift className="h-4 w-4 text-primary" /> Spend Credits
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-[11px] text-muted-foreground mb-3">Credits are automatically applied at checkout to reduce your payment.</p>
-          <div className="grid grid-cols-2 gap-2">
-            {SPEND_OPTIONS.map((opt) => (
-              <Button
-                key={opt.key}
-                variant="outline"
-                size="sm"
-                className="flex flex-col h-auto py-3 px-2 text-xs"
-                disabled={spending || balance < opt.cost}
-                onClick={() => handleSpend(opt.key, opt.label)}
-              >
-                <span className="flex items-center gap-1 mb-1">{opt.icon} {opt.label}</span>
-                <Badge variant="secondary" className="text-[10px]">{opt.cost} credits</Badge>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Transaction History */}
       <Card>
