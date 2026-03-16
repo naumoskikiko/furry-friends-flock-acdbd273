@@ -3,7 +3,7 @@ import {
   X, ChevronLeft, Plus, Trash2, Clock, DollarSign, Save, Image as ImageIcon,
   Upload, Wallet, ArrowUpRight, MapPin, Zap, Menu,
   BarChart3, Calendar, Star, BadgeCheck, Shield, FileCheck, ShieldCheck,
-  MessageSquare, TrendingUp, Bell, Settings, Briefcase
+  MessageSquare, TrendingUp, Bell, Settings, Briefcase, Heart
 } from "lucide-react";
 import { useMyProvider, useProviderServices, useProviderAvailability, useProviderBookings, useProviderReviews, useProviderGallery, CATEGORIES, DAY_NAMES } from "@/hooks/useCare";
 import { useProviderBalance, useProviderPayments, useProviderPayouts } from "@/hooks/usePayments";
