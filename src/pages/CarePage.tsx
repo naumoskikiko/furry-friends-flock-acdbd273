@@ -183,7 +183,7 @@ const CarePage = () => {
                         <div className="flex items-center gap-1.5">
                           <h3 className="font-display text-base font-bold truncate">{p.business_name}</h3>
                           {p.is_verified && <BadgeCheck className="h-4 w-4 text-primary shrink-0" />}
-                          {boostedProviderIds.has(p.id) && <BoostBadge size="md" />}
+                          
                         </div>
                         <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                           <span className="flex items-center gap-0.5">
