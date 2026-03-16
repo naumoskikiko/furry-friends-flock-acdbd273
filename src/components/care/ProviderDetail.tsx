@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import {
   Star, BadgeCheck, MapPin, Clock, DollarSign,
-  Calendar, ChevronLeft, MessageSquare, AlertTriangle, Image as ImageIcon, Shield,
+  Calendar, ChevronLeft, MessageSquare, AlertTriangle, Image as ImageIcon, Shield, Coins,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/hooks/useCare";
 import { useProcessPayment, calculateFees } from "@/hooks/usePayments";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCredits } from "@/hooks/useCredits";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { getOrCreateConversation } from "@/hooks/useMessages";
