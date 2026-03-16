@@ -53,6 +53,15 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   const { user } = useAuth();
   const { toast } = useToast();
   const { earnCredits } = useCredits();
+  const navigate = useNavigate();
+
+  const goToProfile = (userId: string) => {
+    if (user?.id === userId) {
+      navigate("/profile");
+    } else {
+      navigate(`/user/${userId}`);
+    }
+  };
 
   const [liked, setLiked] = useState(post.is_liked);
   const [likesCount, setLikesCount] = useState(post.likes_count);
