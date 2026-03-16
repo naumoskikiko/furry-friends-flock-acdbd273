@@ -57,14 +57,7 @@ const StoriesBar = () => {
           {/* Own story button */}
           <button
             className="flex flex-col items-center gap-1"
-            onClick={() => {
-              if (hasOwnStory) {
-                const idx = storyGroups.findIndex((g) => g.user_id === user?.id);
-                if (idx >= 0) openStory(idx);
-              } else {
-                setCreateOpen(true);
-              }
-            }}
+            onClick={() => setCreateOpen(true)}
           >
             <div className={`flex h-16 w-16 items-center justify-center rounded-full p-[2px] ${hasOwnStory ? "bg-gradient-to-br from-primary via-petkeep-orange-light to-accent" : "bg-secondary"}`}>
               <div className="relative flex h-full w-full items-center justify-center rounded-full bg-card">
@@ -73,15 +66,32 @@ const StoriesBar = () => {
                 ) : (
                   <span className="font-display text-sm font-bold">{initials}</span>
                 )}
-                {!hasOwnStory && (
-                  <div className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
-                    <Plus className="h-3 w-3" />
-                  </div>
-                )}
+                <div className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
+                  <Plus className="h-3 w-3" />
+                </div>
               </div>
             </div>
             <span className="w-16 truncate text-center text-[10px] font-medium">Your Story</span>
           </button>
+
+          {/* Own stories (if any) */}
+          {hasOwnStory && (() => {
+            const ownGroup = storyGroups.find((g) => g.user_id === user?.id);
+            const ownIndex = storyGroups.indexOf(ownGroup!);
+            return (
+              <button
+                className="flex flex-col items-center gap-1"
+                onClick={() => openStory(ownIndex)}
+              >
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary via-petkeep-orange-light to-accent p-[2px]">
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-card text-xs font-bold text-muted-foreground">
+                    {ownGroup!.stories.length}
+                  </div>
+                </div>
+                <span className="w-16 truncate text-center text-[10px] font-medium">View</span>
+              </button>
+            );
+          })()}
 
           {/* Other stories */}
           {storyGroups
