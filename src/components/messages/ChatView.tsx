@@ -242,32 +242,48 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
       )}
 
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-border px-3 py-3">
-        <button onClick={onBack} className="rounded-full p-1.5 hover:bg-secondary">
+      <div className="flex items-center gap-2 border-b border-border bg-card/95 backdrop-blur-md px-2 py-2.5">
+        <button onClick={onBack} className="shrink-0 rounded-full p-2 hover:bg-secondary active:scale-95 transition-transform">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <button onClick={() => navigate(user?.id === other.user_id ? "/profile" : `/user/${other.user_id}`)} className="flex items-center gap-3 min-w-0">
-          <div className="relative">
-            <Avatar className="h-9 w-9">
+
+        <button
+          onClick={() => navigate(user?.id === other.user_id ? "/profile" : `/user/${other.user_id}`)}
+          className="flex flex-1 items-center gap-3 min-w-0 rounded-xl px-1 py-1 hover:bg-secondary/50 transition-colors"
+        >
+          <div className="relative shrink-0">
+            <Avatar className="h-10 w-10 ring-2 ring-border">
               <AvatarImage src={other.avatar_url || undefined} />
               <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-xs font-bold text-primary-foreground">
                 {initials}
               </AvatarFallback>
             </Avatar>
             {activity.isOnline && (
-              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-card" />
+              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-500 ring-2 ring-card" />
             )}
           </div>
           <div className="flex-1 min-w-0 text-left">
-            <p className="text-sm font-bold leading-tight truncate">{other.full_name}</p>
-            <p className="text-[10px] text-muted-foreground">
-              {other.username && `@${other.username} · `}{activity.label}
+            <p className="text-[15px] font-bold leading-tight truncate">{other.full_name}</p>
+            <p className="text-[11px] leading-tight mt-0.5">
+              {typingUsers.length > 0 ? (
+                <span className="text-primary font-semibold animate-pulse">Typing…</span>
+              ) : activity.isOnline ? (
+                <span className="text-green-600 dark:text-green-400 font-medium">Online</span>
+              ) : (
+                <span className="text-muted-foreground">{activity.label}</span>
+              )}
             </p>
           </div>
         </button>
-        <button onClick={() => setShowSearch(!showSearch)} className="rounded-full p-1.5 hover:bg-secondary">
-          {showSearch ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
-        </button>
+
+        <div className="flex items-center gap-0.5 shrink-0">
+          <button onClick={() => setShowSearch(!showSearch)} className="rounded-full p-2 hover:bg-secondary active:scale-95 transition-transform">
+            {showSearch ? <X className="h-[18px] w-[18px]" /> : <Search className="h-[18px] w-[18px]" />}
+          </button>
+          <button className="rounded-full p-2 hover:bg-secondary active:scale-95 transition-transform">
+            <MoreVertical className="h-[18px] w-[18px]" />
+          </button>
+        </div>
       </div>
 
       {/* Search */}
