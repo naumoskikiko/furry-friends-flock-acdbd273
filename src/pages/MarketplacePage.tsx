@@ -392,7 +392,7 @@ const MarketplacePage = () => {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {businesses.map((b) => {
+                  {rankedBusinesses.map((b) => {
                     const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
                     return (
                       <div
