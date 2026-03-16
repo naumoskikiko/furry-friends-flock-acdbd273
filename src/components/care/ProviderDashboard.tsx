@@ -3,7 +3,7 @@ import {
   X, ChevronLeft, Plus, Trash2, Clock, DollarSign, Save, Image as ImageIcon,
   Upload, Wallet, ArrowUpRight, MapPin, Zap, Menu,
   BarChart3, Calendar, Star, BadgeCheck, Shield, FileCheck, ShieldCheck,
-  MessageSquare, TrendingUp, Bell, Settings, Briefcase
+  MessageSquare, TrendingUp, Bell, Settings, Briefcase, Heart
 } from "lucide-react";
 import { useMyProvider, useProviderServices, useProviderAvailability, useProviderBookings, useProviderReviews, useProviderGallery, CATEGORIES, DAY_NAMES } from "@/hooks/useCare";
 import { useProviderBalance, useProviderPayments, useProviderPayouts } from "@/hooks/usePayments";
@@ -20,6 +20,7 @@ import CareEarningsTab from "./tabs/CareEarningsTab";
 import CareReviewsTab from "./tabs/CareReviewsTab";
 import CareAnalyticsTab from "./tabs/CareAnalyticsTab";
 import CareNotificationsTab from "./tabs/CareNotificationsTab";
+import PetMatchTab from "./tabs/PetMatchTab";
 
 const NORTH_MACEDONIA_TOWNS = [
   "Skopje", "Bitola", "Kumanovo", "Tetovo", "Ohrid", "Prilep", "Veles", "Štip",
@@ -34,7 +35,7 @@ interface ProviderDashboardProps {
   onClose: () => void;
 }
 
-type TabKey = "overview" | "bookings" | "services" | "hours" | "reviews" | "earnings" | "verification" | "settings" | "analytics" | "notifications";
+type TabKey = "overview" | "bookings" | "services" | "hours" | "reviews" | "earnings" | "verification" | "settings" | "analytics" | "notifications" | "petmatch";
 
 const tabs: { key: TabKey; label: string; icon: any }[] = [
   { key: "overview", label: "Overview", icon: BarChart3 },
@@ -45,6 +46,7 @@ const tabs: { key: TabKey; label: string; icon: any }[] = [
   { key: "reviews", label: "Reviews", icon: Star },
   { key: "analytics", label: "Analytics", icon: TrendingUp },
   { key: "verification", label: "Verification", icon: ShieldCheck },
+  { key: "petmatch", label: "PetMatch", icon: Heart },
   { key: "settings", label: "Settings", icon: Settings },
   { key: "notifications", label: "Notifications", icon: Bell },
 ];
@@ -233,6 +235,8 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
         return <CareAnalyticsTab provider={provider} bookings={bookings} reviews={reviews} payments={providerPayments} />;
       case "notifications":
         return <CareNotificationsTab bookings={bookings} reviews={reviews} isFullyVerified={isFullyVerified} pendingVerifications={pendingCount} />;
+      case "petmatch":
+        return <PetMatchTab />;
 
       case "hours":
         return (
