@@ -41,6 +41,7 @@ const CheckoutPage = () => {
   const { createOrder } = useCreateOrder();
   const { applyCoupon, incrementUsage, applying } = useApplyCoupon();
   const { defaultMethod, saveCard, loading: paymentLoading } = usePaymentMethods();
+  const { balance: creditBalance, applyCreditsToPayment } = useCredits();
 
   const [step, setStep] = useState<"checkout" | "confirmed">("checkout");
   const [shipping, setShipping] = useState<ShippingInfo>({
