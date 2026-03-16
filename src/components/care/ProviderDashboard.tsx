@@ -46,7 +46,6 @@ const tabs: { key: TabKey; label: string; icon: any }[] = [
   { key: "reviews", label: "Reviews", icon: Star },
   { key: "analytics", label: "Analytics", icon: TrendingUp },
   { key: "verification", label: "Verification", icon: ShieldCheck },
-  { key: "petmatch", label: "PetMatch", icon: Heart },
   { key: "settings", label: "Settings", icon: Settings },
   { key: "notifications", label: "Notifications", icon: Bell },
 ];
