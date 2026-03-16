@@ -1,12 +1,22 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, MapPin, Grid3X3, Star, UserPlus, UserCheck, MessageCircle } from "lucide-react";
+import {
+  ArrowLeft, MapPin, Grid3X3, UserPlus, UserCheck, MessageCircle,
+  Share2, BadgeCheck, PawPrint, Tag, Star, ChevronRight, Briefcase,
+} from "lucide-react";
 import PostGrid from "@/components/profile/PostGrid";
+import PetCard from "@/components/profile/PetCard";
+import PetProfileModal from "@/components/profile/PetProfileModal";
+import FollowListModal from "@/components/profile/FollowListModal";
 import { getOrCreateConversation } from "@/hooks/useMessages";
+import { createNotification } from "@/hooks/useNotifications";
+import { animalTypes } from "@/data/petBreeds";
+
+type TabType = "posts" | "pets" | "tagged";
 
 const UserProfilePage = () => {
   const { username } = useParams<{ username: string }>();
@@ -16,18 +26,33 @@ const UserProfilePage = () => {
 
   const [profile, setProfile] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
+  const [pets, setPets] = useState<any[]>([]);
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [petCount, setPetCount] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabType>("posts");
+  const [viewPet, setViewPet] = useState<any>(null);
+
+  // Provider / Business data
+  const [providerData, setProviderData] = useState<any>(null);
+  const [businessData, setBusinessData] = useState<any>(null);
+
+  // Follow list
+  const [followListOpen, setFollowListOpen] = useState(false);
+  const [followListType, setFollowListType] = useState<"followers" | "following">("followers");
+
+  // Swipe tabs
+  const tabTouchRef = useRef({ x: 0, time: 0 });
+  const tabs: TabType[] = ["posts", "pets", "tagged"];
 
   const fetchProfile = useCallback(async () => {
     if (!username) return;
     setLoading(true);
 
-    // Try by username first, then by user_id
-    let profileData: any = null;
     const cleanUsername = username.startsWith("@") ? username.slice(1) : username;
+    let profileData: any = null;
 
     const { data: byUsername } = await supabase
       .from("profiles")
@@ -38,7 +63,6 @@ const UserProfilePage = () => {
     if (byUsername) {
       profileData = byUsername;
     } else {
-      // Try by user_id
       const { data: byId } = await supabase
         .from("profiles")
         .select("*")
@@ -54,15 +78,22 @@ const UserProfilePage = () => {
 
     setProfile(profileData);
 
-    const [followers, following, postsRes] = await Promise.all([
+    const [followers, following, postsRes, petsRes, providerRes, businessRes] = await Promise.all([
       supabase.from("followers").select("id", { count: "exact", head: true }).eq("following_id", profileData.user_id),
       supabase.from("followers").select("id", { count: "exact", head: true }).eq("follower_id", profileData.user_id),
       supabase.from("posts").select("*").eq("user_id", profileData.user_id).order("created_at", { ascending: false }),
+      supabase.from("pets").select("*").eq("owner_id", profileData.user_id),
+      supabase.from("care_providers").select("*").eq("user_id", profileData.user_id).eq("is_suspended", false).eq("is_banned", false).maybeSingle(),
+      supabase.from("business_profiles").select("*").eq("user_id", profileData.user_id).eq("is_suspended", false).maybeSingle(),
     ]);
 
     setFollowerCount(followers.count || 0);
     setFollowingCount(following.count || 0);
     setPosts(postsRes.data || []);
+    setPets(petsRes.data || []);
+    setPetCount(petsRes.data?.length || 0);
+    setProviderData(providerRes.data || null);
+    setBusinessData(businessRes.data || null);
 
     if (user && user.id !== profileData.user_id) {
       const { data: followCheck } = await supabase
@@ -79,6 +110,12 @@ const UserProfilePage = () => {
 
   useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
+  useEffect(() => {
+    if (profile && user && profile.user_id === user.id) {
+      navigate("/profile", { replace: true });
+    }
+  }, [profile, user, navigate]);
+
   const handleFollow = async () => {
     if (!user || !profile) return;
     if (isFollowing) {
@@ -89,15 +126,49 @@ const UserProfilePage = () => {
       await supabase.from("followers").insert({ follower_id: user.id, following_id: profile.user_id });
       setIsFollowing(true);
       setFollowerCount((c) => c + 1);
+      createNotification(user.id, profile.user_id, "follow", "profile", profile.user_id, "started following you");
     }
   };
 
-  // If this is the current user's profile, redirect
-  useEffect(() => {
-    if (profile && user && profile.user_id === user.id) {
-      navigate("/profile", { replace: true });
+  const handleMessage = async () => {
+    if (!user || !profile) return;
+    try {
+      const convId = await getOrCreateConversation(profile.user_id);
+      navigate(`/messages?conversation=${convId}&userId=${profile.user_id}`);
+    } catch {
+      toast({ title: "Error", description: "Could not open chat", variant: "destructive" });
     }
-  }, [profile, user, navigate]);
+  };
+
+  const handleShare = () => {
+    const uname = profile?.username || profile?.user_id;
+    const url = `${window.location.origin}/user/${uname}`;
+    if (navigator.share) {
+      navigator.share({ title: profile?.full_name, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url);
+      toast({ title: "Profile link copied!" });
+    }
+  };
+
+  const openFollowList = (type: "followers" | "following") => {
+    setFollowListType(type);
+    setFollowListOpen(true);
+  };
+
+  // Tab swipe handlers
+  const handleTabTouchStart = (e: React.TouchEvent) => {
+    tabTouchRef.current = { x: e.touches[0].clientX, time: Date.now() };
+  };
+  const handleTabTouchEnd = (e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - tabTouchRef.current.x;
+    const dt = Date.now() - tabTouchRef.current.time;
+    if (dt < 400 && Math.abs(dx) > 60) {
+      const idx = tabs.indexOf(activeTab);
+      if (dx < 0 && idx < tabs.length - 1) setActiveTab(tabs[idx + 1]);
+      if (dx > 0 && idx > 0) setActiveTab(tabs[idx - 1]);
+    }
+  };
 
   if (loading) {
     return (
@@ -127,52 +198,74 @@ const UserProfilePage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg">
-        <div className="flex items-center gap-3 px-4 pt-4">
-          <button onClick={() => navigate(-1)} className="rounded-full p-1.5 hover:bg-secondary">
+      <div className="mx-auto max-w-lg animate-fade-in">
+        {/* Top bar */}
+        <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+          <button onClick={() => navigate(-1)} className="rounded-full p-1.5 hover:bg-secondary transition-colors">
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="font-display text-lg font-extrabold">
+          <h1 className="font-display text-lg font-extrabold flex items-center gap-1.5">
             @{profile.username || profile.user_id.slice(0, 8)}
+            {profile.role === "verified" && <BadgeCheck className="h-4.5 w-4.5 text-primary" />}
           </h1>
         </div>
 
-        <div className="flex flex-col items-center px-4 pt-4">
-          {profile.avatar_url ? (
-            <img src={profile.avatar_url} alt="Avatar" className="h-24 w-24 rounded-full object-cover" />
-          ) : (
-            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent font-display text-3xl font-bold text-primary-foreground">
-              {initials}
+        {/* Profile header - Instagram style */}
+        <div className="px-4 pt-2">
+          <div className="flex items-start gap-5">
+            {/* Avatar */}
+            <div className="shrink-0">
+              {profile.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt="Avatar"
+                  className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/20"
+                />
+              ) : (
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent font-display text-2xl font-bold text-primary-foreground">
+                  {initials}
+                </div>
+              )}
             </div>
-          )}
-          <h2 className="mt-3 font-display text-xl font-extrabold">{displayName}</h2>
-          {profile.location && (
-            <p className="mt-0.5 text-xs text-muted-foreground flex items-center gap-1">
-              <MapPin className="h-3 w-3" /> {profile.location}
-            </p>
-          )}
-          <p className="mt-1 text-sm text-center max-w-xs">{profile.bio || "No bio yet"}</p>
+
+            {/* Stats row */}
+            <div className="flex-1 flex justify-around pt-2">
+              <div className="text-center">
+                <p className="font-display text-lg font-extrabold">{posts.length}</p>
+                <p className="text-[10px] text-muted-foreground">Posts</p>
+              </div>
+              <div className="text-center">
+                <p className="font-display text-lg font-extrabold">{petCount}</p>
+                <p className="text-[10px] text-muted-foreground">Pets</p>
+              </div>
+              <button onClick={() => openFollowList("followers")} className="text-center">
+                <p className="font-display text-lg font-extrabold">{followerCount}</p>
+                <p className="text-[10px] text-muted-foreground">Followers</p>
+              </button>
+              <button onClick={() => openFollowList("following")} className="text-center">
+                <p className="font-display text-lg font-extrabold">{followingCount}</p>
+                <p className="text-[10px] text-muted-foreground">Following</p>
+              </button>
+            </div>
+          </div>
+
+          {/* Name, bio, location */}
+          <div className="mt-3">
+            <p className="font-display text-sm font-extrabold">{displayName}</p>
+            {profile.bio && <p className="mt-0.5 text-sm text-foreground">{profile.bio}</p>}
+            {profile.location && (
+              <p className="mt-0.5 text-xs text-muted-foreground flex items-center gap-1">
+                <MapPin className="h-3 w-3" /> {profile.location}
+              </p>
+            )}
+          </div>
         </div>
 
-        <div className="mt-4 flex justify-center gap-8">
-          <div className="text-center">
-            <p className="font-display text-lg font-extrabold">{posts.length}</p>
-            <p className="text-[10px] text-muted-foreground">Posts</p>
-          </div>
-          <div className="text-center">
-            <p className="font-display text-lg font-extrabold">{followerCount}</p>
-            <p className="text-[10px] text-muted-foreground">Followers</p>
-          </div>
-          <div className="text-center">
-            <p className="font-display text-lg font-extrabold">{followingCount}</p>
-            <p className="text-[10px] text-muted-foreground">Following</p>
-          </div>
-        </div>
-
+        {/* Action buttons */}
         <div className="mt-3 px-4 flex gap-2">
           <button
             onClick={handleFollow}
-            className={`flex-1 rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-2 ${
+            className={`flex-1 rounded-xl py-2 text-sm font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.97] ${
               isFollowing
                 ? "bg-secondary text-secondary-foreground"
                 : "petkeep-gradient text-primary-foreground"
@@ -181,29 +274,197 @@ const UserProfilePage = () => {
             {isFollowing ? <><UserCheck className="h-4 w-4" /> Following</> : <><UserPlus className="h-4 w-4" /> Follow</>}
           </button>
           <button
-            onClick={async () => {
-              if (!user || !profile) return;
-              try {
-                await getOrCreateConversation(profile.user_id);
-                navigate("/messages", { state: { openChat: profile.user_id } });
-              } catch (e) {
-                toast({ title: "Error", description: "Could not open chat", variant: "destructive" });
-              }
-            }}
-            className="rounded-xl py-2.5 px-4 text-sm font-bold flex items-center justify-center gap-2 bg-secondary text-secondary-foreground"
+            onClick={handleMessage}
+            className="flex-1 rounded-xl py-2 text-sm font-bold flex items-center justify-center gap-1.5 bg-secondary text-secondary-foreground transition-all active:scale-[0.97]"
           >
-            <MessageCircle className="h-4 w-4" />
+            <MessageCircle className="h-4 w-4" /> Message
+          </button>
+          <button
+            onClick={handleShare}
+            className="rounded-xl py-2 px-3.5 text-sm font-bold flex items-center justify-center bg-secondary text-secondary-foreground transition-all active:scale-[0.97]"
+          >
+            <Share2 className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="flex border-t border-border mt-4">
-          <div className="flex-1 py-3 flex items-center justify-center border-b-2 border-foreground">
-            <Grid3X3 className="h-5 w-5" />
+        {/* Provider card */}
+        {providerData && (
+          <button
+            onClick={() => navigate("/care")}
+            className="mx-4 mt-3 flex items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left transition-all active:scale-[0.98]"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Briefcase className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold truncate">{providerData.business_name}</p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="flex items-center gap-0.5">
+                  <Star className="h-3 w-3 fill-primary text-primary" />
+                  {Number(providerData.avg_rating).toFixed(1)}
+                </span>
+                <span>({providerData.total_reviews} reviews)</span>
+                {providerData.is_verified && <BadgeCheck className="h-3 w-3 text-primary" />}
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+        )}
+
+        {/* Business card */}
+        {businessData && (
+          <button
+            onClick={() => navigate(`/store/${businessData.id}`)}
+            className="mx-4 mt-3 flex items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left transition-all active:scale-[0.98]"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 text-accent">
+              {businessData.logo_url ? (
+                <img src={businessData.logo_url} alt="" className="h-10 w-10 rounded-xl object-cover" />
+              ) : (
+                <Briefcase className="h-5 w-5" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold truncate">{businessData.business_name}</p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="flex items-center gap-0.5">
+                  <Star className="h-3 w-3 fill-primary text-primary" />
+                  {Number(businessData.avg_rating).toFixed(1)}
+                </span>
+                <span>({businessData.total_reviews} reviews)</span>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+        )}
+
+        {/* Pet highlights row */}
+        {pets.length > 0 && (
+          <div className="mt-3 px-4">
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1">
+              {pets.map((pet) => (
+                <PetCard key={pet.id} pet={pet} onClick={setViewPet} />
+              ))}
+            </div>
           </div>
+        )}
+
+        {/* Tabs */}
+        <div className="flex border-b border-border mt-3">
+          <button
+            onClick={() => setActiveTab("posts")}
+            className={`flex-1 py-3 flex items-center justify-center transition-colors ${
+              activeTab === "posts" ? "border-b-2 border-foreground" : "text-muted-foreground"
+            }`}
+          >
+            <Grid3X3 className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => setActiveTab("pets")}
+            className={`flex-1 py-3 flex items-center justify-center transition-colors ${
+              activeTab === "pets" ? "border-b-2 border-foreground" : "text-muted-foreground"
+            }`}
+          >
+            <PawPrint className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => setActiveTab("tagged")}
+            className={`flex-1 py-3 flex items-center justify-center transition-colors ${
+              activeTab === "tagged" ? "border-b-2 border-foreground" : "text-muted-foreground"
+            }`}
+          >
+            <Tag className="h-5 w-5" />
+          </button>
         </div>
 
-        <PostGrid posts={posts} onRefresh={fetchProfile} />
+        {/* Tab content */}
+        <div
+          onTouchStart={handleTabTouchStart}
+          onTouchEnd={handleTabTouchEnd}
+          className="min-h-[30vh]"
+        >
+          {activeTab === "posts" && (
+            <div className="animate-fade-in">
+              {posts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Grid3X3 className="h-12 w-12 text-muted-foreground/30 mb-3" />
+                  <p className="text-sm font-semibold text-muted-foreground">No posts yet</p>
+                </div>
+              ) : (
+                <PostGrid posts={posts} onRefresh={fetchProfile} />
+              )}
+            </div>
+          )}
+
+          {activeTab === "pets" && (
+            <div className="animate-fade-in px-4 py-4">
+              {pets.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <PawPrint className="h-12 w-12 text-muted-foreground/30 mb-3" />
+                  <p className="text-sm font-semibold text-muted-foreground">No pets added yet</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {pets.map((pet) => {
+                    const emoji = animalTypes.find(a => a.value === pet.animal_type)?.emoji || "🐾";
+                    return (
+                      <button
+                        key={pet.id}
+                        onClick={() => setViewPet(pet)}
+                        className="rounded-2xl border border-border bg-card overflow-hidden text-left transition-all active:scale-[0.97]"
+                      >
+                        {pet.photo_url ? (
+                          <img src={pet.photo_url} alt={pet.name} className="w-full aspect-square object-cover" />
+                        ) : (
+                          <div className="w-full aspect-square bg-secondary flex items-center justify-center text-4xl">
+                            {emoji}
+                          </div>
+                        )}
+                        <div className="p-3">
+                          <p className="font-display text-sm font-bold truncate">{pet.name}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {pet.breed || pet.animal_type}
+                            {pet.age ? ` · ${pet.age}` : ""}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "tagged" && (
+            <div className="animate-fade-in flex flex-col items-center justify-center py-16 text-center">
+              <Tag className="h-12 w-12 text-muted-foreground/30 mb-3" />
+              <p className="text-sm font-semibold text-muted-foreground">No tagged posts</p>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Pet profile modal */}
+      {viewPet && (
+        <PetProfileModal
+          pet={viewPet}
+          open={!!viewPet}
+          onOpenChange={(open) => !open && setViewPet(null)}
+          isOwner={false}
+          onEdit={() => {}}
+          onDelete={() => {}}
+        />
+      )}
+
+      {/* Follow list modal */}
+      {profile && (
+        <FollowListModal
+          open={followListOpen}
+          onOpenChange={setFollowListOpen}
+          userId={profile.user_id}
+          type={followListType}
+        />
+      )}
     </AppLayout>
   );
 };
