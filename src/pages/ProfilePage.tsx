@@ -305,7 +305,7 @@ const ProfilePage = () => {
         {activeTab === "posts" && <PostGrid posts={posts} onRefresh={fetchData} />}
         {activeTab === "saved" && <SavedPostsGrid />}
         {activeTab === "liked" && <LikedPostsGrid />}
-        {activeTab === "credits" && <CreditsPanel />}
+        
         {activeTab === "tagged" && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <span className="text-4xl">🏷️</span>
