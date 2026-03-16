@@ -142,6 +142,11 @@ const CheckoutPage = () => {
 
       const id = await createOrder(cartItems, shipping);
       
+      // Apply credits discount
+      if (creditsApplied > 0) {
+        await applyCreditsToPayment(creditsApplied);
+      }
+
       // Increment coupon usage
       if (appliedCoupon?.coupon) {
         await incrementUsage(appliedCoupon.coupon.id, appliedCoupon.coupon.used_count);
