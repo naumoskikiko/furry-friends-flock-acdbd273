@@ -189,6 +189,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     await supabase.from("posts").update({ comments_count: commentsCount + 1 }).eq("id", post.id);
     setCommentsCount((c) => c + 1);
     createNotification(user.id, post.user_id, "comment", "post", post.id, "commented on your post");
+    earnCredits("post_comment");
     setNewComment("");
     openComments();
   };

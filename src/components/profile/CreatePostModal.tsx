@@ -85,6 +85,7 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Posted!" });
+      earnCredits("create_post");
       setCaption(""); setLocation(""); setPetId(null); setMediaUrl(""); setMediaType("image");
       onPostCreated();
       onOpenChange(false);
