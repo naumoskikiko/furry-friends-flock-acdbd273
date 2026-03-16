@@ -61,6 +61,7 @@ const ProfessionalMode = () => {
     { id: "care-verification" as const, label: "Care Verification", desc: "Review provider verification requests", icon: ShieldCheck, color: "bg-primary/10 text-primary" },
     { id: "care-management" as const, label: "Care Management", desc: "Manage providers, reviews & reports", icon: Users, color: "bg-primary/10 text-primary" },
     { id: "marketplace-control" as const, label: "Marketplace Control", desc: "Manage stores, products & listings", icon: Store, color: "bg-primary/10 text-primary" },
+    { id: "petmatch" as const, label: "PetMatch Management", desc: "Verify breeders, reports & analytics", icon: Heart, color: "bg-pink-500/10 text-pink-500" },
     { id: "user-management" as const, label: "User Management", desc: "View users, manage accounts & content", icon: UserCog, color: "bg-blue-500/10 text-blue-500" },
     { id: "promotions" as const, label: "Promotion Management", desc: "Boosts, pricing & revenue tracking", icon: Zap, color: "bg-amber-500/10 text-amber-500" },
     { id: "financial" as const, label: "Financial Control", desc: "Revenue, commissions & transactions", icon: DollarSign, color: "bg-emerald-500/10 text-emerald-600" },
