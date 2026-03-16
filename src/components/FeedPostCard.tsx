@@ -290,7 +290,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     <article className="border-b border-border bg-card">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-3">
+        <button className="flex items-center gap-3" onClick={() => goToProfile(post.user_id)}>
           {post.avatar_url ? (
             <img src={post.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
           ) : (
@@ -298,7 +298,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
               {initials}
             </div>
           )}
-          <div>
+          <div className="text-left">
             <span className="text-sm font-bold">{post.username}</span>
             {post.pet_name && (
               <p className="text-xs text-muted-foreground">
@@ -306,7 +306,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
               </p>
             )}
           </div>
-        </div>
+        </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-1 text-muted-foreground">
