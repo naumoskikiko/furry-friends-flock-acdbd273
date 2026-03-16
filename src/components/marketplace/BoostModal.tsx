@@ -36,65 +36,69 @@ const BoostModal = ({ type, targetId, targetName, onClose }: BoostModalProps) =>
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-card border border-border p-5 space-y-4 animate-in slide-in-from-bottom-4"
+        className="w-full max-w-md max-h-[85vh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-card border border-border animate-in slide-in-from-bottom-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/10">
-              <Zap className="h-4.5 w-4.5 text-amber-500" fill="currentColor" />
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/10">
+                <Zap className="h-4.5 w-4.5 text-amber-500" fill="currentColor" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold">Boost {typeLabel}</h3>
+                <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">{targetName}</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-bold">Boost {typeLabel}</h3>
-              <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">{targetName}</p>
-            </div>
+            <button onClick={onClose} className="rounded-full p-1.5 hover:bg-secondary">
+              <X className="h-4 w-4" />
+            </button>
           </div>
-          <button onClick={onClose} className="rounded-full p-1.5 hover:bg-secondary">
-            <X className="h-4 w-4" />
-          </button>
+
+          <div className="rounded-xl bg-gradient-to-r from-amber-500/10 to-primary/10 p-3">
+            <p className="text-xs font-semibold">✨ Boost Benefits</p>
+            <ul className="text-[10px] text-muted-foreground mt-1 space-y-0.5">
+              <li>• Appears in featured/promoted sections</li>
+              <li>• Higher position in search results</li>
+              <li>• "Promoted" badge on card</li>
+            </ul>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-6">
+              <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full" />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs font-bold">Choose Duration</p>
+              {pricing.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setSelected(p.id)}
+                  className={`w-full flex items-center justify-between rounded-xl p-3 border-2 transition-all ${
+                    selected === p.id
+                      ? "border-amber-500 bg-amber-500/5"
+                      : "border-border hover:border-muted-foreground/30"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {selected === p.id && (
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-white">
+                        <Check className="h-3 w-3" />
+                      </div>
+                    )}
+                    <span className="text-sm font-semibold">{p.duration_label}</span>
+                  </div>
+                  <span className="text-sm font-extrabold text-primary">{p.price} MKD</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="rounded-xl bg-gradient-to-r from-amber-500/10 to-primary/10 p-3">
-          <p className="text-xs font-semibold">✨ Boost Benefits</p>
-          <ul className="text-[10px] text-muted-foreground mt-1 space-y-0.5">
-            <li>• Appears in featured/promoted sections</li>
-            <li>• Higher position in search results</li>
-            <li>• "Promoted" badge on card</li>
-          </ul>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center py-6">
-            <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full" />
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <p className="text-xs font-bold">Choose Duration</p>
-            {pricing.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setSelected(p.id)}
-                className={`w-full flex items-center justify-between rounded-xl p-3 border-2 transition-all ${
-                  selected === p.id
-                    ? "border-amber-500 bg-amber-500/5"
-                    : "border-border hover:border-muted-foreground/30"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  {selected === p.id && (
-      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-white">
-                      <Check className="h-3 w-3" />
-                    </div>
-                  )}
-                  <span className="text-sm font-semibold">{p.duration_label}</span>
-                </div>
-                <span className="text-sm font-extrabold text-primary">{p.price} MKD</span>
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className="sticky bottom-0 pt-3 pb-2 bg-card">
+        {/* Fixed bottom button */}
+        <div className="shrink-0 border-t border-border p-4 bg-card rounded-b-3xl">
           <button
             onClick={handleBoost}
             disabled={!selected || purchasing}
