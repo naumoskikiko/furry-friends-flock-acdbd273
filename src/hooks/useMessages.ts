@@ -503,8 +503,9 @@ export function useChatMessages(conversationId: string | null) {
   // Realtime
   useEffect(() => {
     if (!conversationId) return;
+    const channelName = `chat-${conversationId}-${Date.now()}`;
     const channel = supabase
-      .channel(`chat-${conversationId}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
@@ -535,9 +536,24 @@ export function useChatMessages(conversationId: string | null) {
           setMessages((prev) => prev.filter((m) => m.id !== deleted.id));
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "CHANNEL_ERROR") {
+          // Fallback: refetch messages on subscription error
+          setTimeout(() => fetchMessages(), 1000);
+        }
+      });
+
+    // Visibility change handler - refetch when tab becomes visible
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        fetchMessages();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
     return () => {
       supabase.removeChannel(channel);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [conversationId, user]);
 
