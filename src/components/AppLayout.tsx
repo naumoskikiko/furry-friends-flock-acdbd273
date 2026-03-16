@@ -5,10 +5,26 @@ import BottomNav from "./BottomNav";
 const TAB_PATHS = ["/", "/explore", "/marketplace", "/care", "/messages", "/profile"];
 const scrollCache: Record<string, number> = {};
 
+/** Check if an element or any ancestor is horizontally scrollable */
+function isInsideHorizontalScroller(el: EventTarget | null): boolean {
+  let node = el as HTMLElement | null;
+  while (node) {
+    if (node.scrollWidth > node.clientWidth + 4) {
+      const style = window.getComputedStyle(node);
+      const overflow = style.overflowX;
+      if (overflow === "auto" || overflow === "scroll" || node.classList.contains("overflow-x-auto") || node.classList.contains("scrollbar-hide")) {
+        return true;
+      }
+    }
+    node = node.parentElement;
+  }
+  return false;
+}
+
 const AppLayout = forwardRef<HTMLDivElement, { children: ReactNode }>(({ children }, ref) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const touchRef = useRef({ x: 0, y: 0, time: 0 });
+  const touchRef = useRef({ x: 0, y: 0, time: 0, blocked: false });
   const prevPathRef = useRef(location.pathname);
   const [slideClass, setSlideClass] = useState("");
   const currentIndex = TAB_PATHS.indexOf(location.pathname);
@@ -22,7 +38,6 @@ const AppLayout = forwardRef<HTMLDivElement, { children: ReactNode }>(({ childre
       const dir = currentIndex > prevIndex ? "swipe-slide-from-right" : "swipe-slide-from-left";
       setSlideClass(dir);
       const t = setTimeout(() => setSlideClass(""), 280);
-      // Restore scroll
       const cached = scrollCache[location.pathname];
       requestAnimationFrame(() => window.scrollTo(0, cached ?? 0));
       prevPathRef.current = location.pathname;
@@ -38,20 +53,20 @@ const AppLayout = forwardRef<HTMLDivElement, { children: ReactNode }>(({ childre
   }, [location.pathname]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, time: Date.now() };
+    const blocked = isInsideHorizontalScroller(e.target);
+    touchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, time: Date.now(), blocked };
   }, []);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (!isTabPage) return;
+    if (!isTabPage || touchRef.current.blocked) return;
     const startX = touchRef.current.x;
     const dx = e.changedTouches[0].clientX - startX;
     const dy = e.changedTouches[0].clientY - touchRef.current.y;
     const dt = Date.now() - touchRef.current.time;
     const screenWidth = window.innerWidth;
-    const EDGE_ZONE = 30; // px from screen edge
+    const EDGE_ZONE = 30;
     const startedFromLeftEdge = startX < EDGE_ZONE;
     const startedFromRightEdge = startX > screenWidth - EDGE_ZONE;
-    // Only trigger on edge swipes: must start near screen edge, be fast & horizontal-dominant
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.8 && dt < 400) {
       if (dx < 0 && startedFromRightEdge && currentIndex < TAB_PATHS.length - 1) {
         saveScroll();
