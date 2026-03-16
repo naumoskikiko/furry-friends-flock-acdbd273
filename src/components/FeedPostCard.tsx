@@ -52,6 +52,7 @@ interface Comment {
 const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { earnCredits } = useCredits();
   const [liked, setLiked] = useState(post.is_liked);
   const [likesCount, setLikesCount] = useState(post.likes_count);
   const [saved, setSaved] = useState(post.is_saved);
