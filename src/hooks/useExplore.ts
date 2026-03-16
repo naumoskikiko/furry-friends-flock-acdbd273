@@ -122,7 +122,7 @@ export function useExplore() {
     if (activeFilter !== "All") {
       const filterMap: Record<string, string[]> = {
         Sitters: ["Pet Sitter"],
-        Walkers: ["Dog Walker"],
+        Walkers: ["Pet Walker"],
         Vets: ["Vet Clinic"],
         Stores: ["Pet Shop"],
         Grooming: ["Grooming Salon"],

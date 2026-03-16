@@ -27,7 +27,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
   park: "🌳",
   sitter: "🐕",
   grooming: "✂️",
-  walker: "🐕‍🦺",
+  walker: "🚶",
   cafe: "☕",
   hotel: "🏨",
   shelter: "🏠",

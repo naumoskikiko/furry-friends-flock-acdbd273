@@ -56,7 +56,7 @@ export const mockPosts: FeedPost[] = [
     comments: 41,
     timeAgo: "6h",
     liked: false,
-    hashtags: ["HuskyLove", "DogWalker", "StudentSitter"],
+    hashtags: ["HuskyLove", "PetWalker", "StudentSitter"],
   },
   {
     id: "4",
