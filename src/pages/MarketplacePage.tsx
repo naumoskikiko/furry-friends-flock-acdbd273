@@ -168,7 +168,6 @@ const MarketplacePage = () => {
                           <div className="flex items-center gap-1">
                             <p className="text-xs font-bold truncate">{b.business_name}</p>
                             {b.is_verified && <BadgeCheck className="h-3 w-3 text-primary shrink-0" />}
-                            {boostedStoreIds.has(b.id) && <BoostBadge />}
                           </div>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
