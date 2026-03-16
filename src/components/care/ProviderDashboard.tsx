@@ -35,7 +35,7 @@ interface ProviderDashboardProps {
   onClose: () => void;
 }
 
-type TabKey = "overview" | "bookings" | "services" | "hours" | "reviews" | "earnings" | "verification" | "settings" | "analytics" | "notifications" | "petmatch";
+type TabKey = "overview" | "bookings" | "services" | "hours" | "reviews" | "earnings" | "verification" | "settings" | "analytics" | "notifications";
 
 const tabs: { key: TabKey; label: string; icon: any }[] = [
   { key: "overview", label: "Overview", icon: BarChart3 },
