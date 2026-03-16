@@ -9,8 +9,7 @@ import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import BusinessDashboard from "@/components/business/BusinessDashboard";
 import ProductImage from "@/components/marketplace/ProductImage";
-import BoostBadge from "@/components/marketplace/BoostBadge";
-import { useBoostedIds } from "@/hooks/useBoosts";
+import { useRankedBusinesses, useRankedProducts } from "@/hooks/useRankedBusinesses";
 
 const MarketplacePage = () => {
   const { profile } = useAuth();
