@@ -22,6 +22,7 @@ import FollowListModal from "@/components/profile/FollowListModal";
 import CreateStoryModal from "@/components/stories/CreateStoryModal";
 import StoryViewer from "@/components/stories/StoryViewer";
 import { useStories } from "@/hooks/useStories";
+import CreditsPanel from "@/components/credits/CreditsPanel";
 
 const ProfilePage = () => {
   const { user, profile, refreshProfile } = useAuth();
