@@ -21,6 +21,7 @@ interface LikesListModalProps {
 
 const LikesListModal = ({ open, onOpenChange, postId }: LikesListModalProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [users, setUsers] = useState<LikeUser[]>([]);
   const [loading, setLoading] = useState(true);
 
