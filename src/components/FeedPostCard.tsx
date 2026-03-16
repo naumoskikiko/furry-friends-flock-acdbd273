@@ -10,7 +10,6 @@ import {
   VolumeX,
   Flag,
   UserMinus,
-  UserX,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +52,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   const { user } = useAuth();
   const { toast } = useToast();
   const { earnCredits } = useCredits();
+
   const [liked, setLiked] = useState(post.is_liked);
   const [likesCount, setLikesCount] = useState(post.likes_count);
   const [saved, setSaved] = useState(post.is_saved);
@@ -64,9 +64,18 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   const [likesListOpen, setLikesListOpen] = useState(false);
   const [muted, setMuted] = useState(true);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+
   const lastTapRef = useRef(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaContainerRef = useRef<HTMLDivElement>(null);
+  const likeInProgressRef = useRef(false);
+  const commentInProgressRef = useRef(false);
+
+  // Sync from parent props when they change (e.g. realtime updates)
+  useEffect(() => { setLiked(post.is_liked); }, [post.is_liked]);
+  useEffect(() => { setLikesCount(post.likes_count); }, [post.likes_count]);
+  useEffect(() => { setCommentsCount(post.comments_count); }, [post.comments_count]);
+  useEffect(() => { setSaved(post.is_saved); }, [post.is_saved]);
 
   const isVideo = post.post_type === "video" || (post.image_url && /\.(mp4|mov|webm)$/i.test(post.image_url));
   const initials = post.username.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
@@ -90,46 +99,64 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     return () => observer.disconnect();
   }, [isVideo]);
 
-  const performLike = useCallback(async () => {
-    if (!user || liked) return;
-    setLiked(true);
-    setLikesCount((c) => c + 1);
-    setShowHeartAnim(true);
-    await supabase.from("post_likes").insert({ post_id: post.id, user_id: user.id });
-    await supabase.from("posts").update({ likes_count: likesCount + 1 }).eq("id", post.id);
-    createNotification(user.id, post.user_id, "like", "post", post.id, "liked your post");
-    onLikeToggle(post.id, true);
-  }, [user, liked, post.id, post.user_id, likesCount, onLikeToggle]);
+  // Unified like handler with mutex to prevent race conditions
+  const toggleLike = useCallback(async () => {
+    if (!user || likeInProgressRef.current) return;
+    likeInProgressRef.current = true;
 
+    const wasLiked = liked;
+    const newLiked = !wasLiked;
+
+    // Optimistic UI update
+    setLiked(newLiked);
+    setLikesCount((c) => newLiked ? c + 1 : Math.max(0, c - 1));
+    if (newLiked) setShowHeartAnim(true);
+
+    try {
+      if (newLiked) {
+        // Insert like — unique constraint prevents duplicates; ignore conflict
+        const { error } = await supabase.from("post_likes").insert({ post_id: post.id, user_id: user.id });
+        if (error) {
+          // Duplicate or other error — revert
+          if (error.code !== "23505") {
+            setLiked(wasLiked);
+            setLikesCount((c) => Math.max(0, c - 1));
+            console.error("Like insert error:", error.message);
+          }
+          // 23505 = unique violation = already liked, keep UI as liked
+        } else {
+          // Success — send notification & credit
+          createNotification(user.id, post.user_id, "like", "post", post.id, "liked your post");
+          if (user.id !== post.user_id) {
+            earnCredits("post_like_received", post.id);
+          }
+        }
+      } else {
+        // Remove like
+        const { error } = await supabase.from("post_likes").delete().eq("post_id", post.id).eq("user_id", user.id);
+        if (error) {
+          // Revert on failure
+          setLiked(wasLiked);
+          setLikesCount((c) => c + 1);
+          console.error("Like delete error:", error.message);
+        }
+      }
+      // DB trigger updates posts.likes_count automatically — no manual update needed
+      onLikeToggle(post.id, newLiked);
+    } finally {
+      likeInProgressRef.current = false;
+    }
+  }, [user, liked, post.id, post.user_id, onLikeToggle, earnCredits]);
+
+  // Double-tap to like (only likes, doesn't unlike)
   const handleDoubleTap = useCallback(() => {
     const now = Date.now();
     if (now - lastTapRef.current < 350) {
-      performLike();
+      if (!liked) toggleLike();
+      else setShowHeartAnim(true); // Already liked, just show animation
     }
     lastTapRef.current = now;
-  }, [performLike]);
-
-  const toggleLike = async () => {
-    if (!user) return;
-    const newLiked = !liked;
-    setLiked(newLiked);
-    setLikesCount((c) => (newLiked ? c + 1 : Math.max(0, c - 1)));
-
-    if (newLiked) {
-      setShowHeartAnim(true);
-      await supabase.from("post_likes").insert({ post_id: post.id, user_id: user.id });
-      await supabase.from("posts").update({ likes_count: likesCount + 1 }).eq("id", post.id);
-      createNotification(user.id, post.user_id, "like", "post", post.id, "liked your post");
-      // Credit reward to post owner (not self-like)
-      if (user.id !== post.user_id) {
-        earnCredits("post_like_received", post.id);
-      }
-    } else {
-      await supabase.from("post_likes").delete().eq("post_id", post.id).eq("user_id", user.id);
-      await supabase.from("posts").update({ likes_count: Math.max(0, likesCount - 1) }).eq("id", post.id);
-    }
-    onLikeToggle(post.id, newLiked);
-  };
+  }, [liked, toggleLike]);
 
   const toggleSave = async () => {
     if (!user) return;
@@ -146,9 +173,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     onSaveToggle(post.id, newSaved);
   };
 
-  const sharePost = () => {
-    setShareModalOpen(true);
-  };
+  const sharePost = () => setShareModalOpen(true);
 
   const copyPostLink = () => {
     const url = `${window.location.origin}/post/${post.id}`;
@@ -184,22 +209,43 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   };
 
   const addComment = async () => {
-    if (!user || !newComment.trim()) return;
-    await supabase.from("post_comments").insert({ post_id: post.id, user_id: user.id, content: newComment.trim() });
-    await supabase.from("posts").update({ comments_count: commentsCount + 1 }).eq("id", post.id);
-    setCommentsCount((c) => c + 1);
-    createNotification(user.id, post.user_id, "comment", "post", post.id, "commented on your post");
-    earnCredits("post_comment");
+    if (!user || !newComment.trim() || commentInProgressRef.current) return;
+    commentInProgressRef.current = true;
+
+    const content = newComment.trim();
     setNewComment("");
-    openComments();
+
+    try {
+      const { error } = await supabase.from("post_comments").insert({
+        post_id: post.id,
+        user_id: user.id,
+        content,
+      });
+
+      if (error) {
+        console.error("Comment insert error:", error.message);
+        setNewComment(content); // Restore on failure
+      } else {
+        // DB trigger updates posts.comments_count automatically
+        setCommentsCount((c) => c + 1);
+        createNotification(user.id, post.user_id, "comment", "post", post.id, "commented on your post");
+        earnCredits("post_comment");
+        // Refresh comments list
+        openComments();
+      }
+    } finally {
+      commentInProgressRef.current = false;
+    }
   };
 
   const deleteComment = async (commentId: string) => {
-    await supabase.from("post_comments").delete().eq("id", commentId);
-    await supabase.from("posts").update({ comments_count: Math.max(0, commentsCount - 1) }).eq("id", post.id);
-    setCommentsCount((c) => Math.max(0, c - 1));
-    setComments((prev) => prev.filter((c) => c.id !== commentId));
-    toast({ title: "Comment deleted" });
+    const { error } = await supabase.from("post_comments").delete().eq("id", commentId);
+    if (!error) {
+      // DB trigger updates posts.comments_count automatically
+      setCommentsCount((c) => Math.max(0, c - 1));
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+      toast({ title: "Comment deleted" });
+    }
   };
 
   const canDeleteComment = (c: Comment) => user && (user.id === c.user_id || user.id === post.user_id);
