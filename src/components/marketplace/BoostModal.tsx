@@ -82,7 +82,7 @@ const BoostModal = ({ type, targetId, targetName, onClose }: BoostModalProps) =>
               >
                 <div className="flex items-center gap-2">
                   {selected === p.id && (
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-white">
+      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-white">
                       <Check className="h-3 w-3" />
                     </div>
                   )}
@@ -94,14 +94,16 @@ const BoostModal = ({ type, targetId, targetName, onClose }: BoostModalProps) =>
           </div>
         )}
 
-        <button
-          onClick={handleBoost}
-          disabled={!selected || purchasing}
-          className="w-full rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 text-white py-3.5 text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          <Zap className="h-4 w-4" fill="currentColor" />
-          {purchasing ? "Processing..." : selectedPricing ? `Boost for ${selectedPricing.price} MKD` : "Select a duration"}
-        </button>
+        <div className="sticky bottom-0 pt-3 pb-2 bg-card">
+          <button
+            onClick={handleBoost}
+            disabled={!selected || purchasing}
+            className="w-full rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 text-white py-3.5 text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <Zap className="h-4 w-4" fill="currentColor" />
+            {purchasing ? "Processing..." : selectedPricing ? `Boost for ${selectedPricing.price} MKD` : "Select a duration"}
+          </button>
+        </div>
       </div>
     </div>
   );
