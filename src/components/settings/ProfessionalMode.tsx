@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap, DollarSign, Sliders, TrendingUp, UserCog, Heart } from "lucide-react";
+import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap, DollarSign, Sliders, TrendingUp, UserCog, Heart, Coins } from "lucide-react";
 import SettingsMapManagement from "./SettingsMapManagement";
 import CareVerificationPanel from "./CareVerificationPanel";
 import CareManagementPanel from "./CareManagementPanel";
@@ -12,6 +12,7 @@ import PlatformAnalyticsPanel from "./PlatformAnalyticsPanel";
 import AlgorithmControlPanel from "./AlgorithmControlPanel";
 import FinancialControlPanel from "./FinancialControlPanel";
 import PetMatchManagementPanel from "./PetMatchManagementPanel";
+import CreditManagementPanel from "./CreditManagementPanel";
 import { useIsOwner } from "@/hooks/useIsOwner";
 
 type SubSection =
