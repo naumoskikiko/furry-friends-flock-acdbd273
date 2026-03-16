@@ -35,7 +35,7 @@ interface ProviderDashboardProps {
   onClose: () => void;
 }
 
-type TabKey = "overview" | "bookings" | "services" | "hours" | "reviews" | "earnings" | "verification" | "settings" | "analytics" | "notifications" | "petmatch";
+type TabKey = "overview" | "bookings" | "services" | "hours" | "reviews" | "earnings" | "verification" | "settings" | "analytics" | "notifications";
 
 const tabs: { key: TabKey; label: string; icon: any }[] = [
   { key: "overview", label: "Overview", icon: BarChart3 },
@@ -46,7 +46,6 @@ const tabs: { key: TabKey; label: string; icon: any }[] = [
   { key: "reviews", label: "Reviews", icon: Star },
   { key: "analytics", label: "Analytics", icon: TrendingUp },
   { key: "verification", label: "Verification", icon: ShieldCheck },
-  { key: "petmatch", label: "PetMatch", icon: Heart },
   { key: "settings", label: "Settings", icon: Settings },
   { key: "notifications", label: "Notifications", icon: Bell },
 ];
@@ -235,8 +234,6 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
         return <CareAnalyticsTab provider={provider} bookings={bookings} reviews={reviews} payments={providerPayments} />;
       case "notifications":
         return <CareNotificationsTab bookings={bookings} reviews={reviews} isFullyVerified={isFullyVerified} pendingVerifications={pendingCount} />;
-      case "petmatch":
-        return <PetMatchTab />;
 
       case "hours":
         return (
