@@ -8,8 +8,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  DropdownMenuTrigger } from
+"@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,13 +18,13 @@ import type { BlogPostData } from "./BlogCard";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
-const CATEGORY_META: Record<string, { label: string; icon: string }> = {
+const CATEGORY_META: Record<string, {label: string;icon: string;}> = {
   "pet-training": { label: "Pet Training", icon: "🎓" },
   "pet-health": { label: "Pet Health", icon: "🏥" },
   "nutrition": { label: "Nutrition", icon: "🍖" },
   "grooming": { label: "Grooming", icon: "✂️" },
   "adoption": { label: "Adoption", icon: "🏠" },
-  "pet-lifestyle": { label: "Pet Lifestyle", icon: "🐾" },
+  "pet-lifestyle": { label: "Pet Lifestyle", icon: "🐾" }
 };
 
 interface Comment {
@@ -79,20 +79,20 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
 
   const checkSaved = async () => {
     if (!user || !post) return;
-    const { data } = await fromTable("blog_saves")
-      .select("id")
-      .eq("blog_post_id", post.id)
-      .eq("user_id", user.id)
-      .maybeSingle();
+    const { data } = await fromTable("blog_saves").
+    select("id").
+    eq("blog_post_id", post.id).
+    eq("user_id", user.id).
+    maybeSingle();
     setSaved(!!data);
   };
 
   const loadComments = async () => {
     if (!post) return;
-    const { data } = await fromTable("blog_comments")
-      .select("*")
-      .eq("blog_post_id", post.id)
-      .order("created_at", { ascending: true });
+    const { data } = await fromTable("blog_comments").
+    select("*").
+    eq("blog_post_id", post.id).
+    order("created_at", { ascending: true });
 
     if (data && data.length > 0) {
       const userIds = [...new Set(data.map((c: any) => c.user_id))];
@@ -105,7 +105,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
           content: c.content,
           created_at: c.created_at,
           username: pMap.get(c.user_id)?.full_name || "User",
-          avatar_url: pMap.get(c.user_id)?.avatar_url || null,
+          avatar_url: pMap.get(c.user_id)?.avatar_url || null
         }))
       );
     } else {
@@ -196,8 +196,8 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
       <div className="fixed top-0 left-0 right-0 z-[110] h-[3px] bg-secondary">
         <div
           className="h-full bg-primary transition-[width] duration-100 ease-out"
-          style={{ width: `${readProgress * 100}%` }}
-        />
+          style={{ width: `${readProgress * 100}%` }} />
+        
       </div>
 
       {/* Sticky header */}
@@ -212,11 +212,11 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
         </div>
         <div className="flex items-center gap-2">
           <button onClick={toggleSave} className="transition-transform active:scale-90">
-            {saved ? (
-              <BookmarkCheck className="h-5 w-5 text-primary fill-primary" />
-            ) : (
-              <Bookmark className="h-5 w-5 text-foreground" />
-            )}
+            {saved ?
+            <BookmarkCheck className="h-5 w-5 text-primary fill-primary" /> :
+
+            <Bookmark className="h-5 w-5 text-foreground" />
+            }
           </button>
           <button onClick={handleShareArticle} className="transition-transform active:scale-90">
             <Share2 className="h-5 w-5 text-foreground" />
@@ -228,21 +228,21 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="h-[calc(100vh-53px)] overflow-y-auto overscroll-contain scroll-smooth"
-      >
+        className="h-[calc(100vh-53px)] overflow-y-auto overscroll-contain scroll-smooth">
+        
         {/* Cover image */}
-        {post.cover_image && (
-          <button
-            onClick={() => setFullscreenImage(post.cover_image)}
-            className="w-full"
-          >
+        {post.cover_image &&
+        <button
+          onClick={() => setFullscreenImage(post.cover_image)}
+          className="w-full">
+          
             <img
-              src={post.cover_image}
-              alt={post.title}
-              className="w-full aspect-[16/9] object-cover"
-            />
+            src={post.cover_image}
+            alt={post.title}
+            className="w-full aspect-[16/9] object-cover" />
+          
           </button>
-        )}
+        }
 
         {/* Article body - centered, readable width */}
         <article className="px-5 pb-8 max-w-[640px] mx-auto">
@@ -254,13 +254,13 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
           {/* Author meta */}
           <div className="mt-4 flex items-center gap-3">
             <button onClick={() => goToProfile(post.user_id)}>
-              {post.avatar_url ? (
-                <img src={post.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
-              ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-bold text-primary-foreground">
+              {post.avatar_url ?
+              <img src={post.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" /> :
+
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-bold text-primary-foreground">
                   {initials}
                 </div>
-              )}
+              }
             </button>
             <div>
               <button onClick={() => goToProfile(post.user_id)} className="text-sm font-bold hover:underline">
@@ -277,23 +277,23 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
 
           {/* Content — better typography */}
           <div className="space-y-4">
-            {paragraphs.map((p, i) => (
-              <p key={i} className="text-[15px] leading-[1.8] text-foreground/90">
+            {paragraphs.map((p, i) =>
+            <p key={i} className="text-[15px] leading-[1.8] text-foreground/90">
                 {p}
               </p>
-            ))}
+            )}
           </div>
 
           {/* Tags */}
-          {post.tags && post.tags.length > 0 && (
-            <div className="mt-8 flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
-                <span key={tag} className="rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-foreground/70">
+          {post.tags && post.tags.length > 0 &&
+          <div className="mt-8 flex flex-wrap gap-2">
+              {post.tags.map((tag) =>
+            <span key={tag} className="rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-foreground/70">
                   #{tag}
                 </span>
-              ))}
+            )}
             </div>
-          )}
+          }
 
           {/* Interaction bar */}
           <div className="mt-8 flex items-center gap-5 border-y border-border py-4">
@@ -307,11 +307,11 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
             </div>
             <div className="flex-1" />
             <button onClick={toggleSave} className="transition-transform active:scale-90">
-              {saved ? (
-                <BookmarkCheck className="h-5 w-5 text-primary fill-primary" />
-              ) : (
-                <Bookmark className="h-5 w-5 text-muted-foreground" />
-              )}
+              {saved ?
+              <BookmarkCheck className="h-5 w-5 text-primary fill-primary" /> :
+
+              <Bookmark className="h-5 w-5 text-muted-foreground" />
+              }
             </button>
             <button onClick={handleShareArticle} className="transition-transform active:scale-90">
               <Share2 className="h-5 w-5 text-muted-foreground" />
@@ -324,13 +324,13 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
               Comments ({comments.length})
             </h3>
 
-            {comments.length === 0 && (
-              <p className="text-sm text-muted-foreground py-4 text-center">No comments yet. Be the first to share your thoughts!</p>
-            )}
+            {comments.length === 0 &&
+            <p className="text-sm text-muted-foreground py-4 text-center">No comments yet. Be the first to share your thoughts!</p>
+            }
 
             <div className="space-y-4">
-              {comments.map((c) => (
-                <div key={c.id} className="flex items-start gap-3">
+              {comments.map((c) =>
+              <div key={c.id} className="flex items-start gap-3">
                   <button onClick={() => goToProfile(c.user_id)} className="shrink-0">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={c.avatar_url || undefined} />
@@ -350,8 +350,8 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                     </div>
                     <p className="mt-1 text-sm leading-relaxed">{c.content}</p>
                   </div>
-                  {canDeleteComment(c) && (
-                    <DropdownMenu>
+                  {canDeleteComment(c) &&
+                <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="shrink-0 p-1 text-muted-foreground hover:text-foreground mt-2">
                           <MoreVertical className="h-3.5 w-3.5" />
@@ -363,9 +363,9 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  )}
+                }
                 </div>
-              ))}
+              )}
             </div>
 
             {/* Comment input */}
@@ -375,14 +375,14 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 className="flex-1 rounded-full text-sm"
-                onKeyDown={(e) => e.key === "Enter" && addComment()}
-              />
+                onKeyDown={(e) => e.key === "Enter" && addComment()} />
+              
               <Button
                 size="sm"
                 onClick={addComment}
                 disabled={!newComment.trim()}
-                className="rounded-full px-4"
-              >
+                className="rounded-full px-4">
+                
                 <Send className="h-4 w-4" />
               </Button>
             </div>
@@ -391,19 +391,19 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
       </div>
 
       {/* Fullscreen image viewer */}
-      {fullscreenImage && (
-        <div
-          className="fixed inset-0 z-[120] bg-black flex items-center justify-center"
-          onClick={() => setFullscreenImage(null)}
-        >
+      {fullscreenImage &&
+      <div
+        className="fixed inset-0 z-[120] bg-black flex items-center justify-center"
+        onClick={() => setFullscreenImage(null)}>
+        
           <button className="absolute top-4 right-4 text-white z-10">
             <ArrowLeft className="h-6 w-6" />
           </button>
           <img src={fullscreenImage} alt="" className="max-h-full max-w-full object-contain" />
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 };
 
 export default BlogArticleViewer;
