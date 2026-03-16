@@ -35,6 +35,7 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
   const { typingUsers, setTyping } = useTypingIndicator(conversation.id);
   const isOnline = useConnectionStatus();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useActivityTracking();
 
