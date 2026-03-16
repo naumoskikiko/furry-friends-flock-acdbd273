@@ -36,7 +36,7 @@ const NotificationsPage = () => {
     if (n.entity_type === "post" && n.entity_id) {
       navigate("/");
     } else if (n.entity_type === "profile" || n.type === "follow") {
-      navigate("/profile");
+      navigate(`/user/${n.actor_id}`);
     } else if (n.entity_type === "blog" && n.entity_id) {
       navigate("/");
     } else if (n.entity_type === "message") {
@@ -44,6 +44,11 @@ const NotificationsPage = () => {
     } else if (n.entity_type === "booking" || n.entity_type === "order") {
       navigate("/marketplace");
     }
+  };
+
+  const handleActorTap = (e: React.MouseEvent, actorId: string) => {
+    e.stopPropagation();
+    navigate(`/user/${actorId}`);
   };
 
   const renderNotification = (n: NotificationData) => {
