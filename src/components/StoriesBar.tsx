@@ -50,50 +50,44 @@ const StoriesBar = () => {
     setShareModal({ storyId, mediaUrl });
   };
 
+  // Own story avatar: tap opens viewer if stories exist, long-press or + button creates
+  const handleOwnStoryTap = () => {
+    if (hasOwnStory) {
+      const idx = storyGroups.findIndex((g) => g.user_id === user?.id);
+      if (idx >= 0) openStory(idx);
+    } else {
+      setCreateOpen(true);
+    }
+  };
+
   return (
     <>
       <div className="border-b border-border bg-card px-4 py-3">
         <div className="flex gap-4 overflow-x-auto scrollbar-hide">
-          {/* Own story button */}
-          <button
-            className="flex flex-col items-center gap-1"
-            onClick={() => setCreateOpen(true)}
-          >
-            <div className={`flex h-16 w-16 items-center justify-center rounded-full p-[2px] ${hasOwnStory ? "bg-gradient-to-br from-primary via-petkeep-orange-light to-accent" : "bg-secondary"}`}>
-              <div className="relative flex h-full w-full items-center justify-center rounded-full bg-card">
-                {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} className="h-full w-full rounded-full object-cover" />
-                ) : (
-                  <span className="font-display text-sm font-bold">{initials}</span>
-                )}
-                <div className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
-                  <Plus className="h-3 w-3" />
+          {/* Own story — single icon */}
+          <div className="flex flex-col items-center gap-1 relative">
+            <button onClick={handleOwnStoryTap}>
+              <div className={`flex h-16 w-16 items-center justify-center rounded-full p-[2px] ${hasOwnStory ? "bg-gradient-to-br from-primary via-petkeep-orange-light to-accent" : "bg-secondary"}`}>
+                <div className="relative flex h-full w-full items-center justify-center rounded-full bg-card">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} className="h-full w-full rounded-full object-cover" />
+                  ) : (
+                    <span className="font-display text-sm font-bold">{initials}</span>
+                  )}
                 </div>
               </div>
-            </div>
+            </button>
+            {/* Always show + button to add more stories */}
+            <button
+              onClick={(e) => { e.stopPropagation(); setCreateOpen(true); }}
+              className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow z-10"
+            >
+              <Plus className="h-3 w-3" />
+            </button>
             <span className="w-16 truncate text-center text-[10px] font-medium">Your Story</span>
-          </button>
+          </div>
 
-          {/* Own stories (if any) */}
-          {hasOwnStory && (() => {
-            const ownGroup = storyGroups.find((g) => g.user_id === user?.id);
-            const ownIndex = storyGroups.indexOf(ownGroup!);
-            return (
-              <button
-                className="flex flex-col items-center gap-1"
-                onClick={() => openStory(ownIndex)}
-              >
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary via-petkeep-orange-light to-accent p-[2px]">
-                  <div className="flex h-full w-full items-center justify-center rounded-full bg-card text-xs font-bold text-muted-foreground">
-                    {ownGroup!.stories.length}
-                  </div>
-                </div>
-                <span className="w-16 truncate text-center text-[10px] font-medium">View</span>
-              </button>
-            );
-          })()}
-
-          {/* Other stories */}
+          {/* Other users — one icon per user, all stories grouped */}
           {storyGroups
             .filter((g) => g.user_id !== user?.id)
             .map((group) => {
