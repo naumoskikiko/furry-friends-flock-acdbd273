@@ -12,6 +12,7 @@ import PostGrid from "@/components/profile/PostGrid";
 import PetCard from "@/components/profile/PetCard";
 import PetProfileModal from "@/components/profile/PetProfileModal";
 import FollowListModal from "@/components/profile/FollowListModal";
+import ProfileShareModal from "@/components/profile/ProfileShareModal";
 import { getOrCreateConversation } from "@/hooks/useMessages";
 import { createNotification } from "@/hooks/useNotifications";
 import { animalTypes } from "@/data/petBreeds";
@@ -42,6 +43,9 @@ const UserProfilePage = () => {
   // Follow list
   const [followListOpen, setFollowListOpen] = useState(false);
   const [followListType, setFollowListType] = useState<"followers" | "following">("followers");
+
+  // Share modal
+  const [shareOpen, setShareOpen] = useState(false);
 
   // Swipe tabs
   const tabTouchRef = useRef({ x: 0, time: 0 });
@@ -141,14 +145,7 @@ const UserProfilePage = () => {
   };
 
   const handleShare = () => {
-    const uname = profile?.username || profile?.user_id;
-    const url = `${window.location.origin}/user/${uname}`;
-    if (navigator.share) {
-      navigator.share({ title: profile?.full_name, url }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(url);
-      toast({ title: "Profile link copied!" });
-    }
+    setShareOpen(true);
   };
 
   const openFollowList = (type: "followers" | "following") => {
@@ -463,6 +460,19 @@ const UserProfilePage = () => {
           onOpenChange={setFollowListOpen}
           userId={profile.user_id}
           type={followListType}
+        />
+      )}
+
+      {/* Share modal */}
+      {shareOpen && profile && (
+        <ProfileShareModal
+          profile={{
+            user_id: profile.user_id,
+            full_name: profile.full_name,
+            username: profile.username,
+            avatar_url: profile.avatar_url,
+          }}
+          onClose={() => setShareOpen(false)}
         />
       )}
     </AppLayout>

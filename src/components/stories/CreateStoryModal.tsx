@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Image, Video, Camera, MapPin, Type, Smile, FileEdit, Trash2 } from "lucide-react";
+import { X, Image, Video, Camera, MapPin, Type, Smile, FileEdit, Trash2, Plus, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -19,32 +19,37 @@ interface CreateStoryModalProps {
 
 const EMOJI_LIST = ["🐶", "🐱", "🐾", "❤️", "🔥", "✨", "🎉", "😍", "🐕", "🐈", "🦜", "🐠", "🐰", "🐹"];
 
+interface FileItem {
+  file: File;
+  preview: string;
+  mediaType: "image" | "video";
+}
+
 const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateStoryModalProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<"image" | "video">("image");
+  const [files, setFiles] = useState<FileItem[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
   const [textOverlay, setTextOverlay] = useState("");
   const [sticker, setSticker] = useState("");
   const [petId, setPetId] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [showTools, setShowTools] = useState<"text" | "sticker" | "location" | "pet" | null>(null);
   const [showDrafts, setShowDrafts] = useState(false);
   const [drafts, setDrafts] = useState<StoryDraft[]>([]);
-  const [loadedDraftId, setLoadedDraftId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) setDrafts(getStoryDrafts());
   }, [open]);
 
   const resetForm = () => {
-    setFile(null);
-    setPreview(null);
+    setFiles([]);
+    setActiveIndex(0);
     setCaption("");
     setLocation("");
     setTextOverlay("");
@@ -52,135 +57,104 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
     setPetId("");
     setShowTools(null);
     setShowDrafts(false);
-    setLoadedDraftId(null);
+    setUploadProgress(0);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (!selected) return;
+    const selected = e.target.files;
+    if (!selected || selected.length === 0) return;
     setShowDrafts(false);
 
-    const isVideo = selected.type.startsWith("video/");
-    if (isVideo) {
-      const video = document.createElement("video");
-      video.preload = "metadata";
-      video.onloadedmetadata = () => {
-        URL.revokeObjectURL(video.src);
-        if (video.duration > 60) {
-          toast({ title: "Video too long", description: "Max 60 seconds", variant: "destructive" });
-          return;
+    const newItems: FileItem[] = [];
+    let processed = 0;
+
+    Array.from(selected).forEach((file) => {
+      const isVideo = file.type.startsWith("video/");
+      if (isVideo) {
+        const video = document.createElement("video");
+        video.preload = "metadata";
+        video.onloadedmetadata = () => {
+          URL.revokeObjectURL(video.src);
+          if (video.duration > 60) {
+            toast({ title: "Video too long", description: `${file.name} exceeds 60s, skipped`, variant: "destructive" });
+          } else {
+            newItems.push({ file, preview: URL.createObjectURL(file), mediaType: "video" });
+          }
+          processed++;
+          if (processed === selected.length) {
+            setFiles((prev) => [...prev, ...newItems]);
+          }
+        };
+        video.src = URL.createObjectURL(file);
+      } else {
+        newItems.push({ file, preview: URL.createObjectURL(file), mediaType: "image" });
+        processed++;
+        if (processed === selected.length) {
+          setFiles((prev) => [...prev, ...newItems]);
         }
-        setFile(selected);
-        setPreview(URL.createObjectURL(selected));
-        setMediaType("video");
-      };
-      video.src = URL.createObjectURL(selected);
-    } else {
-      setFile(selected);
-      setPreview(URL.createObjectURL(selected));
-      setMediaType("image");
-    }
+      }
+    });
+
+    // Reset input so same files can be re-selected
+    e.target.value = "";
   };
 
-  const handleSaveDraft = () => {
-    if (!preview) return;
-    const draft: StoryDraft = {
-      id: loadedDraftId || `draft_${Date.now()}`,
-      mediaDataUrl: preview,
-      mediaType,
-      caption,
-      location,
-      textOverlay,
-      sticker,
-      petId,
-      createdAt: Date.now(),
-    };
-    saveStoryDraft(draft);
-    setDrafts(getStoryDrafts());
-    toast({ title: "Draft saved" });
-  };
-
-  const handleLoadDraft = (draft: StoryDraft) => {
-    setPreview(draft.mediaDataUrl);
-    setMediaType(draft.mediaType);
-    setCaption(draft.caption);
-    setLocation(draft.location);
-    setTextOverlay(draft.textOverlay);
-    setSticker(draft.sticker);
-    setPetId(draft.petId);
-    setLoadedDraftId(draft.id);
-    setShowDrafts(false);
-    setFile(null); // Will need to re-select file for upload
-  };
-
-  const handleDeleteDraft = (draftId: string) => {
-    deleteStoryDraft(draftId);
-    setDrafts(getStoryDrafts());
-    if (loadedDraftId === draftId) {
-      resetForm();
-    }
-    toast({ title: "Draft deleted" });
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+    if (activeIndex >= files.length - 1) setActiveIndex(Math.max(0, files.length - 2));
   };
 
   const handleClose = () => {
-    // Auto-save draft if there's unsaved content
-    if (preview && !uploading) {
-      handleSaveDraft();
-    }
     resetForm();
     onOpenChange(false);
   };
 
   const handlePublish = async () => {
-    if (!user) return;
+    if (!user || files.length === 0) return;
+    setUploading(true);
 
-    // If loaded from draft without file, we need the dataURL
-    let mediaUrl: string;
-
-    if (file) {
-      setUploading(true);
-      const ext = file.name.split(".").pop();
-      const filePath = `${user.id}/${Date.now()}.${ext}`;
-      const { error: uploadErr } = await supabase.storage.from("story-media").upload(filePath, file);
+    for (let i = 0; i < files.length; i++) {
+      setUploadProgress(Math.round(((i) / files.length) * 100));
+      const item = files[i];
+      const ext = item.file.name.split(".").pop();
+      const filePath = `${user.id}/${Date.now()}_${i}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from("story-media").upload(filePath, item.file);
       if (uploadErr) {
         toast({ title: "Upload failed", description: uploadErr.message, variant: "destructive" });
         setUploading(false);
+        setUploadProgress(0);
         return;
       }
       const { data: { publicUrl } } = supabase.storage.from("story-media").getPublicUrl(filePath);
-      mediaUrl = publicUrl;
-    } else if (preview?.startsWith("blob:") || preview?.startsWith("data:")) {
-      toast({ title: "Please re-select the media file", description: "Draft media needs to be re-uploaded", variant: "destructive" });
-      return;
-    } else {
-      toast({ title: "No media selected", variant: "destructive" });
-      return;
+
+      const { error } = await supabase.from("stories").insert({
+        user_id: user.id,
+        media_url: publicUrl,
+        media_type: item.mediaType,
+        caption: i === 0 ? caption : "",
+        location: i === 0 ? location : "",
+        text_overlay: i === 0 ? textOverlay : "",
+        sticker: i === 0 ? sticker : "",
+        pet_id: petId || null,
+      });
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+        setUploading(false);
+        setUploadProgress(0);
+        return;
+      }
     }
 
-    setUploading(true);
-    const { error } = await supabase.from("stories").insert({
-      user_id: user.id,
-      media_url: mediaUrl,
-      media_type: mediaType,
-      caption,
-      location,
-      text_overlay: textOverlay,
-      sticker,
-      pet_id: petId || null,
-    });
-
+    setUploadProgress(100);
     setUploading(false);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      // Remove draft if published from one
-      if (loadedDraftId) deleteStoryDraft(loadedDraftId);
-      toast({ title: "Story published!" });
-      resetForm();
-      onOpenChange(false);
-      onStoryCreated();
-    }
+    toast({ title: files.length > 1 ? `${files.length} stories published!` : "Story published!" });
+    resetForm();
+    onOpenChange(false);
+    onStoryCreated();
   };
+
+  const currentFile = files[activeIndex];
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else onOpenChange(v); }}>
@@ -189,53 +163,50 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
           <button onClick={handleClose}>
             <X className="h-5 w-5" />
           </button>
-          <h2 className="font-display font-bold">New Story</h2>
-          <div className="flex items-center gap-2">
-            {preview && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleSaveDraft}
-                className="text-xs"
-              >
-                Save Draft
-              </Button>
-            )}
-            <Button
-              size="sm"
-              onClick={handlePublish}
-              disabled={!file || uploading}
-              className="petkeep-gradient text-primary-foreground font-bold"
-            >
-              {uploading ? "..." : "Share"}
-            </Button>
-          </div>
+          <h2 className="font-display font-bold">
+            {files.length > 1 ? `New Stories (${files.length})` : "New Story"}
+          </h2>
+          <Button
+            size="sm"
+            onClick={handlePublish}
+            disabled={files.length === 0 || uploading}
+            className="petkeep-gradient text-primary-foreground font-bold"
+          >
+            {uploading ? `${uploadProgress}%` : "Share"}
+          </Button>
         </div>
 
         {/* Preview area */}
         <div className="relative aspect-[9/16] max-h-[400px] bg-muted flex items-center justify-center overflow-hidden">
-          {preview ? (
+          {currentFile ? (
             <>
-              {mediaType === "video" ? (
-                <video src={preview} className="h-full w-full object-cover" controls muted />
+              {currentFile.mediaType === "video" ? (
+                <video src={currentFile.preview} className="h-full w-full object-cover" controls muted />
               ) : (
-                <img src={preview} alt="Preview" className="h-full w-full object-cover" />
+                <img src={currentFile.preview} alt="Preview" className="h-full w-full object-cover" />
               )}
-              {textOverlay && (
+              {textOverlay && activeIndex === 0 && (
                 <div className="absolute inset-x-0 bottom-20 text-center">
                   <span className="rounded-lg bg-black/60 px-4 py-2 text-lg font-bold text-white">
                     {textOverlay}
                   </span>
                 </div>
               )}
-              {sticker && (
+              {sticker && activeIndex === 0 && (
                 <div className="absolute right-4 top-4 text-4xl">{sticker}</div>
               )}
-              {location && (
+              {location && activeIndex === 0 && (
                 <div className="absolute left-4 top-4 flex items-center gap-1 rounded-full bg-black/50 px-3 py-1 text-xs text-white">
                   <MapPin className="h-3 w-3" /> {location}
                 </div>
               )}
+              {/* Remove button */}
+              <button
+                onClick={() => removeFile(activeIndex)}
+                className="absolute right-3 top-3 z-10 rounded-full bg-black/50 p-1.5 text-white"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
             </>
           ) : (
             <div className="flex flex-col items-center gap-4">
@@ -262,7 +233,7 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
                   <span className="text-xs font-medium">Camera</span>
                 </button>
               </div>
-              <p className="text-sm text-muted-foreground">Select media for your story</p>
+              <p className="text-sm text-muted-foreground">Select photos or videos for stories</p>
 
               {/* Drafts section */}
               {drafts.length > 0 && (
@@ -291,12 +262,6 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
                             </p>
                           </div>
                           <button
-                            onClick={() => handleLoadDraft(d)}
-                            className="text-xs font-semibold text-primary px-2 py-1"
-                          >
-                            Edit
-                          </button>
-                          <button
                             onClick={() => handleDeleteDraft(d.id)}
                             className="p-1 text-destructive"
                           >
@@ -314,14 +279,44 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
             ref={fileInputRef}
             type="file"
             accept="image/*,video/*"
-            capture="environment"
+            multiple
             className="hidden"
             onChange={handleFileSelect}
           />
         </div>
 
+        {/* Thumbnail strip for multi-select */}
+        {files.length > 0 && (
+          <div className="flex items-center gap-2 px-4 py-2 overflow-x-auto border-t border-border">
+            {files.map((item, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveIndex(i)}
+                className={`relative shrink-0 h-14 w-14 rounded-lg overflow-hidden ring-2 transition-all ${
+                  i === activeIndex ? "ring-primary" : "ring-transparent"
+                }`}
+              >
+                {item.mediaType === "video" ? (
+                  <video src={item.preview} className="h-full w-full object-cover" muted />
+                ) : (
+                  <img src={item.preview} alt="" className="h-full w-full object-cover" />
+                )}
+                <span className="absolute top-0.5 left-0.5 bg-black/60 text-white text-[9px] font-bold rounded px-1">
+                  {i + 1}
+                </span>
+              </button>
+            ))}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="shrink-0 flex h-14 w-14 items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 text-muted-foreground hover:bg-secondary transition-colors"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          </div>
+        )}
+
         {/* Tools bar */}
-        {preview && (
+        {files.length > 0 && (
           <div className="border-t border-border">
             <div className="flex justify-around py-2">
               <button onClick={() => setShowTools(showTools === "text" ? null : "text")} className={`flex flex-col items-center gap-0.5 p-2 rounded-lg ${showTools === "text" ? "bg-primary/10 text-primary" : "text-muted-foreground"}`}>
@@ -387,6 +382,12 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
       </DialogContent>
     </Dialog>
   );
+
+  function handleDeleteDraft(draftId: string) {
+    deleteStoryDraft(draftId);
+    setDrafts(getStoryDrafts());
+    toast({ title: "Draft deleted" });
+  }
 };
 
 export default CreateStoryModal;
