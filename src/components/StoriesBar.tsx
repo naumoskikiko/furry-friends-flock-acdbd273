@@ -65,10 +65,10 @@ const StoriesBar = () => {
       <div className="border-b border-border bg-card px-4 py-3">
         <div className="flex gap-4 overflow-x-auto scrollbar-hide">
           {/* Own story — single icon */}
-          <div className="flex flex-col items-center gap-1 relative">
-            <button onClick={handleOwnStoryTap}>
+          <div className="flex flex-col items-center gap-1">
+            <button onClick={handleOwnStoryTap} className="relative">
               <div className={`flex h-16 w-16 items-center justify-center rounded-full p-[2px] ${hasOwnStory ? "bg-gradient-to-br from-primary via-petkeep-orange-light to-accent" : "bg-secondary"}`}>
-                <div className="relative flex h-full w-full items-center justify-center rounded-full bg-card">
+                <div className="flex h-full w-full items-center justify-center rounded-full bg-card">
                   {profile?.avatar_url ? (
                     <img src={profile.avatar_url} className="h-full w-full rounded-full object-cover" />
                   ) : (
@@ -76,13 +76,13 @@ const StoriesBar = () => {
                   )}
                 </div>
               </div>
-            </button>
-            {/* Always show + button to add more stories */}
-            <button
-              onClick={(e) => { e.stopPropagation(); setCreateOpen(true); }}
-              className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow z-10"
-            >
-              <Plus className="h-3 w-3" />
+              {/* Small + badge on bottom-right corner */}
+              <span
+                onClick={(e) => { e.stopPropagation(); setCreateOpen(true); }}
+                className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground border-2 border-card shadow-sm z-10"
+              >
+                <Plus className="h-3 w-3" />
+              </span>
             </button>
             <span className="w-16 truncate text-center text-[10px] font-medium">Your Story</span>
           </div>
