@@ -75,7 +75,7 @@ const NotificationsPage = () => {
           <div className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-card shadow-sm">
             {notificationIcon(n.type)}
           </div>
-        </div>
+        </button>
 
         {/* Content */}
         <div className="min-w-0 flex-1">
