@@ -103,7 +103,6 @@ const MarketplacePage = () => {
         <div className="flex mx-4 mb-3 rounded-xl bg-secondary p-1">
           {[
             { key: "discover" as const, label: "Discover", icon: "✨" },
-            { key: "products" as const, label: "Products", icon: null, Icon: Package, count: isSearching ? products.length : 0 },
             { key: "stores" as const, label: "Stores", icon: null, Icon: Store, count: isSearching ? businesses.length : 0 },
           ].map((t) => (
             <button
