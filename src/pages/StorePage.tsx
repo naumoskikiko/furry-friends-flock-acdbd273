@@ -234,7 +234,6 @@ const StorePage = () => {
                   className="min-w-[140px] rounded-2xl bg-card border border-border overflow-hidden shrink-0 petkeep-card-hover cursor-pointer">
                   <div className="relative">
                     <ProductImage src={p.image_url} alt={p.name} category={p.category} size="lg" aspectRatio="square" className="rounded-t-2xl" />
-                    <ProductImage src={p.image_url} alt={p.name} category={p.category} size="lg" aspectRatio="square" className="rounded-t-2xl" />
                   </div>
                   <div className="p-2">
                     <p className="text-[10px] font-bold truncate">{p.name}</p>
