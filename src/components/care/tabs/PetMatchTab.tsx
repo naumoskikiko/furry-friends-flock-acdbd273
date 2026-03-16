@@ -342,8 +342,19 @@ const PetMatchTab = () => {
     else toast({ title: "Cannot contact this user" });
   };
 
-  const handleReport = (listing: PetMatchListing) => {
-    toast({ title: "Report submitted", description: "We'll review this listing shortly." });
+  const handleReport = async (listing: PetMatchListing) => {
+    if (!user) return;
+    const { error } = await fromTable("petmatch_reports").insert({
+      listing_id: listing.id,
+      reporter_id: user.id,
+      reported_user_id: listing.user_id,
+      reason: "Reported by user",
+    });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Report submitted", description: "Our team will review this listing shortly." });
   };
 
   const listedPetIds = myListings.map((l) => l.pet_id);
