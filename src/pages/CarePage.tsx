@@ -130,7 +130,7 @@ const CarePage = () => {
                         <div className="flex items-center gap-1">
                           <p className="text-xs font-bold truncate">{p.business_name}</p>
                           {p.is_verified && <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />}
-                          {boostedProviderIds.has(p.id) && <BoostBadge />}
+                          
                         </div>
                         <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                           <Star className="h-3 w-3 fill-primary text-primary" />
