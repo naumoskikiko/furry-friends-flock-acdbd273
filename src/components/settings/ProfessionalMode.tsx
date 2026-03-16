@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap, DollarSign, Sliders, TrendingUp, UserCog, Heart } from "lucide-react";
+import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap, DollarSign, Sliders, TrendingUp, UserCog, Heart, Coins } from "lucide-react";
 import SettingsMapManagement from "./SettingsMapManagement";
 import CareVerificationPanel from "./CareVerificationPanel";
 import CareManagementPanel from "./CareManagementPanel";
@@ -12,6 +12,7 @@ import PlatformAnalyticsPanel from "./PlatformAnalyticsPanel";
 import AlgorithmControlPanel from "./AlgorithmControlPanel";
 import FinancialControlPanel from "./FinancialControlPanel";
 import PetMatchManagementPanel from "./PetMatchManagementPanel";
+import CreditManagementPanel from "./CreditManagementPanel";
 import { useIsOwner } from "@/hooks/useIsOwner";
 
 type SubSection =
@@ -26,7 +27,8 @@ type SubSection =
   | "analytics"
   | "algorithm"
   | "financial"
-  | "petmatch";
+  | "petmatch"
+  | "credits";
 
 const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
@@ -52,6 +54,7 @@ const ProfessionalMode = () => {
         {sub === "algorithm" && <AlgorithmControlPanel />}
         {sub === "financial" && <FinancialControlPanel />}
         {sub === "petmatch" && <PetMatchManagementPanel />}
+        {sub === "credits" && <CreditManagementPanel />}
       </div>
     );
   }
@@ -66,6 +69,7 @@ const ProfessionalMode = () => {
     { id: "promotions" as const, label: "Promotion Management", desc: "Boosts, pricing & revenue tracking", icon: Zap, color: "bg-amber-500/10 text-amber-500" },
     { id: "financial" as const, label: "Financial Control", desc: "Revenue, commissions & transactions", icon: DollarSign, color: "bg-emerald-500/10 text-emerald-600" },
     { id: "analytics" as const, label: "Platform Analytics", desc: "Top stores, providers & growth metrics", icon: TrendingUp, color: "bg-indigo-500/10 text-indigo-500" },
+    { id: "credits" as const, label: "PetKeep Credits", desc: "Manage credit economy & user balances", icon: Coins, color: "bg-amber-500/10 text-amber-500" },
   ];
 
   const ownerSections = [

@@ -2,14 +2,16 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import AppLayout from "@/components/AppLayout";
-import { ArrowLeft, CheckCircle2, Truck, Store, CreditCard, Tag, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Truck, Store, CreditCard, Tag, X, Coins } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { useCart } from "@/hooks/useCart";
 import { useCreateOrder, type ShippingInfo } from "@/hooks/useOrders";
 import { useApplyCoupon } from "@/hooks/useCoupons";
 import { useToast } from "@/hooks/use-toast";
+import { useCredits } from "@/hooks/useCredits";
 import SlideToPayButton from "@/components/marketplace/SlideToPayButton";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import ProductImage from "@/components/marketplace/ProductImage";
@@ -39,6 +41,7 @@ const CheckoutPage = () => {
   const { createOrder } = useCreateOrder();
   const { applyCoupon, incrementUsage, applying } = useApplyCoupon();
   const { defaultMethod, saveCard, loading: paymentLoading } = usePaymentMethods();
+  const { balance: creditBalance, applyCreditsToPayment } = useCredits();
 
   const [step, setStep] = useState<"checkout" | "confirmed">("checkout");
   const [shipping, setShipping] = useState<ShippingInfo>({
@@ -54,10 +57,13 @@ const CheckoutPage = () => {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{ coupon: any; discount: number } | null>(null);
   const [couponError, setCouponError] = useState("");
+  const [useCreditsToggle, setUseCreditsToggle] = useState(true);
 
   const platformFee = Math.round(totalPrice * 0.10 * 100) / 100;
   const discount = appliedCoupon?.discount || 0;
-  const grandTotal = Math.max(0, totalPrice + DELIVERY_FEE - discount);
+  const subtotalAfterDiscount = Math.max(0, totalPrice + DELIVERY_FEE - discount);
+  const creditsApplied = useCreditsToggle ? Math.min(creditBalance, subtotalAfterDiscount) : 0;
+  const grandTotal = Math.max(0, subtotalAfterDiscount - creditsApplied);
 
   const shippingValid = useMemo(() => shippingSchema.safeParse(shipping).success, [shipping]);
   const hasSavedCard = !!defaultMethod;
@@ -136,6 +142,11 @@ const CheckoutPage = () => {
 
       const id = await createOrder(cartItems, shipping);
       
+      // Apply credits discount
+      if (creditsApplied > 0) {
+        await applyCreditsToPayment(creditsApplied);
+      }
+
       // Increment coupon usage
       if (appliedCoupon?.coupon) {
         await incrementUsage(appliedCoupon.coupon.id, appliedCoupon.coupon.used_count);
@@ -306,6 +317,25 @@ const CheckoutPage = () => {
               )}
             </div>
 
+            {/* Credits */}
+            {creditBalance > 0 && (
+              <div className="rounded-2xl bg-card border border-border p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Coins className="h-4 w-4 text-primary" />
+                    <div>
+                      <h3 className="text-sm font-bold">Use PetKeep Credits</h3>
+                      <p className="text-[10px] text-muted-foreground">Balance: {creditBalance.toFixed(2)} credits ({creditBalance.toFixed(2)} MKD)</p>
+                    </div>
+                  </div>
+                  <Switch checked={useCreditsToggle} onCheckedChange={setUseCreditsToggle} />
+                </div>
+                {useCreditsToggle && creditsApplied > 0 && (
+                  <p className="text-xs text-primary font-semibold mt-2">-{creditsApplied.toFixed(2)} MKD will be deducted</p>
+                )}
+              </div>
+            )}
+
             {/* Price breakdown */}
             <div className="rounded-2xl bg-card border border-border p-4">
               <h3 className="text-sm font-bold mb-3">Price Breakdown</h3>
@@ -320,8 +350,14 @@ const CheckoutPage = () => {
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-xs">
-                    <span className="text-primary font-bold">Discount</span>
+                    <span className="text-primary font-bold">Coupon Discount</span>
                     <span className="font-bold text-primary">-{discount.toLocaleString()} MKD</span>
+                  </div>
+                )}
+                {creditsApplied > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-primary font-bold flex items-center gap-1"><Coins className="h-3 w-3" /> Credits Applied</span>
+                    <span className="font-bold text-primary">-{creditsApplied.toFixed(2)} MKD</span>
                   </div>
                 )}
                 <div className="flex justify-between text-xs">

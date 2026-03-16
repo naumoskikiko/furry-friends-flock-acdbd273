@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Coins, TrendingUp, ShieldCheck, Gift, ArrowUpRight, Zap, Star, ShoppingBag, Sparkles } from "lucide-react";
+import { Coins, TrendingUp, ShieldCheck, Gift, Zap, Star, ShoppingBag, Sparkles, History, ArrowDown, ArrowUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useCredits } from "@/hooks/useCredits";
 import { useToast } from "@/hooks/use-toast";
 import { CREDIT_REWARDS, CREDIT_SPENDING, type CreditSpendAction } from "@/lib/creditsConfig";
+import { formatDistanceToNow } from "date-fns";
 
 const SPEND_OPTIONS: { key: CreditSpendAction; label: string; icon: React.ReactNode; cost: number }[] = [
   { key: "boost_post", label: "Boost Post", icon: <Zap className="h-4 w-4" />, cost: CREDIT_SPENDING.boost_post },
@@ -22,6 +23,7 @@ const EARN_INFO = [
   { action: "Create Post", credits: CREDIT_REWARDS.create_post },
   { action: "Like Received", credits: CREDIT_REWARDS.post_like_received },
   { action: "Comment", credits: CREDIT_REWARDS.post_comment },
+  { action: "Comment Received", credits: CREDIT_REWARDS.comment_received },
   { action: "Create Story", credits: CREDIT_REWARDS.create_story },
   { action: "Story Reply", credits: CREDIT_REWARDS.story_reply },
   { action: "Blog Reply", credits: CREDIT_REWARDS.blog_reply },
@@ -29,9 +31,10 @@ const EARN_INFO = [
 ];
 
 const CreditsPanel = () => {
-  const { balance, dailyEarned, monthlyEarned, dailyLimit, monthlyLimit, minWithdrawal, canWithdraw, spendCredits, loading } = useCredits();
+  const { balance, dailyEarned, monthlyEarned, dailyLimit, monthlyLimit, transactions, spendCredits, loading } = useCredits();
   const { toast } = useToast();
   const [spending, setSpending] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const handleSpend = async (action: CreditSpendAction, label: string) => {
     setSpending(true);
@@ -48,10 +51,9 @@ const CreditsPanel = () => {
 
   const dailyPct = Math.min((dailyEarned / dailyLimit) * 100, 100);
   const monthlyPct = Math.min((monthlyEarned / monthlyLimit) * 100, 100);
-  const withdrawPct = Math.min((balance / minWithdrawal) * 100, 100);
 
   return (
-    <div className="space-y-4 pb-8">
+    <div className="space-y-4 px-4 pt-4 pb-8">
       {/* Balance Card */}
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
         <CardContent className="p-5">
@@ -64,7 +66,10 @@ const CreditsPanel = () => {
               <p className="text-3xl font-display font-bold text-foreground">{balance.toFixed(2)}</p>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">1 Credit = 1 MKD</p>
+          <p className="text-xs text-muted-foreground">1 Credit = 1 MKD discount · Platform currency only</p>
+          <div className="mt-3 rounded-xl bg-accent/10 border border-accent/20 p-2.5">
+            <p className="text-[11px] text-accent font-semibold">💡 Credits reduce your payment at checkout — they cannot be withdrawn as cash.</p>
+          </div>
         </CardContent>
       </Card>
 
@@ -90,20 +95,6 @@ const CreditsPanel = () => {
             </div>
             <Progress value={monthlyPct} className="h-2" />
           </div>
-          <div>
-            <div className="flex justify-between text-xs mb-1">
-              <span>Withdrawal ({balance.toFixed(0)} / {minWithdrawal})</span>
-              <Badge variant={canWithdraw ? "default" : "secondary"} className="text-[10px]">
-                {canWithdraw ? "Eligible" : "Not yet"}
-              </Badge>
-            </div>
-            <Progress value={withdrawPct} className="h-2" />
-          </div>
-          {canWithdraw && (
-            <Button size="sm" className="w-full mt-2">
-              <ArrowUpRight className="h-4 w-4 mr-1" /> Request Withdrawal
-            </Button>
-          )}
         </CardContent>
       </Card>
 
@@ -134,6 +125,7 @@ const CreditsPanel = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          <p className="text-[11px] text-muted-foreground mb-3">Credits are automatically applied at checkout to reduce your payment.</p>
           <div className="grid grid-cols-2 gap-2">
             {SPEND_OPTIONS.map((opt) => (
               <Button
@@ -150,6 +142,40 @@ const CreditsPanel = () => {
             ))}
           </div>
         </CardContent>
+      </Card>
+
+      {/* Transaction History */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2 cursor-pointer" onClick={() => setShowHistory(!showHistory)}>
+            <History className="h-4 w-4 text-primary" /> Transaction History
+            <Badge variant="secondary" className="text-[10px] ml-auto">{transactions.length}</Badge>
+          </CardTitle>
+        </CardHeader>
+        {showHistory && (
+          <CardContent>
+            {transactions.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4">No transactions yet</p>
+            ) : (
+              <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                {transactions.map((tx: any) => (
+                  <div key={tx.id} className="flex items-center gap-2 py-1.5 border-b border-border last:border-0">
+                    <div className={`flex h-6 w-6 items-center justify-center rounded-full ${tx.amount > 0 ? "bg-emerald-500/10" : "bg-destructive/10"}`}>
+                      {tx.amount > 0 ? <ArrowDown className="h-3 w-3 text-emerald-500" /> : <ArrowUp className="h-3 w-3 text-destructive" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-semibold truncate">{tx.description}</p>
+                      <p className="text-[9px] text-muted-foreground">{formatDistanceToNow(new Date(tx.created_at), { addSuffix: true })}</p>
+                    </div>
+                    <span className={`text-xs font-bold font-mono ${tx.amount > 0 ? "text-emerald-500" : "text-destructive"}`}>
+                      {tx.amount > 0 ? "+" : ""}{tx.amount}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        )}
       </Card>
     </div>
   );

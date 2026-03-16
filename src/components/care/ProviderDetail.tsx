@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import {
   Star, BadgeCheck, MapPin, Clock, DollarSign,
-  Calendar, ChevronLeft, MessageSquare, AlertTriangle, Image as ImageIcon, Shield,
+  Calendar, ChevronLeft, MessageSquare, AlertTriangle, Image as ImageIcon, Shield, Coins,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/hooks/useCare";
 import { useProcessPayment, calculateFees } from "@/hooks/usePayments";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCredits } from "@/hooks/useCredits";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { getOrCreateConversation } from "@/hooks/useMessages";
@@ -34,6 +36,7 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   const { processPayment } = useProcessPayment();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { balance: creditBalance, applyCreditsToPayment } = useCredits();
 
   const [tab, setTab] = useState<"services" | "reviews" | "hours" | "gallery">("services");
   const [selectedService, setSelectedService] = useState<CareService | null>(null);
@@ -42,6 +45,7 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   const [bookingNotes, setBookingNotes] = useState("");
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
   const [booking, setBooking] = useState(false);
+  const [useCareCredits, setUseCareCredits] = useState(true);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
@@ -355,28 +359,61 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
                               className="mt-1 w-full rounded-xl bg-secondary px-3 py-2 text-sm outline-none resize-none placeholder:text-muted-foreground"
                             />
                           </div>
+                          {/* Credits toggle */}
+                          {creditBalance > 0 && (
+                            <div className="flex items-center justify-between rounded-xl bg-primary/5 border border-primary/20 p-2.5">
+                              <div className="flex items-center gap-2">
+                                <Coins className="h-4 w-4 text-primary" />
+                                <div>
+                                  <p className="text-[11px] font-semibold">Use Credits</p>
+                                  <p className="text-[9px] text-muted-foreground">{creditBalance.toFixed(2)} available</p>
+                                </div>
+                              </div>
+                              <Switch checked={useCareCredits} onCheckedChange={setUseCareCredits} />
+                            </div>
+                          )}
                           {/* Price breakdown */}
-                          <div className="rounded-xl bg-secondary/50 p-3 space-y-1.5">
-                            <div className="flex justify-between text-xs">
-                              <span className="text-muted-foreground">Service price</span>
-                              <span className="font-semibold">{s.price} MKD</span>
-                            </div>
-                            <div className="flex justify-between text-xs">
-                              <span className="text-muted-foreground">Platform fee (10%)</span>
-                              <span className="font-semibold">{calculateFees(s.price).platformFee} MKD</span>
-                            </div>
-                            <div className="border-t border-border pt-1.5 flex justify-between text-xs">
-                              <span className="font-bold">Total</span>
-                              <span className="font-bold text-primary">{s.price} MKD</span>
-                            </div>
-                            <p className="text-[9px] text-muted-foreground">💳 Simulated payment · Stripe coming soon</p>
-                          </div>
+                          {(() => {
+                            const careCreditsApplied = useCareCredits ? Math.min(creditBalance, s.price) : 0;
+                            const finalPrice = Math.max(0, s.price - careCreditsApplied);
+                            return (
+                              <div className="rounded-xl bg-secondary/50 p-3 space-y-1.5">
+                                <div className="flex justify-between text-xs">
+                                  <span className="text-muted-foreground">Service price</span>
+                                  <span className="font-semibold">{s.price} MKD</span>
+                                </div>
+                                <div className="flex justify-between text-xs">
+                                  <span className="text-muted-foreground">Platform fee (10%)</span>
+                                  <span className="font-semibold">{calculateFees(s.price).platformFee} MKD</span>
+                                </div>
+                                {careCreditsApplied > 0 && (
+                                  <div className="flex justify-between text-xs">
+                                    <span className="text-primary font-bold flex items-center gap-1"><Coins className="h-3 w-3" /> Credits</span>
+                                    <span className="font-bold text-primary">-{careCreditsApplied.toFixed(2)} MKD</span>
+                                  </div>
+                                )}
+                                <div className="border-t border-border pt-1.5 flex justify-between text-xs">
+                                  <span className="font-bold">Total</span>
+                                  <span className="font-bold text-primary">{finalPrice.toFixed(2)} MKD</span>
+                                </div>
+                                <p className="text-[9px] text-muted-foreground">💳 Simulated payment · Stripe coming soon</p>
+                              </div>
+                            );
+                          })()}
                           <button
-                            onClick={handleBook}
+                            onClick={async () => {
+                              const careCreditsApplied = useCareCredits ? Math.min(creditBalance, s.price) : 0;
+                              const finalPrice = Math.max(0, s.price - careCreditsApplied);
+                              // Apply credits first
+                              if (careCreditsApplied > 0) {
+                                await applyCreditsToPayment(careCreditsApplied);
+                              }
+                              handleBook();
+                            }}
                             disabled={booking}
                             className="w-full petkeep-gradient rounded-xl py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
                           >
-                            {booking ? "Processing payment..." : `Pay & Book — ${s.price} MKD`}
+                            {booking ? "Processing payment..." : `Pay & Book — ${Math.max(0, s.price - (useCareCredits ? Math.min(creditBalance, s.price) : 0)).toFixed(0)} MKD`}
                           </button>
                         </>
                       )}
