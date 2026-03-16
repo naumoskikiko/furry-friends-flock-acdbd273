@@ -247,7 +247,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
         {/* Article body - centered, readable width */}
         <article className="px-5 pb-8 max-w-[640px] mx-auto">
           {/* Title */}
-          <h1 className="mt-6 font-display text-2xl font-extrabold leading-tight tracking-tight">
+          <h1 className="mt-6 font-display text-[26px] sm:text-3xl font-extrabold leading-[1.25] tracking-tight text-foreground">
             {post.title}
           </h1>
 
@@ -256,7 +256,6 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
             <button onClick={() => goToProfile(post.user_id)}>
               {post.avatar_url ?
               <img src={post.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" /> :
-
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-sm font-bold text-primary-foreground">
                   {initials}
                 </div>
@@ -275,10 +274,10 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
           {/* Divider */}
           <div className="my-6 border-t border-border" />
 
-          {/* Content — better typography */}
-          <div className="space-y-4">
+          {/* Content — mobile-optimized typography */}
+          <div className="space-y-5">
             {paragraphs.map((p, i) =>
-            <p key={i} className="text-[15px] leading-[1.8] text-foreground/90">
+            <p key={i} className="text-[17px] sm:text-lg leading-[1.85] text-foreground/90 break-words">
                 {p}
               </p>
             )}
