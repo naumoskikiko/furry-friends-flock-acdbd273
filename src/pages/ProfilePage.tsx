@@ -224,7 +224,15 @@ const ProfilePage = () => {
         </div>
 
         {/* Stats cards */}
-        <div className="grid grid-cols-2 gap-3 px-4 py-4">
+        <div className="grid grid-cols-3 gap-3 px-4 py-4">
+          <button onClick={() => setActiveTab("credits")} className="rounded-2xl bg-petkeep-mint-light p-3 text-left">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-accent" />
+              <span className="text-xs font-bold text-accent">Credits</span>
+            </div>
+            <p className="mt-1 font-display text-xl font-extrabold">{creditBalance.toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground">💎 PetKeep Points</p>
+          </button>
           {(profile?.role === "business" || profile?.role === "provider") ? (
             <div className="rounded-2xl bg-petkeep-cream p-3">
               <div className="flex items-center gap-2">
