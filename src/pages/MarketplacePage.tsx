@@ -44,8 +44,10 @@ const MarketplacePage = () => {
   const { business: myBusiness, loading: myBizLoading } = useMyBusiness();
   const hasStore = !!myBusiness;
   const canManageStore = isBusiness || isAdmin;
-  const boostedProductIds = useBoostedIds("product");
-  const boostedStoreIds = useBoostedIds("store");
+
+  // Apply ranking algorithm (boost affects order, not visual)
+  const rankedBusinesses = useRankedBusinesses(businesses);
+  const rankedProducts = useRankedProducts(products);
 
   const handleQuickAdd = async (productId: string, productName: string) => {
     try {
