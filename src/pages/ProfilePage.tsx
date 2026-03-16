@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Settings, Grid3X3, Bookmark, Heart, Tag, MapPin, CreditCard, Camera, Plus, Star, Link as LinkIcon, ShoppingBag } from "lucide-react";
+import { Settings, Grid3X3, Bookmark, Heart, Tag, MapPin, CreditCard, Camera, Plus, Star, Link as LinkIcon, ShoppingBag, Coins } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
