@@ -10,10 +10,9 @@ const FeedHeader = () => {
     <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-md">
       <div className="relative mx-auto flex max-w-lg items-center justify-center px-4 py-3">
         {/* Center: Logo Text */}
-        <div className="flex items-center gap-1">
-          <span className="font-display text-xl font-extrabold uppercase tracking-tight" style={{ color: 'hsl(25, 90%, 55%)' }}>Pet</span>
-          <span className="font-display text-xl font-extrabold uppercase tracking-tight" style={{ color: 'hsl(85, 45%, 38%)' }}>Keep</span>
-        </div>
+        <h1 className="font-display text-2xl font-black uppercase tracking-wide">
+          <span style={{ color: 'hsl(25, 90%, 55%)' }}>Pet</span><span style={{ color: 'hsl(85, 45%, 38%)' }}>Keep</span>
+        </h1>
 
         {/* Right: Bell with badge */}
         <button
