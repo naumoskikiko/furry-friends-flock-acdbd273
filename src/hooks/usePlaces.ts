@@ -29,6 +29,10 @@ const CATEGORY_EMOJI: Record<string, string> = {
   grooming: "✂️",
   walker: "🐕‍🦺",
   cafe: "☕",
+  hotel: "🏨",
+  shelter: "🏠",
+  trainer: "🎓",
+  boarding: "🛏️",
   "pet-service": "🐕",
   other: "📍",
 };
@@ -38,13 +42,17 @@ export const getCategoryEmoji = (category: string) =>
 
 export const PLACE_CATEGORIES = [
   { value: "pet-shop", label: "Pet Shop" },
-  { value: "vet", label: "Veterinary Clinic" },
-  { value: "park", label: "Park" },
-  { value: "cafe", label: "Pet Friendly Cafe" },
-  { value: "pet-service", label: "Pet Service" },
-  { value: "grooming", label: "Grooming Salon" },
-  { value: "sitter", label: "Pet Sitter" },
+  { value: "vet", label: "Veterinarian" },
+  { value: "grooming", label: "Groomer" },
+  { value: "shelter", label: "Shelter" },
+  { value: "trainer", label: "Dog Trainer" },
+  { value: "boarding", label: "Pet Boarding" },
   { value: "walker", label: "Dog Walker" },
+  { value: "sitter", label: "Pet Sitter" },
+  { value: "park", label: "Pet Park" },
+  { value: "cafe", label: "Pet Friendly Cafe" },
+  { value: "hotel", label: "Pet Friendly Hotel" },
+  { value: "pet-service", label: "Pet Service" },
   { value: "other", label: "Other" },
 ];
 
