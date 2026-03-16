@@ -13,9 +13,13 @@ const tabs = [
   { path: "/profile", icon: User, label: "Profile" },
 ];
 
+interface BottomNavProps {
+  onBeforeNavigate?: () => void;
+}
+
 const fromTable = (table: string) => (supabase as any).from(table);
 
-const BottomNav = () => {
+const BottomNav = ({ onBeforeNavigate }: BottomNavProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -65,7 +69,7 @@ const BottomNav = () => {
           return (
             <button
               key={path}
-              onClick={() => navigate(path)}
+              onClick={() => { onBeforeNavigate?.(); navigate(path); }}
               className={`relative flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 transition-colors ${
                 isActive
                   ? "text-primary"

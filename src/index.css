@@ -123,4 +123,22 @@
     box-shadow: 0 4px 24px hsl(25 30% 15% / 0.1), 0 2px 8px hsl(25 30% 15% / 0.06);
     transform: translateY(-1px);
   }
+  }
+
+  /* Swipe navigation slide animations */
+  .swipe-slide-from-right {
+    animation: swipeFromRight 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+  .swipe-slide-from-left {
+    animation: swipeFromLeft 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+}
+
+@keyframes swipeFromRight {
+  from { transform: translateX(25%); opacity: 0.4; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes swipeFromLeft {
+  from { transform: translateX(-25%); opacity: 0.4; }
+  to { transform: translateX(0); opacity: 1; }
 }
