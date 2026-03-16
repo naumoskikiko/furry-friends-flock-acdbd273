@@ -24,6 +24,7 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrdersPage from "./pages/OrdersPage";
+import CreditsPage from "./pages/CreditsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
