@@ -134,7 +134,7 @@ export const mockSitters: Sitter[] = [
     reviews: 12,
     pricePerHour: 180,
     distance: "0.5 km",
-    services: ["Dog Walking", "Drop-in Visits"],
+    services: ["Pet Walking", "Drop-in Visits"],
     verified: false,
     isStudent: true,
     bio: "Animal science student looking to help pet owners nearby.",
