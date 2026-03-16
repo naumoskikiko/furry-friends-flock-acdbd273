@@ -47,6 +47,7 @@ const StoryViewer = ({
   onLike, onUnlike, onReply, onShare, onView,
 }: StoryViewerProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [groupIndex, setGroupIndex] = useState(initialGroupIndex);
   const [storyIndex, setStoryIndex] = useState(0);
   const [progress, setProgress] = useState(0);
