@@ -11,6 +11,7 @@ export function useCredits() {
   const [dailyEarned, setDailyEarned] = useState(0);
   const [monthlyEarned, setMonthlyEarned] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [transactions, setTransactions] = useState<any[]>([]);
 
   const fetchBalance = useCallback(async () => {
     if (!user) return;
@@ -41,22 +42,31 @@ export function useCredits() {
     setMonthlyEarned(monthly);
   }, [user]);
 
+  const fetchTransactions = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase.from("credit_transactions")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setTransactions(data || []);
+  }, [user]);
+
   useEffect(() => {
     fetchBalance();
     fetchLimits();
-  }, [fetchBalance, fetchLimits]);
+    fetchTransactions();
+  }, [fetchBalance, fetchLimits, fetchTransactions]);
 
   const earnCredits = useCallback(async (action: CreditAction, sourceId?: string): Promise<boolean> => {
     if (!user) return false;
 
     const amount = CREDIT_REWARDS[action];
 
-    // Check daily limit
     if (dailyEarned + amount > CREDIT_LIMITS.daily_max) return false;
-    // Check monthly limit
     if (monthlyEarned + amount > CREDIT_LIMITS.monthly_max) return false;
 
-    // Prevent double-reward: check if this exact action+source was already credited
+    // Prevent double-reward
     if (sourceId) {
       const { data: existing } = await fromTable("credit_daily_log")
         .select("id")
@@ -64,10 +74,9 @@ export function useCredits() {
         .eq("action_type", action)
         .eq("source_id", sourceId)
         .limit(1);
-      if (existing && existing.length > 0) return false; // Already credited
+      if (existing && existing.length > 0) return false;
     }
 
-    // Log the earning
     await fromTable("credit_daily_log").insert({
       user_id: user.id,
       action_type: action,
@@ -75,13 +84,11 @@ export function useCredits() {
       source_id: sourceId || null,
     });
 
-    // Update balance
     await supabase.from("credits").update({
       balance: balance + amount,
       updated_at: new Date().toISOString(),
     }).eq("user_id", user.id);
 
-    // Log transaction
     await supabase.from("credit_transactions").insert({
       user_id: user.id,
       amount,
@@ -117,19 +124,38 @@ export function useCredits() {
     return true;
   }, [user, balance]);
 
-  const canWithdraw = balance >= CREDIT_LIMITS.min_withdrawal;
+  /** Apply credits as a discount to a payment. Returns credits actually used. */
+  const applyCreditsToPayment = useCallback(async (maxAmount: number): Promise<number> => {
+    if (!user || balance <= 0) return 0;
+    const creditsToUse = Math.min(balance, maxAmount);
+
+    await supabase.from("credits").update({
+      balance: balance - creditsToUse,
+      updated_at: new Date().toISOString(),
+    }).eq("user_id", user.id);
+
+    await supabase.from("credit_transactions").insert({
+      user_id: user.id,
+      amount: -creditsToUse,
+      type: "spend",
+      description: `Used as payment discount`,
+    });
+
+    setBalance((b) => b - creditsToUse);
+    return creditsToUse;
+  }, [user, balance]);
 
   return {
     balance,
     dailyEarned,
     monthlyEarned,
     loading,
+    transactions,
     earnCredits,
     spendCredits,
-    canWithdraw,
+    applyCreditsToPayment,
     dailyLimit: CREDIT_LIMITS.daily_max,
     monthlyLimit: CREDIT_LIMITS.monthly_max,
-    minWithdrawal: CREDIT_LIMITS.min_withdrawal,
-    refresh: () => { fetchBalance(); fetchLimits(); },
+    refresh: () => { fetchBalance(); fetchLimits(); fetchTransactions(); },
   };
 }
