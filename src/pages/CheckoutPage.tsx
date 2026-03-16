@@ -59,7 +59,7 @@ const CheckoutPage = () => {
   const [couponError, setCouponError] = useState("");
   const [useCreditsToggle, setUseCreditsToggle] = useState(true);
 
-  const platformFee = Math.round(totalPrice * 0.10 * 100) / 100;
+  // Platform fee is deducted server-side, not shown to users
   const discount = appliedCoupon?.discount || 0;
   const subtotalAfterDiscount = Math.max(0, totalPrice + DELIVERY_FEE - discount);
   const creditsApplied = useCreditsToggle ? Math.min(creditBalance, subtotalAfterDiscount) : 0;
