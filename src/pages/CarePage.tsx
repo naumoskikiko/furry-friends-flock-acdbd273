@@ -1,12 +1,13 @@
 import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
-import { Star, BadgeCheck, MapPin, ChevronRight, Search, Briefcase, Clock, History } from "lucide-react";
+import { Star, BadgeCheck, MapPin, ChevronRight, Search, Briefcase, Clock, History, Heart } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCareProviders, useMyProvider, useMyBookings, useProviderAvailability, CATEGORIES, type CareProvider } from "@/hooks/useCare";
 import ProviderDetail from "@/components/care/ProviderDetail";
 import ProviderDashboard from "@/components/care/ProviderDashboard";
 import BookingHistory from "@/components/care/BookingHistory";
 import { useBoostedIds } from "@/hooks/useBoosts";
+import PetMatchTab from "@/components/care/tabs/PetMatchTab";
 
 const ProviderStatusBadge = ({ providerId }: { providerId: string }) => {
   const availability = useProviderAvailability(providerId);
