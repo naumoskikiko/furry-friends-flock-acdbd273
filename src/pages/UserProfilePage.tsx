@@ -44,6 +44,9 @@ const UserProfilePage = () => {
   const [followListOpen, setFollowListOpen] = useState(false);
   const [followListType, setFollowListType] = useState<"followers" | "following">("followers");
 
+  // Share modal
+  const [shareOpen, setShareOpen] = useState(false);
+
   // Swipe tabs
   const tabTouchRef = useRef({ x: 0, time: 0 });
   const tabs: TabType[] = ["posts", "pets", "tagged"];
