@@ -1359,6 +1359,62 @@ export type Database = {
         }
         Relationships: []
       }
+      petmatch_listings: {
+        Row: {
+          breed_document_name: string | null
+          breed_document_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          looking_for: string | null
+          pet_id: string
+          status: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          breed_document_name?: string | null
+          breed_document_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          looking_for?: string | null
+          pet_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          breed_document_name?: string | null
+          breed_document_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          looking_for?: string | null
+          pet_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "petmatch_listings_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: true
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pets: {
         Row: {
           age: string | null
