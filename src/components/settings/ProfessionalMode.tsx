@@ -1,18 +1,30 @@
 import { useState } from "react";
-import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap } from "lucide-react";
+import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap, DollarSign, Sliders, TrendingUp, UserCog } from "lucide-react";
 import SettingsMapManagement from "./SettingsMapManagement";
 import CareVerificationPanel from "./CareVerificationPanel";
 import CareManagementPanel from "./CareManagementPanel";
 import MarketplaceManagementPanel from "./MarketplaceManagementPanel";
 import RoleManagementPanel from "./RoleManagementPanel";
 import PromotionManagementPanel from "./PromotionManagementPanel";
+import PlatformDashboard from "./PlatformDashboard";
+import UserManagementPanel from "./UserManagementPanel";
+import PlatformAnalyticsPanel from "./PlatformAnalyticsPanel";
+import AlgorithmControlPanel from "./AlgorithmControlPanel";
+import FinancialControlPanel from "./FinancialControlPanel";
 import { useIsOwner } from "@/hooks/useIsOwner";
 
-type SubSection = "dashboard" | "map-management" | "care-verification" | "care-management" | "marketplace-control" | "role-management" | "promotions";
-
-const futureSections = [
-  { id: "analytics", label: "Platform Analytics", icon: BarChart3, description: "User stats, growth metrics", coming: true },
-];
+type SubSection =
+  | "dashboard"
+  | "map-management"
+  | "care-verification"
+  | "care-management"
+  | "marketplace-control"
+  | "role-management"
+  | "promotions"
+  | "user-management"
+  | "analytics"
+  | "algorithm"
+  | "financial";
 
 const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
@@ -33,129 +45,85 @@ const ProfessionalMode = () => {
         {sub === "marketplace-control" && <MarketplaceManagementPanel />}
         {sub === "role-management" && <RoleManagementPanel />}
         {sub === "promotions" && <PromotionManagementPanel />}
+        {sub === "user-management" && <UserManagementPanel />}
+        {sub === "analytics" && <PlatformAnalyticsPanel />}
+        {sub === "algorithm" && <AlgorithmControlPanel />}
+        {sub === "financial" && <FinancialControlPanel />}
       </div>
     );
   }
+
+  const sections = [
+    { id: "map-management" as const, label: "Map Management", desc: "Add, edit & delete map locations", icon: Map, color: "bg-primary/10 text-primary" },
+    { id: "care-verification" as const, label: "Care Verification", desc: "Review provider verification requests", icon: ShieldCheck, color: "bg-primary/10 text-primary" },
+    { id: "care-management" as const, label: "Care Management", desc: "Manage providers, reviews & reports", icon: Users, color: "bg-primary/10 text-primary" },
+    { id: "marketplace-control" as const, label: "Marketplace Control", desc: "Manage stores, products & listings", icon: Store, color: "bg-primary/10 text-primary" },
+    { id: "user-management" as const, label: "User Management", desc: "View users, manage accounts & content", icon: UserCog, color: "bg-blue-500/10 text-blue-500" },
+    { id: "promotions" as const, label: "Promotion Management", desc: "Boosts, pricing & revenue tracking", icon: Zap, color: "bg-amber-500/10 text-amber-500" },
+    { id: "financial" as const, label: "Financial Control", desc: "Revenue, commissions & transactions", icon: DollarSign, color: "bg-emerald-500/10 text-emerald-600" },
+    { id: "analytics" as const, label: "Platform Analytics", desc: "Top stores, providers & growth metrics", icon: TrendingUp, color: "bg-indigo-500/10 text-indigo-500" },
+  ];
+
+  const ownerSections = [
+    { id: "algorithm" as const, label: "Algorithm Control", desc: "Tune discovery ranking weights", icon: Sliders, color: "bg-purple-500/10 text-purple-500" },
+    { id: "role-management" as const, label: "Role Management", desc: "Assign roles, promote & demote admins", icon: Crown, color: "bg-amber-500/10 text-amber-600" },
+  ];
 
   return (
     <div className="px-4 py-4 space-y-3">
       <div className="rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 p-4">
         <p className="text-sm font-bold">🛠️ Professional Mode</p>
         <p className="text-xs text-muted-foreground mt-1">
-          Advanced management tools for platform administration.
+          Platform control center for administration & management.
         </p>
       </div>
 
-      {/* Map Management */}
-      <button
-        onClick={() => setSub("map-management")}
-        className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
-      >
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-          <Map className="h-4.5 w-4.5 text-primary" />
-        </div>
-        <div className="flex-1 text-left">
-          <p className="text-sm font-semibold">Map Management</p>
-          <p className="text-xs text-muted-foreground">Add, edit & delete map locations</p>
-        </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-      </button>
+      {/* Platform Dashboard */}
+      <PlatformDashboard />
 
-      {/* Care Verification */}
-      <button
-        onClick={() => setSub("care-verification")}
-        className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
-      >
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-          <ShieldCheck className="h-4.5 w-4.5 text-primary" />
-        </div>
-        <div className="flex-1 text-left">
-          <p className="text-sm font-semibold">Care Verification</p>
-          <p className="text-xs text-muted-foreground">Review provider verification requests</p>
-        </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-      </button>
+      {/* Management Sections */}
+      <div className="space-y-1">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-1 pt-2">Management</p>
+        {sections.map(s => (
+          <button
+            key={s.id}
+            onClick={() => setSub(s.id)}
+            className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
+          >
+            <div className={`flex h-9 w-9 items-center justify-center rounded-full ${s.color}`}>
+              <s.icon className="h-4.5 w-4.5" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-semibold">{s.label}</p>
+              <p className="text-xs text-muted-foreground">{s.desc}</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
+        ))}
+      </div>
 
-      {/* Care Management */}
-      <button
-        onClick={() => setSub("care-management")}
-        className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
-      >
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-          <Users className="h-4.5 w-4.5 text-primary" />
-        </div>
-        <div className="flex-1 text-left">
-          <p className="text-sm font-semibold">Care Management</p>
-          <p className="text-xs text-muted-foreground">Manage providers, reviews & reports</p>
-        </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-      </button>
-
-      {/* Marketplace Control */}
-      <button
-        onClick={() => setSub("marketplace-control")}
-        className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
-      >
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-          <Store className="h-4.5 w-4.5 text-primary" />
-        </div>
-        <div className="flex-1 text-left">
-          <p className="text-sm font-semibold">Marketplace Control</p>
-          <p className="text-xs text-muted-foreground">Manage stores, products & listings</p>
-        </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-      </button>
-
-      {/* Promotion Management */}
-      <button
-        onClick={() => setSub("promotions")}
-        className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
-      >
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/10">
-          <Zap className="h-4.5 w-4.5 text-amber-500" />
-        </div>
-        <div className="flex-1 text-left">
-          <p className="text-sm font-semibold">Promotion Management</p>
-          <p className="text-xs text-muted-foreground">Boosts, pricing & revenue tracking</p>
-        </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-      </button>
-
-      {/* Role Management - Owner Only */}
+      {/* Owner-only sections */}
       {isOwner && (
-        <button
-          onClick={() => setSub("role-management")}
-          className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/10">
-            <Crown className="h-4.5 w-4.5 text-amber-600" />
-          </div>
-          <div className="flex-1 text-left">
-            <p className="text-sm font-semibold">Role Management</p>
-            <p className="text-xs text-muted-foreground">Assign roles, promote & demote admins</p>
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </button>
-      )}
-
-      {/* Future sections */}
-      {futureSections.map((s) => (
-        <div
-          key={s.id}
-          className="flex items-center gap-3 rounded-xl px-3 py-3 opacity-50 cursor-not-allowed"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary">
-            <s.icon className="h-4.5 w-4.5 text-muted-foreground" />
-          </div>
-          <div className="flex-1 text-left">
-            <p className="text-sm font-semibold">{s.label}</p>
-            <p className="text-xs text-muted-foreground">{s.description}</p>
-          </div>
-          <span className="text-[10px] font-semibold text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
-            Coming Soon
-          </span>
+        <div className="space-y-1">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-1 pt-2">Owner Controls</p>
+          {ownerSections.map(s => (
+            <button
+              key={s.id}
+              onClick={() => setSub(s.id)}
+              className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
+            >
+              <div className={`flex h-9 w-9 items-center justify-center rounded-full ${s.color}`}>
+                <s.icon className="h-4.5 w-4.5" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-sm font-semibold">{s.label}</p>
+                <p className="text-xs text-muted-foreground">{s.desc}</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 };

@@ -68,7 +68,7 @@ const PlatformAnalyticsPanel = () => {
       // Enrich products with store names
       const prods = (products || []) as (TopProduct & { business_id?: string })[];
       if (prods.length > 0) {
-        const bizIds = [...new Set(prods.map(p => p.business_id).filter(Boolean))];
+        const bizIds = [...new Set(prods.map(p => p.business_id).filter(Boolean))] as string[];
         if (bizIds.length > 0) {
           const { data: bizNames } = await fromTable("business_profiles")
             .select("id, business_name")
