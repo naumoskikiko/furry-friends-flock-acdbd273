@@ -17,17 +17,12 @@ const MarketplacePage = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [activeTab, setActiveTab] = useState<"discover" | "products" | "stores">("discover");
   const [productCategory, setProductCategory] = useState("all");
-  const [businessCategory, setBusinessCategory] = useState("all");
   const [showDashboard, setShowDashboard] = useState(false);
 
-  const { businesses, loading: bizLoading } = useAllBusinesses(
-    activeTab === "stores" ? businessCategory : undefined,
-    searchQuery || undefined
-  );
+  const { businesses, loading: bizLoading } = useAllBusinesses(undefined, searchQuery || undefined);
   const { products, loading: prodLoading } = useAllProducts(
-    activeTab === "products" ? productCategory : undefined,
+    productCategory !== "all" ? productCategory : undefined,
     searchQuery || undefined
   );
 
