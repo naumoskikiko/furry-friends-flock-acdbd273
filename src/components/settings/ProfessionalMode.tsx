@@ -54,6 +54,7 @@ const ProfessionalMode = () => {
         {sub === "algorithm" && <AlgorithmControlPanel />}
         {sub === "financial" && <FinancialControlPanel />}
         {sub === "petmatch" && <PetMatchManagementPanel />}
+        {sub === "credits" && <CreditManagementPanel />}
       </div>
     );
   }
