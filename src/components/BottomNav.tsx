@@ -13,6 +13,10 @@ const tabs = [
   { path: "/profile", icon: User, label: "Profile" },
 ];
 
+interface BottomNavProps {
+  onBeforeNavigate?: () => void;
+}
+
 const fromTable = (table: string) => (supabase as any).from(table);
 
 const BottomNav = () => {
