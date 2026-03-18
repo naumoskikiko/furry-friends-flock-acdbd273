@@ -68,6 +68,7 @@ const StoryViewer = ({
   const [paused, setPaused] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [showReply, setShowReply] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const timerRef = useRef<number>(0);
   const startTimeRef = useRef<number>(0);
   const elapsedRef = useRef<number>(0);
