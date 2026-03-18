@@ -65,7 +65,9 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   const { user } = useAuth();
   const { toast } = useToast();
   const { earnCredits } = useCredits();
+  const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const goToProfile = (userId: string) => {
     if (user?.id === userId) {
