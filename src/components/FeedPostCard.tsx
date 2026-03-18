@@ -277,7 +277,8 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   const handleDeletePost = async () => {
     await supabase.from("posts").delete().eq("id", post.id);
     onDelete?.(post.id);
-    toast({ title: "Post deleted" });
+    toast({ title: isAdmin && !isOwner ? "Post removed by admin" : "Post deleted" });
+    setConfirmDeleteOpen(false);
   };
 
   const handleUnfollow = async () => {
