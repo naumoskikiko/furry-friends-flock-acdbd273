@@ -342,7 +342,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
       {post.image_url && (
         <div
           ref={mediaContainerRef}
-          className="relative aspect-square w-full overflow-hidden select-none"
+          className="relative w-full max-h-[600px] overflow-hidden select-none bg-secondary"
           onClick={handleDoubleTap}
         >
           {isVideo ? (
@@ -350,7 +350,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
               <video
                 ref={videoRef}
                 src={post.image_url}
-                className="h-full w-full object-cover"
+                className="w-full max-h-[600px] object-contain"
                 muted={muted}
                 playsInline
                 loop
@@ -364,7 +364,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
               </button>
             </>
           ) : (
-            <img src={post.image_url} alt="" className="h-full w-full object-cover" loading="lazy" />
+            <img src={post.image_url} alt="" className="w-full max-h-[600px] object-contain" loading="lazy" />
           )}
           <HeartAnimation show={showHeartAnim} onComplete={() => setShowHeartAnim(false)} />
         </div>

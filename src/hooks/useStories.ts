@@ -14,9 +14,30 @@ export const useStories = () => {
   const fetchStories = useCallback(async () => {
     setLoading(true);
 
+    // Get followed user IDs
+    let followingIds: string[] = [];
+    if (user) {
+      const { data: followingData } = await supabase
+        .from("followers")
+        .select("following_id")
+        .eq("follower_id", user.id);
+      followingIds = followingData?.map((f) => f.following_id) || [];
+    }
+
+    // Include own + followed users
+    const storyUserIds = user ? [user.id, ...followingIds] : [];
+
+    if (storyUserIds.length === 0) {
+      setStoryGroups([]);
+      setHasOwnStory(false);
+      setLoading(false);
+      return;
+    }
+
     const { data: stories } = await supabase
       .from("stories")
       .select("*")
+      .in("user_id", storyUserIds)
       .gt("expires_at", new Date().toISOString())
       .order("created_at", { ascending: true });
 

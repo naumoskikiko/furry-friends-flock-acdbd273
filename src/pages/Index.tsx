@@ -106,8 +106,14 @@ const Index = () => {
                 <span className="text-4xl">📸</span>
                 <p className="mt-3 font-display font-bold">Your feed is empty</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Follow other pet owners to see their posts here!
+                  Follow people to see their posts here!
                 </p>
+                <button
+                  onClick={() => (window.location.href = "/explore")}
+                  className="mt-4 rounded-full bg-primary px-6 py-2 text-sm font-bold text-primary-foreground"
+                >
+                  Discover People
+                </button>
               </div>
             )}
 

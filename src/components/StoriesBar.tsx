@@ -87,7 +87,12 @@ const StoriesBar = () => {
             <span className="w-16 truncate text-center text-[10px] font-medium">Your Story</span>
           </div>
 
-          {/* Other users — one icon per user, all stories grouped */}
+          {/* Followed users — one icon per user, all stories grouped */}
+          {storyGroups.length <= 1 && !storyGroups.some((g) => g.user_id !== user?.id) && (
+            <div className="flex items-center px-2">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">Follow people to see their stories</span>
+            </div>
+          )}
           {storyGroups
             .filter((g) => g.user_id !== user?.id)
             .map((group) => {

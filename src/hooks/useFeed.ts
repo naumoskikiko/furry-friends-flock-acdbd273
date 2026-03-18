@@ -87,10 +87,27 @@ export const useFeed = () => {
 
     setLoading(true);
 
-    // Load all public posts from all users
+    // Get list of users the current user follows
+    const { data: followingData } = await supabase
+      .from("followers")
+      .select("following_id")
+      .eq("follower_id", user.id);
+
+    const followingIds = followingData?.map((f) => f.following_id) || [];
+    // Include own posts + followed users' posts
+    const feedUserIds = [user.id, ...followingIds];
+
+    if (feedUserIds.length === 0) {
+      if (reset) setPosts([]);
+      setHasMore(false);
+      setLoading(false);
+      return;
+    }
+
     const { data: rawPosts } = await supabase
       .from("posts")
       .select("*")
+      .in("user_id", feedUserIds)
       .order("created_at", { ascending: false })
       .range(offsetRef.current, offsetRef.current + BATCH_SIZE - 1);
 
