@@ -272,7 +272,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     }
   };
 
-  const canDeleteComment = (c: Comment) => user && (user.id === c.user_id || user.id === post.user_id);
+  const canDeleteComment = (c: Comment) => user && (user.id === c.user_id || user.id === post.user_id || isAdmin);
 
   const handleDeletePost = async () => {
     await supabase.from("posts").delete().eq("id", post.id);
