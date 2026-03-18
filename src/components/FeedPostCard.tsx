@@ -334,7 +334,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
             {isOwner ? (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive" onClick={handleDeletePost}>
+                <DropdownMenuItem className="text-destructive" onClick={() => setConfirmDeleteOpen(true)}>
                   Delete Post
                 </DropdownMenuItem>
               </>
@@ -347,6 +347,14 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
                 <DropdownMenuItem>
                   <Flag className="mr-2 h-4 w-4" /> Report
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive" onClick={() => setConfirmDeleteOpen(true)}>
+                      <Shield className="mr-2 h-4 w-4" /> Delete Post (Admin)
+                    </DropdownMenuItem>
+                  </>
+                )}
               </>
             )}
           </DropdownMenuContent>
