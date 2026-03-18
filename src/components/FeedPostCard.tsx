@@ -11,6 +11,7 @@ import {
   VolumeX,
   Flag,
   UserMinus,
+  Shield,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
