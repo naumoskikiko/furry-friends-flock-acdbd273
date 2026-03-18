@@ -218,6 +218,14 @@ const StoryViewer = ({
     onShare?.(story.id, story.media_url);
   };
 
+  const handleAdminDeleteStory = async () => {
+    if (!story) return;
+    await supabase.from("stories").delete().eq("id", story.id);
+    toast({ title: isMine ? "Story deleted" : "Story removed by admin" });
+    setConfirmDeleteOpen(false);
+    onClose();
+  };
+
   if (!open || !group || !story) return null;
 
   const dragOpacity = Math.max(0.2, 1 - dragY / 400);
