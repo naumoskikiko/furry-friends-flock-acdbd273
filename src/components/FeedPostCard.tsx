@@ -32,6 +32,17 @@ import {
 import HeartAnimation from "@/components/feed/HeartAnimation";
 import LikesListModal from "@/components/feed/LikesListModal";
 import SharePostModal from "@/components/messages/SharePostModal";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { FeedPostData } from "@/hooks/useFeed";
 
 interface FeedPostCardProps {
