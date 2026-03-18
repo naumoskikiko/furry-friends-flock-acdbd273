@@ -1,10 +1,22 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, ChevronLeft, ChevronRight, MapPin, Pause, Play, Heart, MessageCircle, Send, Eye, BarChart3, ChevronDown } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, MapPin, Pause, Play, Heart, MessageCircle, Send, Eye, BarChart3, ChevronDown, Trash2, Shield } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export interface StoryItem {
   id: string;
