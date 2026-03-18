@@ -273,10 +273,17 @@ const StoryViewer = ({
           if (dragging) handleDragEnd();
         }}
       >
-        {/* Close */}
-        <button onClick={onClose} className="absolute right-4 top-4 z-50 text-white">
-          <X className="h-6 w-6" />
-        </button>
+        {/* Close & Admin Delete */}
+        <div className="absolute right-4 top-4 z-50 flex items-center gap-2">
+          {(isMine || isAdmin) && (
+            <button onClick={() => setConfirmDeleteOpen(true)} className="text-white/80 hover:text-white">
+              <Trash2 className="h-5 w-5" />
+            </button>
+          )}
+          <button onClick={onClose} className="text-white">
+            <X className="h-6 w-6" />
+          </button>
+        </div>
 
         {/* Left/Right tap zones */}
         {!showReply && !dragging && (
