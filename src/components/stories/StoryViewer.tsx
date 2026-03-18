@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, ChevronLeft, ChevronRight, MapPin, Pause, Play, Heart, MessageCircle, Send, Eye, BarChart3, ChevronDown, Trash2, Shield } from "lucide-react";
+import { X, MapPin, Heart, MessageCircle, Send, Eye, BarChart3, ChevronDown, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +53,9 @@ interface StoryViewerProps {
 }
 
 const STORY_DURATION = 5000;
+const TAP_THRESHOLD = 10; // px — max movement to count as tap
+const SWIPE_THRESHOLD = 60; // px — min distance for swipe
+const LONG_PRESS_MS = 200; // ms to activate hold-to-pause
 
 const StoryViewer = ({
   groups, initialGroupIndex, open, onClose,
@@ -62,6 +65,7 @@ const StoryViewer = ({
   const { isAdmin } = useIsAdmin();
   const { toast } = useToast();
   const navigate = useNavigate();
+
   const [groupIndex, setGroupIndex] = useState(initialGroupIndex);
   const [storyIndex, setStoryIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -69,38 +73,44 @@ const StoryViewer = ({
   const [replyText, setReplyText] = useState("");
   const [showReply, setShowReply] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const timerRef = useRef<number>(0);
+
+  // Pull-down state
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Timer refs
+  const rafRef = useRef<number>(0);
   const startTimeRef = useRef<number>(0);
   const elapsedRef = useRef<number>(0);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Pull-down-to-close state
-  const [dragY, setDragY] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const dragStartRef = useRef({ y: 0, time: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
+  // Gesture refs
+  const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isHoldingRef = useRef(false);
+  const gestureActiveRef = useRef<"none" | "drag-down" | "swipe-h">("none");
+
+  // Video ref
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const group = groups[groupIndex];
   const story = group?.stories[storyIndex];
   const isVideo = story?.media_type === "video";
   const isMine = story?.user_id === user?.id;
 
-  // Record view when story changes
+  // Record view
   useEffect(() => {
-    if (story && onView && !isMine) {
-      onView(story.id);
-    }
+    if (story && onView && !isMine) onView(story.id);
   }, [story?.id]);
 
+  // --- Navigation ---
   const goNext = useCallback(() => {
     if (!group) return;
     if (storyIndex < group.stories.length - 1) {
-      setStoryIndex((s) => s + 1);
-      setProgress(0);
+      setStoryIndex(s => s + 1);
     } else if (groupIndex < groups.length - 1) {
-      setGroupIndex((g) => g + 1);
+      setGroupIndex(g => g + 1);
       setStoryIndex(0);
-      setProgress(0);
     } else {
       onClose();
     }
@@ -108,17 +118,43 @@ const StoryViewer = ({
 
   const goPrev = useCallback(() => {
     if (storyIndex > 0) {
-      setStoryIndex((s) => s - 1);
-      setProgress(0);
+      setStoryIndex(s => s - 1);
     } else if (groupIndex > 0) {
-      setGroupIndex((g) => g - 1);
-      setStoryIndex(0);
-      setProgress(0);
+      setGroupIndex(g => g - 1);
+      // Go to last story of previous group
+      const prevGroup = groups[groupIndex - 1];
+      setStoryIndex(prevGroup ? prevGroup.stories.length - 1 : 0);
     }
-  }, [storyIndex, groupIndex]);
+  }, [storyIndex, groupIndex, groups]);
+
+  const goNextGroup = useCallback(() => {
+    if (groupIndex < groups.length - 1) {
+      setGroupIndex(g => g + 1);
+      setStoryIndex(0);
+    } else {
+      onClose();
+    }
+  }, [groupIndex, groups.length, onClose]);
+
+  const goPrevGroup = useCallback(() => {
+    if (groupIndex > 0) {
+      setGroupIndex(g => g - 1);
+      setStoryIndex(0);
+    }
+  }, [groupIndex]);
+
+  // --- Timer ---
+  const pauseTimer = useCallback(() => {
+    elapsedRef.current += Date.now() - startTimeRef.current;
+    cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  const resumeTimer = useCallback(() => {
+    startTimeRef.current = Date.now();
+  }, []);
 
   useEffect(() => {
-    if (!open || !story || isVideo || paused || showReply || dragging) return;
+    if (!open || !story || isVideo || paused || showReply || isDragging || isHoldingRef.current) return;
 
     startTimeRef.current = Date.now();
 
@@ -127,79 +163,192 @@ const StoryViewer = ({
       const pct = Math.min(elapsed / STORY_DURATION, 1);
       setProgress(pct);
       if (pct < 1) {
-        timerRef.current = requestAnimationFrame(animate);
+        rafRef.current = requestAnimationFrame(animate);
       } else {
         elapsedRef.current = 0;
         goNext();
       }
     };
 
-    timerRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(timerRef.current);
-  }, [open, story, isVideo, paused, goNext, showReply, dragging]);
+    rafRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [open, story?.id, isVideo, paused, goNext, showReply, isDragging]);
 
+  // Reset on story change
   useEffect(() => {
     elapsedRef.current = 0;
     setProgress(0);
     setPaused(false);
     setShowReply(false);
     setReplyText("");
+    isHoldingRef.current = false;
   }, [groupIndex, storyIndex]);
 
+  // Sync initial group
   useEffect(() => {
     setGroupIndex(initialGroupIndex);
     setStoryIndex(0);
   }, [initialGroupIndex]);
 
-  // --- Pull-down-to-close handlers ---
-  const handleDragStart = (clientY: number) => {
-    dragStartRef.current = { y: clientY, time: Date.now() };
-    setDragging(true);
-    // Pause timer during drag
-    elapsedRef.current += Date.now() - startTimeRef.current;
-    cancelAnimationFrame(timerRef.current);
-  };
-
-  const handleDragMove = (clientY: number) => {
-    if (!dragging) return;
-    const dy = Math.max(0, clientY - dragStartRef.current.y);
-    setDragY(dy);
-  };
-
-  const handleDragEnd = () => {
-    if (!dragging) return;
-    setDragging(false);
-    if (dragY > 150) {
-      onClose();
-    }
-    setDragY(0);
-  };
-
-  const handlePauseToggle = () => {
-    if (showReply) return;
-    if (paused) {
-      setPaused(false);
+  // Pause/resume video with paused state
+  useEffect(() => {
+    if (!videoRef.current || !isVideo) return;
+    if (paused || isDragging || isHoldingRef.current) {
+      videoRef.current.pause();
     } else {
-      elapsedRef.current += Date.now() - startTimeRef.current;
-      cancelAnimationFrame(timerRef.current);
+      videoRef.current.play().catch(() => {});
+    }
+  }, [paused, isDragging, isVideo]);
+
+  // --- Gesture handlers (unified touch system) ---
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (showReply) return;
+    const { clientX, clientY } = e.touches[0];
+    touchStartRef.current = { x: clientX, y: clientY, time: Date.now() };
+    gestureActiveRef.current = "none";
+    isHoldingRef.current = false;
+
+    // Start long-press timer
+    longPressTimerRef.current = setTimeout(() => {
+      isHoldingRef.current = true;
+      pauseTimer();
       setPaused(true);
+    }, LONG_PRESS_MS);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (showReply) return;
+    const { clientX, clientY } = e.touches[0];
+    const dx = clientX - touchStartRef.current.x;
+    const dy = clientY - touchStartRef.current.y;
+
+    // Cancel long-press if moved
+    if (Math.abs(dx) > TAP_THRESHOLD || Math.abs(dy) > TAP_THRESHOLD) {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+    }
+
+    if (isHoldingRef.current) return; // Holding = paused, ignore movement
+
+    // Determine gesture direction if not yet committed
+    if (gestureActiveRef.current === "none" && (Math.abs(dx) > 15 || Math.abs(dy) > 15)) {
+      if (Math.abs(dy) > Math.abs(dx) && dy > 0) {
+        gestureActiveRef.current = "drag-down";
+        pauseTimer();
+        setIsDragging(true);
+      } else if (Math.abs(dx) > Math.abs(dy)) {
+        gestureActiveRef.current = "swipe-h";
+      }
+    }
+
+    if (gestureActiveRef.current === "drag-down") {
+      setDragY(Math.max(0, dy));
     }
   };
 
-  const handleVideoEnd = () => goNext();
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (showReply) return;
 
+    // Clear long-press timer
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+
+    const { clientX, clientY } = e.changedTouches[0];
+    const dx = clientX - touchStartRef.current.x;
+    const dy = clientY - touchStartRef.current.y;
+    const dt = Date.now() - touchStartRef.current.time;
+
+    // Release hold-to-pause
+    if (isHoldingRef.current) {
+      isHoldingRef.current = false;
+      setPaused(false);
+      gestureActiveRef.current = "none";
+      return;
+    }
+
+    // Handle drag-down close
+    if (gestureActiveRef.current === "drag-down") {
+      if (dragY > 120) {
+        onClose();
+      }
+      setDragY(0);
+      setIsDragging(false);
+      gestureActiveRef.current = "none";
+      return;
+    }
+
+    // Handle horizontal swipe between groups
+    if (gestureActiveRef.current === "swipe-h" && Math.abs(dx) > SWIPE_THRESHOLD && dt < 500) {
+      if (dx < 0) goNextGroup();
+      else goPrevGroup();
+      gestureActiveRef.current = "none";
+      return;
+    }
+
+    gestureActiveRef.current = "none";
+
+    // It's a tap — determine left/right side
+    if (Math.abs(dx) < TAP_THRESHOLD && Math.abs(dy) < TAP_THRESHOLD && dt < 300) {
+      const screenW = window.innerWidth;
+      if (clientX < screenW * 0.3) {
+        goPrev();
+      } else if (clientX > screenW * 0.7) {
+        goNext();
+      }
+      // Center tap does nothing (was handled by long press)
+    }
+  };
+
+  // --- Mouse fallback for desktop ---
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (showReply) return;
+    touchStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
+    gestureActiveRef.current = "none";
+    isHoldingRef.current = false;
+
+    longPressTimerRef.current = setTimeout(() => {
+      isHoldingRef.current = true;
+      pauseTimer();
+      setPaused(true);
+    }, LONG_PRESS_MS);
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (showReply) return;
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+
+    if (isHoldingRef.current) {
+      isHoldingRef.current = false;
+      setPaused(false);
+      return;
+    }
+
+    const dx = e.clientX - touchStartRef.current.x;
+    const dy = e.clientY - touchStartRef.current.y;
+    const dt = Date.now() - touchStartRef.current.time;
+
+    if (Math.abs(dx) < TAP_THRESHOLD && Math.abs(dy) < TAP_THRESHOLD && dt < 300) {
+      const screenW = window.innerWidth;
+      if (e.clientX < screenW * 0.3) goPrev();
+      else if (e.clientX > screenW * 0.7) goNext();
+    }
+  };
+
+  // --- Actions ---
   const handleLike = () => {
     if (!story) return;
-    if (story.is_liked) {
-      onUnlike?.(story.id);
-    } else {
-      onLike?.(story.id);
-    }
+    story.is_liked ? onUnlike?.(story.id) : onLike?.(story.id);
   };
 
   const handleReplyOpen = () => {
-    elapsedRef.current += Date.now() - startTimeRef.current;
-    cancelAnimationFrame(timerRef.current);
+    pauseTimer();
     setPaused(true);
     setShowReply(true);
     setTimeout(() => inputRef.current?.focus(), 100);
@@ -226,6 +375,8 @@ const StoryViewer = ({
     onClose();
   };
 
+  const handleVideoEnd = () => goNext();
+
   if (!open || !group || !story) return null;
 
   const dragOpacity = Math.max(0.2, 1 - dragY / 400);
@@ -237,80 +388,30 @@ const StoryViewer = ({
       style={{ backgroundColor: `rgba(0,0,0,${dragOpacity})` }}
     >
       <div
-        ref={containerRef}
-        className="relative h-full w-full max-w-lg mx-auto"
+        className="relative h-full w-full max-w-lg mx-auto select-none"
         style={{
           transform: `translateY(${dragY}px) scale(${dragScale})`,
-          transition: dragging ? "none" : "transform 0.3s ease-out",
+          transition: isDragging ? "none" : "transform 0.3s ease-out",
           borderRadius: dragY > 0 ? "1.5rem" : "0",
           overflow: "hidden",
         }}
-        onTouchStart={(e) => {
-          if (showReply) return;
-          handleDragStart(e.touches[0].clientY);
-        }}
-        onTouchMove={(e) => {
-          if (showReply) return;
-          handleDragMove(e.touches[0].clientY);
-        }}
-        onTouchEnd={() => {
-          if (showReply) return;
-          handleDragEnd();
-        }}
-        onMouseDown={(e) => {
-          if (showReply) return;
-          handleDragStart(e.clientY);
-        }}
-        onMouseMove={(e) => {
-          if (showReply || !dragging) return;
-          handleDragMove(e.clientY);
-        }}
-        onMouseUp={() => {
-          if (showReply) return;
-          handleDragEnd();
-        }}
-        onMouseLeave={() => {
-          if (dragging) handleDragEnd();
-        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
       >
-        {/* Close & Admin Delete */}
+        {/* Close & Delete buttons */}
         <div className="absolute right-4 top-4 z-50 flex items-center gap-2">
           {(isMine || isAdmin) && (
-            <button onClick={() => setConfirmDeleteOpen(true)} className="text-white/80 hover:text-white">
+            <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteOpen(true); }} className="text-white/80 hover:text-white">
               <Trash2 className="h-5 w-5" />
             </button>
           )}
-          <button onClick={onClose} className="text-white">
+          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="text-white">
             <X className="h-6 w-6" />
           </button>
         </div>
-
-        {/* Left/Right tap zones */}
-        {!showReply && !dragging && (
-          <>
-            <button onClick={goPrev} className="absolute left-0 top-0 z-40 h-full w-1/4" />
-            <button onClick={goNext} className="absolute right-0 top-0 z-40 h-full w-1/4" />
-            {/* Center hold-to-pause zone */}
-            <div
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                elapsedRef.current += Date.now() - startTimeRef.current;
-                cancelAnimationFrame(timerRef.current);
-                setPaused(true);
-              }}
-              onMouseUp={() => setPaused(false)}
-              onMouseLeave={() => { if (paused && !showReply) setPaused(false); }}
-              onTouchStart={(e) => {
-                e.stopPropagation();
-                elapsedRef.current += Date.now() - startTimeRef.current;
-                cancelAnimationFrame(timerRef.current);
-                setPaused(true);
-              }}
-              onTouchEnd={() => setPaused(false)}
-              className="absolute left-1/4 top-0 z-40 h-[calc(100%-120px)] w-1/2 cursor-pointer"
-            />
-          </>
-        )}
 
         {/* Progress bars */}
         <div className="absolute left-0 right-0 top-0 z-50 flex gap-1 p-2">
@@ -329,7 +430,10 @@ const StoryViewer = ({
 
         {/* User info */}
         <div className="absolute left-0 right-0 top-4 z-50 flex items-center gap-3 px-4 pt-4">
-          <button onClick={() => { onClose(); navigate(user?.id === group.user_id ? "/profile" : `/user/${group.user_id}`); }} className="flex items-center gap-3">
+          <button
+            onClick={(e) => { e.stopPropagation(); onClose(); navigate(user?.id === group.user_id ? "/profile" : `/user/${group.user_id}`); }}
+            className="flex items-center gap-3"
+          >
             {group.avatar_url ? (
               <img src={group.avatar_url} className="h-8 w-8 rounded-full object-cover ring-2 ring-white/50" />
             ) : (
@@ -345,44 +449,55 @@ const StoryViewer = ({
               {storyIndex + 1}/{group.stories.length}
             </span>
           )}
-          {paused && !showReply && <Pause className="ml-1 h-4 w-4 text-white/60" />}
         </div>
 
         {/* Media */}
         <div className="relative h-full w-full bg-black">
           {isVideo ? (
             <video
+              ref={videoRef}
               key={story.id}
               src={story.media_url}
               className="h-full w-full object-contain"
               autoPlay
-              muted={false}
               playsInline
               onEnded={handleVideoEnd}
             />
           ) : (
-            <img key={story.id} src={story.media_url} alt="" className="h-full w-full object-contain" />
+            <img key={story.id} src={story.media_url} alt="" className="h-full w-full object-contain" loading="eager" />
           )}
 
           {/* Overlays */}
           {story.text_overlay && (
-            <div className="absolute inset-x-0 bottom-40 z-30 text-center">
+            <div className="absolute inset-x-0 bottom-40 z-30 text-center pointer-events-none">
               <span className="rounded-lg bg-black/60 px-4 py-2 text-lg font-bold text-white">
                 {story.text_overlay}
               </span>
             </div>
           )}
           {story.sticker && (
-            <div className="absolute right-6 top-24 z-30 text-5xl">{story.sticker}</div>
+            <div className="absolute right-6 top-24 z-30 text-5xl pointer-events-none">{story.sticker}</div>
           )}
           {story.location && (
-            <div className="absolute left-4 top-20 z-30 flex items-center gap-1 rounded-full bg-black/50 px-3 py-1 text-xs text-white">
+            <div className="absolute left-4 top-20 z-30 flex items-center gap-1 rounded-full bg-black/50 px-3 py-1 text-xs text-white pointer-events-none">
               <MapPin className="h-3 w-3" /> {story.location}
             </div>
           )}
           {story.caption && !showReply && (
-            <div className="absolute inset-x-0 bottom-28 z-30 px-6 text-center">
+            <div className="absolute inset-x-0 bottom-28 z-30 px-6 text-center pointer-events-none">
               <p className="text-sm text-white drop-shadow-lg">{story.caption}</p>
+            </div>
+          )}
+
+          {/* Paused indicator */}
+          {paused && !showReply && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+              <div className="rounded-full bg-black/40 p-4 backdrop-blur-sm">
+                <div className="flex gap-1.5">
+                  <div className="h-6 w-2 rounded-sm bg-white" />
+                  <div className="h-6 w-2 rounded-sm bg-white" />
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -413,7 +528,7 @@ const StoryViewer = ({
               </div>
             ) : (
               <div className="flex items-center justify-center gap-8 bg-gradient-to-t from-black/60 to-transparent px-4 py-5 pb-8">
-                <button onClick={handleLike} className="flex flex-col items-center gap-1">
+                <button onClick={(e) => { e.stopPropagation(); handleLike(); }} className="flex flex-col items-center gap-1">
                   <Heart
                     className={`h-6 w-6 transition-transform active:scale-125 ${
                       story.is_liked ? "fill-red-500 text-red-500" : "text-white"
@@ -423,11 +538,11 @@ const StoryViewer = ({
                     {story.likes_count > 0 ? story.likes_count : "Like"}
                   </span>
                 </button>
-                <button onClick={handleReplyOpen} className="flex flex-col items-center gap-1">
+                <button onClick={(e) => { e.stopPropagation(); handleReplyOpen(); }} className="flex flex-col items-center gap-1">
                   <MessageCircle className="h-6 w-6 text-white" />
                   <span className="text-[10px] text-white/80">Reply</span>
                 </button>
-                <button onClick={handleShare} className="flex flex-col items-center gap-1">
+                <button onClick={(e) => { e.stopPropagation(); handleShare(); }} className="flex flex-col items-center gap-1">
                   <Send className="h-6 w-6 text-white" />
                   <span className="text-[10px] text-white/80">Share</span>
                 </button>
@@ -436,7 +551,7 @@ const StoryViewer = ({
           </div>
         )}
 
-        {/* Own story: analytics panel */}
+        {/* Own story: analytics */}
         {isMine && (
           <StoryAnalyticsPanel storyId={story.id} likesCount={story.likes_count} />
         )}
@@ -467,7 +582,7 @@ const StoryViewer = ({
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
-// --- Story Analytics Panel (for own stories) ---
+// --- Story Analytics Panel ---
 interface AnalyticsData {
   views: { user_id: string; full_name: string; avatar_url: string | null; viewed_at: string }[];
   likesCount: number;
@@ -509,18 +624,14 @@ const StoryAnalyticsPanel = ({ storyId, likesCount }: { storyId: string; likesCo
       };
     });
 
-    setData({
-      views: enrichedViews,
-      likesCount,
-      viewsCount: enrichedViews.length,
-    });
+    setData({ views: enrichedViews, likesCount, viewsCount: enrichedViews.length });
     setLoading(false);
   };
 
   return (
     <div className="absolute bottom-0 left-0 right-0 z-50">
       <button
-        onClick={fetchAnalytics}
+        onClick={(e) => { e.stopPropagation(); fetchAnalytics(); }}
         className="mx-auto mb-2 flex items-center gap-2 rounded-full bg-black/60 px-4 py-2 text-white backdrop-blur-sm"
       >
         <BarChart3 className="h-4 w-4" />
@@ -549,7 +660,7 @@ const StoryAnalyticsPanel = ({ storyId, likesCount }: { storyId: string; likesCo
                 </div>
               </div>
 
-              {data.views.length > 0 && (
+              {data.views.length > 0 ? (
                 <div>
                   <p className="text-[11px] font-semibold text-white/60 uppercase mb-2">Viewed by</p>
                   <div className="space-y-2">
@@ -574,9 +685,7 @@ const StoryAnalyticsPanel = ({ storyId, likesCount }: { storyId: string; likesCo
                     })}
                   </div>
                 </div>
-              )}
-
-              {data.views.length === 0 && (
+              ) : (
                 <p className="text-center text-xs text-white/50 py-2">No views yet</p>
               )}
             </>
