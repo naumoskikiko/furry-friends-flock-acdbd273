@@ -11,6 +11,7 @@ import {
   VolumeX,
   Flag,
   UserMinus,
+  Shield,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +32,17 @@ import {
 import HeartAnimation from "@/components/feed/HeartAnimation";
 import LikesListModal from "@/components/feed/LikesListModal";
 import SharePostModal from "@/components/messages/SharePostModal";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { FeedPostData } from "@/hooks/useFeed";
 
 interface FeedPostCardProps {
@@ -53,7 +65,9 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   const { user } = useAuth();
   const { toast } = useToast();
   const { earnCredits } = useCredits();
+  const { isAdmin } = useIsAdmin();
   const navigate = useNavigate();
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const goToProfile = (userId: string) => {
     if (user?.id === userId) {
@@ -258,12 +272,13 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     }
   };
 
-  const canDeleteComment = (c: Comment) => user && (user.id === c.user_id || user.id === post.user_id);
+  const canDeleteComment = (c: Comment) => user && (user.id === c.user_id || user.id === post.user_id || isAdmin);
 
   const handleDeletePost = async () => {
     await supabase.from("posts").delete().eq("id", post.id);
     onDelete?.(post.id);
-    toast({ title: "Post deleted" });
+    toast({ title: isAdmin && !isOwner ? "Post removed by admin" : "Post deleted" });
+    setConfirmDeleteOpen(false);
   };
 
   const handleUnfollow = async () => {
@@ -319,7 +334,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
             {isOwner ? (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive" onClick={handleDeletePost}>
+                <DropdownMenuItem className="text-destructive" onClick={() => setConfirmDeleteOpen(true)}>
                   Delete Post
                 </DropdownMenuItem>
               </>
@@ -332,6 +347,14 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
                 <DropdownMenuItem>
                   <Flag className="mr-2 h-4 w-4" /> Report
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive" onClick={() => setConfirmDeleteOpen(true)}>
+                      <Shield className="mr-2 h-4 w-4" /> Delete Post (Admin)
+                    </DropdownMenuItem>
+                  </>
+                )}
               </>
             )}
           </DropdownMenuContent>
@@ -484,6 +507,26 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isAdmin && !isOwner
+                ? "You are deleting this post as an admin. This action cannot be undone."
+                : "Are you sure you want to delete this post? This action cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeletePost} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </article>
   );
 };

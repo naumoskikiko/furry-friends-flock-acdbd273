@@ -1,10 +1,22 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, ChevronLeft, ChevronRight, MapPin, Pause, Play, Heart, MessageCircle, Send, Eye, BarChart3, ChevronDown } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, MapPin, Pause, Play, Heart, MessageCircle, Send, Eye, BarChart3, ChevronDown, Trash2, Shield } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export interface StoryItem {
   id: string;
@@ -47,6 +59,8 @@ const StoryViewer = ({
   onLike, onUnlike, onReply, onShare, onView,
 }: StoryViewerProps) => {
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [groupIndex, setGroupIndex] = useState(initialGroupIndex);
   const [storyIndex, setStoryIndex] = useState(0);
@@ -54,6 +68,7 @@ const StoryViewer = ({
   const [paused, setPaused] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [showReply, setShowReply] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const timerRef = useRef<number>(0);
   const startTimeRef = useRef<number>(0);
   const elapsedRef = useRef<number>(0);
@@ -203,6 +218,14 @@ const StoryViewer = ({
     onShare?.(story.id, story.media_url);
   };
 
+  const handleAdminDeleteStory = async () => {
+    if (!story) return;
+    await supabase.from("stories").delete().eq("id", story.id);
+    toast({ title: isMine ? "Story deleted" : "Story removed by admin" });
+    setConfirmDeleteOpen(false);
+    onClose();
+  };
+
   if (!open || !group || !story) return null;
 
   const dragOpacity = Math.max(0.2, 1 - dragY / 400);
@@ -250,10 +273,17 @@ const StoryViewer = ({
           if (dragging) handleDragEnd();
         }}
       >
-        {/* Close */}
-        <button onClick={onClose} className="absolute right-4 top-4 z-50 text-white">
-          <X className="h-6 w-6" />
-        </button>
+        {/* Close & Admin Delete */}
+        <div className="absolute right-4 top-4 z-50 flex items-center gap-2">
+          {(isMine || isAdmin) && (
+            <button onClick={() => setConfirmDeleteOpen(true)} className="text-white/80 hover:text-white">
+              <Trash2 className="h-5 w-5" />
+            </button>
+          )}
+          <button onClick={onClose} className="text-white">
+            <X className="h-6 w-6" />
+          </button>
+        </div>
 
         {/* Left/Right tap zones */}
         {!showReply && !dragging && (
@@ -411,6 +441,26 @@ const StoryViewer = ({
           <StoryAnalyticsPanel storyId={story.id} likesCount={story.likes_count} />
         )}
       </div>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent className="z-[200]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this story?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isAdmin && !isMine
+                ? "You are deleting this story as an admin. This action cannot be undone."
+                : "Are you sure you want to delete this story? This action cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAdminDeleteStory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
