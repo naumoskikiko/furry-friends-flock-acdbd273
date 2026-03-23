@@ -8,6 +8,9 @@ import {
 } from "lucide-react";
 import type { MapMarker } from "@/components/explore/ExploreMap";
 import type { NearbyItem } from "@/components/explore/NearbySection";
+import { useUserLocation } from "@/hooks/useUserLocation";
+import { setUserLocationOnMap, removeUserLocationMarker } from "@/lib/userLocationMarker";
+import { toast } from "sonner";
 
 const emojiIcon = (emoji: string, active = false) =>
   L.divIcon({
