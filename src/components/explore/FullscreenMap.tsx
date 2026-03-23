@@ -76,22 +76,6 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
       markersLayerRef.current = L.layerGroup().addTo(map);
       mapRef.current = map;
 
-      // Intercept popup link clicks for SPA navigation
-      map.on("popupopen", (e: any) => {
-        const container = e.popup.getElement();
-        if (!container) return;
-        const links = container.querySelectorAll("a[data-nav]");
-        links.forEach((link: HTMLAnchorElement) => {
-          link.addEventListener("click", (ev: Event) => {
-            ev.preventDefault();
-            const href = link.getAttribute("data-nav");
-            if (href) {
-              onClose();
-              navigate(href);
-            }
-          });
-        });
-      });
 
       setTimeout(() => map.invalidateSize(), 100);
       setMapReady(true);
