@@ -76,7 +76,7 @@ const MarketplacePage = () => {
               onClick={() => navigate("/liked-products")}
               className="flex items-center gap-1.5 rounded-xl bg-secondary text-secondary-foreground px-3 py-2 text-xs font-bold"
             >
-              <Heart className="h-3.5 w-3.5" /> Liked
+              <Heart className={`h-3.5 w-3.5 ${wishlistCount > 0 ? "fill-destructive text-destructive" : ""}`} /> Liked
             </button>
             {canManageStore && (
               <button
