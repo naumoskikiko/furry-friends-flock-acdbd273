@@ -103,17 +103,16 @@ const Index = () => {
             {showSkeleton && <FeedSkeleton />}
 
             {!showSkeleton && posts.length === 0 && (
-              <div className="flex flex-col items-center py-16 text-center">
-                <span className="text-4xl">📸</span>
-                <p className="mt-3 font-display font-bold">Your feed is empty</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Follow people to see their posts here!
+              <div className="flex flex-col items-center py-8 text-center">
+                <PeopleYouMayKnow />
+                <p className="mt-4 text-sm text-muted-foreground">
+                  Start following people to see posts here!
                 </p>
                 <button
                   onClick={() => (window.location.href = "/explore")}
-                  className="mt-4 rounded-full bg-primary px-6 py-2 text-sm font-bold text-primary-foreground"
+                  className="mt-3 rounded-full bg-primary px-6 py-2 text-sm font-bold text-primary-foreground"
                 >
-                  Discover People
+                  Discover More
                 </button>
               </div>
             )}
