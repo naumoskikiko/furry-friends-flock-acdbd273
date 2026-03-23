@@ -88,10 +88,10 @@ export interface GalleryImage {
 const CATEGORIES = [
   { value: "sitter", label: "Pet Sitters", icon: "🐾" },
   { value: "walker", label: "Pet Walker", icon: "🚶" },
-  { value: "trainer", label: "Trainer", icon: "🎓" },
-  { value: "shelter", label: "Shelter", icon: "🏠" },
   { value: "vet-clinic", label: "Vet Clinic", icon: "🏥" },
   { value: "grooming-salon", label: "Grooming Salon", icon: "✂️" },
+  { value: "trainer", label: "Trainer", icon: "🎓" },
+  { value: "shelter", label: "Shelter", icon: "🏠" },
 ];
 
 export { CATEGORIES };
