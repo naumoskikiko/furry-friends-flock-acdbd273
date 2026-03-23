@@ -161,10 +161,6 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
     const marker = filteredMarkers.find((m) => m.id === item.id);
     if (marker && mapRef.current) {
       mapRef.current.setView([marker.lat, marker.lng], 16);
-      const leafletMarker = leafletMarkersRef.current.get(marker.id);
-      if (leafletMarker) {
-        leafletMarker.openPopup();
-      }
       setSelectedMarker(marker);
     }
   }, [filteredMarkers]);
