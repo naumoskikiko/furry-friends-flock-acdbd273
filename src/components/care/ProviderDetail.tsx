@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Star, BadgeCheck, MapPin, Clock, DollarSign,
   Calendar, ChevronLeft, MessageSquare, AlertTriangle, Image as ImageIcon, Shield, Coins,
@@ -331,14 +332,15 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
         </div>
       </div>
 
-      {/* Booking Modal */}
-      {showBookingModal && (
+      {/* Booking Modal - portaled to body to avoid stacking context issues */}
+      {showBookingModal && createPortal(
         <BookingModal
           provider={provider}
           initialService={bookingService || undefined}
           services={services}
           onClose={() => setShowBookingModal(false)}
-        />
+        />,
+        document.body
       )}
     </div>
   );
