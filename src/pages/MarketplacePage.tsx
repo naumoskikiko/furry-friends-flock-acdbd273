@@ -199,25 +199,37 @@ const MarketplacePage = () => {
                   <button onClick={() => setActiveTab("products")} className="text-xs font-bold text-primary">See all</button>
                 </div>
                 <div className="px-4 grid grid-cols-2 gap-3">
-                  {popularProducts.map((p) => (
-                    <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
-                      <div className="relative cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
-                        <ProductImage src={p.image_url} alt={p.name} category={p.category} size="lg" aspectRatio="square" className="rounded-none" />
-                      </div>
-                      <div className="p-2.5">
-                        <h4 className="text-xs font-bold truncate cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>{p.name}</h4>
-                        <div className="flex items-center justify-between mt-1.5">
-                          <p className="text-sm font-extrabold text-primary">{p.price} MKD</p>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleQuickAdd(p.id, p.name); }}
-                            className="flex h-7 w-7 items-center justify-center rounded-full petkeep-gradient text-primary-foreground"
-                          >
-                            <Plus className="h-3.5 w-3.5" />
-                          </button>
+                  {popularProducts.map((p) => {
+                    const outOfStock = p.stock !== null && p.stock !== undefined && p.stock <= 0;
+                    const lowStock = p.stock !== null && p.stock !== undefined && p.stock > 0 && p.stock <= 5;
+                    return (
+                      <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
+                        <div className="relative cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
+                          <ProductImage src={p.image_url} alt={p.name} category={p.category} size="lg" aspectRatio="square" className="rounded-none" />
+                          {outOfStock && (
+                            <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                              <span className="text-xs font-bold text-destructive">Out of stock</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-2.5">
+                          <h4 className="text-xs font-bold truncate cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>{p.name}</h4>
+                          {lowStock && <p className="text-[10px] font-bold text-amber-600 mt-0.5">Only {p.stock} left</p>}
+                          <div className="flex items-center justify-between mt-1.5">
+                            <p className="text-sm font-extrabold text-primary">{p.price} MKD</p>
+                            {!outOfStock && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleQuickAdd(p.id, p.name); }}
+                                className="flex h-7 w-7 items-center justify-center rounded-full petkeep-gradient text-primary-foreground"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
