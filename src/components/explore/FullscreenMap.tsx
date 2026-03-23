@@ -248,9 +248,14 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
           </button>
           <button
             onClick={handleCenterOnMe}
+            disabled={locationLoading}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-card shadow-lg border border-border"
           >
-            <Crosshair className="h-4 w-4 text-primary" />
+            {locationLoading ? (
+              <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Crosshair className="h-4 w-4 text-primary" />
+            )}
           </button>
         </div>
 
