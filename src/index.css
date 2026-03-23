@@ -141,3 +141,12 @@
   from { transform: translateX(-25%); opacity: 0.4; }
   to { transform: translateX(0); opacity: 1; }
 }
+
+@keyframes user-loc-pulse {
+  0% { transform: scale(1); opacity: 0.25; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+.user-location-marker {
+  z-index: 1000 !important;
+}
