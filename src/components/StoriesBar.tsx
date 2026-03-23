@@ -130,6 +130,7 @@ const StoriesBar = () => {
           onReply={handleReply}
           onShare={handleShare}
           onView={recordView}
+          onDelete={deleteStory}
         />
       )}
 
