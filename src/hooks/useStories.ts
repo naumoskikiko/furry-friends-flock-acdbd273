@@ -150,9 +150,23 @@ export const useStories = () => {
     );
   }, [user]);
 
+  const deleteStory = useCallback((storyId: string) => {
+    setStoryGroups((prev) => {
+      const updated = prev.map((g) => ({
+        ...g,
+        stories: g.stories.filter((s) => s.id !== storyId),
+      })).filter((g) => g.stories.length > 0);
+      return updated;
+    });
+    setHasOwnStory((prev) => {
+      // Recheck after deletion
+      return storyGroups.some((g) => g.user_id === user?.id && g.stories.some((s) => s.id !== storyId));
+    });
+  }, [storyGroups, user]);
+
   return {
     storyGroups, loading, hasOwnStory, refreshStories: fetchStories,
-    likeStory, unlikeStory, recordView,
+    likeStory, unlikeStory, recordView, deleteStory,
   };
 };
 

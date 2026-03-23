@@ -13,7 +13,7 @@ const fromTable = (table: string) => (supabase as any).from(table);
 
 const StoriesBar = () => {
   const { user, profile } = useAuth();
-  const { storyGroups, hasOwnStory, refreshStories, likeStory, unlikeStory, recordView } = useStories();
+  const { storyGroups, hasOwnStory, refreshStories, likeStory, unlikeStory, recordView, deleteStory } = useStories();
   const { toast } = useToast();
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
@@ -130,6 +130,7 @@ const StoriesBar = () => {
           onReply={handleReply}
           onShare={handleShare}
           onView={recordView}
+          onDelete={deleteStory}
         />
       )}
 
