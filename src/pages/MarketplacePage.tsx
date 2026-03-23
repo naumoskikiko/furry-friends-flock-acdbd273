@@ -43,6 +43,7 @@ const MarketplacePage = () => {
   const { business: myBusiness, loading: myBizLoading } = useMyBusiness();
   const hasStore = !!myBusiness;
   const canManageStore = isBusiness || isAdmin;
+  const { count: wishlistCount } = useWishlist();
 
   // Apply ranking algorithm (boost affects order, not visual)
   const rankedBusinesses = useRankedBusinesses(businesses);
