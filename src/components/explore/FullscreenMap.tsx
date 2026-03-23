@@ -8,6 +8,9 @@ import {
 } from "lucide-react";
 import type { MapMarker } from "@/components/explore/ExploreMap";
 import type { NearbyItem } from "@/components/explore/NearbySection";
+import { useUserLocation } from "@/hooks/useUserLocation";
+import { setUserLocationOnMap, removeUserLocationMarker } from "@/lib/userLocationMarker";
+import { toast } from "sonner";
 
 const emojiIcon = (emoji: string, active = false) =>
   L.divIcon({
@@ -28,6 +31,7 @@ interface FullscreenMapProps {
 
 const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet }: FullscreenMapProps) => {
   const navigate = useNavigate();
+  const { location: userLocation, error: locationError, loading: locationLoading, requestLocation, startWatching, stopWatching } = useUserLocation();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
@@ -146,16 +150,31 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
   const handleZoomOut = () => mapRef.current?.zoomOut();
 
   const handleCenterOnMe = () => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const latlng: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-          mapRef.current?.setView(latlng, 15);
-        },
-        () => {}
-      );
-    }
+    requestLocation();
+    startWatching();
   };
+
+  // React to location updates
+  useEffect(() => {
+    if (userLocation && mapRef.current) {
+      setUserLocationOnMap(mapRef.current, userLocation.lat, userLocation.lng);
+    }
+  }, [userLocation]);
+
+  // Show error toast
+  useEffect(() => {
+    if (locationError) {
+      toast.error(locationError);
+    }
+  }, [locationError]);
+
+  // Cleanup on close
+  useEffect(() => {
+    if (!open) {
+      removeUserLocationMarker();
+      stopWatching();
+    }
+  }, [open, stopWatching]);
 
   const handleNearbyClick = useCallback((item: NearbyItem) => {
     const marker = filteredMarkers.find((m) => m.id === item.id);
@@ -229,9 +248,14 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
           </button>
           <button
             onClick={handleCenterOnMe}
+            disabled={locationLoading}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-card shadow-lg border border-border"
           >
-            <Crosshair className="h-4 w-4 text-primary" />
+            {locationLoading ? (
+              <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Crosshair className="h-4 w-4 text-primary" />
+            )}
           </button>
         </div>
 
