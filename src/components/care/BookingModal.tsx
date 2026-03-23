@@ -153,8 +153,8 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
   };
 
   return (
-    <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center">
-      <div className="w-full max-w-lg bg-card rounded-t-3xl sm:rounded-3xl border border-border shadow-2xl max-h-[92vh] flex flex-col animate-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed inset-0 z-[60] bg-background sm:bg-background/80 sm:backdrop-blur-sm flex items-end sm:items-center justify-center">
+      <div className="w-full max-w-lg bg-card sm:rounded-3xl border-t sm:border border-border shadow-2xl h-full sm:h-auto sm:max-h-[92vh] flex flex-col sm:animate-in sm:slide-in-from-bottom-4 sm:duration-300">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
           <button onClick={handleBack} className="rounded-full p-1.5 hover:bg-secondary transition-colors">
