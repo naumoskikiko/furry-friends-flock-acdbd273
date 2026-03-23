@@ -4,21 +4,19 @@ import {
   Calendar, ChevronLeft, MessageSquare, AlertTriangle, Image as ImageIcon, Shield, Coins,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import {
   useProviderServices, useProviderReviews,
-  useProviderAvailability, useProviderGallery, useBooking, useSubmitReview,
-  generateTimeSlots, CATEGORIES, DAY_NAMES,
+  useProviderAvailability, useProviderGallery, useSubmitReview,
+  CATEGORIES, DAY_NAMES,
   type CareProvider, type CareService,
 } from "@/hooks/useCare";
-import { useProcessPayment, calculateFees } from "@/hooks/usePayments";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCredits } from "@/hooks/useCredits";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { getOrCreateConversation } from "@/hooks/useMessages";
+import BookingModal from "@/components/care/BookingModal";
 
 interface ProviderDetailProps {
   provider: CareProvider;
