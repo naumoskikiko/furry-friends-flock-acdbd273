@@ -58,6 +58,7 @@ const ExplorePage = () => {
           <div className="flex items-center gap-2 rounded-xl bg-secondary px-3 py-2.5">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
+              ref={searchInputRef}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {
