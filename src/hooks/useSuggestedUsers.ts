@@ -17,7 +17,7 @@ export function useSuggestedUsers() {
   const { user } = useAuth();
   const [users, setUsers] = useState<SuggestedUser[]>([]);
   const [loading, setLoading] = useState(false);
-  const shownIdsRef = useRef<Set<string>>(new Set());
+  const lastBatchIdsRef = useRef<Set<string>>(new Set());
 
   const fetchSuggestions = useCallback(async () => {
     if (!user) return;
@@ -29,12 +29,13 @@ export function useSuggestedUsers() {
       (supabase as any).from("blocked_users").select("blocked_id").eq("blocker_id", user.id),
     ]);
 
-    const excludeIds = new Set<string>([
+    const hardExcludeIds = new Set<string>([
       user.id,
       ...(followRes.data?.map((f: any) => f.following_id) || []),
       ...(blockedRes.data?.map((b: any) => b.blocked_id) || []),
-      ...shownIdsRef.current,
     ]);
+    // Soft-exclude last batch to avoid immediate repeats
+    const softExcludeIds = lastBatchIdsRef.current;
 
     // Get the user's followers' followings (mutual logic)
     const myFollowingIds = followRes.data?.map((f: any) => f.following_id) || [];
