@@ -67,7 +67,20 @@ export function useCart() {
 
   const addToCart = useCallback(async (productId: string, quantity = 1) => {
     if (!user) return;
-    // Upsert: if exists, increment quantity
+
+    // Check stock before adding
+    const { data: prod } = await fromTable("products").select("stock").eq("id", productId).single();
+    if (prod) {
+      const stock = (prod as any).stock;
+      if (stock !== null && stock !== undefined) {
+        const existing = items.find((i) => i.product_id === productId);
+        const currentInCart = existing ? existing.quantity : 0;
+        if (currentInCart + quantity > stock) {
+          throw new Error(stock <= 0 ? "This product is out of stock" : `Only ${stock} available (${currentInCart} already in cart)`);
+        }
+      }
+    }
+
     const existing = items.find((i) => i.product_id === productId);
     if (existing) {
       await fromTable("cart_items")

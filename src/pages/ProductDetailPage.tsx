@@ -172,8 +172,10 @@ const ProductDetailPage = () => {
             </div>
             <h1 className="font-display text-xl font-extrabold mt-1">{product.name}</h1>
             {product.stock !== null && product.stock !== undefined && (
-              <p className={`text-xs mt-1 ${inStock ? "text-muted-foreground" : "text-destructive font-bold"}`}>
-                {inStock ? `${product.stock} in stock` : "Out of stock"}
+              <p className={`text-xs mt-1 font-bold ${
+                !inStock ? "text-destructive" : product.stock <= 5 ? "text-amber-600" : "text-muted-foreground font-normal"
+              }`}>
+                {!inStock ? "Out of stock" : product.stock <= 5 ? `Only ${product.stock} left — order soon!` : `${product.stock} in stock`}
               </p>
             )}
           </div>

@@ -2567,6 +2567,10 @@ export type Database = {
         }
         Returns: string
       }
+      reduce_product_stock: {
+        Args: { _product_id: string; _quantity: number }
+        Returns: boolean
+      }
       user_owns_order_items: {
         Args: { _order_id: string; _user_id: string }
         Returns: boolean

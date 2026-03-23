@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Package, AlertTriangle, Plus, Minus } from "lucide-react";
+import { Package, AlertTriangle, Plus, Pencil, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import ProductImage from "@/components/marketplace/ProductImage";
@@ -13,6 +13,8 @@ interface Props {
 const DashboardInventoryTab = ({ products, onUpdateProduct }: Props) => {
   const [restockAmounts, setRestockAmounts] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
 
   const handleRestock = async (productId: string, currentStock: number | null) => {
     const amount = parseInt(restockAmounts[productId] || "0");
@@ -21,6 +23,21 @@ const DashboardInventoryTab = ({ products, onUpdateProduct }: Props) => {
     await onUpdateProduct(productId, { stock: (currentStock || 0) + amount } as any);
     setRestockAmounts((prev) => ({ ...prev, [productId]: "" }));
     setSavingId(null);
+  };
+
+  const handleSetStock = async (productId: string) => {
+    const val = parseInt(editValue);
+    if (isNaN(val) || val < 0) return;
+    setSavingId(productId);
+    await onUpdateProduct(productId, { stock: val } as any);
+    setEditingId(null);
+    setEditValue("");
+    setSavingId(null);
+  };
+
+  const startEditing = (productId: string, currentStock: number | null) => {
+    setEditingId(productId);
+    setEditValue(String(currentStock ?? 0));
   };
 
   const sorted = [...products].sort((a, b) => {
@@ -32,7 +49,6 @@ const DashboardInventoryTab = ({ products, onUpdateProduct }: Props) => {
   const totalStock = products.reduce((s, p) => s + (p.stock || 0), 0);
   const lowStock = products.filter((p) => p.stock !== null && p.stock !== undefined && p.stock > 0 && p.stock <= 5);
   const outOfStock = products.filter((p) => p.stock !== null && p.stock !== undefined && p.stock <= 0);
-  const tracked = products.filter((p) => p.stock !== null && p.stock !== undefined);
 
   return (
     <div className="space-y-4">
@@ -57,6 +73,7 @@ const DashboardInventoryTab = ({ products, onUpdateProduct }: Props) => {
         const isLow = p.stock !== null && p.stock !== undefined && p.stock > 0 && p.stock <= 5;
         const isOut = p.stock !== null && p.stock !== undefined && p.stock <= 0;
         const untracked = p.stock === null || p.stock === undefined;
+        const isEditing = editingId === p.id;
 
         return (
           <div key={p.id} className="rounded-2xl bg-card border border-border p-3">
@@ -66,27 +83,62 @@ const DashboardInventoryTab = ({ products, onUpdateProduct }: Props) => {
                 <p className="text-xs font-bold truncate">{p.name}</p>
                 <p className="text-[10px] text-muted-foreground">{p.price} MKD</p>
               </div>
-              <div className="text-right shrink-0">
-                {untracked ? (
-                  <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">∞ Unlimited</span>
-                ) : isOut ? (
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">
-                    <AlertTriangle className="h-2.5 w-2.5" /> Out of stock
-                  </span>
-                ) : isLow ? (
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">
-                    <AlertTriangle className="h-2.5 w-2.5" /> {p.stock} left
-                  </span>
+              <div className="text-right shrink-0 flex items-center gap-1.5">
+                {isEditing ? (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min="0"
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      className="h-7 text-xs w-16"
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => handleSetStock(p.id)}
+                      disabled={savingId === p.id}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground"
+                    >
+                      <Check className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg bg-secondary"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
                 ) : (
-                  <span className="text-[10px] font-bold text-foreground bg-secondary px-2 py-0.5 rounded-full">
-                    {p.stock} in stock
-                  </span>
+                  <>
+                    {untracked ? (
+                      <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">∞ Unlimited</span>
+                    ) : isOut ? (
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">
+                        <AlertTriangle className="h-2.5 w-2.5" /> Out of stock
+                      </span>
+                    ) : isLow ? (
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded-full">
+                        <AlertTriangle className="h-2.5 w-2.5" /> {p.stock} left
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-foreground bg-secondary px-2 py-0.5 rounded-full">
+                        {p.stock} in stock
+                      </span>
+                    )}
+                    <button
+                      onClick={() => startEditing(p.id, p.stock)}
+                      className="flex h-6 w-6 items-center justify-center rounded-lg hover:bg-secondary text-muted-foreground"
+                      title="Edit stock"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                  </>
                 )}
               </div>
             </div>
 
             {/* Restock controls */}
-            {!untracked && (
+            {!untracked && !isEditing && (
               <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border">
                 <Input
                   type="number"
