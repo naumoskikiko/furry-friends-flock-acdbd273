@@ -109,26 +109,6 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
     filteredMarkers.forEach((m) => {
       const marker = L.marker([m.lat, m.lng], { icon: emojiIcon(m.emoji, false) });
 
-      const imgHtml = m.image_url
-        ? `<img src="${m.image_url}" style="width:100%;height:80px;object-fit:cover;border-radius:8px 8px 0 0;margin-bottom:6px;" />`
-        : "";
-      const descHtml = m.description
-        ? `<p style="color:#666;font-size:11px;margin:4px 0 8px;">${m.description.slice(0, 80)}${m.description.length > 80 ? "…" : ""}</p>`
-        : "";
-
-      marker.bindPopup(
-        `<div style="text-align:center;min-width:160px;max-width:220px;">
-          ${imgHtml}
-          <b style="font-size:13px;">${m.name}</b><br/>
-          <span style="color:#888;font-size:11px;">${m.type}</span>
-          ${descHtml}
-          ${m.rating ? `<span style="font-size:11px;">⭐ ${m.rating}</span>` : ""}
-          ${m.distance ? `<span style="font-size:11px;margin-left:6px;">📍 ${m.distance}</span>` : ""}
-          <br/><a data-nav="/place/${m.id}" href="#" style="display:inline-block;margin-top:8px;padding:4px 14px;background:hsl(25,90%,55%);color:white;border-radius:8px;font-size:11px;font-weight:700;text-decoration:none;">View Details</a>
-        </div>`,
-        { maxWidth: 240 }
-      );
-
       marker.on("click", () => {
         setSelectedMarker(m);
       });
