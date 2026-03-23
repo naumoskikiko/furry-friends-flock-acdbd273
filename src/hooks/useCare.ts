@@ -90,7 +90,8 @@ const CATEGORIES = [
   { value: "walker", label: "Pet Walker", icon: "🚶" },
   { value: "trainer", label: "Trainer", icon: "🎓" },
   { value: "shelter", label: "Shelter", icon: "🏠" },
-  { value: "boarding", label: "Boarding", icon: "🏨" },
+  { value: "vet-clinic", label: "Vet Clinic", icon: "🏥" },
+  { value: "grooming-salon", label: "Grooming Salon", icon: "✂️" },
 ];
 
 export { CATEGORIES };
