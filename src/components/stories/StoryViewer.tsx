@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, MapPin, Heart, MessageCircle, Send, Eye, BarChart3, ChevronDown, Trash2 } from "lucide-react";
+import { X, MapPin, Heart, MessageCircle, Send, Eye, BarChart3, ChevronDown, Trash2, MoreVertical } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,16 +50,17 @@ interface StoryViewerProps {
   onReply?: (storyId: string, storyOwnerId: string, mediaUrl: string, replyText: string) => void;
   onShare?: (storyId: string, mediaUrl: string) => void;
   onView?: (storyId: string) => void;
+  onDelete?: (storyId: string) => void;
 }
 
 const STORY_DURATION = 5000;
-const TAP_THRESHOLD = 10; // px — max movement to count as tap
-const SWIPE_THRESHOLD = 60; // px — min distance for swipe
-const LONG_PRESS_MS = 200; // ms to activate hold-to-pause
+const TAP_THRESHOLD = 10;
+const SWIPE_THRESHOLD = 60;
+const LONG_PRESS_MS = 200;
 
 const StoryViewer = ({
   groups, initialGroupIndex, open, onClose,
-  onLike, onUnlike, onReply, onShare, onView,
+  onLike, onUnlike, onReply, onShare, onView, onDelete,
 }: StoryViewerProps) => {
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin();
@@ -73,6 +74,8 @@ const StoryViewer = ({
   const [replyText, setReplyText] = useState("");
   const [showReply, setShowReply] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [insightsOpen, setInsightsOpen] = useState(false);
 
   // Pull-down state
   const [dragY, setDragY] = useState(0);
@@ -98,6 +101,9 @@ const StoryViewer = ({
   const isVideo = story?.media_type === "video";
   const isMine = story?.user_id === user?.id;
 
+  // Compute whether timer should be frozen
+  const timerFrozen = paused || showReply || isDragging || isHoldingRef.current || insightsOpen || confirmDeleteOpen || showMenu;
+
   // Record view
   useEffect(() => {
     if (story && onView && !isMine) onView(story.id);
@@ -121,7 +127,6 @@ const StoryViewer = ({
       setStoryIndex(s => s - 1);
     } else if (groupIndex > 0) {
       setGroupIndex(g => g - 1);
-      // Go to last story of previous group
       const prevGroup = groups[groupIndex - 1];
       setStoryIndex(prevGroup ? prevGroup.stories.length - 1 : 0);
     }
@@ -149,12 +154,11 @@ const StoryViewer = ({
     cancelAnimationFrame(rafRef.current);
   }, []);
 
-  const resumeTimer = useCallback(() => {
-    startTimeRef.current = Date.now();
-  }, []);
-
   useEffect(() => {
-    if (!open || !story || isVideo || paused || showReply || isDragging || isHoldingRef.current) return;
+    if (!open || !story || isVideo || timerFrozen) {
+      cancelAnimationFrame(rafRef.current);
+      return;
+    }
 
     startTimeRef.current = Date.now();
 
@@ -172,7 +176,7 @@ const StoryViewer = ({
 
     rafRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [open, story?.id, isVideo, paused, goNext, showReply, isDragging]);
+  }, [open, story?.id, isVideo, timerFrozen, goNext]);
 
   // Reset on story change
   useEffect(() => {
@@ -181,6 +185,8 @@ const StoryViewer = ({
     setPaused(false);
     setShowReply(false);
     setReplyText("");
+    setInsightsOpen(false);
+    setShowMenu(false);
     isHoldingRef.current = false;
   }, [groupIndex, storyIndex]);
 
@@ -190,25 +196,24 @@ const StoryViewer = ({
     setStoryIndex(0);
   }, [initialGroupIndex]);
 
-  // Pause/resume video with paused state
+  // Pause/resume video
   useEffect(() => {
     if (!videoRef.current || !isVideo) return;
-    if (paused || isDragging || isHoldingRef.current) {
+    if (timerFrozen) {
       videoRef.current.pause();
     } else {
       videoRef.current.play().catch(() => {});
     }
-  }, [paused, isDragging, isVideo]);
+  }, [timerFrozen, isVideo]);
 
-  // --- Gesture handlers (unified touch system) ---
+  // --- Gesture handlers ---
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (showReply) return;
+    if (showReply || insightsOpen) return;
     const { clientX, clientY } = e.touches[0];
     touchStartRef.current = { x: clientX, y: clientY, time: Date.now() };
     gestureActiveRef.current = "none";
     isHoldingRef.current = false;
 
-    // Start long-press timer
     longPressTimerRef.current = setTimeout(() => {
       isHoldingRef.current = true;
       pauseTimer();
@@ -217,12 +222,11 @@ const StoryViewer = ({
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (showReply) return;
+    if (showReply || insightsOpen) return;
     const { clientX, clientY } = e.touches[0];
     const dx = clientX - touchStartRef.current.x;
     const dy = clientY - touchStartRef.current.y;
 
-    // Cancel long-press if moved
     if (Math.abs(dx) > TAP_THRESHOLD || Math.abs(dy) > TAP_THRESHOLD) {
       if (longPressTimerRef.current) {
         clearTimeout(longPressTimerRef.current);
@@ -230,9 +234,8 @@ const StoryViewer = ({
       }
     }
 
-    if (isHoldingRef.current) return; // Holding = paused, ignore movement
+    if (isHoldingRef.current) return;
 
-    // Determine gesture direction if not yet committed
     if (gestureActiveRef.current === "none" && (Math.abs(dx) > 15 || Math.abs(dy) > 15)) {
       if (Math.abs(dy) > Math.abs(dx) && dy > 0) {
         gestureActiveRef.current = "drag-down";
@@ -249,9 +252,8 @@ const StoryViewer = ({
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (showReply) return;
+    if (showReply || insightsOpen) return;
 
-    // Clear long-press timer
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
@@ -262,7 +264,6 @@ const StoryViewer = ({
     const dy = clientY - touchStartRef.current.y;
     const dt = Date.now() - touchStartRef.current.time;
 
-    // Release hold-to-pause
     if (isHoldingRef.current) {
       isHoldingRef.current = false;
       setPaused(false);
@@ -270,18 +271,14 @@ const StoryViewer = ({
       return;
     }
 
-    // Handle drag-down close
     if (gestureActiveRef.current === "drag-down") {
-      if (dragY > 120) {
-        onClose();
-      }
+      if (dragY > 120) onClose();
       setDragY(0);
       setIsDragging(false);
       gestureActiveRef.current = "none";
       return;
     }
 
-    // Handle horizontal swipe between groups
     if (gestureActiveRef.current === "swipe-h" && Math.abs(dx) > SWIPE_THRESHOLD && dt < 500) {
       if (dx < 0) goNextGroup();
       else goPrevGroup();
@@ -291,21 +288,16 @@ const StoryViewer = ({
 
     gestureActiveRef.current = "none";
 
-    // It's a tap — determine left/right side
     if (Math.abs(dx) < TAP_THRESHOLD && Math.abs(dy) < TAP_THRESHOLD && dt < 300) {
       const screenW = window.innerWidth;
-      if (clientX < screenW * 0.3) {
-        goPrev();
-      } else if (clientX > screenW * 0.7) {
-        goNext();
-      }
-      // Center tap does nothing (was handled by long press)
+      if (clientX < screenW * 0.3) goPrev();
+      else if (clientX > screenW * 0.7) goNext();
     }
   };
 
-  // --- Mouse fallback for desktop ---
+  // Mouse fallback
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (showReply) return;
+    if (showReply || insightsOpen) return;
     touchStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
     gestureActiveRef.current = "none";
     isHoldingRef.current = false;
@@ -318,7 +310,7 @@ const StoryViewer = ({
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
-    if (showReply) return;
+    if (showReply || insightsOpen) return;
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
@@ -367,15 +359,34 @@ const StoryViewer = ({
     onShare?.(story.id, story.media_url);
   };
 
-  const handleAdminDeleteStory = async () => {
+  const handleDeleteStory = async () => {
     if (!story) return;
     await supabase.from("stories").delete().eq("id", story.id);
     toast({ title: isMine ? "Story deleted" : "Story removed by admin" });
     setConfirmDeleteOpen(false);
-    onClose();
+
+    // Call parent callback for optimistic removal
+    onDelete?.(story.id);
+
+    // Navigate: if more stories in group, go to next; otherwise close or next group
+    if (group.stories.length > 1) {
+      // Story will be removed from array by parent, adjust index
+      if (storyIndex >= group.stories.length - 1) {
+        setStoryIndex(Math.max(0, storyIndex - 1));
+      }
+    } else if (groupIndex < groups.length - 1) {
+      setGroupIndex(g => g + 1);
+      setStoryIndex(0);
+    } else {
+      onClose();
+    }
   };
 
   const handleVideoEnd = () => goNext();
+
+  const toggleInsights = () => {
+    setInsightsOpen(prev => !prev);
+  };
 
   if (!open || !group || !story) return null;
 
@@ -401,12 +412,24 @@ const StoryViewer = ({
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
       >
-        {/* Close & Delete buttons */}
+        {/* Top buttons */}
         <div className="absolute right-4 top-4 z-50 flex items-center gap-2">
           {(isMine || isAdmin) && (
-            <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteOpen(true); }} className="text-white/80 hover:text-white">
-              <Trash2 className="h-5 w-5" />
-            </button>
+            <div className="relative">
+              <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className="text-white/80 hover:text-white">
+                <MoreVertical className="h-5 w-5" />
+              </button>
+              {showMenu && (
+                <div className="absolute right-0 top-8 w-40 rounded-xl bg-black/90 backdrop-blur-md border border-white/10 overflow-hidden shadow-xl z-[60]">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowMenu(false); setConfirmDeleteOpen(true); }}
+                    className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-400 hover:bg-white/10 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" /> Delete Story
+                  </button>
+                </div>
+              )}
+            </div>
           )}
           <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="text-white">
             <X className="h-6 w-6" />
@@ -445,7 +468,7 @@ const StoryViewer = ({
           </button>
           <span className="text-xs text-white/60">{formatDistanceToNow(new Date(story.created_at), { addSuffix: true })}</span>
           {group.stories.length > 1 && (
-            <span className="ml-auto text-[10px] text-white/50 font-medium">
+            <span className="ml-auto text-[10px] text-white/50 font-medium mr-16">
               {storyIndex + 1}/{group.stories.length}
             </span>
           )}
@@ -490,7 +513,7 @@ const StoryViewer = ({
           )}
 
           {/* Paused indicator */}
-          {paused && !showReply && (
+          {paused && !showReply && !insightsOpen && (
             <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
               <div className="rounded-full bg-black/40 p-4 backdrop-blur-sm">
                 <div className="flex gap-1.5">
@@ -502,7 +525,7 @@ const StoryViewer = ({
           )}
         </div>
 
-        {/* Interaction bar */}
+        {/* Interaction bar (other users) */}
         {!isMine && (
           <div className="absolute bottom-0 left-0 right-0 z-50">
             {showReply ? (
@@ -553,12 +576,17 @@ const StoryViewer = ({
 
         {/* Own story: analytics */}
         {isMine && (
-          <StoryAnalyticsPanel storyId={story.id} likesCount={story.likes_count} />
+          <StoryAnalyticsPanel
+            storyId={story.id}
+            likesCount={story.likes_count}
+            expanded={insightsOpen}
+            onToggle={toggleInsights}
+          />
         )}
       </div>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={(v) => { setConfirmDeleteOpen(v); if (!v) setShowMenu(false); }}>
         <AlertDialogContent className="z-[200]">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this story?</AlertDialogTitle>
@@ -570,12 +598,17 @@ const StoryViewer = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleAdminDeleteStory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={handleDeleteStory} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Close menu on outside click */}
+      {showMenu && (
+        <div className="fixed inset-0 z-[99]" onClick={() => setShowMenu(false)} />
+      )}
     </div>
   );
 };
@@ -589,15 +622,24 @@ interface AnalyticsData {
   viewsCount: number;
 }
 
-const StoryAnalyticsPanel = ({ storyId, likesCount }: { storyId: string; likesCount: number }) => {
-  const [expanded, setExpanded] = useState(false);
+const StoryAnalyticsPanel = ({
+  storyId,
+  likesCount,
+  expanded,
+  onToggle,
+}: {
+  storyId: string;
+  likesCount: number;
+  expanded: boolean;
+  onToggle: () => void;
+}) => {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(false);
 
   const fetchAnalytics = async () => {
-    if (data) { setExpanded(!expanded); return; }
+    if (data) { onToggle(); return; }
     setLoading(true);
-    setExpanded(true);
+    onToggle();
 
     const { data: views } = await fromTable("story_views")
       .select("user_id, viewed_at")
