@@ -11,6 +11,8 @@ const ExploreMap = lazy(() => import("@/components/explore/ExploreMap"));
 
 const ExplorePage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const {
     activeFilter,
     setActiveFilter,
