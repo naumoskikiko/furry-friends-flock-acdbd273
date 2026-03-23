@@ -1,5 +1,5 @@
-import { Suspense, lazy, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Suspense, lazy, useState, useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { Search, MapPin, Locate, Maximize2, ChevronRight } from "lucide-react";
 import NearbySection from "@/components/explore/NearbySection";
@@ -11,6 +11,8 @@ const ExploreMap = lazy(() => import("@/components/explore/ExploreMap"));
 
 const ExplorePage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const {
     activeFilter,
     setActiveFilter,
@@ -23,6 +25,12 @@ const ExplorePage = () => {
     allNearbyItems,
     loading,
   } = useExplore();
+
+  useEffect(() => {
+    if (searchParams.get("focus") === "search") {
+      setTimeout(() => searchInputRef.current?.focus(), 300);
+    }
+  }, [searchParams]);
 
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
@@ -50,6 +58,7 @@ const ExplorePage = () => {
           <div className="flex items-center gap-2 rounded-xl bg-secondary px-3 py-2.5">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
+              ref={searchInputRef}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import FeedHeader from "@/components/FeedHeader";
 import StoriesBar from "@/components/StoriesBar";
@@ -10,6 +11,7 @@ import { useFeed } from "@/hooks/useFeed";
 import { Loader2, Newspaper, Image } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"feed" | "blog">("feed");
   const { posts, loading, hasMore, loadMore, refreshFeed } = useFeed();
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -109,7 +111,7 @@ const Index = () => {
                   Start following people to see posts here!
                 </p>
                 <button
-                  onClick={() => (window.location.href = "/explore")}
+                  onClick={() => navigate("/explore?focus=search")}
                   className="mt-3 rounded-full bg-primary px-6 py-2 text-sm font-bold text-primary-foreground"
                 >
                   Discover More
