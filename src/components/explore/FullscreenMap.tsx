@@ -36,6 +36,7 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const leafletMarkersRef = useRef<Map<string, L.Marker>>(new Map());
+  const userMarkerRef = useRef<L.Marker | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [panelExpanded, setPanelExpanded] = useState(false);
