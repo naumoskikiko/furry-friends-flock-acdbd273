@@ -413,17 +413,23 @@ const StoryViewer = ({
         onMouseUp={handleMouseUp}
       >
         {/* Top buttons */}
-        <div className="absolute right-4 top-4 z-50 flex items-center gap-2" onMouseDown={e => e.stopPropagation()} onMouseUp={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onTouchEnd={e => e.stopPropagation()}>
+        <div className="absolute right-4 top-4 z-[80] flex items-center gap-2 pointer-events-auto" onMouseDown={e => e.stopPropagation()} onMouseUp={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onTouchEnd={e => e.stopPropagation()}>
           {(isMine || isAdmin) && (
-            <div className="relative">
-              <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className="text-white/80 hover:text-white">
+            <div className="relative z-[81] pointer-events-auto">
+              <button
+                type="button"
+                aria-label="Open story menu"
+                onClick={(e) => { e.stopPropagation(); setShowMenu((prev) => !prev); }}
+                className="pointer-events-auto text-white/80 transition-colors hover:text-white"
+              >
                 <MoreVertical className="h-5 w-5" />
               </button>
               {showMenu && (
-                <div className="absolute right-0 top-8 w-40 rounded-xl bg-black/90 backdrop-blur-md border border-white/10 overflow-hidden shadow-xl z-[60]">
+                <div className="absolute right-0 top-8 z-[90] w-40 overflow-hidden rounded-xl border border-white/10 bg-black/90 shadow-xl backdrop-blur-md pointer-events-auto">
                   <button
+                    type="button"
                     onClick={(e) => { e.stopPropagation(); setShowMenu(false); setConfirmDeleteOpen(true); }}
-                    className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-red-400 hover:bg-white/10 transition-colors"
+                    className="flex w-full items-center gap-2.5 px-4 py-3 text-sm text-destructive transition-colors hover:bg-white/10"
                   >
                     <Trash2 className="h-4 w-4" /> Delete Story
                   </button>
@@ -431,7 +437,12 @@ const StoryViewer = ({
               )}
             </div>
           )}
-          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="text-white">
+          <button
+            type="button"
+            aria-label="Close story viewer"
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            className="pointer-events-auto text-white"
+          >
             <X className="h-6 w-6" />
           </button>
         </div>
