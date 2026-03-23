@@ -55,7 +55,7 @@ export function useSuggestedUsers() {
     }
 
     // Fetch candidate profiles excluding already shown/followed/blocked
-    const excludeArr = [...excludeIds];
+    const excludeArr = [...hardExcludeIds];
     let query = supabase
       .from("profiles")
       .select("user_id, full_name, avatar_url, username, created_at")
