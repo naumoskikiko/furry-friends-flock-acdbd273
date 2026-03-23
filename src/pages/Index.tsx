@@ -109,7 +109,7 @@ const Index = () => {
                   Start following people to see posts here!
                 </p>
                 <button
-                  onClick={() => (window.location.href = "/explore")}
+                  onClick={() => navigate("/explore?focus=search")}
                   className="mt-3 rounded-full bg-primary px-6 py-2 text-sm font-bold text-primary-foreground"
                 >
                   Discover More
