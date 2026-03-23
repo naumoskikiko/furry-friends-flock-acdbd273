@@ -125,7 +125,7 @@ const Index = () => {
                   onSaveToggle={() => {}}
                   onDelete={() => refreshFeed()}
                 />
-                {(index + 1) % 4 === 0 && <PeopleYouMayKnow />}
+                {(index + 1) % 12 === 0 && <PeopleYouMayKnow />}
               </div>
             ))}
 
