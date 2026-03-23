@@ -4,21 +4,19 @@ import {
   Calendar, ChevronLeft, MessageSquare, AlertTriangle, Image as ImageIcon, Shield, Coins,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import {
   useProviderServices, useProviderReviews,
-  useProviderAvailability, useProviderGallery, useBooking, useSubmitReview,
-  generateTimeSlots, CATEGORIES, DAY_NAMES,
+  useProviderAvailability, useProviderGallery, useSubmitReview,
+  CATEGORIES, DAY_NAMES,
   type CareProvider, type CareService,
 } from "@/hooks/useCare";
-import { useProcessPayment, calculateFees } from "@/hooks/usePayments";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCredits } from "@/hooks/useCredits";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { getOrCreateConversation } from "@/hooks/useMessages";
+import BookingModal from "@/components/care/BookingModal";
 
 interface ProviderDetailProps {
   provider: CareProvider;
@@ -31,42 +29,18 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   const { reviews, refresh: refreshReviews } = useProviderReviews(provider.id);
   const availability = useProviderAvailability(provider.id);
   const { images: galleryImages } = useProviderGallery(provider.id);
-  const { createBooking } = useBooking();
   const { submitReview } = useSubmitReview();
-  const { processPayment } = useProcessPayment();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { balance: creditBalance, applyCreditsToPayment } = useCredits();
 
   const [tab, setTab] = useState<"services" | "reviews" | "hours" | "gallery">("services");
-  const [selectedService, setSelectedService] = useState<CareService | null>(null);
-  const [bookingDate, setBookingDate] = useState("");
-  const [bookingTime, setBookingTime] = useState("");
-  const [bookingNotes, setBookingNotes] = useState("");
-  const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
-  const [booking, setBooking] = useState(false);
-  const [useCareCredits, setUseCareCredits] = useState(true);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingService, setBookingService] = useState<CareService | null>(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
-  const [userPets, setUserPets] = useState<{ id: string; name: string; animal_type: string; breed: string | null }[]>([]);
 
   const catInfo = CATEGORIES.find((c) => c.value === provider.category);
-
-  // Fetch user's pets for booking
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("pets").select("id, name, animal_type, breed").eq("owner_id", user.id).then(({ data }) => {
-      setUserPets(data || []);
-    });
-  }, [user]);
-
-  // Available time slots for selected date
-  const selectedDayOfWeek = bookingDate ? new Date(bookingDate).getDay() : -1;
-  const dayAvail = availability.find((a) => a.day_of_week === selectedDayOfWeek && a.is_available);
-  const timeSlots = dayAvail && selectedService
-    ? generateTimeSlots(dayAvail.start_time, dayAvail.end_time, selectedService.duration)
-    : [];
 
   // Provider status
   const now = new Date();
@@ -74,42 +48,9 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   const isOpen = currentDayAvail && currentTime >= currentDayAvail.start_time.slice(0, 5) && currentTime <= currentDayAvail.end_time.slice(0, 5);
 
-  const handleBook = async () => {
-    if (!selectedService || !bookingDate || !bookingTime) return;
-    setBooking(true);
-    try {
-      const result = await createBooking(provider.id, selectedService.id, bookingDate, bookingTime, bookingNotes, selectedPetId || undefined);
-      // Process simulated payment with 10% platform fee
-      if (result?.id) {
-        await processPayment(result.id, provider.id, selectedService.price);
-        // Send booking request card to chat
-        try {
-          const convId = await getOrCreateConversation(provider.user_id);
-          const { sendBookingMessage } = await import("@/hooks/useMessages");
-          await sendBookingMessage(convId, {
-            booking_id: result.id,
-            service_name: selectedService.service_name,
-            date: bookingDate,
-            time: bookingTime,
-            price: selectedService.price,
-            pet_name: userPets.find(p => p.id === selectedPetId)?.name || undefined,
-            status: "pending",
-          });
-        } catch (e) {
-          console.error("Failed to send booking message", e);
-        }
-      }
-      const fees = calculateFees(selectedService.price);
-      toast({ title: "Booking & Payment confirmed!", description: `${selectedService.service_name} — ${fees.totalAmount} MKD ${(provider as any).booking_mode === 'request' ? '(pending approval)' : 'paid'}` });
-      setSelectedService(null);
-      setBookingDate("");
-      setBookingTime("");
-      setBookingNotes("");
-      setSelectedPetId(null);
-    } catch (e: any) {
-      toast({ title: "Booking failed", description: e.message, variant: "destructive" });
-    }
-    setBooking(false);
+  const openBooking = (service?: CareService) => {
+    setBookingService(service || null);
+    setShowBookingModal(true);
   };
 
   const handleReview = async () => {
@@ -269,14 +210,10 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
                     {!isOwnProfile && (
                       provider.is_verified ? (
                         <button
-                          onClick={() => setSelectedService(selectedService?.id === s.id ? null : s)}
-                          className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
-                            selectedService?.id === s.id
-                              ? "bg-secondary text-secondary-foreground"
-                              : "petkeep-gradient text-primary-foreground"
-                          }`}
+                          onClick={() => openBooking(s)}
+                          className="rounded-xl px-3 py-1.5 text-xs font-bold petkeep-gradient text-primary-foreground"
                         >
-                          {selectedService?.id === s.id ? "Cancel" : "Book"}
+                          Book
                         </button>
                       ) : (
                         <span className="rounded-xl px-3 py-1.5 text-xs font-bold bg-muted text-muted-foreground cursor-not-allowed">
@@ -285,136 +222,6 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
                       )
                     )}
                   </div>
-
-                  {/* Booking form inline */}
-                  {selectedService?.id === s.id && (
-                    <div className="mt-4 pt-3 border-t border-border space-y-3">
-                      {/* Pet selection */}
-                      {userPets.length > 0 && (
-                        <div>
-                          <label className="text-xs font-semibold text-muted-foreground">Select Pet</label>
-                          <div className="mt-1 flex flex-wrap gap-2">
-                            {userPets.map((pet) => (
-                              <button
-                                key={pet.id}
-                                onClick={() => setSelectedPetId(selectedPetId === pet.id ? null : pet.id)}
-                                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                  selectedPetId === pet.id
-                                    ? "petkeep-gradient text-primary-foreground"
-                                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                                }`}
-                              >
-                                🐾 {pet.name}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <div>
-                        <label className="text-xs font-semibold text-muted-foreground">Select Date</label>
-                        <input
-                          type="date"
-                          value={bookingDate}
-                          onChange={(e) => { setBookingDate(e.target.value); setBookingTime(""); }}
-                          min={new Date().toISOString().split("T")[0]}
-                          className="mt-1 w-full rounded-xl bg-secondary px-3 py-2 text-sm outline-none"
-                        />
-                      </div>
-
-                      {bookingDate && timeSlots.length > 0 && (
-                        <div>
-                          <label className="text-xs font-semibold text-muted-foreground">Available Times</label>
-                          <div className="mt-1 flex flex-wrap gap-2">
-                            {timeSlots.map((t) => (
-                              <button
-                                key={t}
-                                onClick={() => setBookingTime(t)}
-                                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                                  bookingTime === t
-                                    ? "petkeep-gradient text-primary-foreground"
-                                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                                }`}
-                              >
-                                {t}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {bookingDate && timeSlots.length === 0 && (
-                        <p className="text-xs text-muted-foreground">No available slots on this day</p>
-                      )}
-
-                      {bookingTime && (
-                        <>
-                          <div>
-                            <label className="text-xs font-semibold text-muted-foreground">Notes for provider</label>
-                            <textarea
-                              value={bookingNotes}
-                              onChange={(e) => setBookingNotes(e.target.value)}
-                              placeholder="Any special requirements, medical notes, pet behavior info..."
-                              rows={3}
-                              className="mt-1 w-full rounded-xl bg-secondary px-3 py-2 text-sm outline-none resize-none placeholder:text-muted-foreground"
-                            />
-                          </div>
-                          {/* Credits toggle */}
-                          {creditBalance > 0 && (
-                            <div className="flex items-center justify-between rounded-xl bg-primary/5 border border-primary/20 p-2.5">
-                              <div className="flex items-center gap-2">
-                                <Coins className="h-4 w-4 text-primary" />
-                                <div>
-                                  <p className="text-[11px] font-semibold">Use Credits</p>
-                                  <p className="text-[9px] text-muted-foreground">{creditBalance.toFixed(2)} available</p>
-                                </div>
-                              </div>
-                              <Switch checked={useCareCredits} onCheckedChange={setUseCareCredits} />
-                            </div>
-                          )}
-                          {/* Price breakdown */}
-                          {(() => {
-                            const careCreditsApplied = useCareCredits ? Math.min(creditBalance, s.price) : 0;
-                            const finalPrice = Math.max(0, s.price - careCreditsApplied);
-                            return (
-                              <div className="rounded-xl bg-secondary/50 p-3 space-y-1.5">
-                                <div className="flex justify-between text-xs">
-                                  <span className="text-muted-foreground">Service price</span>
-                                  <span className="font-semibold">{s.price} MKD</span>
-                                </div>
-                                {careCreditsApplied > 0 && (
-                                  <div className="flex justify-between text-xs">
-                                    <span className="text-primary font-bold flex items-center gap-1"><Coins className="h-3 w-3" /> Credits</span>
-                                    <span className="font-bold text-primary">-{careCreditsApplied.toFixed(2)} MKD</span>
-                                  </div>
-                                )}
-                                <div className="border-t border-border pt-1.5 flex justify-between text-xs">
-                                  <span className="font-bold">Total</span>
-                                  <span className="font-bold text-primary">{finalPrice.toFixed(2)} MKD</span>
-                                </div>
-                                <p className="text-[9px] text-muted-foreground">💳 Simulated payment · Stripe coming soon</p>
-                              </div>
-                            );
-                          })()}
-                          <button
-                            onClick={async () => {
-                              const careCreditsApplied = useCareCredits ? Math.min(creditBalance, s.price) : 0;
-                              const finalPrice = Math.max(0, s.price - careCreditsApplied);
-                              // Apply credits first
-                              if (careCreditsApplied > 0) {
-                                await applyCreditsToPayment(careCreditsApplied);
-                              }
-                              handleBook();
-                            }}
-                            disabled={booking}
-                            className="w-full petkeep-gradient rounded-xl py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
-                          >
-                            {booking ? "Processing payment..." : `Pay & Book — ${Math.max(0, s.price - (useCareCredits ? Math.min(creditBalance, s.price) : 0)).toFixed(0)} MKD`}
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -523,6 +330,16 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
           )}
         </div>
       </div>
+
+      {/* Booking Modal */}
+      {showBookingModal && (
+        <BookingModal
+          provider={provider}
+          initialService={bookingService || undefined}
+          services={services}
+          onClose={() => setShowBookingModal(false)}
+        />
+      )}
     </div>
   );
 };
