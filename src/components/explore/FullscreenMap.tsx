@@ -9,7 +9,7 @@ import {
 import type { MapMarker } from "@/components/explore/ExploreMap";
 import type { NearbyItem } from "@/components/explore/NearbySection";
 import { useUserLocation } from "@/hooks/useUserLocation";
-import { setUserLocationOnMap, removeUserLocationMarker } from "@/lib/userLocationMarker";
+import { createUserLocationIcon } from "@/lib/userLocationMarker";
 import { toast } from "sonner";
 
 const emojiIcon = (emoji: string, active = false) =>
@@ -36,6 +36,7 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const leafletMarkersRef = useRef<Map<string, L.Marker>>(new Map());
+  const userMarkerRef = useRef<L.Marker | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [panelExpanded, setPanelExpanded] = useState(false);
@@ -154,11 +155,25 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
     startWatching();
   };
 
-  // React to location updates
+  // React to location updates - place/move the blue dot
   useEffect(() => {
-    if (userLocation && mapRef.current) {
-      setUserLocationOnMap(mapRef.current, userLocation.lat, userLocation.lng);
+    if (!userLocation || !mapRef.current) return;
+    const map = mapRef.current;
+
+    if (userMarkerRef.current) {
+      userMarkerRef.current.setLatLng([userLocation.lat, userLocation.lng]);
+    } else {
+      userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], {
+        icon: createUserLocationIcon(),
+        zIndexOffset: 1000,
+        interactive: false,
+      }).addTo(map);
     }
+
+    map.flyTo([userLocation.lat, userLocation.lng], 16, {
+      animate: true,
+      duration: 1,
+    });
   }, [userLocation]);
 
   // Show error toast
@@ -171,7 +186,10 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
   // Cleanup on close
   useEffect(() => {
     if (!open) {
-      removeUserLocationMarker();
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
       stopWatching();
     }
   }, [open, stopWatching]);
