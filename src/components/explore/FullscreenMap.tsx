@@ -150,16 +150,31 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
   const handleZoomOut = () => mapRef.current?.zoomOut();
 
   const handleCenterOnMe = () => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const latlng: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-          mapRef.current?.setView(latlng, 15);
-        },
-        () => {}
-      );
-    }
+    requestLocation();
+    startWatching();
   };
+
+  // React to location updates
+  useEffect(() => {
+    if (userLocation && mapRef.current) {
+      setUserLocationOnMap(mapRef.current, userLocation.lat, userLocation.lng);
+    }
+  }, [userLocation]);
+
+  // Show error toast
+  useEffect(() => {
+    if (locationError) {
+      toast.error(locationError);
+    }
+  }, [locationError]);
+
+  // Cleanup on close
+  useEffect(() => {
+    if (!open) {
+      removeUserLocationMarker();
+      stopWatching();
+    }
+  }, [open, stopWatching]);
 
   const handleNearbyClick = useCallback((item: NearbyItem) => {
     const marker = filteredMarkers.find((m) => m.id === item.id);
