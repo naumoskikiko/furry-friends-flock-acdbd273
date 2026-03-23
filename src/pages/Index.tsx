@@ -5,6 +5,7 @@ import StoriesBar from "@/components/StoriesBar";
 import FeedPostCard from "@/components/FeedPostCard";
 import BlogFeed from "@/components/blog/BlogFeed";
 import FeedSkeleton from "@/components/feed/FeedSkeleton";
+import PeopleYouMayKnow from "@/components/feed/PeopleYouMayKnow";
 import { useFeed } from "@/hooks/useFeed";
 import { Loader2, Newspaper, Image } from "lucide-react";
 
@@ -117,14 +118,16 @@ const Index = () => {
               </div>
             )}
 
-            {posts.map((post) => (
-              <FeedPostCard
-                key={post.id}
-                post={post}
-                onLikeToggle={() => {}}
-                onSaveToggle={() => {}}
-                onDelete={() => refreshFeed()}
-              />
+            {posts.map((post, index) => (
+              <div key={post.id}>
+                <FeedPostCard
+                  post={post}
+                  onLikeToggle={() => {}}
+                  onSaveToggle={() => {}}
+                  onDelete={() => refreshFeed()}
+                />
+                {(index + 1) % 4 === 0 && <PeopleYouMayKnow />}
+              </div>
             ))}
 
             <div ref={sentinelRef} className="h-1" />
