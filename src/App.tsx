@@ -58,6 +58,7 @@ const App = () => (
             <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
             <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
             <Route path="/credits" element={<ProtectedRoute><CreditsPage /></ProtectedRoute>} />
+            <Route path="/liked-products" element={<ProtectedRoute><LikedProductsPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

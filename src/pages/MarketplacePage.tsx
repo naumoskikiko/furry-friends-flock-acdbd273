@@ -71,6 +71,12 @@ const MarketplacePage = () => {
             <p className="text-sm text-muted-foreground">Your local pet marketplace</p>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate("/liked-products")}
+              className="flex items-center gap-1.5 rounded-xl bg-secondary text-secondary-foreground px-3 py-2 text-xs font-bold"
+            >
+              <Heart className="h-3.5 w-3.5" /> Liked
+            </button>
             {canManageStore && (
               <button
                 onClick={() => setShowDashboard(true)}
