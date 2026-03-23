@@ -32,7 +32,8 @@ const CATEGORY_EMOJI: Record<string, string> = {
   hotel: "🏨",
   shelter: "🏠",
   trainer: "🎓",
-  boarding: "🛏️",
+  "vet-clinic": "🏥",
+  "grooming-salon": "✂️",
   "pet-service": "🐕",
   other: "📍",
 };
