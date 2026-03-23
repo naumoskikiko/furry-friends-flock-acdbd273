@@ -1,13 +1,15 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Image, Video, Camera, Type, Smile, MapPin, Trash2, Plus, Pencil, Crop } from "lucide-react";
+import { X, Image, Video, Camera, Type, Smile, MapPin, Trash2, Plus, Pencil, Crop, Palette, Eraser } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { getStoryDrafts, saveStoryDraft, deleteStoryDraft, type StoryDraft } from "@/hooks/useStories";
 import { formatDistanceToNow } from "date-fns";
+import DraggableOverlay from "./DraggableOverlay";
+import DrawingCanvas from "./DrawingCanvas";
 
 interface CreateStoryModalProps {
   open: boolean;
@@ -16,7 +18,9 @@ interface CreateStoryModalProps {
   pets: any[];
 }
 
-const EMOJI_LIST = ["🐶", "🐱", "🐾", "❤️", "🔥", "✨", "🎉", "😍", "🐕", "🐈", "🦜", "🐠", "🐰", "🐹"];
+const EMOJI_LIST = ["🐶", "🐱", "🐾", "❤️", "🔥", "✨", "🎉", "😍", "🐕", "🐈", "🦜", "🐠", "🐰", "🐹", "😂", "🥺", "💕", "🌈", "⭐", "🎵", "🤩", "💪", "🎀", "🌸"];
+const COLORS = ["#ffffff", "#ff3b30", "#ff9500", "#ffcc00", "#34c759", "#007aff", "#5856d6", "#af52de", "#ff2d55", "#000000"];
+const FONTS = ["font-sans", "font-serif", "font-mono"];
 
 interface FileItem {
   file: File;
@@ -24,24 +28,57 @@ interface FileItem {
   mediaType: "image" | "video";
 }
 
-type ToolMode = "text" | "sticker" | "location" | "draw" | null;
+interface TextItem {
+  id: string;
+  text: string;
+  color: string;
+  font: string;
+}
+
+interface EmojiItem {
+  id: string;
+  emoji: string;
+}
+
+type ToolMode = "text" | "sticker" | "location" | "draw" | "crop" | null;
 
 const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateStoryModalProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const drawCanvasRef = useRef<HTMLCanvasElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   const [files, setFiles] = useState<FileItem[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
-  const [textOverlay, setTextOverlay] = useState("");
-  const [sticker, setSticker] = useState("");
   const [petId, setPetId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [activeTool, setActiveTool] = useState<ToolMode>(null);
   const [drafts, setDrafts] = useState<StoryDraft[]>([]);
+
+  // Text overlays
+  const [textItems, setTextItems] = useState<TextItem[]>([]);
+  const [editingText, setEditingText] = useState("");
+  const [textColor, setTextColor] = useState("#ffffff");
+  const [textFont, setTextFont] = useState("font-sans");
+
+  // Emoji overlays
+  const [emojiItems, setEmojiItems] = useState<EmojiItem[]>([]);
+
+  // Drawing
+  const [drawColor, setDrawColor] = useState("#ff3b30");
+  const [brushSize, setBrushSize] = useState(4);
+  const [erasing, setErasing] = useState(false);
+
+  // Crop
+  const [cropActive, setCropActive] = useState(false);
+  const [cropScale, setCropScale] = useState(1);
+  const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 });
+  const cropDragRef = useRef({ startX: 0, startY: 0, offsetX: 0, offsetY: 0 });
+  const cropPinchRef = useRef({ initialDist: 0, initialScale: 1 });
 
   useEffect(() => {
     if (open) setDrafts(getStoryDrafts());
@@ -52,11 +89,15 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
     setActiveIndex(0);
     setCaption("");
     setLocation("");
-    setTextOverlay("");
-    setSticker("");
     setPetId("");
     setActiveTool(null);
     setUploadProgress(0);
+    setTextItems([]);
+    setEmojiItems([]);
+    setEditingText("");
+    setCropActive(false);
+    setCropScale(1);
+    setCropOffset({ x: 0, y: 0 });
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,9 +142,85 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
     onOpenChange(false);
   };
 
+  const addTextItem = () => {
+    if (!editingText.trim()) return;
+    setTextItems(prev => [...prev, { id: Date.now().toString(), text: editingText.trim(), color: textColor, font: textFont }]);
+    setEditingText("");
+  };
+
+  const removeTextItem = (id: string) => {
+    setTextItems(prev => prev.filter(t => t.id !== id));
+  };
+
+  const addEmojiItem = (emoji: string) => {
+    setEmojiItems(prev => [...prev, { id: Date.now().toString(), emoji }]);
+  };
+
+  const removeEmojiItem = (id: string) => {
+    setEmojiItems(prev => prev.filter(e => e.id !== id));
+  };
+
+  // Crop gestures
+  const handleCropTouchStart = (e: React.TouchEvent) => {
+    if (!cropActive) return;
+    e.stopPropagation();
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      cropPinchRef.current = { initialDist: Math.sqrt(dx * dx + dy * dy), initialScale: cropScale };
+    } else {
+      cropDragRef.current = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, offsetX: cropOffset.x, offsetY: cropOffset.y };
+    }
+  };
+
+  const handleCropTouchMove = (e: React.TouchEvent) => {
+    if (!cropActive) return;
+    e.stopPropagation();
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const newScale = Math.max(0.5, Math.min(5, cropPinchRef.current.initialScale * (dist / cropPinchRef.current.initialDist)));
+      setCropScale(newScale);
+    } else if (e.touches.length === 1) {
+      const dx = e.touches[0].clientX - cropDragRef.current.startX;
+      const dy = e.touches[0].clientY - cropDragRef.current.startY;
+      setCropOffset({ x: cropDragRef.current.offsetX + dx, y: cropDragRef.current.offsetY + dy });
+    }
+  };
+
+  const handleCropMouseDown = (e: React.MouseEvent) => {
+    if (!cropActive) return;
+    e.stopPropagation();
+    e.preventDefault();
+    cropDragRef.current = { startX: e.clientX, startY: e.clientY, offsetX: cropOffset.x, offsetY: cropOffset.y };
+    const onMove = (ev: MouseEvent) => {
+      const dx = ev.clientX - cropDragRef.current.startX;
+      const dy = ev.clientY - cropDragRef.current.startY;
+      setCropOffset({ x: cropDragRef.current.offsetX + dx, y: cropDragRef.current.offsetY + dy });
+    };
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  const handleCropWheel = (e: React.WheelEvent) => {
+    if (!cropActive) return;
+    e.stopPropagation();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    setCropScale(prev => Math.max(0.5, Math.min(5, prev + delta)));
+  };
+
   const handlePublish = async () => {
     if (!user || files.length === 0) return;
     setUploading(true);
+
+    // Serialize overlays as simple text for storage
+    const textOverlay = textItems.map(t => t.text).join(" | ");
+    const stickerStr = emojiItems.map(e => e.emoji).join("");
 
     for (let i = 0; i < files.length; i++) {
       setUploadProgress(Math.round(((i) / files.length) * 100));
@@ -126,7 +243,7 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
         caption: i === 0 ? caption : "",
         location: i === 0 ? location : "",
         text_overlay: i === 0 ? textOverlay : "",
-        sticker: i === 0 ? sticker : "",
+        sticker: i === 0 ? stickerStr : "",
         pet_id: petId || null,
       });
 
@@ -151,6 +268,21 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
     setDrafts(getStoryDrafts());
     toast({ title: "Draft deleted" });
   }
+
+  const toggleTool = (tool: ToolMode) => {
+    if (tool === "crop") {
+      if (cropActive) {
+        setCropActive(false);
+        setActiveTool(null);
+      } else {
+        setCropActive(true);
+        setActiveTool("crop");
+      }
+    } else {
+      setCropActive(false);
+      setActiveTool(activeTool === tool ? null : tool);
+    }
+  };
 
   const currentFile = files[activeIndex];
   const hasFiles = files.length > 0;
@@ -177,68 +309,155 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
             </Button>
           </div>
 
-          {/* Main preview area — takes all available space */}
-          <div className="flex-1 relative overflow-hidden flex items-center justify-center">
+          {/* Main preview area */}
+          <div
+            ref={previewRef}
+            className="flex-1 relative overflow-hidden flex items-center justify-center"
+            onWheel={handleCropWheel}
+          >
             {currentFile ? (
               <>
-                {currentFile.mediaType === "video" ? (
-                  <video src={currentFile.preview} className="h-full w-full object-contain" controls muted autoPlay />
-                ) : (
-                  <img src={currentFile.preview} alt="Preview" className="h-full w-full object-contain" />
+                {/* Media with crop transforms */}
+                <div
+                  className="h-full w-full flex items-center justify-center"
+                  style={cropActive ? { cursor: "grab" } : undefined}
+                  onTouchStart={handleCropTouchStart}
+                  onTouchMove={handleCropTouchMove}
+                  onMouseDown={handleCropMouseDown}
+                >
+                  {currentFile.mediaType === "video" ? (
+                    <video
+                      src={currentFile.preview}
+                      className="h-full w-full object-contain"
+                      style={{ transform: `scale(${cropScale}) translate(${cropOffset.x / cropScale}px, ${cropOffset.y / cropScale}px)`, transition: "none" }}
+                      controls
+                      muted
+                      autoPlay
+                    />
+                  ) : (
+                    <img
+                      src={currentFile.preview}
+                      alt="Preview"
+                      className="h-full w-full object-contain"
+                      style={{ transform: `scale(${cropScale}) translate(${cropOffset.x / cropScale}px, ${cropOffset.y / cropScale}px)`, transition: "none" }}
+                      draggable={false}
+                    />
+                  )}
+                </div>
+
+                {/* Crop overlay border */}
+                {cropActive && (
+                  <div className="absolute inset-0 z-30 pointer-events-none border-2 border-dashed border-white/60 m-4 rounded-lg">
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="bg-black/60 text-white text-xs px-3 py-1 rounded-full">Pinch or scroll to zoom • Drag to pan</span>
+                    </div>
+                  </div>
                 )}
 
-                {/* Overlays */}
-                {textOverlay && activeIndex === 0 && (
-                  <div className="absolute inset-x-0 bottom-28 text-center pointer-events-none">
-                    <span className="rounded-lg bg-black/60 px-4 py-2 text-lg font-bold text-white">
-                      {textOverlay}
+                {/* Drawing canvas */}
+                <DrawingCanvas
+                  canvasRef={drawCanvasRef}
+                  width={1080}
+                  height={1920}
+                  active={activeTool === "draw"}
+                  color={drawColor}
+                  brushSize={brushSize}
+                  erasing={erasing}
+                />
+
+                {/* Draggable text overlays */}
+                {textItems.map((item) => (
+                  <DraggableOverlay key={item.id} onRemove={() => removeTextItem(item.id)} initialX={50} initialY={40}>
+                    <span className={`rounded-lg bg-black/60 px-4 py-2 text-lg font-bold ${item.font}`} style={{ color: item.color }}>
+                      {item.text}
                     </span>
-                  </div>
-                )}
-                {sticker && activeIndex === 0 && (
-                  <div className="absolute right-6 top-6 text-5xl pointer-events-none">{sticker}</div>
-                )}
-                {location && activeIndex === 0 && (
-                  <div className="absolute left-4 top-4 flex items-center gap-1 rounded-full bg-black/50 px-3 py-1 text-xs text-white pointer-events-none">
-                    <MapPin className="h-3 w-3" /> {location}
-                  </div>
+                  </DraggableOverlay>
+                ))}
+
+                {/* Draggable emoji overlays */}
+                {emojiItems.map((item) => (
+                  <DraggableOverlay key={item.id} onRemove={() => removeEmojiItem(item.id)} initialX={50} initialY={30}>
+                    <span className="text-5xl select-none">{item.emoji}</span>
+                  </DraggableOverlay>
+                ))}
+
+                {/* Location badge */}
+                {location && (
+                  <DraggableOverlay initialX={20} initialY={10}>
+                    <div className="flex items-center gap-1 rounded-full bg-black/50 px-3 py-1 text-xs text-white">
+                      <MapPin className="h-3 w-3" /> {location}
+                    </div>
+                  </DraggableOverlay>
                 )}
 
                 {/* Side tool buttons */}
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-10">
-                  <ToolBtn icon={<Type className="h-5 w-5" />} active={activeTool === "text"} onClick={() => setActiveTool(activeTool === "text" ? null : "text")} />
-                  <ToolBtn icon={<Pencil className="h-5 w-5" />} active={activeTool === "draw"} onClick={() => setActiveTool(activeTool === "draw" ? null : "draw")} />
-                  <ToolBtn icon={<Smile className="h-5 w-5" />} active={activeTool === "sticker"} onClick={() => setActiveTool(activeTool === "sticker" ? null : "sticker")} />
-                  <ToolBtn icon={<MapPin className="h-5 w-5" />} active={activeTool === "location"} onClick={() => setActiveTool(activeTool === "location" ? null : "location")} />
-                  <ToolBtn icon={<Crop className="h-5 w-5" />} active={false} onClick={() => toast({ title: "Crop coming soon" })} />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-40">
+                  <ToolBtn icon={<Type className="h-5 w-5" />} active={activeTool === "text"} onClick={() => toggleTool("text")} />
+                  <ToolBtn icon={<Pencil className="h-5 w-5" />} active={activeTool === "draw"} onClick={() => toggleTool("draw")} />
+                  <ToolBtn icon={<Smile className="h-5 w-5" />} active={activeTool === "sticker"} onClick={() => toggleTool("sticker")} />
+                  <ToolBtn icon={<MapPin className="h-5 w-5" />} active={activeTool === "location"} onClick={() => toggleTool("location")} />
+                  <ToolBtn icon={<Crop className="h-5 w-5" />} active={cropActive} onClick={() => toggleTool("crop")} />
                   <button onClick={() => removeFile(activeIndex)} className="rounded-full bg-black/50 p-2.5 text-white/80 hover:text-white transition-colors">
                     <Trash2 className="h-5 w-5" />
                   </button>
                 </div>
 
-                {/* Active tool panel */}
+                {/* Active tool panels */}
                 {activeTool === "text" && (
-                  <div className="absolute bottom-4 inset-x-4 z-10">
-                    <Input
-                      placeholder="Add text overlay..."
-                      value={textOverlay}
-                      onChange={(e) => setTextOverlay(e.target.value)}
-                      className="bg-black/60 border-white/20 text-white placeholder:text-white/50 rounded-full"
-                      autoFocus
-                    />
+                  <div className="absolute bottom-4 inset-x-4 z-40 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="Type text..."
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && addTextItem()}
+                        className="bg-black/60 border-white/20 text-white placeholder:text-white/50 rounded-full flex-1"
+                        autoFocus
+                      />
+                      <Button size="sm" onClick={addTextItem} className="rounded-full" disabled={!editingText.trim()}>Add</Button>
+                    </div>
+                    {/* Color picker */}
+                    <div className="flex items-center gap-2 justify-center">
+                      {COLORS.map(c => (
+                        <button
+                          key={c}
+                          onClick={() => setTextColor(c)}
+                          className={`h-6 w-6 rounded-full border-2 transition-transform ${textColor === c ? "border-white scale-125" : "border-transparent"}`}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                    {/* Font picker */}
+                    <div className="flex items-center gap-2 justify-center">
+                      {FONTS.map(f => (
+                        <button
+                          key={f}
+                          onClick={() => setTextFont(f)}
+                          className={`px-3 py-1 rounded-full text-xs text-white transition-colors ${textFont === f ? "bg-primary" : "bg-white/20"} ${f}`}
+                        >
+                          {f === "font-sans" ? "Sans" : f === "font-serif" ? "Serif" : "Mono"}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
+
                 {activeTool === "sticker" && (
-                  <div className="absolute bottom-4 inset-x-4 z-10 flex flex-wrap gap-2 justify-center bg-black/60 backdrop-blur-sm rounded-2xl p-3">
+                  <div className="absolute bottom-4 inset-x-4 z-40 flex flex-wrap gap-2 justify-center bg-black/60 backdrop-blur-sm rounded-2xl p-3 max-h-40 overflow-y-auto">
                     {EMOJI_LIST.map((e) => (
-                      <button key={e} onClick={() => { setSticker(sticker === e ? "" : e); setActiveTool(null); }} className={`rounded-lg p-2 text-2xl transition-transform hover:scale-125 ${sticker === e ? "bg-primary/30 ring-2 ring-primary" : ""}`}>
+                      <button
+                        key={e}
+                        onClick={() => addEmojiItem(e)}
+                        className="rounded-lg p-2 text-2xl transition-transform hover:scale-125 active:scale-95"
+                      >
                         {e}
                       </button>
                     ))}
                   </div>
                 )}
+
                 {activeTool === "location" && (
-                  <div className="absolute bottom-4 inset-x-4 z-10">
+                  <div className="absolute bottom-4 inset-x-4 z-40">
                     <Input
                       placeholder="Add location..."
                       value={location}
@@ -248,9 +467,39 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
                     />
                   </div>
                 )}
+
                 {activeTool === "draw" && (
-                  <div className="absolute bottom-4 inset-x-4 z-10 text-center">
-                    <span className="text-white/70 text-sm bg-black/60 rounded-full px-4 py-2">Draw tool coming soon</span>
+                  <div className="absolute bottom-4 inset-x-4 z-40 space-y-2">
+                    {/* Color + size */}
+                    <div className="flex items-center gap-2 justify-center bg-black/60 backdrop-blur-sm rounded-full px-4 py-2">
+                      {COLORS.slice(0, 8).map(c => (
+                        <button
+                          key={c}
+                          onClick={() => { setDrawColor(c); setErasing(false); }}
+                          className={`h-6 w-6 rounded-full border-2 transition-transform ${drawColor === c && !erasing ? "border-white scale-125" : "border-transparent"}`}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                      <button
+                        onClick={() => setErasing(!erasing)}
+                        className={`rounded-full p-1.5 ml-1 transition-colors ${erasing ? "bg-primary text-primary-foreground" : "bg-white/20 text-white"}`}
+                      >
+                        <Eraser className="h-4 w-4" />
+                      </button>
+                    </div>
+                    {/* Brush size */}
+                    <div className="flex items-center gap-3 justify-center">
+                      <span className="text-white/60 text-[10px]">Size</span>
+                      <input
+                        type="range"
+                        min={1}
+                        max={20}
+                        value={brushSize}
+                        onChange={(e) => setBrushSize(Number(e.target.value))}
+                        className="w-32 accent-primary"
+                      />
+                      <div className="rounded-full bg-white" style={{ width: brushSize * 2, height: brushSize * 2 }} />
+                    </div>
                   </div>
                 )}
               </>
