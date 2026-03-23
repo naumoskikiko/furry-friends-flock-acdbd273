@@ -607,7 +607,7 @@ const StoryViewer = ({
 
       {/* Close menu on outside click */}
       {showMenu && (
-        <div className="fixed inset-0 z-[99]" onClick={() => setShowMenu(false)} />
+        <div className="fixed inset-0 z-[101]" onClick={() => setShowMenu(false)} />
       )}
     </div>
   );
