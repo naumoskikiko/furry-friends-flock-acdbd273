@@ -155,11 +155,25 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
     startWatching();
   };
 
-  // React to location updates
+  // React to location updates - place/move the blue dot
   useEffect(() => {
-    if (userLocation && mapRef.current) {
-      setUserLocationOnMap(mapRef.current, userLocation.lat, userLocation.lng);
+    if (!userLocation || !mapRef.current) return;
+    const map = mapRef.current;
+
+    if (userMarkerRef.current) {
+      userMarkerRef.current.setLatLng([userLocation.lat, userLocation.lng]);
+    } else {
+      userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], {
+        icon: createUserLocationIcon(),
+        zIndexOffset: 1000,
+        interactive: false,
+      }).addTo(map);
     }
+
+    map.flyTo([userLocation.lat, userLocation.lng], 16, {
+      animate: true,
+      duration: 1,
+    });
   }, [userLocation]);
 
   // Show error toast
@@ -172,7 +186,10 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
   // Cleanup on close
   useEffect(() => {
     if (!open) {
-      removeUserLocationMarker();
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
       stopWatching();
     }
   }, [open, stopWatching]);
