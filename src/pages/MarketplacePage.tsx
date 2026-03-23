@@ -8,6 +8,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import BusinessDashboard from "@/components/business/BusinessDashboard";
+import { useWishlist } from "@/hooks/useWishlist";
 import ProductImage from "@/components/marketplace/ProductImage";
 import { useRankedBusinesses, useRankedProducts } from "@/hooks/useRankedBusinesses";
 
@@ -42,6 +43,7 @@ const MarketplacePage = () => {
   const { business: myBusiness, loading: myBizLoading } = useMyBusiness();
   const hasStore = !!myBusiness;
   const canManageStore = isBusiness || isAdmin;
+  const { count: wishlistCount } = useWishlist();
 
   // Apply ranking algorithm (boost affects order, not visual)
   const rankedBusinesses = useRankedBusinesses(businesses);
@@ -75,7 +77,7 @@ const MarketplacePage = () => {
               onClick={() => navigate("/liked-products")}
               className="flex items-center gap-1.5 rounded-xl bg-secondary text-secondary-foreground px-3 py-2 text-xs font-bold"
             >
-              <Heart className="h-3.5 w-3.5" /> Liked
+              <Heart className={`h-3.5 w-3.5 ${wishlistCount > 0 ? "fill-destructive text-destructive" : ""}`} /> Liked
             </button>
             {canManageStore && (
               <button
