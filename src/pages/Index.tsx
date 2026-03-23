@@ -11,6 +11,7 @@ import { useFeed } from "@/hooks/useFeed";
 import { Loader2, Newspaper, Image } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"feed" | "blog">("feed");
   const { posts, loading, hasMore, loadMore, refreshFeed } = useFeed();
   const sentinelRef = useRef<HTMLDivElement>(null);
