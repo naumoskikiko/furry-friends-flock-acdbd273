@@ -413,7 +413,7 @@ const StoryViewer = ({
         onMouseUp={handleMouseUp}
       >
         {/* Top buttons */}
-        <div className="absolute right-4 top-4 z-50 flex items-center gap-2">
+        <div className="absolute right-4 top-4 z-50 flex items-center gap-2" onMouseDown={e => e.stopPropagation()} onMouseUp={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onTouchEnd={e => e.stopPropagation()}>
           {(isMine || isAdmin) && (
             <div className="relative">
               <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className="text-white/80 hover:text-white">
@@ -607,7 +607,7 @@ const StoryViewer = ({
 
       {/* Close menu on outside click */}
       {showMenu && (
-        <div className="fixed inset-0 z-[99]" onClick={() => setShowMenu(false)} />
+        <div className="fixed inset-0 z-[101]" onClick={() => setShowMenu(false)} />
       )}
     </div>
   );
