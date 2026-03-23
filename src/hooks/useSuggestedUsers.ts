@@ -91,7 +91,7 @@ export function useSuggestedUsers() {
   }, [user]);
 
   const resetShown = useCallback(() => {
-    shownIdsRef.current.clear();
+    lastBatchIdsRef.current.clear();
   }, []);
 
   return { users, loading, fetchSuggestions, followUser, resetShown };

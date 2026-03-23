@@ -129,6 +129,8 @@ const Index = () => {
               </div>
             ))}
 
+            {posts.length > 0 && posts.length % 12 !== 0 && <PeopleYouMayKnow />}
+
             <div ref={sentinelRef} className="h-1" />
 
             {loading && posts.length > 0 && (
