@@ -118,14 +118,16 @@ const Index = () => {
               </div>
             )}
 
-            {posts.map((post) => (
-              <FeedPostCard
-                key={post.id}
-                post={post}
-                onLikeToggle={() => {}}
-                onSaveToggle={() => {}}
-                onDelete={() => refreshFeed()}
-              />
+            {posts.map((post, index) => (
+              <div key={post.id}>
+                <FeedPostCard
+                  post={post}
+                  onLikeToggle={() => {}}
+                  onSaveToggle={() => {}}
+                  onDelete={() => refreshFeed()}
+                />
+                {(index + 1) % 4 === 0 && <PeopleYouMayKnow />}
+              </div>
             ))}
 
             <div ref={sentinelRef} className="h-1" />
