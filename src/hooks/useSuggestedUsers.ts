@@ -17,7 +17,7 @@ export function useSuggestedUsers() {
   const { user } = useAuth();
   const [users, setUsers] = useState<SuggestedUser[]>([]);
   const [loading, setLoading] = useState(false);
-  const shownIdsRef = useRef<Set<string>>(new Set());
+  const lastBatchIdsRef = useRef<Set<string>>(new Set());
 
   const fetchSuggestions = useCallback(async () => {
     if (!user) return;
@@ -29,12 +29,13 @@ export function useSuggestedUsers() {
       (supabase as any).from("blocked_users").select("blocked_id").eq("blocker_id", user.id),
     ]);
 
-    const excludeIds = new Set<string>([
+    const hardExcludeIds = new Set<string>([
       user.id,
       ...(followRes.data?.map((f: any) => f.following_id) || []),
       ...(blockedRes.data?.map((b: any) => b.blocked_id) || []),
-      ...shownIdsRef.current,
     ]);
+    // Soft-exclude last batch to avoid immediate repeats
+    const softExcludeIds = lastBatchIdsRef.current;
 
     // Get the user's followers' followings (mutual logic)
     const myFollowingIds = followRes.data?.map((f: any) => f.following_id) || [];
@@ -47,14 +48,14 @@ export function useSuggestedUsers() {
         .in("follower_id", myFollowingIds.slice(0, 50));
       
       for (const row of mutualData || []) {
-        if (!excludeIds.has(row.following_id)) {
+        if (!hardExcludeIds.has(row.following_id)) {
           mutualMap.set(row.following_id, (mutualMap.get(row.following_id) || 0) + 1);
         }
       }
     }
 
     // Fetch candidate profiles excluding already shown/followed/blocked
-    const excludeArr = [...excludeIds];
+    const excludeArr = [...hardExcludeIds];
     let query = supabase
       .from("profiles")
       .select("user_id, full_name, avatar_url, username, created_at")
@@ -63,16 +64,21 @@ export function useSuggestedUsers() {
 
     const { data: candidates } = await query;
 
-    const filtered = (candidates || [])
-      .filter((p) => !excludeIds.has(p.user_id))
+    // Prefer users not in last batch, but allow repeats if pool is small
+    const allCandidates = (candidates || [])
+      .filter((p) => !hardExcludeIds.has(p.user_id))
       .map((p) => ({
         ...p,
         mutual_count: mutualMap.get(p.user_id) || 0,
       }))
-      .sort((a, b) => b.mutual_count - a.mutual_count || new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, BATCH);
+      .sort((a, b) => b.mutual_count - a.mutual_count || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    for (const u of filtered) shownIdsRef.current.add(u.user_id);
+    const fresh = allCandidates.filter((p) => !softExcludeIds.has(p.user_id));
+    const filtered = fresh.length >= BATCH
+      ? fresh.slice(0, BATCH)
+      : [...fresh, ...allCandidates.filter((p) => softExcludeIds.has(p.user_id))].slice(0, BATCH);
+
+    lastBatchIdsRef.current = new Set(filtered.map((u) => u.user_id));
 
     setUsers(filtered);
     setLoading(false);
@@ -85,7 +91,7 @@ export function useSuggestedUsers() {
   }, [user]);
 
   const resetShown = useCallback(() => {
-    shownIdsRef.current.clear();
+    lastBatchIdsRef.current.clear();
   }, []);
 
   return { users, loading, fetchSuggestions, followUser, resetShown };

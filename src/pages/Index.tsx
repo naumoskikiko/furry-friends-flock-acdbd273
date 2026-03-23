@@ -125,9 +125,11 @@ const Index = () => {
                   onSaveToggle={() => {}}
                   onDelete={() => refreshFeed()}
                 />
-                {(index + 1) % 4 === 0 && <PeopleYouMayKnow />}
+                {(index + 1) % 12 === 0 && <PeopleYouMayKnow />}
               </div>
             ))}
+
+            {posts.length > 0 && posts.length % 12 !== 0 && <PeopleYouMayKnow />}
 
             <div ref={sentinelRef} className="h-1" />
 
