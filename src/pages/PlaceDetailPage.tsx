@@ -7,6 +7,14 @@ import { ArrowLeft, MapPin, Phone, Globe, Clock, Star } from "lucide-react";
 const PlaceDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/explore");
+    }
+  };
   const [place, setPlace] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
