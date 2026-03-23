@@ -223,6 +223,7 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
                     )}
                   </div>
                 </div>
+              ))}
             </div>
           )}
 
