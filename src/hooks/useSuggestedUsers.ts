@@ -64,16 +64,21 @@ export function useSuggestedUsers() {
 
     const { data: candidates } = await query;
 
-    const filtered = (candidates || [])
-      .filter((p) => !excludeIds.has(p.user_id))
+    // Prefer users not in last batch, but allow repeats if pool is small
+    const allCandidates = (candidates || [])
+      .filter((p) => !hardExcludeIds.has(p.user_id))
       .map((p) => ({
         ...p,
         mutual_count: mutualMap.get(p.user_id) || 0,
       }))
-      .sort((a, b) => b.mutual_count - a.mutual_count || new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, BATCH);
+      .sort((a, b) => b.mutual_count - a.mutual_count || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    for (const u of filtered) shownIdsRef.current.add(u.user_id);
+    const fresh = allCandidates.filter((p) => !softExcludeIds.has(p.user_id));
+    const filtered = fresh.length >= BATCH
+      ? fresh.slice(0, BATCH)
+      : [...fresh, ...allCandidates.filter((p) => softExcludeIds.has(p.user_id))].slice(0, BATCH);
+
+    lastBatchIdsRef.current = new Set(filtered.map((u) => u.user_id));
 
     setUsers(filtered);
     setLoading(false);
