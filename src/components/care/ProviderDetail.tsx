@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Star, BadgeCheck, MapPin, Clock, DollarSign,
   Calendar, ChevronLeft, MessageSquare, AlertTriangle, Image as ImageIcon, Shield, Coins,
