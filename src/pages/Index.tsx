@@ -5,6 +5,7 @@ import StoriesBar from "@/components/StoriesBar";
 import FeedPostCard from "@/components/FeedPostCard";
 import BlogFeed from "@/components/blog/BlogFeed";
 import FeedSkeleton from "@/components/feed/FeedSkeleton";
+import PeopleYouMayKnow from "@/components/feed/PeopleYouMayKnow";
 import { useFeed } from "@/hooks/useFeed";
 import { Loader2, Newspaper, Image } from "lucide-react";
 
