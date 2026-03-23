@@ -26,6 +26,12 @@ const ExplorePage = () => {
     loading,
   } = useExplore();
 
+  useEffect(() => {
+    if (searchParams.get("focus") === "search") {
+      setTimeout(() => searchInputRef.current?.focus(), 300);
+    }
+  }, [searchParams]);
+
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
   const handleResultClick = (r: any) => {
