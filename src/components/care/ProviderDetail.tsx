@@ -29,42 +29,18 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   const { reviews, refresh: refreshReviews } = useProviderReviews(provider.id);
   const availability = useProviderAvailability(provider.id);
   const { images: galleryImages } = useProviderGallery(provider.id);
-  const { createBooking } = useBooking();
   const { submitReview } = useSubmitReview();
-  const { processPayment } = useProcessPayment();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { balance: creditBalance, applyCreditsToPayment } = useCredits();
 
   const [tab, setTab] = useState<"services" | "reviews" | "hours" | "gallery">("services");
-  const [selectedService, setSelectedService] = useState<CareService | null>(null);
-  const [bookingDate, setBookingDate] = useState("");
-  const [bookingTime, setBookingTime] = useState("");
-  const [bookingNotes, setBookingNotes] = useState("");
-  const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
-  const [booking, setBooking] = useState(false);
-  const [useCareCredits, setUseCareCredits] = useState(true);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingService, setBookingService] = useState<CareService | null>(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
-  const [userPets, setUserPets] = useState<{ id: string; name: string; animal_type: string; breed: string | null }[]>([]);
 
   const catInfo = CATEGORIES.find((c) => c.value === provider.category);
-
-  // Fetch user's pets for booking
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("pets").select("id, name, animal_type, breed").eq("owner_id", user.id).then(({ data }) => {
-      setUserPets(data || []);
-    });
-  }, [user]);
-
-  // Available time slots for selected date
-  const selectedDayOfWeek = bookingDate ? new Date(bookingDate).getDay() : -1;
-  const dayAvail = availability.find((a) => a.day_of_week === selectedDayOfWeek && a.is_available);
-  const timeSlots = dayAvail && selectedService
-    ? generateTimeSlots(dayAvail.start_time, dayAvail.end_time, selectedService.duration)
-    : [];
 
   // Provider status
   const now = new Date();
@@ -72,42 +48,9 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   const isOpen = currentDayAvail && currentTime >= currentDayAvail.start_time.slice(0, 5) && currentTime <= currentDayAvail.end_time.slice(0, 5);
 
-  const handleBook = async () => {
-    if (!selectedService || !bookingDate || !bookingTime) return;
-    setBooking(true);
-    try {
-      const result = await createBooking(provider.id, selectedService.id, bookingDate, bookingTime, bookingNotes, selectedPetId || undefined);
-      // Process simulated payment with 10% platform fee
-      if (result?.id) {
-        await processPayment(result.id, provider.id, selectedService.price);
-        // Send booking request card to chat
-        try {
-          const convId = await getOrCreateConversation(provider.user_id);
-          const { sendBookingMessage } = await import("@/hooks/useMessages");
-          await sendBookingMessage(convId, {
-            booking_id: result.id,
-            service_name: selectedService.service_name,
-            date: bookingDate,
-            time: bookingTime,
-            price: selectedService.price,
-            pet_name: userPets.find(p => p.id === selectedPetId)?.name || undefined,
-            status: "pending",
-          });
-        } catch (e) {
-          console.error("Failed to send booking message", e);
-        }
-      }
-      const fees = calculateFees(selectedService.price);
-      toast({ title: "Booking & Payment confirmed!", description: `${selectedService.service_name} — ${fees.totalAmount} MKD ${(provider as any).booking_mode === 'request' ? '(pending approval)' : 'paid'}` });
-      setSelectedService(null);
-      setBookingDate("");
-      setBookingTime("");
-      setBookingNotes("");
-      setSelectedPetId(null);
-    } catch (e: any) {
-      toast({ title: "Booking failed", description: e.message, variant: "destructive" });
-    }
-    setBooking(false);
+  const openBooking = (service?: CareService) => {
+    setBookingService(service || null);
+    setShowBookingModal(true);
   };
 
   const handleReview = async () => {
