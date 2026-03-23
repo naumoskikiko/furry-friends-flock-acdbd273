@@ -110,12 +110,19 @@ const CartPage = () => {
                 <span className="text-sm text-muted-foreground">Total ({itemCount} items)</span>
                 <span className="font-display text-lg font-extrabold">{totalPrice.toLocaleString()} MKD</span>
               </div>
-              <button
-                onClick={() => navigate("/checkout")}
-                className="w-full flex items-center justify-center gap-2 rounded-2xl petkeep-gradient text-primary-foreground py-4 text-sm font-bold"
-              >
-                <ShoppingBag className="h-4 w-4" /> Proceed to Checkout
-              </button>
+              {(() => {
+                const hasOutOfStock = items.some((i) => i.product?.stock !== null && i.product?.stock !== undefined && (i.product?.stock ?? 0) <= 0);
+                return (
+                  <button
+                    onClick={() => navigate("/checkout")}
+                    disabled={hasOutOfStock}
+                    className="w-full flex items-center justify-center gap-2 rounded-2xl petkeep-gradient text-primary-foreground py-4 text-sm font-bold disabled:opacity-50"
+                  >
+                    <ShoppingBag className="h-4 w-4" />
+                    {hasOutOfStock ? "Remove out-of-stock items first" : "Proceed to Checkout"}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         )}

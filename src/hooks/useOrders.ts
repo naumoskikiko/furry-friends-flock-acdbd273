@@ -100,6 +100,16 @@ export function useCreateOrder() {
     const { error: itemsError } = await fromTable("order_items").insert(orderItems);
     if (itemsError) throw itemsError;
 
+    // Reduce stock for each product atomically
+    for (const item of cartItems) {
+      const { data: success, error: stockErr } = await supabase.rpc("reduce_product_stock" as any, {
+        _product_id: item.product_id,
+        _quantity: item.quantity,
+      });
+      if (stockErr) throw new Error(`Stock update failed for product: ${stockErr.message}`);
+      if (success === false) throw new Error(`Insufficient stock for one of your items. Please review your cart.`);
+    }
+
     // Clear cart
     await fromTable("cart_items").delete().eq("user_id", user.id);
 
