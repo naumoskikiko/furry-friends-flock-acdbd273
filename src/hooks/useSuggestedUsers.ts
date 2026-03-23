@@ -48,7 +48,7 @@ export function useSuggestedUsers() {
         .in("follower_id", myFollowingIds.slice(0, 50));
       
       for (const row of mutualData || []) {
-        if (!excludeIds.has(row.following_id)) {
+        if (!hardExcludeIds.has(row.following_id)) {
           mutualMap.set(row.following_id, (mutualMap.get(row.following_id) || 0) + 1);
         }
       }
