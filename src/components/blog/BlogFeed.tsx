@@ -11,7 +11,7 @@ const CATEGORIES = [
   { value: "pet-training", label: "🎓 Training" },
   { value: "pet-health", label: "🏥 Health" },
   { value: "nutrition", label: "🍖 Nutrition" },
-  { value: "grooming", label: "✂️ Grooming" },
+  
   { value: "adoption", label: "🏠 Adoption" },
   { value: "pet-lifestyle", label: "🐾 Lifestyle" },
 ];
