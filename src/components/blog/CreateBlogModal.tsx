@@ -14,7 +14,7 @@ const BLOG_CATEGORIES = [
   { value: "pet-training", label: "Pet Training", icon: "🎓" },
   { value: "pet-health", label: "Pet Health", icon: "🏥" },
   { value: "nutrition", label: "Nutrition", icon: "🍖" },
-  { value: "grooming", label: "Grooming", icon: "✂️" },
+  
   { value: "adoption", label: "Adoption", icon: "🏠" },
   { value: "pet-lifestyle", label: "Pet Lifestyle", icon: "🐾" },
 ];
