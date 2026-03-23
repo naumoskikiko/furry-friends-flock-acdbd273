@@ -330,6 +330,16 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
           )}
         </div>
       </div>
+
+      {/* Booking Modal */}
+      {showBookingModal && (
+        <BookingModal
+          provider={provider}
+          initialService={bookingService || undefined}
+          services={services}
+          onClose={() => setShowBookingModal(false)}
+        />
+      )}
     </div>
   );
 };
