@@ -122,6 +122,7 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
         watchIdRef.current = null;
       }
       if (mapRef.current) {
+        (mapRef.current as any)._rotCleanup?.();
         mapRef.current.remove();
         mapRef.current = null;
       }
