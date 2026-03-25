@@ -241,7 +241,7 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
       }
       const { data: { publicUrl } } = supabase.storage.from("story-media").getPublicUrl(filePath);
 
-      const { error } = await supabase.from("stories").insert({
+      const storyData: any = {
         user_id: user.id,
         media_url: publicUrl,
         media_type: item.mediaType,
@@ -250,7 +250,12 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
         text_overlay: i === 0 ? textOverlay : "",
         sticker: i === 0 ? stickerStr : "",
         pet_id: petId || null,
-      });
+      };
+      if (i === 0 && locationCoords) {
+        storyData.location_lat = locationCoords.lat;
+        storyData.location_lng = locationCoords.lng;
+      }
+      const { error } = await supabase.from("stories").insert(storyData);
 
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
