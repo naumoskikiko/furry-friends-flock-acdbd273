@@ -114,7 +114,7 @@ const CreateGroupModal = ({ onClose, onCreated }: CreateGroupModalProps) => {
   return (
     <>
       <div className="fixed inset-0 z-50 bg-black/60" onClick={onClose} />
-      <div className="fixed inset-x-0 bottom-0 z-50 max-h-[90vh] flex flex-col rounded-t-3xl bg-card border-t border-border animate-in slide-in-from-bottom">
+      <div className="fixed inset-x-0 bottom-0 z-50 h-[85vh] flex flex-col rounded-t-3xl bg-card border-t border-border animate-in slide-in-from-bottom">
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1 shrink-0">
           <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
