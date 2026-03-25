@@ -123,6 +123,7 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
   // MeetUP card
   if (isMeetup) {
     return (
+      <>
       <article
         onClick={() => onOpen(post)}
         className="cursor-pointer border-b border-border bg-card transition-colors hover:bg-secondary/30"
