@@ -350,7 +350,7 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1 min-h-0">
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1 min-h-0 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
         {loading ? (
           <div className="flex justify-center py-10">
             <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
