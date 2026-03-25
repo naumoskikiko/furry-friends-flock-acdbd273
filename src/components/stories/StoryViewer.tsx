@@ -26,6 +26,8 @@ export interface StoryItem {
   media_type: string;
   caption: string;
   location: string;
+  location_lat?: number | null;
+  location_lng?: number | null;
   text_overlay: string;
   sticker: string;
   created_at: string;
