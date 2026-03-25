@@ -258,6 +258,7 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
   const readTime = Math.max(1, Math.ceil(post.content.length / 1000));
 
   return (
+    <>
     <article
       onClick={() => onOpen(post)}
       className="cursor-pointer border-b border-border bg-card transition-colors hover:bg-secondary/30"
