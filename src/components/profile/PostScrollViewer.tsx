@@ -264,8 +264,8 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
       {/* Scrollable posts */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-scroll snap-y snap-mandatory"
-        style={{ scrollSnapType: "y mandatory", WebkitOverflowScrolling: "touch" }}
+        className="flex-1 overflow-y-auto"
+        style={{ WebkitOverflowScrolling: "touch" }}
       >
         {posts.map((post, idx) => {
           const timeAgo = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
