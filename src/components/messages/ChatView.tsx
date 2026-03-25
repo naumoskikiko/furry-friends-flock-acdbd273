@@ -817,6 +817,23 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
           onClose={() => setStoryViewerData(null)}
         />
       )}
+      {/* Chat settings */}
+      {showSettings && (
+        <ChatSettingsModal
+          conversation={conversation}
+          onClose={() => setShowSettings(false)}
+          onMuteToggle={(muted) => {
+            onMuteToggle?.(conversation.id, muted);
+          }}
+          onDeleteChat={() => {
+            onDeleteChat?.(conversation.id);
+            onBack();
+          }}
+          onClearChat={() => {
+            onClearChat?.(conversation.id);
+          }}
+        />
+      )}
     </div>
   );
 };
