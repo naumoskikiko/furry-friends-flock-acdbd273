@@ -287,7 +287,8 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => sharePost(post)}>Copy link</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSharePost(post)}>Send to chat</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => copyPostLink(post)}>Copy link</DropdownMenuItem>
                     {user?.id === post.user_id && (
                       <DropdownMenuItem className="text-destructive" onClick={() => deletePost(post)}>
                         <Trash2 className="mr-2 h-4 w-4" /> Delete
