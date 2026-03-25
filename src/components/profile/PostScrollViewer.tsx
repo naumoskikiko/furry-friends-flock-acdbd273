@@ -340,13 +340,13 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
                       />
                     </button>
                     <button onClick={() => openComments(post.id)}>
-                      <MessageCircle className="h-6 w-6 text-white" />
+                      <MessageCircle className="h-6 w-6 text-foreground" />
                     </button>
                     <button onClick={() => sharePost(post)}>
-                      <Send className="h-5 w-5 text-white" />
+                      <Send className="h-5 w-5 text-foreground" />
                     </button>
                   </div>
-                  <Bookmark className="h-6 w-6 text-white" />
+                  <Bookmark className="h-6 w-6 text-foreground" />
                 </div>
 
                 {/* Likes count */}
