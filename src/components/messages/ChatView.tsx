@@ -4,8 +4,9 @@ import {
   ArrowLeft, Send, Check, CheckCheck, Search, X, MoreVertical,
   Pencil, Trash2, Flag, ChevronUp, Reply, Forward, Mic, Calendar,
   WifiOff, RefreshCw, ExternalLink, Link2, Image, AlertCircle,
-  CheckCircle2, XCircle, Ban,
+  CheckCircle2, XCircle, Ban, Settings,
 } from "lucide-react";
+import ChatSettingsModal from "./ChatSettingsModal";
 import {
   useChatMessages, useTypingIndicator, useActivityTracking,
   useConnectionStatus, getActivityStatus, extractLinks,
