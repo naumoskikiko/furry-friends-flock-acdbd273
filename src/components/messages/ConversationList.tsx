@@ -30,6 +30,7 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
 
   const handleSearch = async (query: string) => {
     setSearch(query);
