@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { X, Navigation, Loader2, Compass, LocateFixed, Footprints } from "lucide-react";
+import { X, Navigation, Loader2, Compass, LocateFixed, Footprints, RotateCcw, RotateCw } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
