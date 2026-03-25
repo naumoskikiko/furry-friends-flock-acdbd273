@@ -12,6 +12,14 @@ export interface Conversation {
     avatar_url: string | null;
     last_active_at: string | null;
   };
+  is_group?: boolean;
+  group_name?: string | null;
+  group_image_url?: string | null;
+  group_members?: Array<{
+    user_id: string;
+    full_name: string;
+    avatar_url: string | null;
+  }>;
   last_message?: {
     message_text: string;
     created_at: string;
@@ -169,32 +177,43 @@ export function useConversations() {
       ])
     );
 
+    // Fetch conversation details (for group info)
+    const { data: convDetails } = await fromTable("conversations")
+      .select("id, is_group, group_name, group_image_url, created_by")
+      .in("id", convIds);
+
+    const convDetailMap = new Map(
+      (convDetails || []).map((c: any) => [c.id, c])
+    );
+
     const { data: otherParticipants } = await fromTable("conversation_participants")
       .select("conversation_id, user_id")
       .in("conversation_id", convIds)
       .neq("user_id", user.id);
 
-    if (!otherParticipants?.length) {
-      setConversations([]);
-      setLoading(false);
-      return;
-    }
-
-    const otherUserIds = [...new Set(otherParticipants.map((p: any) => p.user_id))];
+    const otherUserIds = [...new Set((otherParticipants || []).map((p: any) => p.user_id))];
     const { data: profiles } = await supabase
       .from("profiles")
       .select("user_id, full_name, username, avatar_url, last_active_at" as any)
-      .in("user_id", otherUserIds as string[]);
+      .in("user_id", otherUserIds.length ? otherUserIds as string[] : ["__none__"]);
 
     const profileMap = new Map((profiles as any[])?.map((p: any) => [p.user_id, p]) || []);
 
     const convList: Conversation[] = [];
 
     for (const convId of convIds) {
-      const otherP = otherParticipants.find((p: any) => p.conversation_id === convId);
-      if (!otherP) continue;
-      const profile = profileMap.get(otherP.user_id) as any;
-      if (!profile) continue;
+      const detail = convDetailMap.get(convId);
+      const isGroup = detail?.is_group || false;
+      const convOtherPs = (otherParticipants || []).filter((p: any) => p.conversation_id === convId);
+
+      // For 1:1 chats, need at least one other participant
+      if (!isGroup && convOtherPs.length === 0) continue;
+
+      const firstOther = convOtherPs[0];
+      const profile = firstOther ? profileMap.get(firstOther.user_id) as any : null;
+
+      // For 1:1 chats, must have a valid profile
+      if (!isGroup && !profile) continue;
 
       const { data: lastMsg } = await fromTable("messages")
         .select("id, message_text, created_at, sender_id, deleted_at, message_type")
@@ -214,16 +233,32 @@ export function useConversations() {
       const meta = metaMap.get(convId) || { is_pinned: false, is_archived: false, is_muted: false };
       const draft = loadDraft(convId);
 
+      // Build group members list
+      const groupMembers = isGroup
+        ? convOtherPs.map((p: any) => {
+            const prof = profileMap.get(p.user_id) as any;
+            return {
+              user_id: p.user_id,
+              full_name: prof?.full_name || "Unknown",
+              avatar_url: prof?.avatar_url || null,
+            };
+          })
+        : undefined;
+
       convList.push({
         id: convId,
         created_at: lastMsg?.created_at || "",
         other_user: {
-          user_id: profile.user_id,
-          full_name: profile.full_name,
-          username: profile.username,
-          avatar_url: profile.avatar_url,
-          last_active_at: profile.last_active_at || null,
+          user_id: profile?.user_id || "",
+          full_name: isGroup ? (detail?.group_name || "Group") : (profile?.full_name || ""),
+          username: profile?.username || null,
+          avatar_url: isGroup ? (detail?.group_image_url || null) : (profile?.avatar_url || null),
+          last_active_at: profile?.last_active_at || null,
         },
+        is_group: isGroup,
+        group_name: detail?.group_name || null,
+        group_image_url: detail?.group_image_url || null,
+        group_members: groupMembers,
         last_message: lastMsg
           ? {
               message_text: lastMsg.deleted_at ? "This message was deleted" : lastMsg.message_text,
