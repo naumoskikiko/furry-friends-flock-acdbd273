@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Search, Check, Users, Camera } from "lucide-react";
+import { X, Search, Check, Users } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -55,49 +55,18 @@ const CreateGroupModal = ({ onClose, onCreated }: CreateGroupModalProps) => {
     setCreating(true);
 
     try {
-      // Use a two-step approach: create conversation, then add self as participant first
-      // so RLS SELECT policy is satisfied
-      const convId = crypto.randomUUID();
-      
-      // Insert conversation directly
-      const { error: convError } = await (supabase as any)
-        .from("conversations")
-        .insert({
-          id: convId,
-          is_group: true,
-          group_name: groupName.trim(),
-          created_by: user.id,
-        });
+      const participantIds = selected.map((member) => member.user_id);
 
-      if (convError) throw convError;
+      const { data: convId, error } = await supabase.rpc(
+        "create_group_conversation" as never,
+        {
+          _group_name: groupName.trim(),
+          _participant_ids: participantIds,
+        } as never,
+      );
 
-      // Add creator first (as admin) so RLS membership check passes
-      const { error: selfError } = await (supabase as any)
-        .from("conversation_participants")
-        .insert({ conversation_id: convId, user_id: user.id, is_admin: true });
-
-      if (selfError) throw selfError;
-
-      // Add other participants
-      const otherParticipants = selected.map((s) => ({
-        conversation_id: convId,
-        user_id: s.user_id,
-        is_admin: false,
-      }));
-
-      const { error: partError } = await (supabase as any)
-        .from("conversation_participants")
-        .insert(otherParticipants);
-
-      if (partError) throw partError;
-
-      // Send system message
-      await (supabase as any).from("messages").insert({
-        conversation_id: convId,
-        sender_id: user.id,
-        message_text: `Group "${groupName.trim()}" created`,
-        message_type: "system",
-      });
+      if (error) throw error;
+      if (!convId) throw new Error("Group could not be created.");
 
       toast({ title: "Group created!" });
       onCreated(convId);

@@ -2570,6 +2570,10 @@ export type Database = {
         Args: { _other_user_id: string }
         Returns: string
       }
+      create_group_conversation: {
+        Args: { _group_name: string; _participant_ids: string[] }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
