@@ -65,6 +65,8 @@ export const useFeed = () => {
         image_url: post.image_url,
         post_type: post.post_type,
         location: post.location,
+        latitude: post.latitude ?? null,
+        longitude: post.longitude ?? null,
         likes_count: post.likes_count,
         comments_count: post.comments_count,
         created_at: post.created_at,
