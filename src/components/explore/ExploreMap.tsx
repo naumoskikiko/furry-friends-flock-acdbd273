@@ -49,7 +49,9 @@ const ExploreMap = ({ markers, center, onMarkerClick }: ExploreMapProps) => {
       zoomControl: false,
       attributionControl: false,
     });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+    }).addTo(map);
     markersLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
 
