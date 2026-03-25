@@ -78,6 +78,7 @@ const StoryViewer = ({
   const [showReply, setShowReply] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [locationMap, setLocationMap] = useState<{ name: string; lat: number; lng: number } | null>(null);
   const [insightsOpen, setInsightsOpen] = useState(false);
 
   // Pull-down state
