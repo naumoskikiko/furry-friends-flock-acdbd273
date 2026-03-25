@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { X, Navigation, Loader2, Compass, LocateFixed, Footprints, RotateCcw, RotateCw } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import "leaflet-rotate";
 
 interface StoryLocationMapProps {
   open: boolean;
@@ -60,15 +59,17 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
   useEffect(() => {
     if (!open || !containerRef.current) return;
 
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       if (mapRef.current || !containerRef.current) return;
 
-      const map = L.map(containerRef.current, {
+      // Dynamically import leaflet-rotate only for this map
+      await import("leaflet-rotate");
+
+      const map = L.map(containerRef.current!, {
         center: [lat, lng],
         zoom: 15,
         zoomControl: false,
         attributionControl: false,
-        // leaflet-rotate options
         rotate: true,
         bearing: 0,
         touchRotate: true,
@@ -79,7 +80,6 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
       L.marker([lat, lng], { icon: destinationIcon }).addTo(map);
 
-      // Track bearing changes for compass UI
       map.on("rotate", () => {
         const bearing = (map as any).getBearing?.() ?? 0;
         setMapBearing(bearing);
