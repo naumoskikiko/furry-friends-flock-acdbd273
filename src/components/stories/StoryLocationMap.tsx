@@ -255,11 +255,11 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
 
   const resetNorth = useCallback(() => {
     if (!mapRef.current) return;
-    // Reset CSS rotation if any
     const container = mapRef.current.getContainer();
     container.style.transition = "transform 0.4s ease";
     container.style.transform = "";
     setTimeout(() => { container.style.transition = ""; }, 400);
+    bearingRef.current = 0;
     setMapBearing(0);
   }, []);
 
