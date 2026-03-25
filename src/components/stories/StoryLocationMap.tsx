@@ -36,6 +36,9 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
   const [routeShown, setRouteShown] = useState(false);
   const [routeInfo, setRouteInfo] = useState<{ distance: number; duration: number } | null>(null);
   const [mapBearing, setMapBearing] = useState(0);
+  const bearingRef = useRef(0);
+  const initialAngleRef = useRef<number | null>(null);
+  const initialBearingRef = useRef(0);
 
   const destinationIcon = L.divIcon({
     html: `<div style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:hsl(25,90%,55%);box-shadow:0 3px 12px rgba(0,0,0,0.35);border:3px solid white;">
@@ -74,16 +77,41 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
       L.marker([lat, lng], { icon: destinationIcon }).addTo(map);
 
-      // Track rotation via CSS transforms for compass
-      const updateBearing = () => {
-        const container = map.getContainer();
-        const transform = container.style.transform || "";
-        const match = transform.match(/rotate\(([^)]+)deg\)/);
-        setMapBearing(match ? parseFloat(match[1]) : 0);
+      // Two-finger rotation gesture
+      const mapEl = map.getContainer();
+      const getTouchAngle = (t1: Touch, t2: Touch) =>
+        (Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180) / Math.PI;
+
+      const onTouchStart = (e: TouchEvent) => {
+        if (e.touches.length === 2) {
+          initialAngleRef.current = getTouchAngle(e.touches[0], e.touches[1]);
+          initialBearingRef.current = bearingRef.current;
+        }
       };
-      map.on("move", updateBearing);
+      const onTouchMove = (e: TouchEvent) => {
+        if (e.touches.length === 2 && initialAngleRef.current !== null) {
+          const delta = getTouchAngle(e.touches[0], e.touches[1]) - initialAngleRef.current;
+          const newBearing = initialBearingRef.current + delta;
+          bearingRef.current = newBearing;
+          setMapBearing(newBearing);
+          mapEl.style.transform = `rotate(${newBearing}deg)`;
+          mapEl.style.transformOrigin = "center center";
+        }
+      };
+      const onTouchEnd = (e: TouchEvent) => {
+        if (e.touches.length < 2) initialAngleRef.current = null;
+      };
+
+      mapEl.addEventListener("touchstart", onTouchStart, { passive: true });
+      mapEl.addEventListener("touchmove", onTouchMove, { passive: true });
+      mapEl.addEventListener("touchend", onTouchEnd, { passive: true });
 
       mapRef.current = map;
+      (mapRef.current as any)._rotCleanup = () => {
+        mapEl.removeEventListener("touchstart", onTouchStart);
+        mapEl.removeEventListener("touchmove", onTouchMove);
+        mapEl.removeEventListener("touchend", onTouchEnd);
+      };
       setTimeout(() => map.invalidateSize(), 100);
     }, 50);
 
@@ -94,6 +122,7 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
         watchIdRef.current = null;
       }
       if (mapRef.current) {
+        (mapRef.current as any)._rotCleanup?.();
         mapRef.current.remove();
         mapRef.current = null;
       }
@@ -226,11 +255,11 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
 
   const resetNorth = useCallback(() => {
     if (!mapRef.current) return;
-    // Reset CSS rotation if any
     const container = mapRef.current.getContainer();
     container.style.transition = "transform 0.4s ease";
     container.style.transform = "";
     setTimeout(() => { container.style.transition = ""; }, 400);
+    bearingRef.current = 0;
     setMapBearing(0);
   }, []);
 
