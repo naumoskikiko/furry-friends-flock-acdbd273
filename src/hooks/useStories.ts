@@ -89,6 +89,8 @@ export const useStories = () => {
         media_type: s.media_type,
         caption: s.caption || "",
         location: s.location || "",
+        location_lat: s.location_lat || null,
+        location_lng: s.location_lng || null,
         text_overlay: s.text_overlay || "",
         sticker: s.sticker || "",
         created_at: s.created_at,

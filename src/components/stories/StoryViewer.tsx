@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useToast } from "@/hooks/use-toast";
+import StoryLocationMap from "./StoryLocationMap";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,8 @@ export interface StoryItem {
   media_type: string;
   caption: string;
   location: string;
+  location_lat?: number | null;
+  location_lng?: number | null;
   text_overlay: string;
   sticker: string;
   created_at: string;
@@ -75,6 +78,7 @@ const StoryViewer = ({
   const [showReply, setShowReply] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [locationMap, setLocationMap] = useState<{ name: string; lat: number; lng: number } | null>(null);
   const [insightsOpen, setInsightsOpen] = useState(false);
 
   // Pull-down state
@@ -513,9 +517,19 @@ const StoryViewer = ({
             <div className="absolute right-6 top-24 z-30 text-5xl pointer-events-none">{story.sticker}</div>
           )}
           {story.location && (
-            <div className="absolute left-4 top-20 z-30 flex items-center gap-1 rounded-full bg-black/50 px-3 py-1 text-xs text-white pointer-events-none">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (story.location_lat && story.location_lng) {
+                  pauseTimer();
+                  setPaused(true);
+                  setLocationMap({ name: story.location, lat: story.location_lat, lng: story.location_lng });
+                }
+              }}
+              className={`absolute left-4 top-20 z-30 flex items-center gap-1 rounded-full bg-black/50 px-3 py-1 text-xs text-white ${story.location_lat ? "cursor-pointer active:scale-95 transition-transform" : "pointer-events-none"}`}
+            >
               <MapPin className="h-3 w-3" /> {story.location}
-            </div>
+            </button>
           )}
           {story.caption && !showReply && (
             <div className="absolute inset-x-0 bottom-28 z-30 px-6 text-center pointer-events-none">
@@ -619,6 +633,17 @@ const StoryViewer = ({
       {/* Close menu on outside click */}
       {showMenu && (
         <div className="fixed inset-0 z-[101]" onClick={() => setShowMenu(false)} />
+      )}
+
+      {/* Location map viewer */}
+      {locationMap && (
+        <StoryLocationMap
+          open={!!locationMap}
+          onClose={() => { setLocationMap(null); setPaused(false); }}
+          locationName={locationMap.name}
+          lat={locationMap.lat}
+          lng={locationMap.lng}
+        />
       )}
     </div>
   );

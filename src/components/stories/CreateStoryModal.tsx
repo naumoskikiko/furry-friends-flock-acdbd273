@@ -10,6 +10,7 @@ import { getStoryDrafts, saveStoryDraft, deleteStoryDraft, type StoryDraft } fro
 import { formatDistanceToNow } from "date-fns";
 import DraggableOverlay from "./DraggableOverlay";
 import DrawingCanvas from "./DrawingCanvas";
+import LocationSearch from "./LocationSearch";
 
 interface CreateStoryModalProps {
   open: boolean;
@@ -53,7 +54,9 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
   const [activeIndex, setActiveIndex] = useState(0);
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
+  const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [petId, setPetId] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [activeTool, setActiveTool] = useState<ToolMode>(null);
@@ -89,7 +92,9 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
     setActiveIndex(0);
     setCaption("");
     setLocation("");
+    setLocationCoords(null);
     setPetId("");
+    setShowPreview(false);
     setActiveTool(null);
     setUploadProgress(0);
     setTextItems([]);
@@ -236,7 +241,7 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
       }
       const { data: { publicUrl } } = supabase.storage.from("story-media").getPublicUrl(filePath);
 
-      const { error } = await supabase.from("stories").insert({
+      const storyData: any = {
         user_id: user.id,
         media_url: publicUrl,
         media_type: item.mediaType,
@@ -245,7 +250,12 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
         text_overlay: i === 0 ? textOverlay : "",
         sticker: i === 0 ? stickerStr : "",
         pet_id: petId || null,
-      });
+      };
+      if (i === 0 && locationCoords) {
+        storyData.location_lat = locationCoords.lat;
+        storyData.location_lng = locationCoords.lng;
+      }
+      const { error } = await supabase.from("stories").insert(storyData);
 
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -299,14 +309,30 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
             <span className="text-white font-display font-bold text-sm">
               {hasFiles ? (files.length > 1 ? `${activeIndex + 1}/${files.length}` : "New Story") : "New Story"}
             </span>
-            <Button
-              size="sm"
-              onClick={handlePublish}
-              disabled={!hasFiles || uploading}
-              className="petkeep-gradient text-primary-foreground font-bold rounded-full px-5"
-            >
-              {uploading ? `${uploadProgress}%` : "Share"}
-            </Button>
+            {showPreview ? (
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setShowPreview(false)} className="rounded-full border-white/30 text-white">
+                  Back
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handlePublish}
+                  disabled={uploading}
+                  className="petkeep-gradient text-primary-foreground font-bold rounded-full px-5"
+                >
+                  {uploading ? `${uploadProgress}%` : "Publish"}
+                </Button>
+              </div>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => hasFiles ? setShowPreview(true) : undefined}
+                disabled={!hasFiles}
+                className="petkeep-gradient text-primary-foreground font-bold rounded-full px-5"
+              >
+                Preview
+              </Button>
+            )}
           </div>
 
           {/* Main preview area */}
@@ -390,7 +416,19 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
                   </DraggableOverlay>
                 )}
 
+                {/* Preview overlay */}
+                {showPreview && (
+                  <div className="absolute inset-0 z-50 pointer-events-none">
+                    <div className="absolute top-16 left-4 right-4 flex items-center justify-center">
+                      <span className="bg-black/60 text-white text-xs font-bold px-4 py-2 rounded-full backdrop-blur-sm">
+                        📱 Preview — This is how your story will look
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Side tool buttons */}
+                {!showPreview && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-40">
                   <ToolBtn icon={<Type className="h-5 w-5" />} active={activeTool === "text"} onClick={() => toggleTool("text")} />
                   <ToolBtn icon={<Pencil className="h-5 w-5" />} active={activeTool === "draw"} onClick={() => toggleTool("draw")} />
@@ -401,6 +439,7 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
                     <Trash2 className="h-5 w-5" />
                   </button>
                 </div>
+                )}
 
                 {/* Active tool panels */}
                 {activeTool === "text" && (
@@ -458,12 +497,16 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
 
                 {activeTool === "location" && (
                   <div className="absolute bottom-4 inset-x-4 z-40">
-                    <Input
-                      placeholder="Add location..."
+                    <LocationSearch
                       value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      className="bg-black/60 border-white/20 text-white placeholder:text-white/50 rounded-full"
-                      autoFocus
+                      onChange={(name, lat, lng) => {
+                        setLocation(name);
+                        setLocationCoords({ lat, lng });
+                      }}
+                      onClear={() => {
+                        setLocation("");
+                        setLocationCoords(null);
+                      }}
                     />
                   </div>
                 )}
