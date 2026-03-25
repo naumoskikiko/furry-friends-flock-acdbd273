@@ -1,7 +1,7 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Heart, MessageCircle, Send, Trash2, X, MoreVertical,
+  Heart, MessageCircle, Send, Trash2, MoreHorizontal, Bookmark, ChevronLeft,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -110,7 +110,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
     });
   }, [startIndex]);
 
-  // Track current index from scroll (for like-checking and counter)
+  // Track current index via IntersectionObserver
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -222,6 +222,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
   };
 
   const profileName = ownerProfile?.full_name || "User";
+  const profileUsername = ownerProfile?.username || "user";
   const profileAvatar = ownerProfile?.avatar_url;
   const profileInitials = profileName
     .split(" ")
@@ -231,53 +232,72 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
     .slice(0, 2);
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col">
-      {/* Header */}
-      <div className="relative z-10 flex items-center gap-3 px-3 py-2.5 bg-card border-b border-border safe-area-top">
-        <button onClick={onClose} className="rounded-full p-2 hover:bg-secondary">
-          <X className="h-5 w-5" />
+    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+      {/* Header — Instagram style: back arrow, "Posts" title, username */}
+      <div className="relative z-10 flex items-center px-2 py-2.5 bg-black safe-area-top">
+        <button onClick={onClose} className="rounded-full p-2 text-white hover:bg-white/10">
+          <ChevronLeft className="h-6 w-6" />
         </button>
-        <button
-          onClick={() => {
-            onClose();
-            if (ownerProfile?.user_id && user?.id !== ownerProfile.user_id) {
-              navigate(`/user/${ownerProfile.username || ownerProfile.user_id}`);
-            }
-          }}
-          className="flex items-center gap-2"
-        >
-          {profileAvatar ? (
-            <img src={profileAvatar} alt="" className="h-7 w-7 rounded-full object-cover" />
-          ) : (
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-[10px] font-bold text-primary-foreground">
-              {profileInitials}
-            </div>
-          )}
-          <span className="text-sm font-bold">{profileName}</span>
-        </button>
-        <div className="flex-1" />
-        <span className="text-xs text-muted-foreground">
-          {currentIndex + 1} / {posts.length}
-        </span>
+        <div className="flex-1 text-center">
+          <p className="text-white text-base font-bold leading-tight">Posts</p>
+          <p className="text-white/60 text-xs">{profileUsername}</p>
+        </div>
+        {/* Spacer to balance the back button */}
+        <div className="w-10" />
       </div>
 
-      {/* Scrollable posts */}
+      {/* Scrollable feed */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto"
+        className="flex-1 overflow-y-auto bg-black"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         {posts.map((post, idx) => {
           const timeAgo = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
 
           return (
-            <div
-              key={post.id}
-              className="w-full border-b border-border"
-            >
-              {/* Media area */}
+            <article key={post.id} className="border-b border-white/10">
+              {/* Per-post header: avatar + username + ··· */}
+              <div className="flex items-center justify-between px-3 py-2.5">
+                <button
+                  onClick={() => {
+                    onClose();
+                    if (ownerProfile?.user_id && user?.id !== ownerProfile.user_id) {
+                      navigate(`/user/${ownerProfile.username || ownerProfile.user_id}`);
+                    }
+                  }}
+                  className="flex items-center gap-2.5"
+                >
+                  {profileAvatar ? (
+                    <img src={profileAvatar} alt="" className="h-8 w-8 rounded-full object-cover ring-1 ring-white/20" />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-[10px] font-bold text-primary-foreground">
+                      {profileInitials}
+                    </div>
+                  )}
+                  <span className="text-white text-sm font-semibold">{profileUsername}</span>
+                </button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="p-1 text-white/70 hover:text-white">
+                      <MoreHorizontal className="h-5 w-5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => sharePost(post)}>Copy link</DropdownMenuItem>
+                    {user?.id === post.user_id && (
+                      <DropdownMenuItem className="text-destructive" onClick={() => deletePost(post)}>
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Image — full width, natural aspect ratio */}
               <div
-                className="relative w-full max-h-[70vh] flex items-center justify-center bg-secondary overflow-hidden"
+                className="relative w-full bg-black"
                 onClick={() => handleDoubleTap(post)}
               >
                 {post.image_url ? (
@@ -287,20 +307,20 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
                       controls
                       playsInline
                       muted
-                      className="max-w-full max-h-full object-contain"
+                      className="w-full object-contain"
                     />
                   ) : (
                     <img
                       src={post.image_url}
                       alt=""
-                      className="max-w-full max-h-full object-contain"
+                      className="w-full object-contain"
                       loading={Math.abs(idx - startIndex) <= 2 ? "eager" : "lazy"}
                       draggable={false}
                     />
                   )
                 ) : (
-                  <div className="bg-card rounded-2xl p-6 mx-4 max-w-sm">
-                    <p className="text-foreground text-lg">{post.caption}</p>
+                  <div className="w-full py-12 flex items-center justify-center">
+                    <p className="text-white text-lg px-6 text-center">{post.caption}</p>
                   </div>
                 )}
 
@@ -310,62 +330,59 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
                 />
               </div>
 
-              {/* Actions & info */}
-              <div className="bg-card px-4 py-2.5 border-t border-border safe-area-bottom">
-                <div className="flex items-center gap-5 mb-1.5">
-                  <button onClick={() => toggleLike(post)} className="transition-transform active:scale-90">
-                    <Heart
-                      className={`h-6 w-6 ${likes[post.id] ? "fill-red-500 text-red-500" : "text-foreground"}`}
-                    />
-                  </button>
-                  <button onClick={() => openComments(post.id)}>
-                    <MessageCircle className="h-6 w-6 text-foreground" />
-                  </button>
-                  <button onClick={() => sharePost(post)}>
-                    <Send className="h-5 w-5 text-foreground" />
-                  </button>
-                  <div className="flex-1" />
-                  {user?.id === post.user_id && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="p-1 text-muted-foreground">
-                          <MoreVertical className="h-5 w-5" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => deletePost(post)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
+              {/* Action row */}
+              <div className="px-3 pt-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <button onClick={() => toggleLike(post)} className="transition-transform active:scale-90">
+                      <Heart
+                        className={`h-6 w-6 ${likes[post.id] ? "fill-red-500 text-red-500" : "text-white"}`}
+                      />
+                    </button>
+                    <button onClick={() => openComments(post.id)}>
+                      <MessageCircle className="h-6 w-6 text-white" />
+                    </button>
+                    <button onClick={() => sharePost(post)}>
+                      <Send className="h-5 w-5 text-white" />
+                    </button>
+                  </div>
+                  <Bookmark className="h-6 w-6 text-white" />
                 </div>
 
-                <p className="text-xs font-bold">{post.likes_count} likes</p>
+                {/* Likes count */}
+                <p className="text-white text-sm font-bold mt-2">
+                  {post.likes_count.toLocaleString()} likes
+                </p>
+
+                {/* Caption */}
                 {post.caption && (
-                  <p className="text-xs mt-0.5 line-clamp-2">
-                    <span className="font-bold">{profileName}</span> {post.caption}
+                  <p className="text-white text-sm mt-1 leading-snug">
+                    <span className="font-bold">{profileUsername}</span>{" "}
+                    {post.caption}
                   </p>
                 )}
+
+                {/* Location */}
                 {post.location && (
-                  <p className="text-[10px] text-muted-foreground mt-0.5">📍 {post.location}</p>
+                  <p className="text-white/50 text-xs mt-1">📍 {post.location}</p>
                 )}
-                <button
-                  onClick={() => openComments(post.id)}
-                  className="text-[10px] text-muted-foreground mt-0.5"
-                >
-                  {post.comments_count > 0
-                    ? `View all ${post.comments_count} comments`
-                    : "Add a comment..."}
-                </button>
-                <p className="text-[9px] text-muted-foreground mt-0.5 uppercase tracking-wide">
+
+                {/* Comments link */}
+                {post.comments_count > 0 && (
+                  <button
+                    onClick={() => openComments(post.id)}
+                    className="text-white/50 text-xs mt-1.5 block"
+                  >
+                    View all {post.comments_count} comments
+                  </button>
+                )}
+
+                {/* Date */}
+                <p className="text-white/40 text-[10px] mt-1.5 pb-3 uppercase tracking-wide">
                   {timeAgo}
                 </p>
               </div>
-            </div>
+            </article>
           );
         })}
       </div>
@@ -373,7 +390,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
       {/* Comments sheet */}
       {commentsOpenFor && (
         <div className="fixed inset-0 z-[60] flex flex-col justify-end" onClick={() => setCommentsOpenFor(null)}>
-          <div className="absolute inset-0 bg-foreground/40" />
+          <div className="absolute inset-0 bg-black/60" />
           <div
             className="relative bg-card rounded-t-2xl max-h-[65vh] flex flex-col animate-slide-up safe-area-bottom"
             onClick={(e) => e.stopPropagation()}
@@ -381,7 +398,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
             <div className="flex items-center justify-between p-3 border-b border-border">
               <h3 className="font-display font-bold text-sm">Comments</h3>
               <button onClick={() => setCommentsOpenFor(null)} className="p-1 text-muted-foreground">
-                <X className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-3 py-2 space-y-3 min-h-[80px]">
