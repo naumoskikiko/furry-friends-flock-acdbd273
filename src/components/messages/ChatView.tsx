@@ -56,7 +56,8 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
   const [showSettings, setShowSettings] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout>>();
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const draftTimeout = useRef<ReturnType<typeof setTimeout>>();
@@ -64,6 +65,30 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, pendingMessages]);
+
+  // Handle mobile keyboard: scroll to bottom when virtual keyboard opens
+  useEffect(() => {
+    const handleResize = () => {
+      // When keyboard opens, visualViewport height shrinks
+      setTimeout(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    };
+
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener("resize", handleResize);
+      return () => vv.removeEventListener("resize", handleResize);
+    }
+  }, []);
+
+  // Auto-resize textarea
+  const autoResize = useCallback(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 120) + "px";
+  }, []);
 
   // Save draft on unmount
   useEffect(() => {
@@ -244,7 +269,7 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div ref={containerRef} className="flex h-full flex-col overflow-hidden">
       {/* Offline banner */}
       {!isOnline && (
         <div className="flex items-center justify-center gap-2 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive">
@@ -796,20 +821,35 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
       )}
 
       {/* Input */}
-      <div className="border-t border-border px-3 py-2 bg-card shrink-0">
-        <div className="flex items-center gap-2">
-          <input
+      <div className="border-t border-border px-3 py-2 bg-card shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="flex items-end gap-2">
+          <textarea
             ref={inputRef}
             value={text}
-            onChange={(e) => handleTextChange(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+            onChange={(e) => {
+              handleTextChange(e.target.value);
+              autoResize();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+                // Reset height after send
+                setTimeout(autoResize, 0);
+              }
+            }}
+            onFocus={() => {
+              setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 300);
+            }}
+            rows={1}
             placeholder={isOnline ? "Type a message..." : "Message will be queued..."}
-            className="flex-1 min-w-0 rounded-full bg-secondary px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/30 transition-shadow"
+            className="flex-1 min-w-0 rounded-[1.25rem] bg-secondary px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/30 transition-shadow resize-none max-h-[120px] leading-5"
+            style={{ height: "auto" }}
           />
           <button
             onClick={handleSend}
             disabled={!text.trim()}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40 transition-all active:scale-90"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40 transition-all active:scale-90 mb-0.5"
           >
             {text.trim() ? <Send className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
           </button>
