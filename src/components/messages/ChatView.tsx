@@ -537,8 +537,8 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
                   >
                     <button
                       onClick={() => navigate(`/post/${msg.metadata.post_id}`)}
-                      className={`max-w-[75%] rounded-2xl overflow-hidden text-left ${
-                        isMine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-secondary text-secondary-foreground rounded-bl-md"
+                      className={`max-w-[80%] rounded-2xl overflow-hidden text-left shadow-sm ${
+                        isMine ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-secondary text-secondary-foreground rounded-bl-sm"
                       }`}
                     >
                       {msg.metadata.image_url && (
