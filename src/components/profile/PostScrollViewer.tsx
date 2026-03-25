@@ -110,26 +110,26 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
     });
   }, [startIndex]);
 
-  // Track current index from scroll
+  // Track current index from scroll (for like-checking and counter)
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    let ticking = false;
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        const scrollTop = container.scrollTop;
-        const height = container.clientHeight;
-        const idx = Math.round(scrollTop / height);
-        setCurrentIndex(Math.min(Math.max(idx, 0), posts.length - 1));
-        ticking = false;
-      });
-    };
+    const postRefs = Array.from(container.children) as HTMLElement[];
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+            const idx = postRefs.indexOf(entry.target as HTMLElement);
+            if (idx >= 0) setCurrentIndex(idx);
+          }
+        }
+      },
+      { root: container, threshold: 0.5 }
+    );
 
-    container.addEventListener("scroll", onScroll, { passive: true });
-    return () => container.removeEventListener("scroll", onScroll);
+    postRefs.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
   }, [posts.length]);
 
   // Prevent body scroll
