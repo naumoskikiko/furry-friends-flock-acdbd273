@@ -77,16 +77,41 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
       L.marker([lat, lng], { icon: destinationIcon }).addTo(map);
 
-      // Track rotation via CSS transforms for compass
-      const updateBearing = () => {
-        const container = map.getContainer();
-        const transform = container.style.transform || "";
-        const match = transform.match(/rotate\(([^)]+)deg\)/);
-        setMapBearing(match ? parseFloat(match[1]) : 0);
+      // Two-finger rotation gesture
+      const mapEl = map.getContainer();
+      const getTouchAngle = (t1: Touch, t2: Touch) =>
+        (Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180) / Math.PI;
+
+      const onTouchStart = (e: TouchEvent) => {
+        if (e.touches.length === 2) {
+          initialAngleRef.current = getTouchAngle(e.touches[0], e.touches[1]);
+          initialBearingRef.current = bearingRef.current;
+        }
       };
-      map.on("move", updateBearing);
+      const onTouchMove = (e: TouchEvent) => {
+        if (e.touches.length === 2 && initialAngleRef.current !== null) {
+          const delta = getTouchAngle(e.touches[0], e.touches[1]) - initialAngleRef.current;
+          const newBearing = initialBearingRef.current + delta;
+          bearingRef.current = newBearing;
+          setMapBearing(newBearing);
+          mapEl.style.transform = `rotate(${newBearing}deg)`;
+          mapEl.style.transformOrigin = "center center";
+        }
+      };
+      const onTouchEnd = (e: TouchEvent) => {
+        if (e.touches.length < 2) initialAngleRef.current = null;
+      };
+
+      mapEl.addEventListener("touchstart", onTouchStart, { passive: true });
+      mapEl.addEventListener("touchmove", onTouchMove, { passive: true });
+      mapEl.addEventListener("touchend", onTouchEnd, { passive: true });
 
       mapRef.current = map;
+      (mapRef.current as any)._rotCleanup = () => {
+        mapEl.removeEventListener("touchstart", onTouchStart);
+        mapEl.removeEventListener("touchmove", onTouchMove);
+        mapEl.removeEventListener("touchend", onTouchEnd);
+      };
       setTimeout(() => map.invalidateSize(), 100);
     }, 50);
 
