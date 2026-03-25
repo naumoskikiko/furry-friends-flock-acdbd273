@@ -277,7 +277,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
             >
               {/* Media area */}
               <div
-                className="flex-1 relative flex items-center justify-center bg-secondary overflow-hidden"
+                className="relative w-full max-h-[70vh] flex items-center justify-center bg-secondary overflow-hidden"
                 onClick={() => handleDoubleTap(post)}
               >
                 {post.image_url ? (
