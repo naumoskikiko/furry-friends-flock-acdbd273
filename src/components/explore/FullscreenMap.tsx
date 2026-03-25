@@ -72,7 +72,9 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
         zoom: 14,
         zoomControl: false,
         attributionControl: false,
-      });
+        rotate: false,
+        rotateControl: false,
+      } as any);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
