@@ -778,7 +778,7 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
       )}
 
       {/* Input */}
-      <div className="border-t border-border px-3 py-2.5">
+      <div className="border-t border-border px-3 py-2 bg-card shrink-0">
         <div className="flex items-center gap-2">
           <input
             ref={inputRef}
@@ -786,12 +786,12 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
             onChange={(e) => handleTextChange(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
             placeholder={isOnline ? "Type a message..." : "Message will be queued..."}
-            className="flex-1 rounded-xl bg-secondary px-3.5 py-2.5 text-sm outline-none placeholder:text-muted-foreground"
+            className="flex-1 min-w-0 rounded-full bg-secondary px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/30 transition-shadow"
           />
           <button
             onClick={handleSend}
             disabled={!text.trim()}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40 transition-opacity"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40 transition-all active:scale-90"
           >
             {text.trim() ? <Send className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
           </button>
