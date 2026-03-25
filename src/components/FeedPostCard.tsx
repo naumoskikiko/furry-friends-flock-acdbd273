@@ -44,6 +44,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { FeedPostData } from "@/hooks/useFeed";
+import StoryLocationMap from "@/components/stories/StoryLocationMap";
 
 interface FeedPostCardProps {
   post: FeedPostData;
