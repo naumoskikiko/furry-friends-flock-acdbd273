@@ -324,3 +324,4 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
 };
 
 export default BlogCard;
+
