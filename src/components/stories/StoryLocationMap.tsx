@@ -253,15 +253,26 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
     mapRef.current.flyTo(pos, 16, { duration: 0.6 });
   }, []);
 
-  const resetNorth = useCallback(() => {
+  const applyBearing = useCallback((deg: number) => {
     if (!mapRef.current) return;
+    bearingRef.current = deg;
+    setMapBearing(deg);
     const container = mapRef.current.getContainer();
-    container.style.transition = "transform 0.4s ease";
-    container.style.transform = "";
-    setTimeout(() => { container.style.transition = ""; }, 400);
-    bearingRef.current = 0;
-    setMapBearing(0);
+    container.style.transition = "transform 0.3s ease";
+    container.style.transform = deg === 0 ? "" : `rotate(${deg}deg)`;
+    container.style.transformOrigin = "center center";
+    setTimeout(() => { container.style.transition = ""; }, 300);
   }, []);
+
+  const resetNorth = useCallback(() => applyBearing(0), [applyBearing]);
+
+  const rotateLeft = useCallback(() => {
+    applyBearing(bearingRef.current - 30);
+  }, [applyBearing]);
+
+  const rotateRight = useCallback(() => {
+    applyBearing(bearingRef.current + 30);
+  }, [applyBearing]);
 
   if (!open) return null;
 
