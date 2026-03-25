@@ -232,15 +232,15 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
     .slice(0, 2);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+    <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Header — Instagram style: back arrow, "Posts" title, username */}
-      <div className="relative z-10 flex items-center px-2 py-2.5 bg-black safe-area-top">
-        <button onClick={onClose} className="rounded-full p-2 text-white hover:bg-white/10">
+      <div className="relative z-10 flex items-center px-2 py-2.5 bg-background safe-area-top">
+        <button onClick={onClose} className="rounded-full p-2 text-foreground hover:bg-secondary">
           <ChevronLeft className="h-6 w-6" />
         </button>
         <div className="flex-1 text-center">
-          <p className="text-white text-base font-bold leading-tight">Posts</p>
-          <p className="text-white/60 text-xs">{profileUsername}</p>
+          <p className="text-foreground text-base font-bold leading-tight">Posts</p>
+          <p className="text-muted-foreground text-xs">{profileUsername}</p>
         </div>
         {/* Spacer to balance the back button */}
         <div className="w-10" />
@@ -249,14 +249,14 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
       {/* Scrollable feed */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto bg-black"
+        className="flex-1 overflow-y-auto bg-background"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         {posts.map((post, idx) => {
           const timeAgo = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
 
           return (
-            <article key={post.id} className="border-b border-white/10">
+            <article key={post.id} className="border-b border-border">
               {/* Per-post header: avatar + username + ··· */}
               <div className="flex items-center justify-between px-3 py-2.5">
                 <button
@@ -269,18 +269,18 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
                   className="flex items-center gap-2.5"
                 >
                   {profileAvatar ? (
-                    <img src={profileAvatar} alt="" className="h-8 w-8 rounded-full object-cover ring-1 ring-white/20" />
+                    <img src={profileAvatar} alt="" className="h-8 w-8 rounded-full object-cover ring-1 ring-border" />
                   ) : (
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-[10px] font-bold text-primary-foreground">
                       {profileInitials}
                     </div>
                   )}
-                  <span className="text-white text-sm font-semibold">{profileUsername}</span>
+                  <span className="text-foreground text-sm font-semibold">{profileUsername}</span>
                 </button>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="p-1 text-white/70 hover:text-white">
+                    <button className="p-1 text-muted-foreground hover:text-foreground">
                       <MoreHorizontal className="h-5 w-5" />
                     </button>
                   </DropdownMenuTrigger>
@@ -297,7 +297,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
 
               {/* Image — full width, natural aspect ratio */}
               <div
-                className="relative w-full bg-black"
+                className="relative w-full bg-background"
                 onClick={() => handleDoubleTap(post)}
               >
                 {post.image_url ? (
@@ -320,7 +320,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
                   )
                 ) : (
                   <div className="w-full py-12 flex items-center justify-center">
-                    <p className="text-white text-lg px-6 text-center">{post.caption}</p>
+                    <p className="text-foreground text-lg px-6 text-center">{post.caption}</p>
                   </div>
                 )}
 
@@ -336,27 +336,27 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
                   <div className="flex items-center gap-4">
                     <button onClick={() => toggleLike(post)} className="transition-transform active:scale-90">
                       <Heart
-                        className={`h-6 w-6 ${likes[post.id] ? "fill-red-500 text-red-500" : "text-white"}`}
+                        className={`h-6 w-6 ${likes[post.id] ? "fill-red-500 text-red-500" : "text-foreground"}`}
                       />
                     </button>
                     <button onClick={() => openComments(post.id)}>
-                      <MessageCircle className="h-6 w-6 text-white" />
+                      <MessageCircle className="h-6 w-6 text-foreground" />
                     </button>
                     <button onClick={() => sharePost(post)}>
-                      <Send className="h-5 w-5 text-white" />
+                      <Send className="h-5 w-5 text-foreground" />
                     </button>
                   </div>
-                  <Bookmark className="h-6 w-6 text-white" />
+                  <Bookmark className="h-6 w-6 text-foreground" />
                 </div>
 
                 {/* Likes count */}
-                <p className="text-white text-sm font-bold mt-2">
+                <p className="text-foreground text-sm font-bold mt-2">
                   {post.likes_count.toLocaleString()} likes
                 </p>
 
                 {/* Caption */}
                 {post.caption && (
-                  <p className="text-white text-sm mt-1 leading-snug">
+                  <p className="text-foreground text-sm mt-1 leading-snug">
                     <span className="font-bold">{profileUsername}</span>{" "}
                     {post.caption}
                   </p>
@@ -364,21 +364,21 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
 
                 {/* Location */}
                 {post.location && (
-                  <p className="text-white/50 text-xs mt-1">📍 {post.location}</p>
+                  <p className="text-muted-foreground text-xs mt-1">📍 {post.location}</p>
                 )}
 
                 {/* Comments link */}
                 {post.comments_count > 0 && (
                   <button
                     onClick={() => openComments(post.id)}
-                    className="text-white/50 text-xs mt-1.5 block"
+                    className="text-muted-foreground text-xs mt-1.5 block"
                   >
                     View all {post.comments_count} comments
                   </button>
                 )}
 
                 {/* Date */}
-                <p className="text-white/40 text-[10px] mt-1.5 pb-3 uppercase tracking-wide">
+                <p className="text-muted-foreground text-[10px] mt-1.5 pb-3 uppercase tracking-wide">
                   {timeAgo}
                 </p>
               </div>
@@ -390,7 +390,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
       {/* Comments sheet */}
       {commentsOpenFor && (
         <div className="fixed inset-0 z-[60] flex flex-col justify-end" onClick={() => setCommentsOpenFor(null)}>
-          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute inset-0 bg-background/60" />
           <div
             className="relative bg-card rounded-t-2xl max-h-[65vh] flex flex-col animate-slide-up safe-area-bottom"
             onClick={(e) => e.stopPropagation()}
