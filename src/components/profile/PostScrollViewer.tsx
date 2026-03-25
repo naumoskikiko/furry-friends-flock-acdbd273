@@ -273,8 +273,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
           return (
             <div
               key={post.id}
-              className="snap-start snap-always w-full flex flex-col"
-              style={{ minHeight: "calc(100vh - 49px)", height: "calc(100vh - 49px)" }}
+              className="w-full border-b border-border"
             >
               {/* Media area */}
               <div
