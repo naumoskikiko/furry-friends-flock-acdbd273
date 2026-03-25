@@ -55,45 +55,52 @@ const CreateGroupModal = ({ onClose, onCreated }: CreateGroupModalProps) => {
     setCreating(true);
 
     try {
-      // Create conversation with group flag
-      const { data: conv, error: convError } = await (supabase as any)
+      // Use a two-step approach: create conversation, then add self as participant first
+      // so RLS SELECT policy is satisfied
+      const convId = crypto.randomUUID();
+      
+      // Insert conversation directly
+      const { error: convError } = await (supabase as any)
         .from("conversations")
         .insert({
+          id: convId,
           is_group: true,
           group_name: groupName.trim(),
           created_by: user.id,
-        })
-        .select("id")
-        .single();
+        });
 
       if (convError) throw convError;
 
-      // Add all participants including creator
-      const participants = [
-        { conversation_id: conv.id, user_id: user.id, is_admin: true },
-        ...selected.map((s) => ({
-          conversation_id: conv.id,
-          user_id: s.user_id,
-          is_admin: false,
-        })),
-      ];
+      // Add creator first (as admin) so RLS membership check passes
+      const { error: selfError } = await (supabase as any)
+        .from("conversation_participants")
+        .insert({ conversation_id: convId, user_id: user.id, is_admin: true });
+
+      if (selfError) throw selfError;
+
+      // Add other participants
+      const otherParticipants = selected.map((s) => ({
+        conversation_id: convId,
+        user_id: s.user_id,
+        is_admin: false,
+      }));
 
       const { error: partError } = await (supabase as any)
         .from("conversation_participants")
-        .insert(participants);
+        .insert(otherParticipants);
 
       if (partError) throw partError;
 
       // Send system message
       await (supabase as any).from("messages").insert({
-        conversation_id: conv.id,
+        conversation_id: convId,
         sender_id: user.id,
         message_text: `Group "${groupName.trim()}" created`,
         message_type: "system",
       });
 
       toast({ title: "Group created!" });
-      onCreated(conv.id);
+      onCreated(convId);
     } catch (e: any) {
       toast({ title: "Failed to create group", description: e.message, variant: "destructive" });
     } finally {
