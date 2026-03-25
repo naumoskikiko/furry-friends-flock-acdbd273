@@ -439,6 +439,7 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
                     <Trash2 className="h-5 w-5" />
                   </button>
                 </div>
+                )}
 
                 {/* Active tool panels */}
                 {activeTool === "text" && (
