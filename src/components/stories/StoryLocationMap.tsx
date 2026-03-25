@@ -327,6 +327,15 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
 
         {/* Map controls */}
         <div className="absolute top-3 right-3 z-[400] flex flex-col gap-2">
+          {/* Rotate Left */}
+          <button
+            onClick={rotateLeft}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-card/95 shadow-lg border border-border backdrop-blur-sm transition-all active:scale-90"
+            aria-label="Rotate left"
+          >
+            <RotateCcw className="h-4.5 w-4.5 text-foreground" />
+          </button>
+
           {/* Compass / Reset North */}
           <button
             onClick={resetNorth}
@@ -337,6 +346,15 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
               className="h-5 w-5 text-foreground transition-transform"
               style={{ transform: `rotate(${-mapBearing}deg)` }}
             />
+          </button>
+
+          {/* Rotate Right */}
+          <button
+            onClick={rotateRight}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-card/95 shadow-lg border border-border backdrop-blur-sm transition-all active:scale-90"
+            aria-label="Rotate right"
+          >
+            <RotateCw className="h-4.5 w-4.5 text-foreground" />
           </button>
 
           {/* Recenter to user */}
