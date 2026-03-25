@@ -1653,8 +1653,10 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
+          latitude: number | null
           likes_count: number
           location: string | null
+          longitude: number | null
           pet_id: string | null
           post_type: string
           updated_at: string
@@ -1666,8 +1668,10 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          latitude?: number | null
           likes_count?: number
           location?: string | null
+          longitude?: number | null
           pet_id?: string | null
           post_type?: string
           updated_at?: string
@@ -1679,8 +1683,10 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          latitude?: number | null
           likes_count?: number
           location?: string | null
+          longitude?: number | null
           pet_id?: string | null
           post_type?: string
           updated_at?: string
