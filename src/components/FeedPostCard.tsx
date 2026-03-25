@@ -536,6 +536,17 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Location Map */}
+      {post.latitude && post.longitude && (
+        <StoryLocationMap
+          open={locationMapOpen}
+          onClose={() => setLocationMapOpen(false)}
+          locationName={post.location || "Location"}
+          lat={post.latitude}
+          lng={post.longitude}
+        />
+      )}
     </article>
   );
 };
