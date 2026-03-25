@@ -58,6 +58,7 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
   const [saved, setSaved] = useState(post.is_saved);
   const [joined, setJoined] = useState(post.is_joined || false);
   const [participantsCount, setParticipantsCount] = useState(post.participants_count || 0);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   const cat = CATEGORY_META[post.category] || { label: post.category, icon: "📝" };
   const initials = post.username.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
