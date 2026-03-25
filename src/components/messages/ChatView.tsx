@@ -29,7 +29,7 @@ interface ChatViewProps {
   onClearChat?: (conversationId: string) => void;
 }
 
-const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
+const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat, onClearChat }: ChatViewProps) => {
   const { user } = useAuth();
   const {
     messages, pendingMessages, loading, hasMore, loadMore, sendMessage,
