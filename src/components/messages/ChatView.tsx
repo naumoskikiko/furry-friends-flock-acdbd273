@@ -285,7 +285,10 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
           <button onClick={() => setShowSearch(!showSearch)} className="rounded-full p-2 hover:bg-secondary active:scale-95 transition-transform">
             {showSearch ? <X className="h-[18px] w-[18px]" /> : <Search className="h-[18px] w-[18px]" />}
           </button>
-          <button className="rounded-full p-2 hover:bg-secondary active:scale-95 transition-transform">
+          <button
+            onClick={() => setShowSettings(true)}
+            className="rounded-full p-2 hover:bg-secondary active:scale-95 transition-transform"
+          >
             <MoreVertical className="h-[18px] w-[18px]" />
           </button>
         </div>
