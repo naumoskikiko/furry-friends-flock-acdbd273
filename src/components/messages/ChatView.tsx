@@ -232,7 +232,7 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col overflow-hidden">
       {/* Offline banner */}
       {!isOnline && (
         <div className="flex items-center justify-center gap-2 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive">
@@ -242,29 +242,29 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
       )}
 
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-border bg-card/95 backdrop-blur-md px-2 py-2.5">
-        <button onClick={onBack} className="shrink-0 rounded-full p-2 hover:bg-secondary active:scale-95 transition-transform">
+      <div className="flex items-center gap-2 border-b border-border bg-card/95 backdrop-blur-md px-3 py-2 shrink-0">
+        <button onClick={onBack} className="shrink-0 rounded-full p-1.5 hover:bg-secondary active:scale-95 transition-transform -ml-1">
           <ArrowLeft className="h-5 w-5" />
         </button>
 
         <button
           onClick={() => navigate(user?.id === other.user_id ? "/profile" : `/user/${other.user_id}`)}
-          className="flex flex-1 items-center gap-3 min-w-0 rounded-xl px-1 py-1 hover:bg-secondary/50 transition-colors"
+          className="flex flex-1 items-center gap-2.5 min-w-0 rounded-lg px-1 py-1 hover:bg-secondary/50 transition-colors"
         >
           <div className="relative shrink-0">
-            <Avatar className="h-10 w-10 ring-2 ring-border">
+            <Avatar className="h-9 w-9 ring-2 ring-border">
               <AvatarImage src={other.avatar_url || undefined} />
               <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-xs font-bold text-primary-foreground">
                 {initials}
               </AvatarFallback>
             </Avatar>
             {activity.isOnline && (
-              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-500 ring-2 ring-card" />
+              <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-card" />
             )}
           </div>
           <div className="flex-1 min-w-0 text-left">
-            <p className="text-[15px] font-bold leading-tight truncate">{other.full_name}</p>
-            <p className="text-[11px] leading-tight mt-0.5">
+            <p className="text-sm font-bold leading-tight truncate">{other.full_name}</p>
+            <p className="text-[11px] leading-tight">
               {typingUsers.length > 0 ? (
                 <span className="text-primary font-semibold animate-pulse">Typing…</span>
               ) : activity.isOnline ? (
@@ -276,7 +276,7 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
           </div>
         </button>
 
-        <div className="flex items-center gap-0.5 shrink-0">
+        <div className="flex items-center shrink-0">
           <button onClick={() => setShowSearch(!showSearch)} className="rounded-full p-2 hover:bg-secondary active:scale-95 transition-transform">
             {showSearch ? <X className="h-[18px] w-[18px]" /> : <Search className="h-[18px] w-[18px]" />}
           </button>
@@ -310,7 +310,7 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5">
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1 min-h-0">
         {loading ? (
           <div className="flex justify-center py-10">
             <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
@@ -500,12 +500,12 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
                   >
                     <button
                       onClick={() => openStoryFromMessage(msg.metadata)}
-                      className={`max-w-[75%] rounded-2xl overflow-hidden text-left ${
-                        isMine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-secondary text-secondary-foreground rounded-bl-md"
+                      className={`max-w-[80%] rounded-2xl overflow-hidden text-left shadow-sm ${
+                        isMine ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-secondary text-secondary-foreground rounded-bl-sm"
                       }`}
                     >
                       {msg.metadata.media_url && (
-                        <img src={msg.metadata.media_url} alt="" className="w-full h-32 object-cover" />
+                        <img src={msg.metadata.media_url} alt="" className="w-full h-36 object-cover" />
                       )}
                       <div className="px-3.5 py-2">
                         <p className={`text-[11px] font-semibold flex items-center gap-1 ${isMine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
@@ -537,12 +537,12 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
                   >
                     <button
                       onClick={() => navigate(`/post/${msg.metadata.post_id}`)}
-                      className={`max-w-[75%] rounded-2xl overflow-hidden text-left ${
-                        isMine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-secondary text-secondary-foreground rounded-bl-md"
+                      className={`max-w-[80%] rounded-2xl overflow-hidden text-left shadow-sm ${
+                        isMine ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-secondary text-secondary-foreground rounded-bl-sm"
                       }`}
                     >
                       {msg.metadata.image_url && (
-                        <img src={msg.metadata.image_url} alt="" className="w-full h-32 object-cover" />
+                        <img src={msg.metadata.image_url} alt="" className="w-full h-40 object-cover" />
                       )}
                       <div className="px-3.5 py-2">
                         <p className={`text-[11px] font-semibold flex items-center gap-1 ${isMine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
@@ -778,7 +778,7 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
       )}
 
       {/* Input */}
-      <div className="border-t border-border px-3 py-2.5">
+      <div className="border-t border-border px-3 py-2 bg-card shrink-0">
         <div className="flex items-center gap-2">
           <input
             ref={inputRef}
@@ -786,12 +786,12 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
             onChange={(e) => handleTextChange(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
             placeholder={isOnline ? "Type a message..." : "Message will be queued..."}
-            className="flex-1 rounded-xl bg-secondary px-3.5 py-2.5 text-sm outline-none placeholder:text-muted-foreground"
+            className="flex-1 min-w-0 rounded-full bg-secondary px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/30 transition-shadow"
           />
           <button
             onClick={handleSend}
             disabled={!text.trim()}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40 transition-opacity"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40 transition-all active:scale-90"
           >
             {text.trim() ? <Send className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
           </button>
