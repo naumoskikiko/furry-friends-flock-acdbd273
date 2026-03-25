@@ -62,6 +62,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
   const [commentsOpenFor, setCommentsOpenFor] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [sharePost, setSharePost] = useState<Post | null>(null);
   const lastTapRefs = useRef<Record<string, number>>({});
   const hasScrolledRef = useRef(false);
 
