@@ -309,14 +309,30 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
             <span className="text-white font-display font-bold text-sm">
               {hasFiles ? (files.length > 1 ? `${activeIndex + 1}/${files.length}` : "New Story") : "New Story"}
             </span>
-            <Button
-              size="sm"
-              onClick={handlePublish}
-              disabled={!hasFiles || uploading}
-              className="petkeep-gradient text-primary-foreground font-bold rounded-full px-5"
-            >
-              {uploading ? `${uploadProgress}%` : "Share"}
-            </Button>
+            {showPreview ? (
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setShowPreview(false)} className="rounded-full border-white/30 text-white">
+                  Back
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handlePublish}
+                  disabled={uploading}
+                  className="petkeep-gradient text-primary-foreground font-bold rounded-full px-5"
+                >
+                  {uploading ? `${uploadProgress}%` : "Publish"}
+                </Button>
+              </div>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => hasFiles ? setShowPreview(true) : undefined}
+                disabled={!hasFiles}
+                className="petkeep-gradient text-primary-foreground font-bold rounded-full px-5"
+              >
+                Preview
+              </Button>
+            )}
           </div>
 
           {/* Main preview area */}
