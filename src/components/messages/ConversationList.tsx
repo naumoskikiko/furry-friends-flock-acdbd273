@@ -273,6 +273,17 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
           })}
         </div>
       )}
+      {/* Create group modal */}
+      {showCreateGroup && (
+        <CreateGroupModal
+          onClose={() => setShowCreateGroup(false)}
+          onCreated={(convId) => {
+            setShowCreateGroup(false);
+            // Refresh conversation list
+            // The new group will appear after refresh
+          }}
+        />
+      )}
     </div>
   );
 };
