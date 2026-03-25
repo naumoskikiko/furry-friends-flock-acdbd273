@@ -460,6 +460,15 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
           </div>
         </div>
       )}
+      {sharePost && (
+        <SharePostModal
+          postId={sharePost.id}
+          imageUrl={sharePost.image_url}
+          caption={sharePost.caption}
+          username={profileUsername}
+          onClose={() => setSharePost(null)}
+        />
+      )}
     </div>
   );
 };
