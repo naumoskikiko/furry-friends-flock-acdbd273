@@ -634,6 +634,17 @@ const StoryViewer = ({
       {showMenu && (
         <div className="fixed inset-0 z-[101]" onClick={() => setShowMenu(false)} />
       )}
+
+      {/* Location map viewer */}
+      {locationMap && (
+        <StoryLocationMap
+          open={!!locationMap}
+          onClose={() => { setLocationMap(null); setPaused(false); }}
+          locationName={locationMap.name}
+          lat={locationMap.lat}
+          lng={locationMap.lng}
+        />
+      )}
     </div>
   );
 };
