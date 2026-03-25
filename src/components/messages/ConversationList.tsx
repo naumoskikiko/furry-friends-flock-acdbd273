@@ -86,15 +86,25 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
         <h1 className="font-display text-2xl font-extrabold">
           {showArchived ? "Archived" : "Messages"}
         </h1>
-        {showArchived ? (
-          <button onClick={() => setShowArchived(false)} className="text-xs font-semibold text-primary">
-            ← Back
-          </button>
-        ) : archivedCount > 0 ? (
-          <button onClick={() => setShowArchived(true)} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground">
-            <Archive className="h-3.5 w-3.5" /> Archived ({archivedCount})
-          </button>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {!showArchived && (
+            <button
+              onClick={() => setShowCreateGroup(true)}
+              className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80"
+            >
+              <Users className="h-4 w-4" /> New Group
+            </button>
+          )}
+          {showArchived ? (
+            <button onClick={() => setShowArchived(false)} className="text-xs font-semibold text-primary">
+              ← Back
+            </button>
+          ) : archivedCount > 0 ? (
+            <button onClick={() => setShowArchived(true)} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground">
+              <Archive className="h-3.5 w-3.5" /> Archived ({archivedCount})
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {/* Search */}
