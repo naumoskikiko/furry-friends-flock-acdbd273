@@ -347,16 +347,15 @@ export function useConversations() {
   const deleteConversation = useCallback(
     async (conversationId: string) => {
       if (!user) return;
-      const { data: msgs } = await fromTable("messages")
-        .select("id")
-        .eq("conversation_id", conversationId);
-      if (msgs?.length) {
-        const inserts = msgs.map((m: any) => ({ message_id: m.id, user_id: user.id }));
-        await fromTable("deleted_messages").upsert(inserts, { onConflict: "message_id,user_id" });
-      }
-      fetchConversations();
+      // Remove user from conversation so it disappears from their list
+      await fromTable("conversation_participants")
+        .delete()
+        .eq("conversation_id", conversationId)
+        .eq("user_id", user.id);
+      // Update local state immediately
+      setConversations((prev) => prev.filter((c) => c.id !== conversationId));
     },
-    [user, fetchConversations]
+    [user]
   );
 
   const activeConversations = showArchived
