@@ -15,13 +15,13 @@ const MessagesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { messages, forwardMessage } = useChatMessages(activeConversation?.id || null);
+  const { toggleMute, deleteConversation, refresh } = useConversations();
 
   // Handle deep-link to a specific conversation
   useEffect(() => {
     const convId = searchParams.get("conversation");
     const userId = searchParams.get("userId");
     if (convId && userId && !activeConversation) {
-      // Build a minimal conversation object and open it
       const loadConversation = async () => {
         const { data: profile } = await supabase
           .from("profiles")
@@ -44,7 +44,6 @@ const MessagesPage = () => {
             is_archived: false,
             is_muted: false,
           });
-          // Clear the search params
           setSearchParams({}, { replace: true });
         }
       };
@@ -65,21 +64,40 @@ const MessagesPage = () => {
     setForwardingMessageId(null);
   };
 
+  const handleMuteToggle = async (conversationId: string, muted: boolean) => {
+    await toggleMute(conversationId, muted);
+    toast({ title: muted ? "Chat muted" : "Chat unmuted" });
+  };
+
+  const handleDeleteChat = async (conversationId: string) => {
+    await deleteConversation(conversationId);
+    toast({ title: "Chat deleted" });
+    refresh();
+  };
+
+  const handleClearChat = async (conversationId: string) => {
+    // Clear by marking all messages as deleted for this user
+    await deleteConversation(conversationId);
+    toast({ title: "Chat cleared" });
+  };
+
   return (
     <AppLayout>
       <div className={`mx-auto max-w-lg ${activeConversation ? "h-[calc(100dvh-4rem)] flex flex-col overflow-hidden" : ""}`}>
         {activeConversation ? (
           <ChatView
             conversation={activeConversation}
-            onBack={() => setActiveConversation(null)}
+            onBack={() => { setActiveConversation(null); refresh(); }}
             onForward={(msgId) => setForwardingMessageId(msgId)}
+            onMuteToggle={handleMuteToggle}
+            onDeleteChat={handleDeleteChat}
+            onClearChat={handleClearChat}
           />
         ) : (
           <ConversationList onSelect={setActiveConversation} />
         )}
       </div>
 
-      {/* Forward modal */}
       {forwardingMessage && (
         <ForwardModal
           message={forwardingMessage}

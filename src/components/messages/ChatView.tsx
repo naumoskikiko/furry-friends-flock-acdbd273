@@ -4,8 +4,9 @@ import {
   ArrowLeft, Send, Check, CheckCheck, Search, X, MoreVertical,
   Pencil, Trash2, Flag, ChevronUp, Reply, Forward, Mic, Calendar,
   WifiOff, RefreshCw, ExternalLink, Link2, Image, AlertCircle,
-  CheckCircle2, XCircle, Ban,
+  CheckCircle2, XCircle, Ban, Settings,
 } from "lucide-react";
+import ChatSettingsModal from "./ChatSettingsModal";
 import {
   useChatMessages, useTypingIndicator, useActivityTracking,
   useConnectionStatus, getActivityStatus, extractLinks,
@@ -23,9 +24,12 @@ interface ChatViewProps {
   conversation: Conversation;
   onBack: () => void;
   onForward?: (messageId: string) => void;
+  onMuteToggle?: (conversationId: string, muted: boolean) => void;
+  onDeleteChat?: (conversationId: string) => void;
+  onClearChat?: (conversationId: string) => void;
 }
 
-const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
+const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat, onClearChat }: ChatViewProps) => {
   const { user } = useAuth();
   const {
     messages, pendingMessages, loading, hasMore, loadMore, sendMessage,
@@ -48,6 +52,7 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [storyViewerData, setStoryViewerData] = useState<{ groups: StoryGroup[]; open: boolean } | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -280,7 +285,10 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
           <button onClick={() => setShowSearch(!showSearch)} className="rounded-full p-2 hover:bg-secondary active:scale-95 transition-transform">
             {showSearch ? <X className="h-[18px] w-[18px]" /> : <Search className="h-[18px] w-[18px]" />}
           </button>
-          <button className="rounded-full p-2 hover:bg-secondary active:scale-95 transition-transform">
+          <button
+            onClick={() => setShowSettings(true)}
+            className="rounded-full p-2 hover:bg-secondary active:scale-95 transition-transform"
+          >
             <MoreVertical className="h-[18px] w-[18px]" />
           </button>
         </div>
@@ -807,6 +815,23 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
           initialGroupIndex={0}
           open={true}
           onClose={() => setStoryViewerData(null)}
+        />
+      )}
+      {/* Chat settings */}
+      {showSettings && (
+        <ChatSettingsModal
+          conversation={conversation}
+          onClose={() => setShowSettings(false)}
+          onMuteToggle={(muted) => {
+            onMuteToggle?.(conversation.id, muted);
+          }}
+          onDeleteChat={() => {
+            onDeleteChat?.(conversation.id);
+            onBack();
+          }}
+          onClearChat={() => {
+            onClearChat?.(conversation.id);
+          }}
         />
       )}
     </div>
