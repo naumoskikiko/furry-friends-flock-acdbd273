@@ -542,7 +542,7 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
                       }`}
                     >
                       {msg.metadata.image_url && (
-                        <img src={msg.metadata.image_url} alt="" className="w-full h-32 object-cover" />
+                        <img src={msg.metadata.image_url} alt="" className="w-full h-40 object-cover" />
                       )}
                       <div className="px-3.5 py-2">
                         <p className={`text-[11px] font-semibold flex items-center gap-1 ${isMine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
