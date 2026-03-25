@@ -218,7 +218,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
     if (posts.length <= 1) onClose();
   };
 
-  const sharePost = (post: Post) => {
+  const copyPostLink = (post: Post) => {
     navigator.clipboard.writeText(`${window.location.origin}/post/${post.id}`);
     toast({ title: "Link copied!" });
   };
