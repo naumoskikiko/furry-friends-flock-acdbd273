@@ -425,7 +425,14 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
           </p>
         )}
         {post.location && (
-          <p className="mt-0.5 text-xs text-muted-foreground">📍 {post.location}</p>
+          <button
+            onClick={() => {
+              if (post.latitude && post.longitude) setLocationMapOpen(true);
+            }}
+            className={`mt-0.5 text-xs text-muted-foreground ${post.latitude && post.longitude ? "hover:text-primary cursor-pointer" : ""}`}
+          >
+            📍 {post.location}
+          </button>
         )}
         {commentsCount > 0 && (
           <button onClick={openComments} className="mt-1 text-xs text-muted-foreground">
