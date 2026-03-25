@@ -503,7 +503,7 @@ export function useChatMessages(conversationId: string | null) {
   // Realtime
   useEffect(() => {
     if (!conversationId) return;
-    const channelName = `chat-${conversationId}-${Date.now()}`;
+    const channelName = `chat-${conversationId}`;
     const channel = supabase
       .channel(channelName)
       .on(
