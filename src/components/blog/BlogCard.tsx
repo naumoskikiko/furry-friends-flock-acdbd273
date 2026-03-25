@@ -320,6 +320,17 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
         </div>
       </div>
     </article>
+
+    {shareModalOpen && (
+      <SharePostModal
+        postId={post.id}
+        imageUrl={post.cover_image}
+        caption={post.title}
+        username={post.username}
+        onClose={() => setShareModalOpen(false)}
+      />
+    )}
+    </>
   );
 };
 
