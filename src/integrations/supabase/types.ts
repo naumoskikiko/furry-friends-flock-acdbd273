@@ -744,6 +744,7 @@ export type Database = {
         Row: {
           conversation_id: string
           id: string
+          is_admin: boolean
           is_archived: boolean
           is_muted: boolean
           is_pinned: boolean
@@ -753,6 +754,7 @@ export type Database = {
         Insert: {
           conversation_id: string
           id?: string
+          is_admin?: boolean
           is_archived?: boolean
           is_muted?: boolean
           is_pinned?: boolean
@@ -762,6 +764,7 @@ export type Database = {
         Update: {
           conversation_id?: string
           id?: string
+          is_admin?: boolean
           is_archived?: boolean
           is_muted?: boolean
           is_pinned?: boolean
@@ -781,17 +784,29 @@ export type Database = {
       conversations: {
         Row: {
           created_at: string
+          created_by: string | null
+          group_image_url: string | null
+          group_name: string | null
           id: string
+          is_group: boolean
           updated_at: string
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
+          group_image_url?: string | null
+          group_name?: string | null
           id?: string
+          is_group?: boolean
           updated_at?: string
         }
         Update: {
           created_at?: string
+          created_by?: string | null
+          group_image_url?: string | null
+          group_name?: string | null
           id?: string
+          is_group?: boolean
           updated_at?: string
         }
         Relationships: []
