@@ -110,26 +110,26 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
     });
   }, [startIndex]);
 
-  // Track current index from scroll
+  // Track current index from scroll (for like-checking and counter)
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    let ticking = false;
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        const scrollTop = container.scrollTop;
-        const height = container.clientHeight;
-        const idx = Math.round(scrollTop / height);
-        setCurrentIndex(Math.min(Math.max(idx, 0), posts.length - 1));
-        ticking = false;
-      });
-    };
+    const postRefs = Array.from(container.children) as HTMLElement[];
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+            const idx = postRefs.indexOf(entry.target as HTMLElement);
+            if (idx >= 0) setCurrentIndex(idx);
+          }
+        }
+      },
+      { root: container, threshold: 0.5 }
+    );
 
-    container.addEventListener("scroll", onScroll, { passive: true });
-    return () => container.removeEventListener("scroll", onScroll);
+    postRefs.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
   }, [posts.length]);
 
   // Prevent body scroll
@@ -264,8 +264,8 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
       {/* Scrollable posts */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-scroll snap-y snap-mandatory"
-        style={{ scrollSnapType: "y mandatory", WebkitOverflowScrolling: "touch" }}
+        className="flex-1 overflow-y-auto"
+        style={{ WebkitOverflowScrolling: "touch" }}
       >
         {posts.map((post, idx) => {
           const timeAgo = formatDistanceToNow(new Date(post.created_at), { addSuffix: true });
@@ -273,12 +273,11 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
           return (
             <div
               key={post.id}
-              className="snap-start snap-always w-full flex flex-col"
-              style={{ minHeight: "calc(100vh - 49px)", height: "calc(100vh - 49px)" }}
+              className="w-full border-b border-border"
             >
               {/* Media area */}
               <div
-                className="flex-1 relative flex items-center justify-center bg-secondary overflow-hidden"
+                className="relative w-full max-h-[70vh] flex items-center justify-center bg-secondary overflow-hidden"
                 onClick={() => handleDoubleTap(post)}
               >
                 {post.image_url ? (
