@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useToast } from "@/hooks/use-toast";
+import StoryLocationMap from "./StoryLocationMap";
 import {
   AlertDialog,
   AlertDialogAction,
