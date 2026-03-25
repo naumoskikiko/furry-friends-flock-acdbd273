@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   Search, Pin, PinOff, Trash2, MoreHorizontal,
-  Archive, ArchiveRestore, BellOff, Bell, FileEdit,
+  Archive, ArchiveRestore, BellOff, Bell, FileEdit, Users,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import CreateGroupModal from "./CreateGroupModal";
 
 interface ConversationListProps {
   onSelect: (conv: Conversation) => void;
