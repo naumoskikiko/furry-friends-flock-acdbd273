@@ -117,8 +117,7 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
 
   const share = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(`${window.location.origin}/blog/${post.id}`);
-    toast({ title: "Link copied!" });
+    setShareModalOpen(true);
   };
 
   // MeetUP card
