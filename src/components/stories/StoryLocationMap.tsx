@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { X, Navigation, Loader2, Compass, LocateFixed, Footprints, RotateCcw, RotateCw } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet-rotate";
 
 interface StoryLocationMapProps {
   open: boolean;
@@ -36,9 +37,6 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
   const [routeShown, setRouteShown] = useState(false);
   const [routeInfo, setRouteInfo] = useState<{ distance: number; duration: number } | null>(null);
   const [mapBearing, setMapBearing] = useState(0);
-  const bearingRef = useRef(0);
-  const initialAngleRef = useRef<number | null>(null);
-  const initialBearingRef = useRef(0);
 
   const destinationIcon = L.divIcon({
     html: `<div style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:hsl(25,90%,55%);box-shadow:0 3px 12px rgba(0,0,0,0.35);border:3px solid white;">
@@ -58,7 +56,7 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
     iconAnchor: [18, 18],
   });
 
-  // Initialize map
+  // Initialize map with leaflet-rotate
   useEffect(() => {
     if (!open || !containerRef.current) return;
 
@@ -70,48 +68,24 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
         zoom: 15,
         zoomControl: false,
         attributionControl: false,
-        touchZoom: true,
+        // leaflet-rotate options
+        rotate: true,
+        bearing: 0,
         touchRotate: true,
+        shiftKeyRotate: true,
+        rotateControl: false,
       } as any);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
       L.marker([lat, lng], { icon: destinationIcon }).addTo(map);
 
-      // Two-finger rotation gesture
-      const mapEl = map.getContainer();
-      const getTouchAngle = (t1: Touch, t2: Touch) =>
-        (Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180) / Math.PI;
-
-      const onTouchStart = (e: TouchEvent) => {
-        if (e.touches.length === 2) {
-          initialAngleRef.current = getTouchAngle(e.touches[0], e.touches[1]);
-          initialBearingRef.current = bearingRef.current;
-        }
-      };
-      const onTouchMove = (e: TouchEvent) => {
-        if (e.touches.length === 2 && initialAngleRef.current !== null) {
-          const delta = getTouchAngle(e.touches[0], e.touches[1]) - initialAngleRef.current;
-          const newBearing = initialBearingRef.current + delta;
-          bearingRef.current = newBearing;
-          setMapBearing(newBearing);
-          mapEl.style.transform = `rotate(${newBearing}deg)`;
-          mapEl.style.transformOrigin = "center center";
-        }
-      };
-      const onTouchEnd = (e: TouchEvent) => {
-        if (e.touches.length < 2) initialAngleRef.current = null;
-      };
-
-      mapEl.addEventListener("touchstart", onTouchStart, { passive: true });
-      mapEl.addEventListener("touchmove", onTouchMove, { passive: true });
-      mapEl.addEventListener("touchend", onTouchEnd, { passive: true });
+      // Track bearing changes for compass UI
+      map.on("rotate", () => {
+        const bearing = (map as any).getBearing?.() ?? 0;
+        setMapBearing(bearing);
+      });
 
       mapRef.current = map;
-      (mapRef.current as any)._rotCleanup = () => {
-        mapEl.removeEventListener("touchstart", onTouchStart);
-        mapEl.removeEventListener("touchmove", onTouchMove);
-        mapEl.removeEventListener("touchend", onTouchEnd);
-      };
       setTimeout(() => map.invalidateSize(), 100);
     }, 50);
 
@@ -122,7 +96,6 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
         watchIdRef.current = null;
       }
       if (mapRef.current) {
-        (mapRef.current as any)._rotCleanup?.();
         mapRef.current.remove();
         mapRef.current = null;
       }
@@ -194,7 +167,6 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
     if (!mapRef.current) return;
 
     if (routeShown) {
-      // Clear everything
       if (routeLayerRef.current) { mapRef.current.removeLayer(routeLayerRef.current); routeLayerRef.current = null; }
       if (routeShadowRef.current) { mapRef.current.removeLayer(routeShadowRef.current); routeShadowRef.current = null; }
       if (userMarkerRef.current) { mapRef.current.removeLayer(userMarkerRef.current); userMarkerRef.current = null; }
@@ -220,18 +192,14 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
 
       await drawRoute(userLat, userLng);
 
-      // Fit bounds
       if (mapRef.current) {
         const bounds = L.latLngBounds([[userLat, userLng], [lat, lng]]);
         mapRef.current.fitBounds(bounds, { padding: [60, 80] });
       }
 
-      // Start watching position for live updates
       if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = navigator.geolocation.watchPosition(
-        (p) => {
-          drawRoute(p.coords.latitude, p.coords.longitude);
-        },
+        (p) => { drawRoute(p.coords.latitude, p.coords.longitude); },
         () => {},
         { enableHighAccuracy: true, maximumAge: 5000 }
       );
@@ -253,26 +221,22 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
     mapRef.current.flyTo(pos, 16, { duration: 0.6 });
   }, []);
 
-  const applyBearing = useCallback((deg: number) => {
+  const rotateLeft = useCallback(() => {
     if (!mapRef.current) return;
-    bearingRef.current = deg;
-    setMapBearing(deg);
-    const container = mapRef.current.getContainer();
-    container.style.transition = "transform 0.3s ease";
-    container.style.transform = deg === 0 ? "" : `rotate(${deg}deg)`;
-    container.style.transformOrigin = "center center";
-    setTimeout(() => { container.style.transition = ""; }, 300);
+    const current = (mapRef.current as any).getBearing?.() ?? 0;
+    (mapRef.current as any).setBearing?.(current - 30);
   }, []);
 
-  const resetNorth = useCallback(() => applyBearing(0), [applyBearing]);
-
-  const rotateLeft = useCallback(() => {
-    applyBearing(bearingRef.current - 30);
-  }, [applyBearing]);
-
   const rotateRight = useCallback(() => {
-    applyBearing(bearingRef.current + 30);
-  }, [applyBearing]);
+    if (!mapRef.current) return;
+    const current = (mapRef.current as any).getBearing?.() ?? 0;
+    (mapRef.current as any).setBearing?.(current + 30);
+  }, []);
+
+  const resetNorth = useCallback(() => {
+    if (!mapRef.current) return;
+    (mapRef.current as any).setBearing?.(0);
+  }, []);
 
   if (!open) return null;
 
@@ -327,37 +291,33 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
 
         {/* Map controls */}
         <div className="absolute top-3 right-3 z-[400] flex flex-col gap-2">
-          {/* Rotate Left */}
           <button
             onClick={rotateLeft}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-card/95 shadow-lg border border-border backdrop-blur-sm transition-all active:scale-90"
             aria-label="Rotate left"
           >
-            <RotateCcw className="h-4.5 w-4.5 text-foreground" />
+            <RotateCcw className="h-4 w-4 text-foreground" />
           </button>
 
-          {/* Compass / Reset North */}
           <button
             onClick={resetNorth}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-card/95 shadow-lg border border-border backdrop-blur-sm transition-all active:scale-90"
             aria-label="Reset north"
           >
             <Compass
-              className="h-5 w-5 text-foreground transition-transform"
+              className="h-5 w-5 text-foreground transition-transform duration-300"
               style={{ transform: `rotate(${-mapBearing}deg)` }}
             />
           </button>
 
-          {/* Rotate Right */}
           <button
             onClick={rotateRight}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-card/95 shadow-lg border border-border backdrop-blur-sm transition-all active:scale-90"
             aria-label="Rotate right"
           >
-            <RotateCw className="h-4.5 w-4.5 text-foreground" />
+            <RotateCw className="h-4 w-4 text-foreground" />
           </button>
 
-          {/* Recenter to user */}
           {routeShown && (
             <button
               onClick={recenterToUser}
