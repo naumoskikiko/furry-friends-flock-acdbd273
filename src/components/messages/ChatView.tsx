@@ -7,6 +7,7 @@ import {
   CheckCircle2, XCircle, Ban, Settings,
 } from "lucide-react";
 import ChatSettingsModal from "./ChatSettingsModal";
+import GroupSettingsModal from "./GroupSettingsModal";
 import {
   useChatMessages, useTypingIndicator, useActivityTracking,
   useConnectionStatus, getActivityStatus, extractLinks,
@@ -825,20 +826,29 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
       )}
       {/* Chat settings */}
       {showSettings && (
-        <ChatSettingsModal
-          conversation={conversation}
-          onClose={() => setShowSettings(false)}
-          onMuteToggle={(muted) => {
-            onMuteToggle?.(conversation.id, muted);
-          }}
-          onDeleteChat={() => {
-            onDeleteChat?.(conversation.id);
-            onBack();
-          }}
-          onClearChat={() => {
-            onClearChat?.(conversation.id);
-          }}
-        />
+        isGroup ? (
+          <GroupSettingsModal
+            conversation={conversation}
+            onClose={() => setShowSettings(false)}
+            onLeft={() => { setShowSettings(false); onBack(); }}
+            onDeleted={() => { setShowSettings(false); onBack(); }}
+          />
+        ) : (
+          <ChatSettingsModal
+            conversation={conversation}
+            onClose={() => setShowSettings(false)}
+            onMuteToggle={(muted) => {
+              onMuteToggle?.(conversation.id, muted);
+            }}
+            onDeleteChat={() => {
+              onDeleteChat?.(conversation.id);
+              onBack();
+            }}
+            onClearChat={() => {
+              onClearChat?.(conversation.id);
+            }}
+          />
+        )
       )}
     </div>
   );
