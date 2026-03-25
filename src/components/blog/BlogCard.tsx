@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SharePostModal from "@/components/messages/SharePostModal";
 import { useNavigate } from "react-router-dom";
 import { Heart, MessageCircle, Send, Bookmark, Clock, MapPin, Calendar, Users } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
@@ -57,6 +58,7 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
   const [saved, setSaved] = useState(post.is_saved);
   const [joined, setJoined] = useState(post.is_joined || false);
   const [participantsCount, setParticipantsCount] = useState(post.participants_count || 0);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   const cat = CATEGORY_META[post.category] || { label: post.category, icon: "📝" };
   const initials = post.username.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
@@ -115,13 +117,13 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
 
   const share = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(`${window.location.origin}/blog/${post.id}`);
-    toast({ title: "Link copied!" });
+    setShareModalOpen(true);
   };
 
   // MeetUP card
   if (isMeetup) {
     return (
+      <>
       <article
         onClick={() => onOpen(post)}
         className="cursor-pointer border-b border-border bg-card transition-colors hover:bg-secondary/30"
@@ -239,6 +241,16 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
           </div>
         </div>
       </article>
+      {shareModalOpen && (
+        <SharePostModal
+          postId={post.id}
+          imageUrl={post.cover_image}
+          caption={post.title}
+          username={post.username}
+          onClose={() => setShareModalOpen(false)}
+        />
+      )}
+      </>
     );
   }
 
@@ -246,6 +258,7 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
   const readTime = Math.max(1, Math.ceil(post.content.length / 1000));
 
   return (
+    <>
     <article
       onClick={() => onOpen(post)}
       className="cursor-pointer border-b border-border bg-card transition-colors hover:bg-secondary/30"
@@ -319,7 +332,19 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
         </div>
       </div>
     </article>
+
+    {shareModalOpen && (
+      <SharePostModal
+        postId={post.id}
+        imageUrl={post.cover_image}
+        caption={post.title}
+        username={post.username}
+        onClose={() => setShareModalOpen(false)}
+      />
+    )}
+    </>
   );
 };
 
 export default BlogCard;
+
