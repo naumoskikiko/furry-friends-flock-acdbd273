@@ -279,7 +279,7 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
       )}
 
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-border bg-card/95 backdrop-blur-md px-3 py-2 shrink-0">
+      <div className="flex items-center gap-2 border-b border-border bg-card/95 backdrop-blur-md px-3 py-2 shrink-0 sticky top-0 z-20">
         <button onClick={onBack} className="shrink-0 rounded-full p-1.5 hover:bg-secondary active:scale-95 transition-transform -ml-1">
           <ArrowLeft className="h-5 w-5" />
         </button>
