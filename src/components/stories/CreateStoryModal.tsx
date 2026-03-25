@@ -416,7 +416,19 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
                   </DraggableOverlay>
                 )}
 
+                {/* Preview overlay */}
+                {showPreview && (
+                  <div className="absolute inset-0 z-50 pointer-events-none">
+                    <div className="absolute top-16 left-4 right-4 flex items-center justify-center">
+                      <span className="bg-black/60 text-white text-xs font-bold px-4 py-2 rounded-full backdrop-blur-sm">
+                        📱 Preview — This is how your story will look
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Side tool buttons */}
+                {!showPreview && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-40">
                   <ToolBtn icon={<Type className="h-5 w-5" />} active={activeTool === "text"} onClick={() => toggleTool("text")} />
                   <ToolBtn icon={<Pencil className="h-5 w-5" />} active={activeTool === "draw"} onClick={() => toggleTool("draw")} />
