@@ -567,7 +567,7 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
                           )}
                         </div>
                       </div>
-                    </a>
+                    </button>
                   </div>
                 );
               }
