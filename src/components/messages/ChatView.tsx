@@ -710,7 +710,8 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
                             <Flag className="h-3.5 w-3.5" /> Report
                           </button>
                         )}
-                      </div>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
