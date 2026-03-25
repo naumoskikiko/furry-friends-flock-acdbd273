@@ -9,6 +9,8 @@ export interface FeedPostData {
   image_url: string | null;
   post_type: string;
   location: string | null;
+  latitude: number | null;
+  longitude: number | null;
   likes_count: number;
   comments_count: number;
   created_at: string;
