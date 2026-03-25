@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import HeartAnimation from "@/components/feed/HeartAnimation";
+import SharePostModal from "@/components/messages/SharePostModal";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -61,6 +62,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
   const [commentsOpenFor, setCommentsOpenFor] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [sharePost, setSharePost] = useState<Post | null>(null);
   const lastTapRefs = useRef<Record<string, number>>({});
   const hasScrolledRef = useRef(false);
 
@@ -216,7 +218,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
     if (posts.length <= 1) onClose();
   };
 
-  const sharePost = (post: Post) => {
+  const copyPostLink = (post: Post) => {
     navigator.clipboard.writeText(`${window.location.origin}/post/${post.id}`);
     toast({ title: "Link copied!" });
   };
@@ -285,7 +287,8 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => sharePost(post)}>Copy link</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSharePost(post)}>Send to chat</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => copyPostLink(post)}>Copy link</DropdownMenuItem>
                     {user?.id === post.user_id && (
                       <DropdownMenuItem className="text-destructive" onClick={() => deletePost(post)}>
                         <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -342,7 +345,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
                     <button onClick={() => openComments(post.id)}>
                       <MessageCircle className="h-6 w-6 text-foreground" />
                     </button>
-                    <button onClick={() => sharePost(post)}>
+                    <button onClick={() => setSharePost(post)}>
                       <Send className="h-5 w-5 text-foreground" />
                     </button>
                   </div>
@@ -456,6 +459,15 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
             </div>
           </div>
         </div>
+      )}
+      {sharePost && (
+        <SharePostModal
+          postId={sharePost.id}
+          imageUrl={sharePost.image_url}
+          caption={sharePost.caption}
+          username={profileUsername}
+          onClose={() => setSharePost(null)}
+        />
       )}
     </div>
   );
