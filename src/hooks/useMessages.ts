@@ -202,8 +202,8 @@ export function useConversations() {
     const convList: Conversation[] = [];
 
     for (const convId of convIds) {
-      const detail = convDetailMap.get(convId);
-      const isGroup = detail?.is_group || false;
+      const detail = convDetailMap.get(convId) as any;
+      const isGroup = !!detail?.is_group;
       const convOtherPs = (otherParticipants || []).filter((p: any) => p.conversation_id === convId);
 
       // For 1:1 chats, need at least one other participant
