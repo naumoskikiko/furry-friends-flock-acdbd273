@@ -92,7 +92,9 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
     setActiveIndex(0);
     setCaption("");
     setLocation("");
+    setLocationCoords(null);
     setPetId("");
+    setShowPreview(false);
     setActiveTool(null);
     setUploadProgress(0);
     setTextItems([]);
