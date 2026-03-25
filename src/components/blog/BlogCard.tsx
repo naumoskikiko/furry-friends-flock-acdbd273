@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SharePostModal from "@/components/messages/SharePostModal";
 import { useNavigate } from "react-router-dom";
 import { Heart, MessageCircle, Send, Bookmark, Clock, MapPin, Calendar, Users } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
