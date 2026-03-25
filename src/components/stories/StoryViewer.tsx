@@ -517,9 +517,19 @@ const StoryViewer = ({
             <div className="absolute right-6 top-24 z-30 text-5xl pointer-events-none">{story.sticker}</div>
           )}
           {story.location && (
-            <div className="absolute left-4 top-20 z-30 flex items-center gap-1 rounded-full bg-black/50 px-3 py-1 text-xs text-white pointer-events-none">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (story.location_lat && story.location_lng) {
+                  pauseTimer();
+                  setPaused(true);
+                  setLocationMap({ name: story.location, lat: story.location_lat, lng: story.location_lng });
+                }
+              }}
+              className={`absolute left-4 top-20 z-30 flex items-center gap-1 rounded-full bg-black/50 px-3 py-1 text-xs text-white ${story.location_lat ? "cursor-pointer active:scale-95 transition-transform" : "pointer-events-none"}`}
+            >
               <MapPin className="h-3 w-3" /> {story.location}
-            </div>
+            </button>
           )}
           {story.caption && !showReply && (
             <div className="absolute inset-x-0 bottom-28 z-30 px-6 text-center pointer-events-none">
