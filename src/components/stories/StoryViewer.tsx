@@ -526,9 +526,18 @@ const StoryViewer = ({
                   setLocationMap({ name: story.location, lat: story.location_lat, lng: story.location_lng });
                 }
               }}
-              className={`absolute left-4 top-20 z-30 flex items-center gap-1 rounded-full bg-black/50 px-3 py-1 text-xs text-white ${story.location_lat ? "cursor-pointer active:scale-95 transition-transform" : "pointer-events-none"}`}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onMouseUp={(e) => e.stopPropagation()}
+              className={`absolute left-4 top-20 z-40 flex items-center gap-1.5 rounded-full bg-black/50 px-4 py-2.5 text-xs text-white backdrop-blur-sm transition-all ${story.location_lat ? "cursor-pointer active:scale-90 hover:bg-black/70" : "pointer-events-none"}`}
             >
-              <MapPin className="h-3 w-3" /> {story.location}
+              <MapPin className="h-3.5 w-3.5" />
+              <span>{story.location}</span>
+              {story.location_lat && (
+                <span className="text-[10px] text-white/60 ml-0.5">› View</span>
+              )}
             </button>
           )}
           {story.caption && !showReply && (
