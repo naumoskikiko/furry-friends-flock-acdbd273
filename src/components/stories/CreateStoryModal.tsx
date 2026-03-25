@@ -10,6 +10,7 @@ import { getStoryDrafts, saveStoryDraft, deleteStoryDraft, type StoryDraft } fro
 import { formatDistanceToNow } from "date-fns";
 import DraggableOverlay from "./DraggableOverlay";
 import DrawingCanvas from "./DrawingCanvas";
+import LocationSearch from "./LocationSearch";
 
 interface CreateStoryModalProps {
   open: boolean;
