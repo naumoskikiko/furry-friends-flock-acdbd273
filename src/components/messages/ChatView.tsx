@@ -655,15 +655,17 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
                   </div>
 
                   {/* Actions menu */}
-                  <div className="relative">
+                   <div className="relative">
                     <button
                       onClick={() => setActiveMenu(activeMenu === msg.id ? null : msg.id)}
-                      className="opacity-0 group-hover:opacity-100 rounded-full p-1 hover:bg-secondary transition-opacity"
+                      className="opacity-0 group-hover:opacity-100 rounded-full p-1.5 hover:bg-secondary transition-opacity active:opacity-100"
                     >
-                      <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                      <MoreVertical className="h-4 w-4 text-muted-foreground" />
                     </button>
                     {activeMenu === msg.id && (
-                      <div className="absolute bottom-full right-0 mb-1 z-50 w-48 rounded-xl border border-border bg-card shadow-lg py-1 text-sm">
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setActiveMenu(null)} />
+                        <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-56 rounded-2xl border border-border bg-card shadow-xl py-2 text-sm">
                         <button
                           onClick={() => { setReplyTo(msg); setActiveMenu(null); inputRef.current?.focus(); }}
                           className="flex w-full items-center gap-2 px-3 py-2 hover:bg-secondary"
@@ -708,7 +710,8 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
                             <Flag className="h-3.5 w-3.5" /> Report
                           </button>
                         )}
-                      </div>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
