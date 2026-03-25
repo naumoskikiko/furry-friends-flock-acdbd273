@@ -302,7 +302,18 @@ const ProfilePage = () => {
         </div>
 
         {/* Tab content */}
-        {activeTab === "posts" && <PostGrid posts={posts} onRefresh={fetchData} />}
+        {activeTab === "posts" && (
+          <PostGrid
+            posts={posts}
+            onRefresh={fetchData}
+            ownerProfile={{
+              avatar_url: profile?.avatar_url,
+              full_name: profile?.full_name || user?.email?.split("@")[0],
+              username: (profile as any)?.username || user?.email?.split("@")[0],
+              user_id: user?.id,
+            }}
+          />
+        )}
         {activeTab === "saved" && <SavedPostsGrid />}
         {activeTab === "liked" && <LikedPostsGrid />}
         

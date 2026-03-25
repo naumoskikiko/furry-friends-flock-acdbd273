@@ -388,7 +388,16 @@ const UserProfilePage = () => {
                   <p className="text-sm font-semibold text-muted-foreground">No posts yet</p>
                 </div>
               ) : (
-                <PostGrid posts={posts} onRefresh={fetchProfile} />
+                <PostGrid
+                  posts={posts}
+                  onRefresh={fetchProfile}
+                  ownerProfile={{
+                    avatar_url: profile?.avatar_url,
+                    full_name: profile?.full_name,
+                    username: profile?.username || profile?.user_id,
+                    user_id: profile?.user_id,
+                  }}
+                />
               )}
             </div>
           )}
