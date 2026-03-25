@@ -36,6 +36,9 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
   const [routeShown, setRouteShown] = useState(false);
   const [routeInfo, setRouteInfo] = useState<{ distance: number; duration: number } | null>(null);
   const [mapBearing, setMapBearing] = useState(0);
+  const bearingRef = useRef(0);
+  const initialAngleRef = useRef<number | null>(null);
+  const initialBearingRef = useRef(0);
 
   const destinationIcon = L.divIcon({
     html: `<div style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:hsl(25,90%,55%);box-shadow:0 3px 12px rgba(0,0,0,0.35);border:3px solid white;">
