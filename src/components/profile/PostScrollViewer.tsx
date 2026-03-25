@@ -235,7 +235,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Header — Instagram style: back arrow, "Posts" title, username */}
       <div className="relative z-10 flex items-center px-2 py-2.5 bg-background safe-area-top">
-        <button onClick={onClose} className="rounded-full p-2 text-white hover:bg-secondary">
+        <button onClick={onClose} className="rounded-full p-2 text-foreground hover:bg-secondary">
           <ChevronLeft className="h-6 w-6" />
         </button>
         <div className="flex-1 text-center">
