@@ -345,7 +345,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
                     <button onClick={() => openComments(post.id)}>
                       <MessageCircle className="h-6 w-6 text-foreground" />
                     </button>
-                    <button onClick={() => sharePost(post)}>
+                    <button onClick={() => setSharePost(post)}>
                       <Send className="h-5 w-5 text-foreground" />
                     </button>
                   </div>
