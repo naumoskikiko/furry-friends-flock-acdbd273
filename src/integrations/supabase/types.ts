@@ -2281,6 +2281,8 @@ export type Database = {
           expires_at: string
           id: string
           location: string | null
+          location_lat: number | null
+          location_lng: number | null
           media_type: string
           media_url: string
           pet_id: string | null
@@ -2294,6 +2296,8 @@ export type Database = {
           expires_at?: string
           id?: string
           location?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
           media_type?: string
           media_url: string
           pet_id?: string | null
@@ -2307,6 +2311,8 @@ export type Database = {
           expires_at?: string
           id?: string
           location?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
           media_type?: string
           media_url?: string
           pet_id?: string | null
