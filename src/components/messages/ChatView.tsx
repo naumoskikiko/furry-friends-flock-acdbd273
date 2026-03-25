@@ -242,29 +242,29 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
       )}
 
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-border bg-card/95 backdrop-blur-md px-2 py-2.5">
-        <button onClick={onBack} className="shrink-0 rounded-full p-2 hover:bg-secondary active:scale-95 transition-transform">
+      <div className="flex items-center gap-2 border-b border-border bg-card/95 backdrop-blur-md px-3 py-2 shrink-0">
+        <button onClick={onBack} className="shrink-0 rounded-full p-1.5 hover:bg-secondary active:scale-95 transition-transform -ml-1">
           <ArrowLeft className="h-5 w-5" />
         </button>
 
         <button
           onClick={() => navigate(user?.id === other.user_id ? "/profile" : `/user/${other.user_id}`)}
-          className="flex flex-1 items-center gap-3 min-w-0 rounded-xl px-1 py-1 hover:bg-secondary/50 transition-colors"
+          className="flex flex-1 items-center gap-2.5 min-w-0 rounded-lg px-1 py-1 hover:bg-secondary/50 transition-colors"
         >
           <div className="relative shrink-0">
-            <Avatar className="h-10 w-10 ring-2 ring-border">
+            <Avatar className="h-9 w-9 ring-2 ring-border">
               <AvatarImage src={other.avatar_url || undefined} />
               <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-xs font-bold text-primary-foreground">
                 {initials}
               </AvatarFallback>
             </Avatar>
             {activity.isOnline && (
-              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-500 ring-2 ring-card" />
+              <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-card" />
             )}
           </div>
           <div className="flex-1 min-w-0 text-left">
-            <p className="text-[15px] font-bold leading-tight truncate">{other.full_name}</p>
-            <p className="text-[11px] leading-tight mt-0.5">
+            <p className="text-sm font-bold leading-tight truncate">{other.full_name}</p>
+            <p className="text-[11px] leading-tight">
               {typingUsers.length > 0 ? (
                 <span className="text-primary font-semibold animate-pulse">Typing…</span>
               ) : activity.isOnline ? (
@@ -276,7 +276,7 @@ const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
           </div>
         </button>
 
-        <div className="flex items-center gap-0.5 shrink-0">
+        <div className="flex items-center shrink-0">
           <button onClick={() => setShowSearch(!showSearch)} className="rounded-full p-2 hover:bg-secondary active:scale-95 transition-transform">
             {showSearch ? <X className="h-[18px] w-[18px]" /> : <Search className="h-[18px] w-[18px]" />}
           </button>
