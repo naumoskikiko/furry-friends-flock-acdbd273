@@ -24,6 +24,9 @@ interface ChatViewProps {
   conversation: Conversation;
   onBack: () => void;
   onForward?: (messageId: string) => void;
+  onMuteToggle?: (conversationId: string, muted: boolean) => void;
+  onDeleteChat?: (conversationId: string) => void;
+  onClearChat?: (conversationId: string) => void;
 }
 
 const ChatView = ({ conversation, onBack, onForward }: ChatViewProps) => {
