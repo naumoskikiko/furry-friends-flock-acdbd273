@@ -2574,6 +2574,28 @@ export type Database = {
         Args: { _group_name: string; _participant_ids: string[] }
         Returns: string
       }
+      group_add_member: {
+        Args: { _conversation_id: string; _target_user_id: string }
+        Returns: undefined
+      }
+      group_delete: { Args: { _conversation_id: string }; Returns: undefined }
+      group_leave: { Args: { _conversation_id: string }; Returns: undefined }
+      group_promote_admin: {
+        Args: { _conversation_id: string; _target_user_id: string }
+        Returns: undefined
+      }
+      group_remove_member: {
+        Args: { _conversation_id: string; _target_user_id: string }
+        Returns: undefined
+      }
+      group_update_info: {
+        Args: {
+          _conversation_id: string
+          _new_image_url?: string
+          _new_name?: string
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
