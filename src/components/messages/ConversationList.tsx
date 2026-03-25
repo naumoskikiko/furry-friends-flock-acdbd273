@@ -75,8 +75,9 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
 
   const filtered = search.length >= 2
     ? conversations.filter((c) =>
-        c.other_user.full_name.toLowerCase().includes(search.toLowerCase()) ||
-        c.other_user.username?.toLowerCase().includes(search.replace("@", "").toLowerCase())
+        (c.is_group ? c.group_name : c.other_user.full_name)?.toLowerCase().includes(search.toLowerCase()) ||
+        c.other_user.username?.toLowerCase().includes(search.replace("@", "").toLowerCase()) ||
+        c.group_name?.toLowerCase().includes(search.toLowerCase())
       )
     : conversations;
 
@@ -167,11 +168,14 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
       ) : (
         <div>
           {filtered.map((c) => {
-            const initials = c.other_user.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
+            const displayName = c.is_group ? (c.group_name || "Group") : (c.other_user.username ? `@${c.other_user.username}` : c.other_user.full_name);
+            const initials = c.is_group
+              ? (c.group_name || "G").slice(0, 2).toUpperCase()
+              : c.other_user.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
             const timeAgo = c.last_message?.created_at
               ? formatDistanceToNow(new Date(c.last_message.created_at), { addSuffix: false })
               : "";
-            const activity = getActivityStatus(c.other_user.last_active_at);
+            const activity = c.is_group ? { isOnline: false, label: `${(c.group_members?.length || 0) + 1} members` } : getActivityStatus(c.other_user.last_active_at);
 
             const lastText = c.draft
               ? c.draft
@@ -189,8 +193,8 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
                 >
                   <div className="relative">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={c.other_user.avatar_url || undefined} />
-                      <AvatarFallback className="bg-gradient-to-br from-primary to-accent font-display text-sm font-bold text-primary-foreground">
+                      <AvatarImage src={c.is_group ? (c.group_image_url || undefined) : (c.other_user.avatar_url || undefined)} />
+                      <AvatarFallback className={`font-display text-sm font-bold text-primary-foreground ${c.is_group ? "bg-gradient-to-br from-violet-500 to-fuchsia-500" : "bg-gradient-to-br from-primary to-accent"}`}>
                         {initials}
                       </AvatarFallback>
                     </Avatar>
@@ -203,9 +207,7 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
                       <div className="flex items-center gap-1.5 min-w-0">
                         {c.is_pinned && <Pin className="h-3 w-3 text-primary shrink-0" />}
                         {c.is_muted && <BellOff className="h-3 w-3 text-muted-foreground shrink-0" />}
-                        <span className="text-sm font-bold truncate">
-                          {c.other_user.username ? `@${c.other_user.username}` : c.other_user.full_name}
-                        </span>
+                        <span className="text-sm font-bold truncate">{displayName}</span>
                       </div>
                       {timeAgo && (
                         <span className="text-[10px] text-muted-foreground ml-2 shrink-0">{timeAgo}</span>
@@ -279,8 +281,17 @@ const ConversationList = ({ onSelect }: ConversationListProps) => {
           onClose={() => setShowCreateGroup(false)}
           onCreated={(convId) => {
             setShowCreateGroup(false);
-            // Refresh conversation list
-            // The new group will appear after refresh
+            onSelect({
+              id: convId,
+              created_at: new Date().toISOString(),
+              other_user: { user_id: "", full_name: "Group", username: null, avatar_url: null, last_active_at: null },
+              is_group: true,
+              group_name: "Group",
+              unread_count: 0,
+              is_pinned: false,
+              is_archived: false,
+              is_muted: false,
+            });
           }}
         />
       )}

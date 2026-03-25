@@ -172,9 +172,15 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
     setStoryViewerData({ groups: [group], open: true });
   };
 
+  const isGroup = conversation.is_group || false;
   const other = conversation.other_user;
-  const initials = other.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
-  const activity = getActivityStatus(other.last_active_at);
+  const chatName = isGroup ? (conversation.group_name || "Group") : other.full_name;
+  const initials = isGroup
+    ? (conversation.group_name || "G").slice(0, 2).toUpperCase()
+    : other.full_name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
+  const activity = isGroup
+    ? { isOnline: false, label: `${(conversation.group_members?.length || 0) + 1} members` }
+    : getActivityStatus(other.last_active_at);
 
   const getReplyPreview = (replyToId: string | null) => {
     if (!replyToId) return null;
@@ -253,13 +259,13 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
         </button>
 
         <button
-          onClick={() => navigate(user?.id === other.user_id ? "/profile" : `/user/${other.user_id}`)}
+          onClick={() => !isGroup && navigate(user?.id === other.user_id ? "/profile" : `/user/${other.user_id}`)}
           className="flex flex-1 items-center gap-2.5 min-w-0 rounded-lg px-1 py-1 hover:bg-secondary/50 transition-colors"
         >
           <div className="relative shrink-0">
             <Avatar className="h-9 w-9 ring-2 ring-border">
-              <AvatarImage src={other.avatar_url || undefined} />
-              <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-xs font-bold text-primary-foreground">
+              <AvatarImage src={isGroup ? (conversation.group_image_url || undefined) : (other.avatar_url || undefined)} />
+              <AvatarFallback className={`text-xs font-bold text-primary-foreground ${isGroup ? "bg-gradient-to-br from-violet-500 to-fuchsia-500" : "bg-gradient-to-br from-primary to-accent"}`}>
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -268,11 +274,11 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
             )}
           </div>
           <div className="flex-1 min-w-0 text-left">
-            <p className="text-sm font-bold leading-tight truncate">{other.full_name}</p>
+            <p className="text-sm font-bold leading-tight truncate">{chatName}</p>
             <p className="text-[11px] leading-tight">
               {typingUsers.length > 0 ? (
                 <span className="text-primary font-semibold animate-pulse">Typing…</span>
-              ) : activity.isOnline ? (
+              ) : !isGroup && activity.isOnline ? (
                 <span className="text-green-600 dark:text-green-400 font-medium">Online</span>
               ) : (
                 <span className="text-muted-foreground">{activity.label}</span>
