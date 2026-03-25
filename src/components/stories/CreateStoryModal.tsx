@@ -484,12 +484,16 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
 
                 {activeTool === "location" && (
                   <div className="absolute bottom-4 inset-x-4 z-40">
-                    <Input
-                      placeholder="Add location..."
+                    <LocationSearch
                       value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      className="bg-black/60 border-white/20 text-white placeholder:text-white/50 rounded-full"
-                      autoFocus
+                      onChange={(name, lat, lng) => {
+                        setLocation(name);
+                        setLocationCoords({ lat, lng });
+                      }}
+                      onClear={() => {
+                        setLocation("");
+                        setLocationCoords(null);
+                      }}
                     />
                   </div>
                 )}
