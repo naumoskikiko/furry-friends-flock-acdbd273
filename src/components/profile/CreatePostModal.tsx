@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Camera, MapPin, Play } from "lucide-react";
+import { Camera, MapPin, Video, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useCredits } from "@/hooks/useCredits";
+import VideoPostEditor, { type VideoEditResult } from "./VideoPostEditor";
 
 interface CreatePostModalProps {
   open: boolean;
@@ -25,9 +26,16 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
   const [location, setLocation] = useState("");
   const [petId, setPetId] = useState<string | null>(null);
   const [mediaUrl, setMediaUrl] = useState("");
+  const [coverUrl, setCoverUrl] = useState("");
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [uploading, setUploading] = useState(false);
   const [posting, setPosting] = useState(false);
+
+  // Video editor state
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [showVideoEditor, setShowVideoEditor] = useState(false);
+  const [videoEditResult, setVideoEditResult] = useState<VideoEditResult | null>(null);
+
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,22 +43,28 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
     if (!file || !user) return;
 
     const isVideo = file.type.startsWith("video/");
-    
-    // Check video length
+
     if (isVideo) {
+      // Check video length
       const video = document.createElement("video");
       video.preload = "metadata";
       const url = URL.createObjectURL(file);
       video.src = url;
       await new Promise(resolve => { video.onloadedmetadata = resolve; });
-      if (video.duration > 60) {
-        toast({ title: "Video too long", description: "Maximum 60 seconds allowed.", variant: "destructive" });
+      if (video.duration > 120) {
+        toast({ title: "Video too long", description: "Maximum 2 minutes allowed.", variant: "destructive" });
         URL.revokeObjectURL(url);
         return;
       }
       URL.revokeObjectURL(url);
+
+      // Open video editor
+      setVideoFile(file);
+      setShowVideoEditor(true);
+      return;
     }
 
+    // Image upload - same as before
     setUploading(true);
     const filePath = `${user.id}/${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from("post-images").upload(filePath, file);
@@ -61,8 +75,54 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
     }
     const { data: { publicUrl } } = supabase.storage.from("post-images").getPublicUrl(filePath);
     setMediaUrl(publicUrl);
-    setMediaType(isVideo ? "video" : "image");
+    setMediaType("image");
     setUploading(false);
+  };
+
+  const handleVideoEditDone = async (result: VideoEditResult) => {
+    setShowVideoEditor(false);
+    setVideoEditResult(result);
+    setUploading(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const formData = new FormData();
+      formData.append("video", result.processedFile);
+      formData.append("cover", new File([result.coverImage], "cover.jpg", { type: "image/jpeg" }));
+      formData.append("trimStart", result.trimStart.toString());
+      formData.append("trimEnd", result.trimEnd.toString());
+      formData.append("aspectRatio", result.aspectRatio);
+
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/process-video`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Processing failed");
+      }
+
+      const data = await response.json();
+      setMediaUrl(data.videoUrl);
+      setCoverUrl(data.coverUrl || "");
+      setMediaType("video");
+      toast({ title: "Video ready!" });
+    } catch (err: any) {
+      toast({ title: "Video processing failed", description: err.message, variant: "destructive" });
+      setVideoEditResult(null);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handlePost = async () => {
@@ -86,39 +146,130 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
     } else {
       toast({ title: "Posted!" });
       earnCredits("create_post");
-      setCaption(""); setLocation(""); setPetId(null); setMediaUrl(""); setMediaType("image");
+      resetForm();
       onPostCreated();
       onOpenChange(false);
     }
   };
 
+  const resetForm = () => {
+    setCaption("");
+    setLocation("");
+    setPetId(null);
+    setMediaUrl("");
+    setCoverUrl("");
+    setMediaType("image");
+    setVideoFile(null);
+    setVideoEditResult(null);
+  };
+
+  const removeMedia = () => {
+    setMediaUrl("");
+    setCoverUrl("");
+    setMediaType("image");
+    setVideoFile(null);
+    setVideoEditResult(null);
+  };
+
+  // Show video editor as full screen overlay
+  if (showVideoEditor && videoFile) {
+    return (
+      <VideoPostEditor
+        videoFile={videoFile}
+        onClose={() => {
+          setShowVideoEditor(false);
+          setVideoFile(null);
+        }}
+        onDone={handleVideoEditDone}
+      />
+    );
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Create Post</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <label className="block cursor-pointer">
-            {mediaUrl ? (
-              mediaType === "video" ? (
-                <video ref={videoRef} src={mediaUrl} controls muted className="w-full aspect-square rounded-xl object-cover" />
+          {/* Media preview or upload */}
+          {mediaUrl ? (
+            <div className="relative">
+              {mediaType === "video" ? (
+                <div className="relative">
+                  {coverUrl ? (
+                    <img src={coverUrl} alt="Cover" className="w-full aspect-square rounded-xl object-cover" />
+                  ) : (
+                    <video
+                      ref={videoRef}
+                      src={mediaUrl}
+                      controls
+                      muted
+                      className="w-full aspect-square rounded-xl object-cover"
+                    />
+                  )}
+                  <div className="absolute top-2 left-2 bg-primary/90 text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <Video className="h-3 w-3" />
+                    VIDEO
+                  </div>
+                </div>
               ) : (
                 <img src={mediaUrl} alt="Post" className="w-full aspect-square rounded-xl object-cover" />
-              )
-            ) : (
-              <div className="flex aspect-square w-full items-center justify-center rounded-xl border-2 border-dashed border-border bg-secondary/50 hover:border-primary transition-colors">
-                <div className="text-center">
-                  <Camera className="mx-auto h-8 w-8 text-muted-foreground" />
-                  <p className="mt-2 text-sm font-medium text-muted-foreground">
-                    {uploading ? "Uploading..." : "Upload Photo or Video"}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">JPG, PNG, WEBP, MP4, MOV, WEBM</p>
+              )}
+              <button
+                onClick={removeMedia}
+                className="absolute top-2 right-2 bg-destructive/90 text-destructive-foreground text-xs font-bold px-2 py-1 rounded-full"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {/* Photo upload */}
+              <label className="block cursor-pointer">
+                <div className="flex aspect-square w-full items-center justify-center rounded-xl border-2 border-dashed border-border bg-secondary/50 hover:border-primary transition-colors">
+                  <div className="text-center p-2">
+                    <Camera className="mx-auto h-7 w-7 text-muted-foreground" />
+                    <p className="mt-1.5 text-xs font-medium text-muted-foreground">
+                      {uploading ? "Uploading..." : "Photo"}
+                    </p>
+                    <p className="text-[9px] text-muted-foreground mt-0.5">JPG, PNG, WEBP</p>
+                  </div>
                 </div>
-              </div>
-            )}
-            <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" className="hidden" onChange={handleMediaUpload} disabled={uploading} />
-          </label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleMediaUpload}
+                  disabled={uploading}
+                />
+              </label>
+
+              {/* Video upload */}
+              <label className="block cursor-pointer">
+                <div className="flex aspect-square w-full items-center justify-center rounded-xl border-2 border-dashed border-border bg-secondary/50 hover:border-primary transition-colors">
+                  <div className="text-center p-2">
+                    {uploading ? (
+                      <Loader2 className="mx-auto h-7 w-7 text-muted-foreground animate-spin" />
+                    ) : (
+                      <Video className="mx-auto h-7 w-7 text-muted-foreground" />
+                    )}
+                    <p className="mt-1.5 text-xs font-medium text-muted-foreground">
+                      {uploading ? "Processing..." : "Video"}
+                    </p>
+                    <p className="text-[9px] text-muted-foreground mt-0.5">MP4, MOV, WEBM</p>
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  accept="video/mp4,video/quicktime,video/webm"
+                  className="hidden"
+                  onChange={handleMediaUpload}
+                  disabled={uploading}
+                />
+              </label>
+            </div>
+          )}
 
           <Textarea placeholder="Write a caption..." value={caption} onChange={(e) => setCaption(e.target.value)} rows={3} />
 
@@ -147,7 +298,7 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
           )}
 
           <Button onClick={handlePost} className="w-full petkeep-gradient text-primary-foreground font-bold" disabled={posting || uploading}>
-            {posting ? "Posting..." : "Share Post"}
+            {posting ? "Posting..." : uploading ? "Processing video..." : "Share Post"}
           </Button>
         </div>
       </DialogContent>
