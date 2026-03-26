@@ -62,6 +62,7 @@ const App = () => (
             <Route path="/credits" element={<ProtectedRoute><CreditsPage /></ProtectedRoute>} />
             <Route path="/liked-products" element={<ProtectedRoute><LikedProductsPage /></ProtectedRoute>} />
             <Route path="/post/:id" element={<ProtectedRoute><PostDetailPage /></ProtectedRoute>} />
+            <Route path="/tag/:tag" element={<ProtectedRoute><TagFeedPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

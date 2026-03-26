@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { Input } from "@/components/ui/input";
+import ClickableTag from "@/components/ui/ClickableTag";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
