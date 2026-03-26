@@ -161,6 +161,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
           created_at: c.created_at,
           username: pMap.get(c.user_id)?.full_name || "User",
           avatar_url: pMap.get(c.user_id)?.avatar_url || null,
+          is_helpful: c.is_helpful || false,
         }))
       );
     } else {
