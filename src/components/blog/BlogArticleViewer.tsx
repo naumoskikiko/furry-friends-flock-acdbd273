@@ -448,9 +448,11 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
           {post.tags && post.tags.length > 0 && (
             <div className="mt-8 flex flex-wrap gap-2">
               {post.tags.map((tag) => (
-                <span key={tag} className="rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-foreground/70">
-                  #{tag}
-                </span>
+                <ClickableTag
+                  key={tag}
+                  tag={tag}
+                  className="rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-foreground/70"
+                />
               ))}
             </div>
           )}
