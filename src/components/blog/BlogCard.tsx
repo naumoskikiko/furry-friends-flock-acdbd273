@@ -307,7 +307,7 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
         {post.tags && post.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {post.tags.map((tag) => (
-              <span key={tag} className="text-[10px] text-primary font-medium">#{tag}</span>
+              <ClickableTag key={tag} tag={tag} />
             ))}
           </div>
         )}
