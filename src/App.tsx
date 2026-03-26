@@ -27,6 +27,7 @@ import OrdersPage from "./pages/OrdersPage";
 import CreditsPage from "./pages/CreditsPage";
 import LikedProductsPage from "./pages/LikedProductsPage";
 import PostDetailPage from "./pages/PostDetailPage";
+import TagFeedPage from "./pages/TagFeedPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
