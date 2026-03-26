@@ -61,6 +61,7 @@ interface BlogArticleViewerProps {
 const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleViewerProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { earnCredits } = useCredits();
   const navigate = useNavigate();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
