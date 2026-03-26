@@ -302,6 +302,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   const paragraphs = post.content.split("\n").filter((p) => p.trim());
 
   return (
+    <>
     <div className="fixed inset-0 z-[100] bg-background">
       {/* Reading progress bar */}
       <div className="fixed top-0 left-0 right-0 z-[110] h-[3px] bg-secondary">
