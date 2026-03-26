@@ -40,6 +40,7 @@ interface Comment {
   created_at: string;
   username: string;
   avatar_url: string | null;
+  is_helpful: boolean;
 }
 
 interface Participant {
