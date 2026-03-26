@@ -269,6 +269,26 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
     }
   };
 
+  const deleteArticle = async () => {
+    if (!user || !post) return;
+    setDeleting(true);
+    // Delete related data first
+    await Promise.all([
+      fromTable("blog_comments").delete().eq("blog_post_id", post.id),
+      fromTable("blog_likes").delete().eq("blog_post_id", post.id),
+      fromTable("blog_saves").delete().eq("blog_post_id", post.id),
+      fromTable("blog_event_participants").delete().eq("blog_post_id", post.id),
+    ]);
+    await fromTable("blog_posts").delete().eq("id", post.id).eq("user_id", user.id);
+    setDeleting(false);
+    setShowDeleteConfirm(false);
+    onOpenChange(false);
+    onRefresh();
+    toast({ title: "Article deleted" });
+  };
+
+  const isOwner = user?.id === post?.user_id;
+
   const canDeleteComment = (c: Comment) => {
     if (!user || !post) return false;
     return user.id === c.user_id || user.id === post.user_id;
