@@ -1,0 +1,1 @@
+ALTER TABLE public.blog_comments ADD COLUMN is_helpful boolean NOT NULL DEFAULT false;
