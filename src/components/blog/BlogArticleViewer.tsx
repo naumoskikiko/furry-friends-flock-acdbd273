@@ -298,32 +298,78 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
 
   const markHelpful = async (comment: Comment) => {
     if (!user || !post || !isOwner || comment.user_id === user.id) return;
-    if (comment.is_helpful) return; // Already marked
+    if (comment.is_helpful) return;
 
-    // Update in DB
-    await fromTable("blog_comments").update({ is_helpful: true }).eq("id", comment.id);
+    // Update is_helpful in DB
+    const { error } = await fromTable("blog_comments")
+      .update({ is_helpful: true })
+      .eq("id", comment.id);
 
-    // Award credits to the answer author
-    const earned = await earnCredits("helpful_blog_answer", comment.id);
+    if (error) {
+      toast({ title: "Failed to mark as helpful", variant: "destructive" });
+      return;
+    }
 
-    // Send notification
+    // Award credits directly to the answer author (not current user)
+    const creditAmount = 0.5;
+    let credited = false;
+    try {
+      // Check duplicate
+      const { data: existing } = await fromTable("credit_daily_log")
+        .select("id")
+        .eq("user_id", comment.user_id)
+        .eq("action_type", "helpful_blog_answer")
+        .eq("source_id", comment.id)
+        .limit(1);
+
+      if (!existing || existing.length === 0) {
+        await fromTable("credit_daily_log").insert({
+          user_id: comment.user_id,
+          action_type: "helpful_blog_answer",
+          credits_earned: creditAmount,
+          source_id: comment.id,
+        });
+
+        // Upsert credits balance
+        const { data: bal } = await supabase.from("credits")
+          .select("balance")
+          .eq("user_id", comment.user_id)
+          .maybeSingle();
+
+        if (bal) {
+          await supabase.from("credits")
+            .update({ balance: bal.balance + creditAmount, updated_at: new Date().toISOString() })
+            .eq("user_id", comment.user_id);
+        }
+
+        await supabase.from("credit_transactions").insert({
+          user_id: comment.user_id,
+          amount: creditAmount,
+          type: "earn",
+          description: "Earned from helpful blog answer",
+        });
+
+        credited = true;
+      }
+    } catch {}
+
+    // Notify the answer author (actorId = current user, userId = answer author)
     try {
       await createNotification(
-        comment.user_id,
         user.id,
+        comment.user_id,
         "credit",
-        earned ? "Your answer was marked helpful! You earned 0.5 credits ⭐" : "Your answer was marked as helpful! ⭐",
         "blog",
-        post.id
+        post.id,
+        credited ? "Your answer was marked helpful! You earned 0.5 credits ⭐" : "Your answer was marked as helpful! ⭐"
       );
     } catch {}
 
-    // Update local state
     setComments((prev) =>
       prev.map((c) => (c.id === comment.id ? { ...c, is_helpful: true } : c))
     );
 
-    toast({ title: earned ? "Marked as helpful — credits awarded! ⭐" : "Marked as helpful ⭐" });
+    toast({ title: credited ? "Marked as helpful — credits awarded! ⭐" : "Marked as helpful ⭐" });
   };
 
   const canDeleteComment = (c: Comment) => {
