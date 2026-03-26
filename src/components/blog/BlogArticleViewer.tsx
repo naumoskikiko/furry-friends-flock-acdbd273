@@ -294,6 +294,37 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   };
 
   const isOwner = user?.id === post?.user_id;
+  const isQuestion = post?.post_type === "question";
+
+  const markHelpful = async (comment: Comment) => {
+    if (!user || !post || !isOwner || comment.user_id === user.id) return;
+    if (comment.is_helpful) return; // Already marked
+
+    // Update in DB
+    await fromTable("blog_comments").update({ is_helpful: true }).eq("id", comment.id);
+
+    // Award credits to the answer author
+    const earned = await earnCredits("helpful_blog_answer", comment.id);
+
+    // Send notification
+    try {
+      await createNotification(
+        comment.user_id,
+        user.id,
+        "credit",
+        earned ? "Your answer was marked helpful! You earned 0.5 credits ⭐" : "Your answer was marked as helpful! ⭐",
+        "blog",
+        post.id
+      );
+    } catch {}
+
+    // Update local state
+    setComments((prev) =>
+      prev.map((c) => (c.id === comment.id ? { ...c, is_helpful: true } : c))
+    );
+
+    toast({ title: earned ? "Marked as helpful — credits awarded! ⭐" : "Marked as helpful ⭐" });
+  };
 
   const canDeleteComment = (c: Comment) => {
     if (!user || !post) return false;
