@@ -559,19 +559,29 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
             </button>
           </div>
 
-          {/* Comments section */}
+          {/* Comments / Answers section */}
           <div className="mt-6">
             <h3 className="font-display text-base font-bold mb-4">
-              Comments ({comments.length})
+              {isQuestion ? `Answers (${comments.length})` : `Comments (${comments.length})`}
             </h3>
 
             {comments.length === 0 && (
-              <p className="text-sm text-muted-foreground py-4 text-center">No comments yet. Be the first to share your thoughts!</p>
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                {isQuestion ? "No answers yet. Be the first to help!" : "No comments yet. Be the first to share your thoughts!"}
+              </p>
             )}
 
             <div className="space-y-4">
-              {comments.map((c) => (
-                <div key={c.id} className="flex items-start gap-3">
+              {/* Sort: helpful answers first */}
+              {[...comments].sort((a, b) => (b.is_helpful ? 1 : 0) - (a.is_helpful ? 1 : 0)).map((c) => (
+                <div
+                  key={c.id}
+                  className={`flex items-start gap-3 ${c.is_helpful ? "relative" : ""}`}
+                >
+                  {/* Helpful highlight border */}
+                  {c.is_helpful && (
+                    <div className="absolute -left-2 top-0 bottom-0 w-1 rounded-full bg-accent" />
+                  )}
                   <button onClick={() => goToProfile(c.user_id)} className="shrink-0">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={c.avatar_url || undefined} />
@@ -580,16 +590,40 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                       </AvatarFallback>
                     </Avatar>
                   </button>
-                  <div className="min-w-0 flex-1 rounded-2xl bg-secondary/50 px-3.5 py-2.5">
-                    <div className="flex items-center gap-2">
+                  <div className={`min-w-0 flex-1 rounded-2xl px-3.5 py-2.5 ${c.is_helpful ? "bg-accent/10 border border-accent/20" : "bg-secondary/50"}`}>
+                    <div className="flex items-center gap-2 flex-wrap">
                       <button onClick={() => goToProfile(c.user_id)} className="text-xs font-bold hover:underline">
                         {c.username}
                       </button>
+                      {c.is_helpful && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold text-accent">
+                          <Star className="h-3 w-3 fill-accent" /> Helpful Answer
+                        </span>
+                      )}
                       <span className="text-[10px] text-muted-foreground">
                         {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
                       </span>
                     </div>
                     <p className="mt-1 text-sm leading-relaxed">{c.content}</p>
+
+                    {/* "This was helpful" button — only for question owner, not on own comments */}
+                    {isQuestion && isOwner && c.user_id !== user?.id && !c.is_helpful && (
+                      <button
+                        onClick={() => markHelpful(c)}
+                        className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-[11px] font-semibold text-muted-foreground hover:text-accent hover:bg-accent/10 transition-colors active:scale-95"
+                      >
+                        <ThumbsUp className="h-3.5 w-3.5" />
+                        This was helpful
+                      </button>
+                    )}
+
+                    {/* Already marked */}
+                    {isQuestion && c.is_helpful && isOwner && (
+                      <div className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-accent">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Marked as Helpful ✅
+                      </div>
+                    )}
                   </div>
                   {canDeleteComment(c) && (
                     <DropdownMenu>
