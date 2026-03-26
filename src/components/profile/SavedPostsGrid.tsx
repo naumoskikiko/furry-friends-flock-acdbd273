@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { Bookmark, Newspaper, Image } from "lucide-react";
+import { Bookmark, Newspaper, Image, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import PostGrid from "./PostGrid";
+import BlogArticleViewer from "@/components/blog/BlogArticleViewer";
+import type { BlogPostData } from "@/components/blog/BlogCard";
 
 const SavedPostsGrid = () => {
   const { user } = useAuth();
@@ -10,6 +12,8 @@ const SavedPostsGrid = () => {
   const [savedBlogs, setSavedBlogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"posts" | "blogs">("posts");
+  const [selectedArticle, setSelectedArticle] = useState<BlogPostData | null>(null);
+  const [articleViewerOpen, setArticleViewerOpen] = useState(false);
 
   const fetchSaved = async () => {
     if (!user) return;
@@ -49,8 +53,29 @@ const SavedPostsGrid = () => {
           .select("user_id, full_name, avatar_url")
           .in("user_id", userIds);
         const profileMap = new Map(profiles?.map((p) => [p.user_id, p]) || []);
+
+        // Check user's likes
+        const { data: userLikes } = await (supabase as any)
+          .from("blog_likes")
+          .select("blog_post_id")
+          .eq("user_id", user.id)
+          .in("blog_post_id", blogIds);
+        const likedSet = new Set(userLikes?.map((l: any) => l.blog_post_id) || []);
+
         const blogMap = new Map(
-          blogs.map((b) => [b.id, { ...b, author: profileMap.get(b.user_id) }])
+          blogs.map((b) => [
+            b.id,
+            {
+              ...b,
+              username: profileMap.get(b.user_id)?.full_name || "Unknown",
+              avatar_url: profileMap.get(b.user_id)?.avatar_url || null,
+              preview_text: b.preview_text || b.content?.slice(0, 120) || "",
+              tags: b.tags || [],
+              is_liked: likedSet.has(b.id),
+              is_saved: true,
+              author: profileMap.get(b.user_id),
+            },
+          ])
         );
         const ordered = blogIds.map((id) => blogMap.get(id)).filter(Boolean);
         setSavedBlogs(ordered);
@@ -67,6 +92,11 @@ const SavedPostsGrid = () => {
   useEffect(() => {
     fetchSaved();
   }, [user]);
+
+  const openArticle = (blog: any) => {
+    setSelectedArticle(blog as BlogPostData);
+    setArticleViewerOpen(true);
+  };
 
   if (loading) {
     return (
@@ -137,9 +167,10 @@ const SavedPostsGrid = () => {
           ) : (
             <div className="space-y-3 p-4">
               {savedBlogs.map((blog: any) => (
-                <div
+                <button
                   key={blog.id}
-                  className="flex gap-3 rounded-xl border border-border bg-card p-3"
+                  onClick={() => openArticle(blog)}
+                  className="flex w-full gap-3 rounded-xl border border-border bg-card p-3 text-left transition-all active:scale-[0.98] hover:bg-secondary/30"
                 >
                   {blog.cover_image && (
                     <img
@@ -153,7 +184,7 @@ const SavedPostsGrid = () => {
                       {blog.title}
                     </h4>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {blog.author?.full_name || "Unknown"}
+                      {blog.username || blog.author?.full_name || "Unknown"}
                     </p>
                     {blog.preview_text && (
                       <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
@@ -164,12 +195,23 @@ const SavedPostsGrid = () => {
                       {blog.category?.replace("-", " ")}
                     </span>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}
         </>
       )}
+
+      {/* Article Viewer */}
+      <BlogArticleViewer
+        post={selectedArticle}
+        open={articleViewerOpen}
+        onOpenChange={(open) => {
+          setArticleViewerOpen(open);
+          if (!open) setSelectedArticle(null);
+        }}
+        onRefresh={fetchSaved}
+      />
     </div>
   );
 };
