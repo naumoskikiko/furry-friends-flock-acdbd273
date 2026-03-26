@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Heart, MessageCircle, Share2, Bookmark, BookmarkCheck,
-  MoreVertical, Send, MapPin, Calendar, Clock, Users, PawPrint,
+  MoreVertical, Send, MapPin, Calendar, Clock, Users, PawPrint, Trash2,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,10 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -64,6 +68,8 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   const [joined, setJoined] = useState(false);
   const [participantsCount, setParticipantsCount] = useState(0);
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isMeetup = post?.post_type === "meetup";
@@ -263,6 +269,26 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
     }
   };
 
+  const deleteArticle = async () => {
+    if (!user || !post) return;
+    setDeleting(true);
+    // Delete related data first
+    await Promise.all([
+      fromTable("blog_comments").delete().eq("blog_post_id", post.id),
+      fromTable("blog_likes").delete().eq("blog_post_id", post.id),
+      fromTable("blog_saves").delete().eq("blog_post_id", post.id),
+      fromTable("blog_event_participants").delete().eq("blog_post_id", post.id),
+    ]);
+    await fromTable("blog_posts").delete().eq("id", post.id).eq("user_id", user.id);
+    setDeleting(false);
+    setShowDeleteConfirm(false);
+    onOpenChange(false);
+    onRefresh();
+    toast({ title: "Article deleted" });
+  };
+
+  const isOwner = user?.id === post?.user_id;
+
   const canDeleteComment = (c: Comment) => {
     if (!user || !post) return false;
     return user.id === c.user_id || user.id === post.user_id;
@@ -276,6 +302,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   const paragraphs = post.content.split("\n").filter((p) => p.trim());
 
   return (
+    <>
     <div className="fixed inset-0 z-[100] bg-background">
       {/* Reading progress bar */}
       <div className="fixed top-0 left-0 right-0 z-[110] h-[3px] bg-secondary">
@@ -300,7 +327,25 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
             {cat.icon} {cat.label}
           </span>
         </div>
-        <div className="w-5" />
+        {isOwner ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="rounded-full p-1 hover:bg-secondary transition-colors">
+                <MoreVertical className="h-5 w-5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="text-destructive gap-2"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <Trash2 className="h-4 w-4" /> Delete Article
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <div className="w-5" />
+        )}
       </div>
 
       {/* Scrollable content */}
@@ -554,6 +599,29 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
         </div>
       )}
     </div>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Article</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this article and all its comments. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={deleteArticle}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
