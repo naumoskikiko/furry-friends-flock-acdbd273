@@ -340,18 +340,18 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
 
   return (
     <>
-    <div className="fixed inset-0 z-[100] bg-background">
+    <div className="fixed inset-0 z-[100] bg-background flex flex-col">
       {/* Reading progress bar */}
-      <div className="fixed top-0 left-0 right-0 z-[110] h-[3px] bg-secondary">
+      <div className="absolute top-0 left-0 right-0 z-[110] h-[3px] bg-secondary pointer-events-none">
         <div
           className="h-full bg-primary transition-[width] duration-100 ease-out"
           style={{ width: `${readProgress * 100}%` }}
         />
       </div>
 
-      {/* Sticky header */}
-      <div className="sticky top-0 z-[105] flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-4 py-3">
-        <button onClick={() => onOpenChange(false)} className="rounded-full p-1 hover:bg-secondary transition-colors">
+      {/* Fixed header */}
+      <div className="shrink-0 z-[105] flex items-center justify-between border-b border-border bg-background px-4 py-3">
+        <button onClick={() => onOpenChange(false)} className="rounded-full p-1.5 hover:bg-secondary transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex items-center gap-1">
@@ -367,7 +367,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
         {isOwner ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="rounded-full p-1 hover:bg-secondary transition-colors">
+              <button className="rounded-full p-1.5 hover:bg-secondary transition-colors">
                 <MoreVertical className="h-5 w-5" />
               </button>
             </DropdownMenuTrigger>
@@ -386,7 +386,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
       </div>
 
       {/* Scrollable content */}
-      <div ref={scrollRef} onScroll={handleScroll} className="h-[calc(100vh-53px)] overflow-y-auto overscroll-contain scroll-smooth">
+      <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide">
         {/* Cover image */}
         {post.cover_image && (
           <button onClick={() => setFullscreenImage(post.cover_image)} className="w-full">
