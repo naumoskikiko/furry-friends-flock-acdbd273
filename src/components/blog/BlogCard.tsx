@@ -2,6 +2,7 @@ import { useState } from "react";
 import SharePostModal from "@/components/messages/SharePostModal";
 import { useNavigate } from "react-router-dom";
 import { Heart, MessageCircle, Send, Bookmark, Clock, MapPin, Calendar, Users } from "lucide-react";
+import ClickableTag from "@/components/ui/ClickableTag";
 import { formatDistanceToNow, format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -307,7 +308,7 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
         {post.tags && post.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {post.tags.map((tag) => (
-              <span key={tag} className="text-[10px] text-primary font-medium">#{tag}</span>
+              <ClickableTag key={tag} tag={tag} />
             ))}
           </div>
         )}
