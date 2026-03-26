@@ -68,6 +68,8 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   const [joined, setJoined] = useState(false);
   const [participantsCount, setParticipantsCount] = useState(0);
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isMeetup = post?.post_type === "meetup";
