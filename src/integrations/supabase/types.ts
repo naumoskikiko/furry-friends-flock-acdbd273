@@ -41,6 +41,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          is_helpful: boolean
           user_id: string
         }
         Insert: {
@@ -48,6 +49,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          is_helpful?: boolean
           user_id: string
         }
         Update: {
@@ -55,6 +57,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          is_helpful?: boolean
           user_id?: string
         }
         Relationships: [

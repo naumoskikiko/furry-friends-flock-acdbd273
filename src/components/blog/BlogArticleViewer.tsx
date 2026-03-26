@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Heart, MessageCircle, Share2, Bookmark, BookmarkCheck,
   MoreVertical, Send, MapPin, Calendar, Clock, Users, PawPrint, Trash2,
+  Star, ThumbsUp, CheckCircle2,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useCredits } from "@/hooks/useCredits";
+import { createNotification } from "@/hooks/useNotifications";
 import type { BlogPostData } from "./BlogCard";
 
 const fromTable = (table: string) => (supabase as any).from(table);
@@ -39,6 +42,7 @@ interface Comment {
   created_at: string;
   username: string;
   avatar_url: string | null;
+  is_helpful: boolean;
 }
 
 interface Participant {
@@ -57,6 +61,7 @@ interface BlogArticleViewerProps {
 const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleViewerProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { earnCredits } = useCredits();
   const navigate = useNavigate();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -156,6 +161,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
           created_at: c.created_at,
           username: pMap.get(c.user_id)?.full_name || "User",
           avatar_url: pMap.get(c.user_id)?.avatar_url || null,
+          is_helpful: c.is_helpful || false,
         }))
       );
     } else {
@@ -288,6 +294,37 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   };
 
   const isOwner = user?.id === post?.user_id;
+  const isQuestion = post?.post_type === "question";
+
+  const markHelpful = async (comment: Comment) => {
+    if (!user || !post || !isOwner || comment.user_id === user.id) return;
+    if (comment.is_helpful) return; // Already marked
+
+    // Update in DB
+    await fromTable("blog_comments").update({ is_helpful: true }).eq("id", comment.id);
+
+    // Award credits to the answer author
+    const earned = await earnCredits("helpful_blog_answer", comment.id);
+
+    // Send notification
+    try {
+      await createNotification(
+        comment.user_id,
+        user.id,
+        "credit",
+        earned ? "Your answer was marked helpful! You earned 0.5 credits ⭐" : "Your answer was marked as helpful! ⭐",
+        "blog",
+        post.id
+      );
+    } catch {}
+
+    // Update local state
+    setComments((prev) =>
+      prev.map((c) => (c.id === comment.id ? { ...c, is_helpful: true } : c))
+    );
+
+    toast({ title: earned ? "Marked as helpful — credits awarded! ⭐" : "Marked as helpful ⭐" });
+  };
 
   const canDeleteComment = (c: Comment) => {
     if (!user || !post) return false;
@@ -522,19 +559,29 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
             </button>
           </div>
 
-          {/* Comments section */}
+          {/* Comments / Answers section */}
           <div className="mt-6">
             <h3 className="font-display text-base font-bold mb-4">
-              Comments ({comments.length})
+              {isQuestion ? `Answers (${comments.length})` : `Comments (${comments.length})`}
             </h3>
 
             {comments.length === 0 && (
-              <p className="text-sm text-muted-foreground py-4 text-center">No comments yet. Be the first to share your thoughts!</p>
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                {isQuestion ? "No answers yet. Be the first to help!" : "No comments yet. Be the first to share your thoughts!"}
+              </p>
             )}
 
             <div className="space-y-4">
-              {comments.map((c) => (
-                <div key={c.id} className="flex items-start gap-3">
+              {/* Sort: helpful answers first */}
+              {[...comments].sort((a, b) => (b.is_helpful ? 1 : 0) - (a.is_helpful ? 1 : 0)).map((c) => (
+                <div
+                  key={c.id}
+                  className={`flex items-start gap-3 ${c.is_helpful ? "relative" : ""}`}
+                >
+                  {/* Helpful highlight border */}
+                  {c.is_helpful && (
+                    <div className="absolute -left-2 top-0 bottom-0 w-1 rounded-full bg-accent" />
+                  )}
                   <button onClick={() => goToProfile(c.user_id)} className="shrink-0">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={c.avatar_url || undefined} />
@@ -543,16 +590,40 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                       </AvatarFallback>
                     </Avatar>
                   </button>
-                  <div className="min-w-0 flex-1 rounded-2xl bg-secondary/50 px-3.5 py-2.5">
-                    <div className="flex items-center gap-2">
+                  <div className={`min-w-0 flex-1 rounded-2xl px-3.5 py-2.5 ${c.is_helpful ? "bg-accent/10 border border-accent/20" : "bg-secondary/50"}`}>
+                    <div className="flex items-center gap-2 flex-wrap">
                       <button onClick={() => goToProfile(c.user_id)} className="text-xs font-bold hover:underline">
                         {c.username}
                       </button>
+                      {c.is_helpful && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold text-accent">
+                          <Star className="h-3 w-3 fill-accent" /> Helpful Answer
+                        </span>
+                      )}
                       <span className="text-[10px] text-muted-foreground">
                         {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
                       </span>
                     </div>
                     <p className="mt-1 text-sm leading-relaxed">{c.content}</p>
+
+                    {/* "This was helpful" button — only for question owner, not on own comments */}
+                    {isQuestion && isOwner && c.user_id !== user?.id && !c.is_helpful && (
+                      <button
+                        onClick={() => markHelpful(c)}
+                        className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-[11px] font-semibold text-muted-foreground hover:text-accent hover:bg-accent/10 transition-colors active:scale-95"
+                      >
+                        <ThumbsUp className="h-3.5 w-3.5" />
+                        This was helpful
+                      </button>
+                    )}
+
+                    {/* Already marked */}
+                    {isQuestion && c.is_helpful && isOwner && (
+                      <div className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-accent">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Marked as Helpful ✅
+                      </div>
+                    )}
                   </div>
                   {canDeleteComment(c) && (
                     <DropdownMenu>
