@@ -221,12 +221,34 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
     loadParticipants();
   };
 
-  const handleShareArticle = () => {
+  const handleShareArticle = async () => {
     const url = `${window.location.origin}/?article=${post?.id}`;
     if (navigator.share) {
-      navigator.share({ title: post?.title, url }).catch(() => {});
+      try {
+        await navigator.share({ title: post?.title, url });
+      } catch {
+        // User cancelled or share failed, fallback to copy
+        await copyToClipboard(url);
+      }
     } else {
-      navigator.clipboard.writeText(url);
+      await copyToClipboard(url);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: "Link copied!" });
+    } catch {
+      // Fallback for insecure contexts
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
       toast({ title: "Link copied!" });
     }
   };
