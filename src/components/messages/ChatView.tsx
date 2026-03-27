@@ -4,9 +4,12 @@ import {
   ArrowLeft, Send, Check, CheckCheck, Search, X, MoreVertical,
   Pencil, Trash2, Flag, ChevronUp, Reply, Forward, Mic, Calendar,
   WifiOff, RefreshCw, ExternalLink, Link2, Image, AlertCircle,
-  CheckCircle2, XCircle, Ban, Settings,
+  CheckCircle2, XCircle, Ban, Settings, Square,
 } from "lucide-react";
 import ChatSettingsModal from "./ChatSettingsModal";
+import VoiceMessageBubble from "./VoiceMessageBubble";
+import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
+import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import GroupSettingsModal from "./GroupSettingsModal";
 import {
   useChatMessages, useTypingIndicator, useActivityTracking,
@@ -54,6 +57,9 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [storyViewerData, setStoryViewerData] = useState<{ groups: StoryGroup[]; open: boolean } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+
+  const voiceRecorder = useVoiceRecorder();
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -117,6 +123,35 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
     saveDraft(conversation.id, "");
     await sendMessage(msg, replyId);
     inputRef.current?.focus();
+  };
+
+  const handleSendVoice = async () => {
+    if (!voiceRecorder.audioBlob || !user) return;
+    voiceRecorder.stopRecording();
+    const blob = voiceRecorder.audioBlob;
+    const duration = voiceRecorder.duration;
+    const ext = blob.type.includes("mp4") ? "m4a" : "webm";
+    const fileName = `${user.id}/${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabaseClient.storage
+      .from("voice-messages")
+      .upload(fileName, blob, { contentType: blob.type });
+
+    if (uploadError) {
+      toast({ title: "Failed to upload voice message", variant: "destructive" });
+      return;
+    }
+
+    const { data: urlData } = supabaseClient.storage
+      .from("voice-messages")
+      .getPublicUrl(fileName);
+
+    await sendMessage("🎤 Voice message", undefined, "voice", {
+      audio_url: urlData.publicUrl,
+      duration,
+    });
+
+    voiceRecorder.resetRecording();
   };
 
   const handleEdit = async () => {
@@ -666,17 +701,24 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
                       </button>
                     )}
 
-                    {/* Voice message placeholder */}
-                    {msg.message_type === "voice" ? (
+                    {/* Voice message */}
+                    {msg.message_type === "voice" && msg.metadata?.audio_url ? (
+                      <VoiceMessageBubble
+                        audioUrl={msg.metadata.audio_url}
+                        duration={msg.metadata.duration || 0}
+                        isMine={isMine}
+                        playingId={playingVoiceId}
+                        messageId={msg.id}
+                        onPlay={(id) => setPlayingVoiceId(id)}
+                        onStop={() => setPlayingVoiceId(null)}
+                      />
+                    ) : msg.message_type !== "voice" ? (
+                      renderMessageText(msg.message_text, isMine)
+                    ) : (
                       <div className="flex items-center gap-2">
                         <Mic className="h-4 w-4" />
-                        <div className="flex-1 h-1 bg-current/20 rounded-full">
-                          <div className="h-1 w-1/2 bg-current rounded-full" />
-                        </div>
-                        <span className="text-[10px]">{msg.metadata?.duration || "0:00"}</span>
+                        <span className="text-[10px]">Voice message</span>
                       </div>
-                    ) : (
-                      renderMessageText(msg.message_text, isMine)
                     )}
 
                     {/* Footer */}
@@ -822,38 +864,112 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
 
       {/* Input */}
       <div className="border-t border-border px-3 py-2 bg-card shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <div className="flex items-end gap-2">
-          <textarea
-            ref={inputRef}
-            value={text}
-            onChange={(e) => {
-              handleTextChange(e.target.value);
-              autoResize();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-                // Reset height after send
-                setTimeout(autoResize, 0);
-              }
-            }}
-            onFocus={() => {
-              setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 300);
-            }}
-            rows={1}
-            placeholder={isOnline ? "Type a message..." : "Message will be queued..."}
-            className="flex-1 min-w-0 rounded-[1.25rem] bg-secondary px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/30 transition-shadow resize-none max-h-[120px] leading-5"
-            style={{ height: "auto" }}
-          />
-          <button
-            onClick={handleSend}
-            disabled={!text.trim()}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40 transition-all active:scale-90 mb-0.5"
-          >
-            {text.trim() ? <Send className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-          </button>
-        </div>
+        {/* Voice recording UI */}
+        {voiceRecorder.isRecording ? (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={voiceRecorder.cancelRecording}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive active:scale-90 transition-transform"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+            <div className="flex-1 flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />
+              <span className="text-sm font-semibold tabular-nums">
+                {Math.floor(voiceRecorder.duration / 60)}:{(voiceRecorder.duration % 60).toString().padStart(2, "0")}
+              </span>
+              {/* Mini waveform animation */}
+              <div className="flex items-center gap-[2px] flex-1">
+                {Array.from({ length: 20 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-[3px] rounded-full bg-primary/40"
+                    style={{
+                      height: `${8 + Math.sin(Date.now() / 200 + i) * 8}px`,
+                      animation: `pulse 0.8s ease-in-out ${i * 0.04}s infinite alternate`,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={voiceRecorder.stopRecording}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-transform"
+            >
+              <Square className="h-4 w-4" />
+            </button>
+          </div>
+        ) : voiceRecorder.audioBlob ? (
+          /* Preview before sending */
+          <div className="flex items-center gap-3">
+            <button
+              onClick={voiceRecorder.resetRecording}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive active:scale-90 transition-transform"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+            <div className="flex-1 flex items-center gap-2">
+              <Mic className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">
+                {Math.floor(voiceRecorder.duration / 60)}:{(voiceRecorder.duration % 60).toString().padStart(2, "0")}
+              </span>
+              <span className="text-xs text-muted-foreground">Ready to send</span>
+            </div>
+            <button
+              onClick={handleSendVoice}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-transform"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          /* Normal text input */
+          <div className="flex items-end gap-2">
+            <textarea
+              ref={inputRef}
+              value={text}
+              onChange={(e) => {
+                handleTextChange(e.target.value);
+                autoResize();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                  setTimeout(autoResize, 0);
+                }
+              }}
+              onFocus={() => {
+                setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 300);
+              }}
+              rows={1}
+              placeholder={isOnline ? "Type a message..." : "Message will be queued..."}
+              className="flex-1 min-w-0 rounded-[1.25rem] bg-secondary px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/30 transition-shadow resize-none max-h-[120px] leading-5"
+              style={{ height: "auto" }}
+            />
+            {text.trim() ? (
+              <button
+                onClick={handleSend}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-all mb-0.5"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            ) : (
+              <button
+                onClick={voiceRecorder.startRecording}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-all mb-0.5"
+              >
+                <Mic className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
+        {/* Permission denied message */}
+        {voiceRecorder.permissionDenied && (
+          <p className="text-xs text-destructive mt-1.5 text-center">
+            {voiceRecorder.error}
+          </p>
+        )}
       </div>
       {/* Story viewer from chat */}
       {storyViewerData?.open && (
