@@ -4,9 +4,12 @@ import {
   ArrowLeft, Send, Check, CheckCheck, Search, X, MoreVertical,
   Pencil, Trash2, Flag, ChevronUp, Reply, Forward, Mic, Calendar,
   WifiOff, RefreshCw, ExternalLink, Link2, Image, AlertCircle,
-  CheckCircle2, XCircle, Ban, Settings,
+  CheckCircle2, XCircle, Ban, Settings, Square,
 } from "lucide-react";
 import ChatSettingsModal from "./ChatSettingsModal";
+import VoiceMessageBubble from "./VoiceMessageBubble";
+import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
+import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import GroupSettingsModal from "./GroupSettingsModal";
 import {
   useChatMessages, useTypingIndicator, useActivityTracking,
