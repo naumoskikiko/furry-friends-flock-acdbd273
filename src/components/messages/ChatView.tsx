@@ -57,6 +57,9 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [storyViewerData, setStoryViewerData] = useState<{ groups: StoryGroup[]; open: boolean } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+
+  const voiceRecorder = useVoiceRecorder();
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
