@@ -701,17 +701,24 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
                       </button>
                     )}
 
-                    {/* Voice message placeholder */}
-                    {msg.message_type === "voice" ? (
+                    {/* Voice message */}
+                    {msg.message_type === "voice" && msg.metadata?.audio_url ? (
+                      <VoiceMessageBubble
+                        audioUrl={msg.metadata.audio_url}
+                        duration={msg.metadata.duration || 0}
+                        isMine={isMine}
+                        playingId={playingVoiceId}
+                        messageId={msg.id}
+                        onPlay={(id) => setPlayingVoiceId(id)}
+                        onStop={() => setPlayingVoiceId(null)}
+                      />
+                    ) : msg.message_type !== "voice" ? (
+                      renderMessageText(msg.message_text, isMine)
+                    ) : (
                       <div className="flex items-center gap-2">
                         <Mic className="h-4 w-4" />
-                        <div className="flex-1 h-1 bg-current/20 rounded-full">
-                          <div className="h-1 w-1/2 bg-current rounded-full" />
-                        </div>
-                        <span className="text-[10px]">{msg.metadata?.duration || "0:00"}</span>
+                        <span className="text-[10px]">Voice message</span>
                       </div>
-                    ) : (
-                      renderMessageText(msg.message_text, isMine)
                     )}
 
                     {/* Footer */}
