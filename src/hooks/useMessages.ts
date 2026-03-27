@@ -546,7 +546,10 @@ export function useChatMessages(conversationId: string | null) {
         (payload) => {
           const newMsg = payload.new as Message;
           setMessages((prev) => {
+            // Deduplicate: skip if already present (by real ID)
             if (prev.find((m) => m.id === newMsg.id)) return prev;
+            // If this is our own message, it was already shown optimistically — skip
+            if (user && newMsg.sender_id === user.id) return prev;
             return [...prev, newMsg];
           });
           if (user && newMsg.sender_id !== user.id) {
@@ -591,7 +594,7 @@ export function useChatMessages(conversationId: string | null) {
     };
   }, [conversationId, user]);
 
-  // --- Send with optional reply + offline support ---
+  // --- Send with optional reply + offline support + optimistic UI ---
   const sendMessage = useCallback(
     async (text: string, replyToId?: string, messageType: string = "text", metadata?: any) => {
       if (!conversationId || !user || (!text.trim() && messageType === "text")) return;
@@ -599,10 +602,12 @@ export function useChatMessages(conversationId: string | null) {
       // Clear draft
       saveDraft(conversationId, "");
 
+      const optimisticId = `optimistic_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
       if (!navigator.onLine) {
         // Queue for offline
         const pending: PendingMessage & { conversationId: string } = {
-          id: `pending_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          id: optimisticId,
           text: text.trim(),
           replyToId,
           messageType,
@@ -616,14 +621,52 @@ export function useChatMessages(conversationId: string | null) {
         return;
       }
 
-      await fromTable("messages").insert({
+      // Optimistic: show message immediately in chat
+      const optimisticMsg: Message = {
+        id: optimisticId,
+        conversation_id: conversationId,
+        sender_id: user.id,
+        message_text: text.trim(),
+        created_at: new Date().toISOString(),
+        is_read: false,
+        edited_at: null,
+        deleted_at: null,
+        reply_to_id: replyToId || null,
+        forwarded_from_id: null,
+        message_type: messageType,
+        metadata: metadata || null,
+      };
+      setMessages((prev) => [...prev, optimisticMsg]);
+
+      const { data, error } = await fromTable("messages").insert({
         conversation_id: conversationId,
         sender_id: user.id,
         message_text: text.trim(),
         reply_to_id: replyToId || null,
         message_type: messageType,
         metadata: metadata || null,
-      });
+      }).select("id").single();
+
+      if (error) {
+        // Remove optimistic message, add to pending with failed status
+        setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+        const failedPending: PendingMessage & { conversationId: string } = {
+          id: optimisticId,
+          text: text.trim(),
+          replyToId,
+          messageType,
+          metadata,
+          status: "failed",
+          timestamp: Date.now(),
+          conversationId,
+        };
+        setPendingMessages((prev) => [...prev, failedPending]);
+      } else if (data) {
+        // Replace optimistic message with real ID so realtime deduplicates
+        setMessages((prev) =>
+          prev.map((m) => m.id === optimisticId ? { ...m, id: data.id } : m)
+        );
+      }
     },
     [conversationId, user]
   );
