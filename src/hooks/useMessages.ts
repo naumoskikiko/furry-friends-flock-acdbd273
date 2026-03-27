@@ -546,7 +546,10 @@ export function useChatMessages(conversationId: string | null) {
         (payload) => {
           const newMsg = payload.new as Message;
           setMessages((prev) => {
+            // Deduplicate: skip if already present (by real ID)
             if (prev.find((m) => m.id === newMsg.id)) return prev;
+            // If this is our own message, it was already shown optimistically — skip
+            if (user && newMsg.sender_id === user.id) return prev;
             return [...prev, newMsg];
           });
           if (user && newMsg.sender_id !== user.id) {
