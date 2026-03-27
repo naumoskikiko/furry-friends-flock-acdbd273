@@ -864,38 +864,112 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
 
       {/* Input */}
       <div className="border-t border-border px-3 py-2 bg-card shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <div className="flex items-end gap-2">
-          <textarea
-            ref={inputRef}
-            value={text}
-            onChange={(e) => {
-              handleTextChange(e.target.value);
-              autoResize();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-                // Reset height after send
-                setTimeout(autoResize, 0);
-              }
-            }}
-            onFocus={() => {
-              setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 300);
-            }}
-            rows={1}
-            placeholder={isOnline ? "Type a message..." : "Message will be queued..."}
-            className="flex-1 min-w-0 rounded-[1.25rem] bg-secondary px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/30 transition-shadow resize-none max-h-[120px] leading-5"
-            style={{ height: "auto" }}
-          />
-          <button
-            onClick={handleSend}
-            disabled={!text.trim()}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40 transition-all active:scale-90 mb-0.5"
-          >
-            {text.trim() ? <Send className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-          </button>
-        </div>
+        {/* Voice recording UI */}
+        {voiceRecorder.isRecording ? (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={voiceRecorder.cancelRecording}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive active:scale-90 transition-transform"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+            <div className="flex-1 flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />
+              <span className="text-sm font-semibold tabular-nums">
+                {Math.floor(voiceRecorder.duration / 60)}:{(voiceRecorder.duration % 60).toString().padStart(2, "0")}
+              </span>
+              {/* Mini waveform animation */}
+              <div className="flex items-center gap-[2px] flex-1">
+                {Array.from({ length: 20 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-[3px] rounded-full bg-primary/40"
+                    style={{
+                      height: `${8 + Math.sin(Date.now() / 200 + i) * 8}px`,
+                      animation: `pulse 0.8s ease-in-out ${i * 0.04}s infinite alternate`,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={voiceRecorder.stopRecording}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-transform"
+            >
+              <Square className="h-4 w-4" />
+            </button>
+          </div>
+        ) : voiceRecorder.audioBlob ? (
+          /* Preview before sending */
+          <div className="flex items-center gap-3">
+            <button
+              onClick={voiceRecorder.resetRecording}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive active:scale-90 transition-transform"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+            <div className="flex-1 flex items-center gap-2">
+              <Mic className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">
+                {Math.floor(voiceRecorder.duration / 60)}:{(voiceRecorder.duration % 60).toString().padStart(2, "0")}
+              </span>
+              <span className="text-xs text-muted-foreground">Ready to send</span>
+            </div>
+            <button
+              onClick={handleSendVoice}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-transform"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          /* Normal text input */
+          <div className="flex items-end gap-2">
+            <textarea
+              ref={inputRef}
+              value={text}
+              onChange={(e) => {
+                handleTextChange(e.target.value);
+                autoResize();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                  setTimeout(autoResize, 0);
+                }
+              }}
+              onFocus={() => {
+                setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 300);
+              }}
+              rows={1}
+              placeholder={isOnline ? "Type a message..." : "Message will be queued..."}
+              className="flex-1 min-w-0 rounded-[1.25rem] bg-secondary px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/30 transition-shadow resize-none max-h-[120px] leading-5"
+              style={{ height: "auto" }}
+            />
+            {text.trim() ? (
+              <button
+                onClick={handleSend}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-all mb-0.5"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            ) : (
+              <button
+                onClick={voiceRecorder.startRecording}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-all mb-0.5"
+              >
+                <Mic className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
+        {/* Permission denied message */}
+        {voiceRecorder.permissionDenied && (
+          <p className="text-xs text-destructive mt-1.5 text-center">
+            {voiceRecorder.error}
+          </p>
+        )}
       </div>
       {/* Story viewer from chat */}
       {storyViewerData?.open && (
