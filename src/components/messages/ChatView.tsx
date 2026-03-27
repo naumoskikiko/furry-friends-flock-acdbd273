@@ -125,6 +125,35 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
     inputRef.current?.focus();
   };
 
+  const handleSendVoice = async () => {
+    if (!voiceRecorder.audioBlob || !user) return;
+    voiceRecorder.stopRecording();
+    const blob = voiceRecorder.audioBlob;
+    const duration = voiceRecorder.duration;
+    const ext = blob.type.includes("mp4") ? "m4a" : "webm";
+    const fileName = `${user.id}/${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabaseClient.storage
+      .from("voice-messages")
+      .upload(fileName, blob, { contentType: blob.type });
+
+    if (uploadError) {
+      toast({ title: "Failed to upload voice message", variant: "destructive" });
+      return;
+    }
+
+    const { data: urlData } = supabaseClient.storage
+      .from("voice-messages")
+      .getPublicUrl(fileName);
+
+    await sendMessage("🎤 Voice message", undefined, "voice", {
+      audio_url: urlData.publicUrl,
+      duration,
+    });
+
+    voiceRecorder.resetRecording();
+  };
+
   const handleEdit = async () => {
     if (!editingId || !editText.trim()) return;
     const ok = await editMessage(editingId, editText);
