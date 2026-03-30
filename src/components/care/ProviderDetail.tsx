@@ -68,7 +68,9 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   };
 
   const isOwnProfile = user?.id === provider.user_id;
+  const isShelter = provider.category === "shelter";
   const tabs = [
+    ...(isShelter ? [{ key: "adoption" as const, label: "🐾 Adopt" }] : []),
     { key: "services" as const, label: "Services" },
     { key: "reviews" as const, label: "Reviews" },
     { key: "hours" as const, label: "Hours" },
