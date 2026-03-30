@@ -16,13 +16,18 @@ const CATEGORIES = [
   { value: "pet-lifestyle", label: "🐾 Lifestyle" },
 ];
 
-const BlogFeed = () => {
+interface BlogFeedProps {
+  openBlogId?: string;
+}
+
+const BlogFeed = ({ openBlogId }: BlogFeedProps) => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<BlogPostData[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("all");
   const [selectedPost, setSelectedPost] = useState<BlogPostData | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [openedDeepLink, setOpenedDeepLink] = useState(false);
 
   const fetchBlogs = useCallback(async () => {
     setLoading(true);
