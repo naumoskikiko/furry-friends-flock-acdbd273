@@ -20,33 +20,17 @@ const Index = () => {
   const openBlogId = searchParams.get("blog") || undefined;
   const { posts, loading, hasMore, loadMore, refreshFeed } = useFeed();
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const pullStartY = useRef(0);
   const feedRef = useRef<HTMLDivElement>(null);
 
-  useTabRefresh("/", useCallback(async () => {
-    setRefreshing(true);
+  const refreshAll = useCallback(async () => {
     await refreshFeed();
-    setRefreshing(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [refreshFeed]));
+  }, [refreshFeed]);
 
-  // Pull to refresh
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    pullStartY.current = e.touches[0].clientY;
-  }, []);
+  useTabRefresh("/", refreshAll);
 
-  const handleTouchEnd = useCallback(
-    async (e: React.TouchEvent) => {
-      const pullDistance = e.changedTouches[0].clientY - pullStartY.current;
-      if (pullDistance > 100 && window.scrollY <= 0 && activeTab === "feed") {
-        setRefreshing(true);
-        await refreshFeed();
-        setRefreshing(false);
-      }
-    },
-    [activeTab, refreshFeed]
-  );
+  const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    usePullToRefresh({ onRefresh: refreshAll });
 
   // Infinite scroll observer
   useEffect(() => {
