@@ -488,8 +488,8 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
             </div>
           )}
 
-          {/* Step 4: Review & confirm */}
-          {step === 4 && selectedService && selectedDate && (
+          {/* Review & confirm */}
+          {currentStepKey === "review" && selectedService && selectedDate && (
             <div className="space-y-4">
               <p className="text-sm font-bold">Review & Confirm</p>
 
@@ -515,13 +515,21 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
                     <span className="font-semibold">{selectedService.service_name}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Date</span>
-                    <span className="font-semibold">{format(selectedDate, "EEE, MMM d, yyyy")}</span>
+                    <span className="text-muted-foreground">
+                      {selectedEndDate ? "Dates" : "Date"}
+                    </span>
+                    <span className="font-semibold">
+                      {format(selectedDate, "EEE, MMM d")}
+                      {selectedEndDate && ` → ${format(selectedEndDate, "MMM d, yyyy")}`}
+                      {!selectedEndDate && `, ${format(selectedDate, "yyyy")}`}
+                    </span>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Time</span>
-                    <span className="font-semibold">{selectedTime}</span>
-                  </div>
+                  {selectedTime && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Time</span>
+                      <span className="font-semibold">{selectedTime}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Duration</span>
                     <span className="font-semibold">{selectedService.duration} min</span>
