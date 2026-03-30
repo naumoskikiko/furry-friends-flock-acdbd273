@@ -187,7 +187,7 @@ const CreditsPanel = () => {
         <CardContent className="space-y-3">
           <div>
             <div className="flex justify-between text-xs mb-1">
-              <span>Daily ({dailyEarned.toFixed(1)} / {dailyLimit})</span>
+              <span>Daily ({dailyEarned.toFixed(1)} / {dailyLimit}) · Ads {dailyAdWatches}/{adLimit}</span>
               <span className="text-muted-foreground">{dailyPct.toFixed(0)}%</span>
             </div>
             <Progress value={dailyPct} className="h-2" />
@@ -198,13 +198,6 @@ const CreditsPanel = () => {
               <span className="text-muted-foreground">{monthlyPct.toFixed(0)}%</span>
             </div>
             <Progress value={monthlyPct} className="h-2" />
-          </div>
-          <div>
-            <div className="flex justify-between text-xs mb-1">
-              <span>Ads Today ({dailyAdWatches} / {adLimit})</span>
-              <span className="text-muted-foreground">{Math.min(Math.round((dailyAdWatches / adLimit) * 100), 100)}%</span>
-            </div>
-            <Progress value={Math.min((dailyAdWatches / adLimit) * 100, 100)} className="h-2" />
           </div>
         </CardContent>
       </Card>
