@@ -62,7 +62,8 @@ const CheckoutPage = () => {
   // Platform fee is deducted server-side, not shown to users
   const discount = appliedCoupon?.discount || 0;
   const subtotalAfterDiscount = Math.max(0, totalPrice + DELIVERY_FEE - discount);
-  const creditsApplied = useCreditsToggle ? Math.min(creditBalance, subtotalAfterDiscount) : 0;
+  const maxCreditsAllowed = Math.floor(totalPrice * 0.04 * 100) / 100; // 4% of product subtotal
+  const creditsApplied = useCreditsToggle ? Math.min(creditBalance, maxCreditsAllowed, subtotalAfterDiscount) : 0;
   const grandTotal = Math.max(0, subtotalAfterDiscount - creditsApplied);
 
   const shippingValid = useMemo(() => shippingSchema.safeParse(shipping).success, [shipping]);
