@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { MapMarker } from "@/components/explore/ExploreMap";
 import type { NearbyItem } from "@/components/explore/NearbySection";
 import { getCategoryEmoji } from "@/hooks/usePlaces";
+import { cacheGet, cacheSet, CacheTTL } from "@/lib/cache";
 
 const SKOPJE: [number, number] = [41.9981, 21.4254];
 
