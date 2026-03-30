@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { Coins, TrendingUp, ShieldCheck, Gift, Zap, Star, ShoppingBag, Sparkles, History, ArrowDown, ArrowUp } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Coins, TrendingUp, ShieldCheck, Gift, Zap, Star, ShoppingBag, Sparkles, History, ArrowDown, ArrowUp, Play, Tv, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useCredits } from "@/hooks/useCredits";
 import { useToast } from "@/hooks/use-toast";
-import { CREDIT_REWARDS, CREDIT_SPENDING, type CreditSpendAction } from "@/lib/creditsConfig";
+import { CREDIT_REWARDS, CREDIT_SPENDING, CREDIT_LIMITS, type CreditSpendAction } from "@/lib/creditsConfig";
 import { formatDistanceToNow } from "date-fns";
 
 const SPEND_OPTIONS: { key: CreditSpendAction; label: string; icon: React.ReactNode; cost: number }[] = [
@@ -28,13 +28,58 @@ const EARN_INFO = [
   { action: "Story Reply", credits: CREDIT_REWARDS.story_reply },
   { action: "Blog Reply", credits: CREDIT_REWARDS.blog_reply },
   { action: "Helpful Answer", credits: CREDIT_REWARDS.helpful_blog_answer },
+  { action: "Watch Ad", credits: CREDIT_REWARDS.watch_ad },
 ];
 
+const AD_DURATION_SECONDS = 15;
+
 const CreditsPanel = () => {
-  const { balance, dailyEarned, monthlyEarned, dailyLimit, monthlyLimit, transactions, spendCredits, loading } = useCredits();
+  const { balance, dailyEarned, monthlyEarned, dailyAdWatches, adLimit, dailyLimit, monthlyLimit, transactions, spendCredits, earnCredits, loading } = useCredits();
   const { toast } = useToast();
   const [spending, setSpending] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+
+  // Ad watching state
+  const [adPlaying, setAdPlaying] = useState(false);
+  const [adProgress, setAdProgress] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const canWatchAd = dailyAdWatches < adLimit;
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
+
+  const handleWatchAd = useCallback(() => {
+    if (!canWatchAd || adPlaying) return;
+    setAdPlaying(true);
+    setAdProgress(0);
+    const step = 100 / (AD_DURATION_SECONDS * 10); // update every 100ms
+    intervalRef.current = setInterval(() => {
+      setAdProgress((prev) => {
+        const next = prev + step;
+        if (next >= 100) {
+          clearInterval(intervalRef.current!);
+          intervalRef.current = null;
+          // Award credits
+          const adId = `ad_${Date.now()}`;
+          earnCredits("watch_ad", adId).then((ok) => {
+            if (ok) {
+              toast({ title: "+1 Credit earned! 🎉", description: "Thanks for watching the ad." });
+            } else {
+              toast({ title: "Limit reached", description: "You've hit your earning limit.", variant: "destructive" });
+            }
+            setAdPlaying(false);
+            setAdProgress(0);
+          });
+          return 100;
+        }
+        return next;
+      });
+    }, 100);
+  }, [canWatchAd, adPlaying, earnCredits, toast]);
 
   const handleSpend = async (action: CreditSpendAction, label: string) => {
     setSpending(true);
@@ -68,8 +113,67 @@ const CreditsPanel = () => {
           </div>
           <p className="text-xs text-muted-foreground">1 Credit = 1 MKD discount · Platform currency only</p>
           <div className="mt-3 rounded-xl bg-accent/10 border border-accent/20 p-2.5">
-            <p className="text-[11px] text-accent font-semibold">💡 Credits reduce your payment at checkout — they cannot be withdrawn as cash.</p>
+            <p className="text-[11px] text-accent font-semibold">💡 Credits reduce your payment at checkout (max 4% per order) — they cannot be withdrawn as cash.</p>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Watch Ads — Earn Credits */}
+      <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-emerald-600/10">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Tv className="h-4 w-4 text-emerald-500" /> Earn Credits
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium">Watch an Ad 🎥</p>
+              <p className="text-[10px] text-muted-foreground">
+                Earn {CREDIT_REWARDS.watch_ad} credit per ad · {dailyAdWatches}/{adLimit} today
+              </p>
+            </div>
+            <Badge variant={canWatchAd ? "default" : "secondary"} className="text-[10px]">
+              +{CREDIT_REWARDS.watch_ad}
+            </Badge>
+          </div>
+
+          {adPlaying ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs text-emerald-600 font-medium">
+                <Play className="h-3.5 w-3.5 animate-pulse" />
+                Watching ad… don't close this
+              </div>
+              <Progress value={adProgress} className="h-2.5 [&>div]:bg-emerald-500" />
+              <p className="text-[10px] text-muted-foreground text-center">
+                {Math.ceil(AD_DURATION_SECONDS * (1 - adProgress / 100))}s remaining
+              </p>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              className="w-full gap-2"
+              variant={canWatchAd ? "default" : "secondary"}
+              disabled={!canWatchAd}
+              onClick={handleWatchAd}
+            >
+              {canWatchAd ? (
+                <>
+                  <Play className="h-4 w-4" />
+                  Watch Ad & Earn {CREDIT_REWARDS.watch_ad} Credit
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Daily Limit Reached
+                </>
+              )}
+            </Button>
+          )}
+
+          <p className="text-[10px] text-muted-foreground text-center">
+            Use credits to save up to 4% on purchases
+          </p>
         </CardContent>
       </Card>
 
@@ -95,6 +199,13 @@ const CreditsPanel = () => {
             </div>
             <Progress value={monthlyPct} className="h-2" />
           </div>
+          <div>
+            <div className="flex justify-between text-xs mb-1">
+              <span>Ads Today ({dailyAdWatches} / {adLimit})</span>
+              <span className="text-muted-foreground">{Math.min(Math.round((dailyAdWatches / adLimit) * 100), 100)}%</span>
+            </div>
+            <Progress value={Math.min((dailyAdWatches / adLimit) * 100, 100)} className="h-2" />
+          </div>
         </CardContent>
       </Card>
 
@@ -116,7 +227,6 @@ const CreditsPanel = () => {
           </div>
         </CardContent>
       </Card>
-
 
       {/* Transaction History */}
       <Card>
