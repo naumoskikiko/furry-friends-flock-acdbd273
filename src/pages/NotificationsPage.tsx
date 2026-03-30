@@ -1,6 +1,9 @@
+import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useNotifications, NotificationData } from "@/hooks/useNotifications";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { ArrowLeft, Bell, Check, Heart, MessageCircle, UserPlus, Bookmark, Newspaper, ShoppingBag } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -21,7 +24,13 @@ const notificationIcon = (type: string) => {
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
-  const { notifications, loading, markAllRead, markRead } = useNotifications();
+  const { notifications, loading, markAllRead, markRead, refresh } = useNotifications();
+
+  const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    usePullToRefresh({ onRefresh: useCallback(async () => {
+      await refresh();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, [refresh]) });
 
   // Group by today / earlier
   const now = new Date();
@@ -96,7 +105,8 @@ const NotificationsPage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg">
+      <div className="mx-auto max-w-lg" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+        <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
         {/* Header */}
         <div className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-card/95 px-4 py-3 backdrop-blur-md">
           <button onClick={() => navigate(-1)} className="rounded-full p-2 hover:bg-secondary">

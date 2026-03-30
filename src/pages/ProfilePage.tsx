@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTabRefresh } from "@/hooks/useTabRefresh";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -85,11 +87,16 @@ const ProfilePage = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  useTabRefresh("/profile", useCallback(() => {
-    fetchData();
+  const refreshAll = useCallback(async () => {
+    await fetchData();
     refreshProfile();
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [fetchData, refreshProfile]));
+  }, [fetchData, refreshProfile]);
+
+  useTabRefresh("/profile", refreshAll);
+
+  const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    usePullToRefresh({ onRefresh: refreshAll });
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -151,7 +158,8 @@ const ProfilePage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg">
+      <div className="mx-auto max-w-lg" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+        <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4">
           <button onClick={() => setCreatePostOpen(true)} className="rounded-full p-2 hover:bg-secondary">

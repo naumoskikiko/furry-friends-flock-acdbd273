@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
 import { useTabRefresh } from "@/hooks/useTabRefresh";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { Search, ChevronRight, Star, MapPin, Store, Package, Plus, BadgeCheck, ShoppingCart, Heart } from "lucide-react";
@@ -77,12 +79,17 @@ const MarketplacePage = () => {
     if (q.length >= 2 || q.length === 0) setSearchQuery(q);
   };
 
-  useTabRefresh("/marketplace", useCallback(() => {
+  const refreshMarketplace = useCallback(async () => {
     setSearchQuery("");
     setSearchInput("");
     setActiveTab("discover");
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []));
+  }, []);
+
+  useTabRefresh("/marketplace", refreshMarketplace);
+
+  const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    usePullToRefresh({ onRefresh: refreshMarketplace });
 
   const isBusiness = profile?.role === "business";
   const { isAdmin } = useIsAdmin();
@@ -112,7 +119,8 @@ const MarketplacePage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg pb-20">
+      <div className="mx-auto max-w-lg pb-20" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+        <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
         {/* Header */}
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <div>

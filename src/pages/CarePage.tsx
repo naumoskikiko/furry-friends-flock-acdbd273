@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
 import { useTabRefresh } from "@/hooks/useTabRefresh";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import AppLayout from "@/components/AppLayout";
 import { Star, BadgeCheck, MapPin, ChevronRight, Search, Briefcase, Clock, History, Heart } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -44,7 +46,7 @@ const CarePage = () => {
   
   const boostedProviderIds = useBoostedIds("provider");
 
-  useTabRefresh("/care", useCallback(() => {
+  const refreshCare = useCallback(async () => {
     setSearchQuery("");
     setSearchInput("");
     setActiveCategory("all");
@@ -53,7 +55,12 @@ const CarePage = () => {
     setShowHistory(false);
     setShowPetMatch(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []));
+  }, []);
+
+  useTabRefresh("/care", refreshCare);
+
+  const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    usePullToRefresh({ onRefresh: refreshCare });
 
   const handleSearch = (q: string) => {
     setSearchInput(q);
@@ -68,7 +75,8 @@ const CarePage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg">
+      <div className="mx-auto max-w-lg" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+        <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
         {/* Header */}
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <div>

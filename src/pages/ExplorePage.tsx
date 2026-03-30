@@ -1,5 +1,7 @@
 import { Suspense, lazy, useState, useEffect, useRef, useCallback } from "react";
 import { useTabRefresh } from "@/hooks/useTabRefresh";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { Search, MapPin, Locate, Maximize2, ChevronRight } from "lucide-react";
@@ -35,11 +37,16 @@ const ExplorePage = () => {
 
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
-  useTabRefresh("/explore", useCallback(() => {
+  const refreshExplore = useCallback(async () => {
     setSearchQuery("");
     setActiveFilter("All");
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [setSearchQuery, setActiveFilter]));
+  }, [setSearchQuery, setActiveFilter]);
+
+  useTabRefresh("/explore", refreshExplore);
+
+  const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    usePullToRefresh({ onRefresh: refreshExplore });
 
   const handleResultClick = (r: any) => {
     if (r.type === "User") {
@@ -59,7 +66,8 @@ const ExplorePage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg">
+      <div className="mx-auto max-w-lg" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+        <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
         {/* Search */}
         <div className="sticky top-0 z-40 bg-card/95 px-4 py-3 backdrop-blur-md">
           <div className="flex items-center gap-2 rounded-xl bg-secondary px-3 py-2.5">

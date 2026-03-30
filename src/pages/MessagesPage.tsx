@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTabRefresh } from "@/hooks/useTabRefresh";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { useSearchParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import ConversationList from "@/components/messages/ConversationList";
@@ -20,10 +22,15 @@ const MessagesPage = () => {
   const { messages, forwardMessage } = useChatMessages(activeConversation?.id || null);
   const { toggleMute, deleteConversation, refresh } = useConversations();
 
-  useTabRefresh("/messages", useCallback(() => {
+  const refreshMessages = useCallback(async () => {
     refresh();
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [refresh]));
+  }, [refresh]);
+
+  useTabRefresh("/messages", refreshMessages);
+
+  const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    usePullToRefresh({ onRefresh: refreshMessages });
 
   // Handle deep-link to a specific conversation
   useEffect(() => {
@@ -177,7 +184,8 @@ const MessagesPage = () => {
 
   return (
     <AppLayout>
-      <div className={`mx-auto max-w-lg ${activeConversation ? "h-[calc(100dvh-4rem)] flex flex-col overflow-hidden" : ""}`}>
+      <div className={`mx-auto max-w-lg ${activeConversation ? "h-[calc(100dvh-4rem)] flex flex-col overflow-hidden" : ""}`} onTouchStart={!activeConversation ? handleTouchStart : undefined} onTouchMove={!activeConversation ? handleTouchMove : undefined} onTouchEnd={!activeConversation ? handleTouchEnd : undefined}>
+        {!activeConversation && <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />}
         {activeConversation ? (
           <ChatView
             conversation={activeConversation}
