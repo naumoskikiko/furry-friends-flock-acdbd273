@@ -641,10 +641,17 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
 
               {/* Price breakdown */}
               <div className="rounded-2xl bg-secondary/50 border border-border p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Service Price</span>
-                  <span className="font-semibold">{selectedService.price} MKD</span>
-                </div>
+                {nights > 0 ? (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{selectedService.price} MKD × {nights} nights</span>
+                    <span className="font-semibold">{totalServicePrice} MKD</span>
+                  </div>
+                ) : (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Service Price</span>
+                    <span className="font-semibold">{totalServicePrice} MKD</span>
+                  </div>
+                )}
                 {creditsApplied > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-primary font-bold flex items-center gap-1">
