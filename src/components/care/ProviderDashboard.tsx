@@ -244,7 +244,7 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
       case "bookings":
         return <CareBookingsTab bookings={bookings} updateBookingStatus={updateBookingStatus} />;
       case "services":
-        return <CareServicesTab services={services} addService={addService} deleteService={deleteService} />;
+        return <CareServicesTab services={services} addService={addService} deleteService={deleteService} isTrainer={isTrainer} trainingPackages={trainingPackages} addTrainingPackage={addTrainingPackage} deleteTrainingPackage={deleteTrainingPackage} />;
       case "earnings":
         return <CareEarningsTab balance={balance} payments={providerPayments} payouts={payouts} requestPayout={requestPayout} />;
       case "reviews":
