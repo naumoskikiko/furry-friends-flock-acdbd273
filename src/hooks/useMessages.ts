@@ -187,6 +187,19 @@ export function useConversations() {
       (convDetails || []).map((c: any) => [c.id, c])
     );
 
+    // Find meetup-linked conversations
+    const groupConvIds = (convDetails || []).filter((c: any) => c.is_group).map((c: any) => c.id);
+    let meetupMap = new Map<string, string>();
+    if (groupConvIds.length > 0) {
+      const { data: meetupLinks } = await fromTable("blog_posts")
+        .select("id, conversation_id")
+        .in("conversation_id", groupConvIds)
+        .eq("post_type", "meetup");
+      if (meetupLinks) {
+        meetupLinks.forEach((m: any) => meetupMap.set(m.conversation_id, m.id));
+      }
+    }
+
     const { data: otherParticipants } = await fromTable("conversation_participants")
       .select("conversation_id, user_id")
       .in("conversation_id", convIds)
