@@ -32,6 +32,9 @@ const MarketplaceManagementPanel = () => {
     setLoading(true);
     let q = fromTable("business_profiles").select("*").order("created_at", { ascending: false });
     if (search) q = q.ilike("business_name", `%${search}%`);
+    if (filter === "pending") q = q.eq("is_verified", false).eq("is_suspended", false);
+    if (filter === "verified") q = q.eq("is_verified", true);
+    if (filter === "suspended") q = q.eq("is_suspended", true);
     const { data } = await q;
     const biz = (data as any as BizRow[]) || [];
 
