@@ -24,6 +24,7 @@ const MarketplaceManagementPanel = () => {
   const [businesses, setBusinesses] = useState<BizRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | "pending" | "verified" | "suspended">("all");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [productCounts, setProductCounts] = useState<Record<string, number>>({});
 
