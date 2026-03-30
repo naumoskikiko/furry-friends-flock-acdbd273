@@ -10,6 +10,7 @@ export function useCredits() {
   const [balance, setBalance] = useState(0);
   const [dailyEarned, setDailyEarned] = useState(0);
   const [monthlyEarned, setMonthlyEarned] = useState(0);
+  const [dailyAdWatches, setDailyAdWatches] = useState(0);
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<any[]>([]);
 
@@ -27,7 +28,7 @@ export function useCredits() {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
     const { data: dailyData } = await fromTable("credit_daily_log")
-      .select("credits_earned")
+      .select("credits_earned,action_type")
       .eq("user_id", user.id)
       .gte("created_at", startOfDay);
 
@@ -38,8 +39,10 @@ export function useCredits() {
 
     const daily = (dailyData || []).reduce((sum: number, r: any) => sum + Number(r.credits_earned), 0);
     const monthly = (monthlyData || []).reduce((sum: number, r: any) => sum + Number(r.credits_earned), 0);
+    const adCount = (dailyData || []).filter((r: any) => r.action_type === "watch_ad").length;
     setDailyEarned(daily);
     setMonthlyEarned(monthly);
+    setDailyAdWatches(adCount);
   }, [user]);
 
   const fetchTransactions = useCallback(async () => {
@@ -65,6 +68,9 @@ export function useCredits() {
 
     if (dailyEarned + amount > CREDIT_LIMITS.daily_max) return false;
     if (monthlyEarned + amount > CREDIT_LIMITS.monthly_max) return false;
+
+    // Ad-specific daily limit
+    if (action === "watch_ad" && dailyAdWatches >= CREDIT_LIMITS.daily_ad_watches) return false;
 
     // Prevent double-reward
     if (sourceId) {
@@ -99,9 +105,10 @@ export function useCredits() {
     setBalance((b) => b + amount);
     setDailyEarned((d) => d + amount);
     setMonthlyEarned((m) => m + amount);
+    if (action === "watch_ad") setDailyAdWatches((c) => c + 1);
 
     return true;
-  }, [user, balance, dailyEarned, monthlyEarned]);
+  }, [user, balance, dailyEarned, monthlyEarned, dailyAdWatches]);
 
   const spendCredits = useCallback(async (action: CreditSpendAction): Promise<boolean> => {
     if (!user) return false;
@@ -149,6 +156,7 @@ export function useCredits() {
     balance,
     dailyEarned,
     monthlyEarned,
+    dailyAdWatches,
     loading,
     transactions,
     earnCredits,
@@ -156,6 +164,7 @@ export function useCredits() {
     applyCreditsToPayment,
     dailyLimit: CREDIT_LIMITS.daily_max,
     monthlyLimit: CREDIT_LIMITS.monthly_max,
+    adLimit: CREDIT_LIMITS.daily_ad_watches,
     refresh: () => { fetchBalance(); fetchLimits(); fetchTransactions(); },
   };
 }

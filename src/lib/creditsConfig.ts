@@ -10,12 +10,14 @@ export const CREDIT_REWARDS = {
   story_reply: 0.05,
   blog_reply: 0.2,
   helpful_blog_answer: 0.5,
+  watch_ad: 1,
 } as const;
 
 export const CREDIT_LIMITS = {
   daily_max: 20,
   monthly_max: 500,
-  max_likes_per_post: 100, // Only first 100 likes on a post earn credits
+  max_likes_per_post: 100,
+  daily_ad_watches: 10,
 } as const;
 
 export const CREDIT_SPENDING = {
