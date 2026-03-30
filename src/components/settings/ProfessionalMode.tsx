@@ -17,6 +17,7 @@ import BookingManagementPanel from "./BookingManagementPanel";
 import ServiceAvailabilityPanel from "./ServiceAvailabilityPanel";
 import OrderManagementPanel from "./OrderManagementPanel";
 import ShelterManagementPanel from "./ShelterManagementPanel";
+import PetVerificationReviewPanel from "./PetVerificationReviewPanel";
 import { useIsOwner } from "@/hooks/useIsOwner";
 
 type SubSection =
