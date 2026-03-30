@@ -145,12 +145,16 @@ export function isProviderOpen(availability: ProviderAvailability[]): "open" | "
   return "closed";
 }
 
-// --- Browse providers ---
+const PROVIDER_BATCH = 12;
+
 export function useCareProviders(category?: string, searchQuery?: string, emergencyOnly?: boolean) {
   const [providers, setProviders] = useState<CareProvider[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const offsetRef = useRef(0);
 
-  const fetchProviders = useCallback(async () => {
+  const fetchProviders = useCallback(async (reset = false) => {
+    if (reset) { offsetRef.current = 0; setHasMore(true); }
     setLoading(true);
     let query = fromTable("care_providers")
       .select("*")
@@ -159,42 +163,36 @@ export function useCareProviders(category?: string, searchQuery?: string, emerge
       .eq("is_banned", false)
       .order("avg_rating", { ascending: false });
 
-    if (category && category !== "all") {
-      query = query.eq("category", category);
-    }
-    if (searchQuery && searchQuery.trim()) {
-      query = query.ilike("business_name", `%${searchQuery.trim()}%`);
-    }
-    if (emergencyOnly) {
-      query = query.eq("emergency_available", true);
-    }
+    if (category && category !== "all") query = query.eq("category", category);
+    if (searchQuery && searchQuery.trim()) query = query.ilike("business_name", `%${searchQuery.trim()}%`);
+    if (emergencyOnly) query = query.eq("emergency_available", true);
 
+    query = query.range(offsetRef.current, offsetRef.current + PROVIDER_BATCH - 1);
     const { data } = await query;
-    const providerList = (data || []) as CareProvider[];
+    const batch = (data || []) as CareProvider[];
 
     // Fetch profiles for providers
-    if (providerList.length > 0) {
-      const userIds = [...new Set(providerList.map((p) => p.user_id))];
+    if (batch.length > 0) {
+      const userIds = [...new Set(batch.map((p) => p.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, full_name, username, avatar_url")
         .in("user_id", userIds);
-
       const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
-      providerList.forEach((p) => {
-        p.profile = profileMap.get(p.user_id) as any;
-      });
+      batch.forEach((p) => { p.profile = profileMap.get(p.user_id) as any; });
     }
 
-    setProviders(providerList);
+    if (reset) { setProviders(batch); } else { setProviders(prev => [...prev, ...batch]); }
+    if (batch.length < PROVIDER_BATCH) setHasMore(false);
+    offsetRef.current += batch.length;
     setLoading(false);
   }, [category, searchQuery, emergencyOnly]);
 
-  useEffect(() => {
-    fetchProviders();
-  }, [fetchProviders]);
+  useEffect(() => { fetchProviders(true); }, [fetchProviders]);
 
-  return { providers, loading, refresh: fetchProviders };
+  const loadMore = useCallback(() => { if (hasMore && !loading) fetchProviders(false); }, [hasMore, loading, fetchProviders]);
+
+  return { providers, loading, hasMore, loadMore, refresh: () => fetchProviders(true) };
 }
 
 // --- Provider services ---
