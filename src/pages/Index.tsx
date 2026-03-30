@@ -70,7 +70,6 @@ const Index = () => {
       {/* Content */}
       <div
         className="mx-auto max-w-lg"
-        className="mx-auto max-w-lg"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
