@@ -877,6 +877,40 @@ const BusinessDashboard = ({ onClose }: BusinessDashboardProps) => {
         {/* Content area */}
         <main className="flex-1 overflow-y-auto">
           <div className={`mx-auto px-4 py-4 pb-20 ${isMobile ? "max-w-lg" : "max-w-2xl"}`}>
+            {/* Verification Status Banner */}
+            {!business.is_verified && (
+              <div className={`mb-4 rounded-2xl border p-4 ${
+                business.is_suspended
+                  ? "border-destructive/30 bg-destructive/5"
+                  : "border-amber-500/30 bg-amber-50 dark:bg-amber-900/10"
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                    business.is_suspended ? "bg-destructive/10" : "bg-amber-100 dark:bg-amber-900/30"
+                  }`}>
+                    <span className="text-lg">{business.is_suspended ? "❌" : "⏳"}</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold">
+                      {business.is_suspended ? "Store Rejected" : "Pending Verification"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {business.is_suspended
+                        ? "Your store has been suspended. Contact support for details."
+                        : "Your store is under review. Products won't be visible to customers until approved."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {business.is_verified && tab === "overview" && (
+              <div className="mb-4 rounded-2xl border border-green-500/30 bg-green-50 dark:bg-green-900/10 p-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">✅</span>
+                  <p className="text-xs font-bold text-green-700 dark:text-green-400">Store Verified — Your products are visible to all customers</p>
+                </div>
+              </div>
+            )}
             {renderContent()}
           </div>
         </main>
