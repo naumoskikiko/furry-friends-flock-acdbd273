@@ -132,11 +132,13 @@ const PetProfileDetailModal = ({
   open,
   onOpenChange,
   myPet,
+  onMessageOwner,
 }: {
   listing: PetMatchListing | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   myPet: Pet | null;
+  onMessageOwner?: (userId: string) => void;
 }) => {
   if (!listing?.pet) return null;
   const pet = listing.pet;
