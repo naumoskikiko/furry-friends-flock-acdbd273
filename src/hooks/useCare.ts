@@ -119,6 +119,7 @@ export function useCareProviders(category?: string, searchQuery?: string, emerge
     setLoading(true);
     let query = fromTable("care_providers")
       .select("*")
+      .eq("is_verified", true)
       .eq("is_suspended", false)
       .eq("is_banned", false)
       .order("avg_rating", { ascending: false });
