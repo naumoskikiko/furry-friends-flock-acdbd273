@@ -166,6 +166,7 @@ export function useMyOrders() {
     }
 
     setOrders(orderList);
+    cacheSet(CACHE_KEY, orderList, CacheTTL.CARE);
     setLoading(false);
   }, [user]);
 

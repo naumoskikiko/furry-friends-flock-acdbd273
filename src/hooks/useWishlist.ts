@@ -48,6 +48,7 @@ export function useWishlist() {
     }
 
     setItems(list);
+    cacheSet(CACHE_KEY, list, CacheTTL.MARKETPLACE);
     setWishlistIds(new Set(list.map((i) => i.product_id)));
     setLoading(false);
   }, [user]);

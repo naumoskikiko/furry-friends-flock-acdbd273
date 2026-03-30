@@ -53,6 +53,7 @@ export function useExplore() {
       ]);
 
       setDbPlaces(places || []);
+      cacheSet("explore_places", places || [], CacheTTL.FEED);
 
       const sitterIds = (sitters || []).map((s: any) => s.user_id);
       let sitterProfileData: any[] = [];
@@ -61,12 +62,12 @@ export function useExplore() {
         sitterProfileData = data || [];
       }
 
-      setSitterProfiles(
-        (sitters || []).map((s: any) => {
-          const p = sitterProfileData.find((pr: any) => pr.user_id === s.user_id);
-          return { ...s, profile: p };
-        })
-      );
+      const enrichedSitters = (sitters || []).map((s: any) => {
+        const p = sitterProfileData.find((pr: any) => pr.user_id === s.user_id);
+        return { ...s, profile: p };
+      });
+      setSitterProfiles(enrichedSitters);
+      cacheSet("explore_sitters", enrichedSitters, CacheTTL.FEED);
       setUserProfiles(profiles || []);
       setLoading(false);
     };

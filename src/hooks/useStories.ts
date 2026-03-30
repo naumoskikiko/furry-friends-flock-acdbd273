@@ -111,6 +111,7 @@ export const useStories = () => {
     }
 
     setStoryGroups(groups);
+    cacheSet(CACHE_KEY, groups, 2 * 60 * 1000);
     setHasOwnStory(groups.some((g) => g.user_id === user?.id));
     setLoading(false);
   }, [user]);
