@@ -455,7 +455,10 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
                     </span>
                   </div>
                   <p className="text-[10px] text-muted-foreground ml-6">
-                    {Math.ceil((selectedEndDate.getTime() - selectedDate.getTime()) / (1000 * 60 * 60 * 24))} days
+                    {nights} night{nights !== 1 ? "s" : ""}
+                    {selectedService && bookingType === "date_range" && (
+                      <> · {selectedService.price} MKD × {nights} = <span className="font-bold text-primary">{totalServicePrice} MKD</span></>
+                    )}
                   </p>
                 </div>
               )}
