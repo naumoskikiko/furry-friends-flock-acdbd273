@@ -148,17 +148,32 @@ const CreateBlogModal = ({ open, onOpenChange, onBlogCreated }: CreateBlogModalP
       }
     }
 
-    const { error } = await (supabase as any).from("blog_posts").insert(insertData);
+    const { data, error } = await (supabase as any).from("blog_posts").insert(insertData).select("id").single();
+
+    if (error) {
+      setPublishing(false);
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    // Auto-create meetup group chat
+    if (postType === "meetup" && data?.id) {
+      try {
+        await (supabase as any).rpc("create_meetup_chat", {
+          _blog_post_id: data.id,
+          _creator_id: user.id,
+          _meetup_title: title.trim(),
+        });
+      } catch (chatErr) {
+        console.error("Failed to create meetup chat:", chatErr);
+      }
+    }
 
     setPublishing(false);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: postType === "meetup" ? "MeetUP event created! 🎉" : "Blog post published!" });
-      resetForm();
-      onOpenChange(false);
-      onBlogCreated();
-    }
+    toast({ title: postType === "meetup" ? "MeetUP event created! 🎉" : "Blog post published!" });
+    resetForm();
+    onOpenChange(false);
+    onBlogCreated();
   };
 
   const isMeetup = postType === "meetup";

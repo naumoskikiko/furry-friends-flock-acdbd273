@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Heart, MessageCircle, Share2, Bookmark, BookmarkCheck,
   MoreVertical, Send, MapPin, Calendar, Clock, Users, PawPrint, Trash2,
-  Star, ThumbsUp, CheckCircle2,
+  Star, ThumbsUp, CheckCircle2, MessageSquare,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { Input } from "@/components/ui/input";
@@ -226,12 +226,26 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
     setParticipantsCount((c) => newJoined ? c + 1 : Math.max(0, c - 1));
     if (newJoined) {
       await fromTable("blog_event_participants").insert({ blog_post_id: post.id, user_id: user.id });
+      // Auto-join meetup chat
+      try {
+        await (supabase as any).rpc("join_meetup_chat", { _blog_post_id: post.id, _user_id: user.id });
+      } catch {}
       toast({ title: "You joined the event! 🎉" });
     } else {
       await fromTable("blog_event_participants").delete().eq("blog_post_id", post.id).eq("user_id", user.id);
+      // Auto-leave meetup chat
+      try {
+        await (supabase as any).rpc("leave_meetup_chat", { _blog_post_id: post.id, _user_id: user.id });
+      } catch {}
       toast({ title: "Left the event" });
     }
     loadParticipants();
+  };
+
+  const openMeetupChat = () => {
+    if (!post) return;
+    onOpenChange(false);
+    navigate(`/messages?meetup=${post.id}`);
   };
 
   const handleShareArticle = async () => {
@@ -531,6 +545,17 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
               >
                 {joined ? "✓ You're Going — Tap to Leave" : "Join This Event"}
               </button>
+
+              {/* Open Chat button — only visible when joined */}
+              {joined && (
+                <button
+                  onClick={openMeetupChat}
+                  className="w-full rounded-xl py-3 text-sm font-bold transition-all active:scale-[0.98] bg-secondary text-foreground border border-border flex items-center justify-center gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Open MeetUP Chat
+                </button>
+              )}
             </div>
           )}
 
