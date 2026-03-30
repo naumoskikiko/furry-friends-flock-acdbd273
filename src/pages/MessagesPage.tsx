@@ -59,22 +59,37 @@ const MessagesPage = () => {
           }
         }
 
-        // Check membership
+        // Check membership — auto-join if user is a meetup participant but not in chat
         const { data: membership } = await (supabase as any)
           .from("conversation_participants")
           .select("id")
-          .eq("conversation_id", blogPost.conversation_id)
+          .eq("conversation_id", convId)
           .eq("user_id", user.id)
           .maybeSingle();
 
         if (!membership) {
-          toast({ title: "Join the meetup to access the chat", variant: "destructive" });
-          setSearchParams({}, { replace: true });
-          return;
+          // Check if user is a meetup participant
+          const { data: eventPart } = await (supabase as any)
+            .from("blog_event_participants")
+            .select("id")
+            .eq("blog_post_id", meetupId)
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (eventPart) {
+            // Auto-add to chat
+            try {
+              await (supabase as any).rpc("join_meetup_chat", { _blog_post_id: meetupId, _user_id: user.id });
+            } catch {}
+          } else {
+            toast({ title: "Join the meetup to access the chat", variant: "destructive" });
+            setSearchParams({}, { replace: true });
+            return;
+          }
         }
 
         setActiveConversation({
-          id: blogPost.conversation_id,
+          id: convId,
           created_at: new Date().toISOString(),
           other_user: {
             user_id: "group",
