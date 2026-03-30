@@ -20,6 +20,7 @@ interface PetProfileModalProps {
   onEdit: (pet: any) => void;
   onDelete: (petId: string) => void;
   onPetUpdated?: () => void;
+  onContact?: (ownerId: string) => void;
 }
 
 const PetProfileModal = ({ pet, open, onOpenChange, isOwner, onEdit, onDelete, onPetUpdated }: PetProfileModalProps) => {
