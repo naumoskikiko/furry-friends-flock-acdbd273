@@ -276,6 +276,23 @@ const PetProfileModal = ({ pet, open, onOpenChange, isOwner, onEdit, onDelete, o
             <InfoRow label="Emergency Contact" value={editing ? form.emergency_contact : pet.emergency_contact} field="emergency_contact" />
             <InfoRow label="Vet Info" value={editing ? form.vet_info : pet.vet_info} field="vet_info" />
           </div>
+
+          {/* Verification section - owner view */}
+          {isOwner && !editing && (
+            <div className="mt-4">
+              <PetVerificationSection petId={pet.id} onStatusChange={onPetUpdated} />
+            </div>
+          )}
+
+          {/* Contact button - non-owner view */}
+          {!isOwner && onContact && pet.owner_id && (
+            <Button
+              onClick={() => onContact(pet.owner_id)}
+              className="w-full mt-4 petkeep-gradient text-primary-foreground font-bold"
+            >
+              <MessageCircle className="h-4 w-4 mr-2" /> Message Owner
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
