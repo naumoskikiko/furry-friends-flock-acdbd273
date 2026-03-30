@@ -379,6 +379,109 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
             </div>
           )}
 
+          {/* Duration step (trainers only) */}
+          {currentStepKey === "duration" && (
+            <div className="space-y-4">
+              <p className="text-sm font-bold">Session Duration</p>
+              <div className="grid grid-cols-2 gap-3">
+                {[30, 60, 90, 120].map((dur) => (
+                  <button
+                    key={dur}
+                    onClick={() => setSelectedDuration(dur)}
+                    className={`rounded-2xl p-4 border-2 text-center transition-all ${
+                      selectedDuration === dur
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/30"
+                    }`}
+                  >
+                    <Clock className={`h-5 w-5 mx-auto mb-1 ${selectedDuration === dur ? "text-primary" : "text-muted-foreground"}`} />
+                    <p className="text-sm font-bold">{dur} min</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {dur === 30 ? "Quick session" : dur === 60 ? "Standard" : dur === 90 ? "Extended" : "Full training"}
+                    </p>
+                  </button>
+                ))}
+              </div>
+
+              {/* Training packages section */}
+              {(trainingPackages.length > 0 || userPackages.length > 0) && (
+                <div className="space-y-3 pt-2">
+                  {/* Active user packages */}
+                  {userPackages.length > 0 && (
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground mb-2">📦 Your Packages</p>
+                      {userPackages.map((up) => (
+                        <button
+                          key={up.id}
+                          onClick={() => setSelectedUserPackage(selectedUserPackage?.id === up.id ? null : up)}
+                          className={`w-full rounded-xl p-3 border-2 text-left mb-2 transition-all ${
+                            selectedUserPackage?.id === up.id
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/30"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs font-bold">{up.package?.name || "Training Package"}</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {up.total_sessions - up.used_sessions} of {up.total_sessions} sessions remaining
+                              </p>
+                            </div>
+                            <span className="text-xs font-bold text-primary">
+                              {selectedUserPackage?.id === up.id ? "✓ Using" : "Use"}
+                            </span>
+                          </div>
+                          <div className="mt-1.5 h-1.5 rounded-full bg-secondary overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-primary transition-all"
+                              style={{ width: `${((up.total_sessions - up.used_sessions) / up.total_sessions) * 100}%` }}
+                            />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Available packages to buy */}
+                  {trainingPackages.length > 0 && (
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground mb-2">🎓 Training Packages</p>
+                      {trainingPackages.map((pkg) => (
+                        <div key={pkg.id} className="rounded-xl border border-border p-3 mb-2">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs font-bold">{pkg.name}</p>
+                              {pkg.description && <p className="text-[10px] text-muted-foreground">{pkg.description}</p>}
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                {pkg.total_sessions} sessions · {pkg.session_duration}min each
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs font-bold text-primary">{pkg.price} MKD</p>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await purchasePackage(pkg);
+                                    toast({ title: "Package purchased! 🎉", description: `${pkg.total_sessions} sessions ready to use` });
+                                  } catch (e: any) {
+                                    toast({ title: "Failed", description: e.message, variant: "destructive" });
+                                  }
+                                }}
+                                className="mt-1 text-[10px] font-bold text-primary underline"
+                              >
+                                Buy Package
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Single date selection (appointment / time_slot) */}
           {currentStepKey === "date" && (
             <div className="space-y-3">
