@@ -33,6 +33,9 @@ interface Pet {
   special_care?: string | null;
   emergency_contact?: string | null;
   vet_info?: string | null;
+  owner_id?: string;
+  vaccination_verified?: boolean;
+  neutered_verified?: boolean;
 }
 
 interface PetMatchListing {
