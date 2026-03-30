@@ -68,6 +68,8 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
   const { processPayment } = useProcessPayment();
   const { balance: creditBalance, applyCreditsToPayment } = useCredits();
   const availability = useProviderAvailability(provider.id);
+  const { bookedDates, bookedTimeSlots } = useProviderBookedSlots(provider.id);
+  const { blockedSlots } = useProviderBlockedSlots(provider.id);
 
   const bookingType = getBookingTypeForCategory(provider.category);
   const STEPS = useMemo(() => getStepsForBookingType(bookingType), [bookingType]);
@@ -92,33 +94,92 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
     });
   }, [user]);
 
+  // Build sets of blocked dates and blocked time slots
+  const blockedDateSet = useMemo(() => {
+    const set = new Set<string>();
+    blockedSlots.forEach((b) => {
+      if (b.block_type === "full_day") set.add(b.blocked_date);
+    });
+    return set;
+  }, [blockedSlots]);
+
+  const blockedTimeSlotsMap = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    blockedSlots.forEach((b) => {
+      if (b.block_type === "time_slot" && b.blocked_time) {
+        if (!map.has(b.blocked_date)) map.set(b.blocked_date, new Set());
+        map.get(b.blocked_date)!.add(b.blocked_time.slice(0, 5));
+      }
+    });
+    return map;
+  }, [blockedSlots]);
+
   // Available days set from provider availability
   const availableDays = useMemo(() => {
     return new Set(availability.filter((a) => a.is_available).map((a) => a.day_of_week));
   }, [availability]);
 
-  // Disable dates that are in the past or unavailable
+  // Disable dates: past, unavailable day of week, blocked, or fully booked (for date_range)
   const isDateDisabled = (date: Date) => {
     if (isBefore(date, startOfDay(new Date()))) return true;
-    return !availableDays.has(date.getDay());
+    if (!availableDays.has(date.getDay())) return true;
+    const dateStr = format(date, "yyyy-MM-dd");
+    if (blockedDateSet.has(dateStr)) return true;
+    // For date_range (sitting), block dates that have existing bookings
+    if (bookingType === "date_range" && bookedDates.has(dateStr)) return true;
+    return false;
   };
 
-  // Time slots for selected date
+  // For end date in date_range: also check if any date in range is blocked/booked
+  const isEndDateDisabled = (date: Date) => {
+    if (!selectedDate) return true;
+    if (isBefore(date, addDays(selectedDate, 1))) return true;
+    if (isBefore(date, startOfDay(new Date()))) return true;
+    // Check if any date in the range is blocked/booked
+    let current = new Date(addDays(selectedDate, 1));
+    while (current <= date) {
+      const ds = format(current, "yyyy-MM-dd");
+      if (blockedDateSet.has(ds) || (bookingType === "date_range" && bookedDates.has(ds))) return true;
+      if (!availableDays.has(current.getDay())) return true;
+      current = addDays(current, 1);
+    }
+    return false;
+  };
+
+  // Time slots: filter out booked and blocked times
   const timeSlots = useMemo(() => {
     if (!selectedDate || !selectedService) return [];
     const dayOfWeek = selectedDate.getDay();
     const dayAvail = availability.find((a) => a.day_of_week === dayOfWeek && a.is_available);
     if (!dayAvail) return [];
-    return generateTimeSlots(dayAvail.start_time, dayAvail.end_time, selectedService.duration);
-  }, [selectedDate, selectedService, availability]);
+    const allSlots = generateTimeSlots(dayAvail.start_time, dayAvail.end_time, selectedService.duration);
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+    const bookedTimes = bookedTimeSlots.get(dateStr) || new Set();
+    const blockedTimes = blockedTimeSlotsMap.get(dateStr) || new Set();
+    return allSlots.filter((t) => !bookedTimes.has(t) && !blockedTimes.has(t));
+  }, [selectedDate, selectedService, availability, bookedTimeSlots, blockedTimeSlotsMap]);
+
+  // Night-based pricing for pet sitting
+  const nights = useMemo(() => {
+    if (bookingType !== "date_range" || !selectedDate || !selectedEndDate) return 0;
+    return calculateNights(selectedDate, selectedEndDate);
+  }, [bookingType, selectedDate, selectedEndDate]);
+
+  const totalServicePrice = useMemo(() => {
+    if (!selectedService) return 0;
+    if (bookingType === "date_range" && nights > 0) {
+      return selectedService.price * nights;
+    }
+    return selectedService.price;
+  }, [selectedService, bookingType, nights]);
 
   // Price calculation
   const creditsApplied = useMemo(() => {
     if (!selectedService || !useCareCredits) return 0;
-    return Math.min(creditBalance, selectedService.price);
-  }, [selectedService, useCareCredits, creditBalance]);
+    return Math.min(creditBalance, totalServicePrice);
+  }, [selectedService, useCareCredits, creditBalance, totalServicePrice]);
 
-  const finalPrice = selectedService ? Math.max(0, selectedService.price - creditsApplied) : 0;
+  const finalPrice = Math.max(0, totalServicePrice - creditsApplied);
 
   const currentStepKey = STEPS[step]?.key;
 
