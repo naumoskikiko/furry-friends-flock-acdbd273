@@ -20,9 +20,10 @@ export interface NotificationData {
 
 export const useNotifications = () => {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const CACHE_KEY = `notif_${user?.id || "anon"}`;
+  const [notifications, setNotifications] = useState<NotificationData[]>(() => cacheGet<NotificationData[]>(CACHE_KEY) || []);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cacheGet<NotificationData[]>(CACHE_KEY));
 
   const enrichNotifications = useCallback(async (raw: any[]): Promise<NotificationData[]> => {
     if (raw.length === 0) return [];
