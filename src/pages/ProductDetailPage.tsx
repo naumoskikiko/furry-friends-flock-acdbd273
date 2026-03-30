@@ -39,6 +39,7 @@ const ProductDetailPage = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Best seller check
   const [isBestSeller, setIsBestSeller] = useState(false);
