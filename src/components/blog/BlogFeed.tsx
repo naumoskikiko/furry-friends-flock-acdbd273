@@ -110,7 +110,15 @@ const BlogFeed = () => {
       };
     });
 
-    setPosts(enriched);
+    // MeetUP posts always appear first, then the rest by created_at (already sorted)
+    const sorted = [...enriched].sort((a, b) => {
+      const aIsMeetup = a.post_type === "meetup" ? 1 : 0;
+      const bIsMeetup = b.post_type === "meetup" ? 1 : 0;
+      if (aIsMeetup !== bIsMeetup) return bIsMeetup - aIsMeetup;
+      return 0; // preserve existing created_at order within each group
+    });
+
+    setPosts(sorted);
     setLoading(false);
   }, [user, category]);
 
