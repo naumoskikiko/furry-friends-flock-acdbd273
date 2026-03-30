@@ -23,7 +23,7 @@ interface PetProfileModalProps {
   onContact?: (ownerId: string) => void;
 }
 
-const PetProfileModal = ({ pet, open, onOpenChange, isOwner, onEdit, onDelete, onPetUpdated }: PetProfileModalProps) => {
+const PetProfileModal = ({ pet, open, onOpenChange, isOwner, onEdit, onDelete, onPetUpdated, onContact }: PetProfileModalProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
