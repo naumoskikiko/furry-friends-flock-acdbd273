@@ -287,6 +287,7 @@ export function useConversations() {
         is_archived: meta.is_archived,
         is_muted: meta.is_muted,
         draft: draft || undefined,
+        meetup_id: meetupMap.get(convId) || undefined,
       });
     }
 
