@@ -40,6 +40,7 @@ const CarePage = () => {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showPetMatch, setShowPetMatch] = useState(false);
+  const [showAdoption, setShowAdoption] = useState(false);
   const boostedProviderIds = useBoostedIds("provider");
 
   const handleSearch = (q: string) => {
