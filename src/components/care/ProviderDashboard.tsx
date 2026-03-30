@@ -564,6 +564,40 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
 
         <main className="flex-1 overflow-y-auto">
           <div className={`mx-auto px-4 py-4 pb-20 ${isMobile ? "max-w-lg" : "max-w-2xl"}`}>
+            {/* Verification Status Banner */}
+            {!provider.is_verified && (
+              <div className={`mb-4 rounded-2xl border p-4 ${
+                (provider as any).is_banned
+                  ? "border-destructive/30 bg-destructive/5"
+                  : "border-amber-500/30 bg-amber-50 dark:bg-amber-900/10"
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                    (provider as any).is_banned ? "bg-destructive/10" : "bg-amber-100 dark:bg-amber-900/30"
+                  }`}>
+                    <span className="text-lg">{(provider as any).is_banned ? "❌" : "⏳"}</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold">
+                      {(provider as any).is_banned ? "Provider Rejected" : "Pending Verification"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {(provider as any).is_banned
+                        ? "Your provider profile has been rejected. Contact support for details."
+                        : "Your profile is under review. You won't appear in search results until verified by an admin."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {provider.is_verified && tab === "overview" && (
+              <div className="mb-4 rounded-2xl border border-green-500/30 bg-green-50 dark:bg-green-900/10 p-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">✅</span>
+                  <p className="text-xs font-bold text-green-700 dark:text-green-400">Provider Verified — You are visible to all users</p>
+                </div>
+              </div>
+            )}
             {renderContent()}
           </div>
         </main>
