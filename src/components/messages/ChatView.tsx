@@ -377,6 +377,23 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
         </div>
       )}
 
+      {/* Meetup banner */}
+      {conversation.meetup_id && (
+        <button
+          onClick={() => navigate(`/?blog=${conversation.meetup_id}`)}
+          className="flex items-center gap-2.5 border-b border-border bg-primary/5 px-4 py-2.5 text-left transition-colors hover:bg-primary/10 active:scale-[0.99]"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+            <MapPin className="h-4 w-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-primary truncate">📍 MeetUP Event</p>
+            <p className="text-[10px] text-muted-foreground">Tap to view event details</p>
+          </div>
+          <ExternalLink className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+        </button>
+      )}
+
       {/* Load more */}
       {hasMore && (
         <button onClick={loadMore} className="flex items-center justify-center gap-1 py-2 text-xs text-muted-foreground hover:text-foreground">
