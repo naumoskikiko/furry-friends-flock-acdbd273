@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTabRefresh } from "@/hooks/useTabRefresh";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
