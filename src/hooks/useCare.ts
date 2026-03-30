@@ -96,6 +96,32 @@ const CATEGORIES = [
 
 export { CATEGORIES };
 
+// Booking type determined by service category
+export type BookingType = "date_range" | "time_slot" | "appointment" | "date_range_with_time";
+
+export const CATEGORY_BOOKING_TYPE: Record<string, BookingType> = {
+  sitter: "date_range",
+  walker: "time_slot",
+  "grooming-salon": "appointment",
+  "vet-clinic": "appointment",
+  trainer: "appointment",
+  shelter: "date_range_with_time",
+};
+
+export function getBookingTypeForCategory(category: string): BookingType {
+  return CATEGORY_BOOKING_TYPE[category] || "appointment";
+}
+
+export function getBookingTypeLabel(bookingType: BookingType): string {
+  switch (bookingType) {
+    case "date_range": return "Date Range (Start → End)";
+    case "time_slot": return "Time Slot Picker";
+    case "appointment": return "Appointment Slots";
+    case "date_range_with_time": return "Date Range + Time";
+    default: return "Appointment";
+  }
+}
+
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 export { DAY_NAMES };
 
