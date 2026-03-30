@@ -163,18 +163,19 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
     return false;
   };
 
-  // Time slots: filter out booked and blocked times
+  // Time slots: filter out booked and blocked times — use selectedDuration for trainers
   const timeSlots = useMemo(() => {
     if (!selectedDate || !selectedService) return [];
     const dayOfWeek = selectedDate.getDay();
     const dayAvail = availability.find((a) => a.day_of_week === dayOfWeek && a.is_available);
     if (!dayAvail) return [];
-    const allSlots = generateTimeSlots(dayAvail.start_time, dayAvail.end_time, selectedService.duration);
+    const duration = isTrainer ? selectedDuration : selectedService.duration;
+    const allSlots = generateTimeSlots(dayAvail.start_time, dayAvail.end_time, duration);
     const dateStr = format(selectedDate, "yyyy-MM-dd");
     const bookedTimes = bookedTimeSlots.get(dateStr) || new Set();
     const blockedTimes = blockedTimeSlotsMap.get(dateStr) || new Set();
     return allSlots.filter((t) => !bookedTimes.has(t) && !blockedTimes.has(t));
-  }, [selectedDate, selectedService, availability, bookedTimeSlots, blockedTimeSlotsMap]);
+  }, [selectedDate, selectedService, selectedDuration, isTrainer, availability, bookedTimeSlots, blockedTimeSlotsMap]);
 
   // Night-based pricing for pet sitting
   const nights = useMemo(() => {
@@ -182,19 +183,23 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
     return calculateNights(selectedDate, selectedEndDate);
   }, [bookingType, selectedDate, selectedEndDate]);
 
+  // If using a package, price = 0 (already paid)
+  const isUsingPackage = !!selectedUserPackage;
+
   const totalServicePrice = useMemo(() => {
+    if (isUsingPackage) return 0;
     if (!selectedService) return 0;
     if (bookingType === "date_range" && nights > 0) {
       return selectedService.price * nights;
     }
     return selectedService.price;
-  }, [selectedService, bookingType, nights]);
+  }, [selectedService, bookingType, nights, isUsingPackage]);
 
   // Price calculation
   const creditsApplied = useMemo(() => {
-    if (!selectedService || !useCareCredits) return 0;
+    if (!selectedService || !useCareCredits || isUsingPackage) return 0;
     return Math.min(creditBalance, totalServicePrice);
-  }, [selectedService, useCareCredits, creditBalance, totalServicePrice]);
+  }, [selectedService, useCareCredits, creditBalance, totalServicePrice, isUsingPackage]);
 
   const finalPrice = Math.max(0, totalServicePrice - creditsApplied);
 
@@ -203,6 +208,7 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
   const canProceed = () => {
     switch (currentStepKey) {
       case "service": return !!selectedService;
+      case "duration": return selectedDuration > 0;
       case "date": return !!selectedDate;
       case "dates": return !!selectedDate && !!selectedEndDate;
       case "time": return !!selectedTime;
