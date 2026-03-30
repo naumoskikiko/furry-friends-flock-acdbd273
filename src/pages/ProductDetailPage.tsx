@@ -343,6 +343,21 @@ const ProductDetailPage = () => {
           </div>
         )}
       </div>
+
+      {showShareModal && product && (
+        <SharePostModal
+          postId={product.id}
+          imageUrl={product.image_url}
+          caption={product.name}
+          username={business?.business_name || "Store"}
+          onClose={() => setShowShareModal(false)}
+          shareType="product"
+          postType="product"
+          eventDate={null}
+          eventLocation={null}
+          productPrice={product.price}
+        />
+      )}
     </AppLayout>
   );
 };
