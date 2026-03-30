@@ -97,6 +97,26 @@ const MarketplaceManagementPanel = () => {
         />
       </div>
 
+      {/* Filter tabs */}
+      <div className="flex gap-2">
+        {([
+          { key: "all" as const, label: "All" },
+          { key: "pending" as const, label: "⏳ Pending" },
+          { key: "verified" as const, label: "✅ Verified" },
+          { key: "suspended" as const, label: "🚫 Suspended" },
+        ]).map(f => (
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+              filter === f.key ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <div className="flex justify-center py-10">
           <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
