@@ -145,7 +145,7 @@ const Index = () => {
           </>
         )}
 
-        {activeTab === "blog" && <BlogFeed />}
+        {activeTab === "blog" && <BlogFeed openBlogId={openBlogId} />}
       </div>
     </AppLayout>
   );
