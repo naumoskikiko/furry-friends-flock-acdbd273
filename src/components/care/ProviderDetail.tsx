@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import AdoptionSection from "@/components/care/AdoptionSection";
 import { createPortal } from "react-dom";
 import {
   Star, BadgeCheck, MapPin, Clock, DollarSign,
