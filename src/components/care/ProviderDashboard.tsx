@@ -251,6 +251,8 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
             onTabChange={(t) => setTab(t as TabKey)}
           />
         );
+      case "adoption":
+        return isShelter && provider ? <ShelterAdoptionTab providerId={provider.id} /> : null;
       case "bookings":
         return <CareBookingsTab bookings={bookings} updateBookingStatus={updateBookingStatus} />;
       case "services":
