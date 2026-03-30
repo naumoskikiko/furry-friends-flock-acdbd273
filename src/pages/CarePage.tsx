@@ -265,7 +265,7 @@ const CarePage = () => {
               <Heart className="h-5 w-5 text-pink-500" />
               <h1 className="font-display text-lg font-bold">PetMatch</h1>
             </div>
-            <div className="px-4 py-4">
+            <div className="px-4 py-4 pb-24">
               <PetMatchTab />
             </div>
           </div>
