@@ -37,10 +37,9 @@ const ExplorePage = () => {
 
   useTabRefresh("/explore", useCallback(() => {
     setSearchQuery("");
-    setSearchInput("");
-    setActiveFilter("all");
+    setActiveFilter("All");
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []));
+  }, [setSearchQuery, setActiveFilter]));
 
   const handleResultClick = (r: any) => {
     if (r.type === "User") {
