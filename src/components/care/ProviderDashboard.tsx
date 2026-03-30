@@ -36,20 +36,27 @@ interface ProviderDashboardProps {
   onClose: () => void;
 }
 
-type TabKey = "overview" | "bookings" | "services" | "hours" | "reviews" | "earnings" | "verification" | "settings" | "analytics" | "notifications";
+type TabKey = "overview" | "bookings" | "services" | "hours" | "reviews" | "earnings" | "verification" | "settings" | "analytics" | "notifications" | "adoption";
 
-const tabs: { key: TabKey; label: string; icon: any }[] = [
-  { key: "overview", label: "Overview", icon: BarChart3 },
-  { key: "bookings", label: "Bookings", icon: Calendar },
-  { key: "services", label: "Services", icon: Briefcase },
-  { key: "hours", label: "Availability", icon: Clock },
-  { key: "earnings", label: "Earnings", icon: DollarSign },
-  { key: "reviews", label: "Reviews", icon: Star },
-  { key: "analytics", label: "Analytics", icon: TrendingUp },
-  { key: "verification", label: "Verification", icon: ShieldCheck },
-  { key: "settings", label: "Settings", icon: Settings },
-  { key: "notifications", label: "Notifications", icon: Bell },
-];
+const getTabsForCategory = (category: string): { key: TabKey; label: string; icon: any }[] => {
+  const base: { key: TabKey; label: string; icon: any }[] = [
+    { key: "overview", label: "Overview", icon: BarChart3 },
+    { key: "bookings", label: "Bookings", icon: Calendar },
+    { key: "services", label: "Services", icon: Briefcase },
+    { key: "hours", label: "Availability", icon: Clock },
+    { key: "earnings", label: "Earnings", icon: DollarSign },
+    { key: "reviews", label: "Reviews", icon: Star },
+    { key: "analytics", label: "Analytics", icon: TrendingUp },
+    { key: "verification", label: "Verification", icon: ShieldCheck },
+    { key: "settings", label: "Settings", icon: Settings },
+    { key: "notifications", label: "Notifications", icon: Bell },
+  ];
+  if (category === "shelter") {
+    // Insert adoption tab after overview
+    base.splice(1, 0, { key: "adoption", label: "Adoption", icon: Heart });
+  }
+  return base;
+};
 
 const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const { provider, loading, createProvider, updateProvider, addService, deleteService, setAvailability } = useMyProvider();
