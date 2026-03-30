@@ -147,6 +147,12 @@ const PetProfileModal = ({ pet, open, onOpenChange, isOwner, onEdit, onDelete, o
       <DialogContent className="max-w-md p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Photo */}
         <div className="relative">
+          <button
+            onClick={() => onOpenChange(false)}
+            className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
           {(editing ? form.photo_url : pet.photo_url) ? (
             <img src={editing ? form.photo_url : pet.photo_url} alt={pet.name} className="w-full aspect-square object-cover" />
           ) : (
