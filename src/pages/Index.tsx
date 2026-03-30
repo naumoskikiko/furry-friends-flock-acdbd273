@@ -87,14 +87,10 @@ const Index = () => {
         ref={feedRef}
         className="mx-auto max-w-lg"
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Pull to refresh indicator */}
-        {refreshing && (
-          <div className="flex justify-center py-4">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          </div>
-        )}
+        <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
 
         {activeTab === "feed" && (
           <>
