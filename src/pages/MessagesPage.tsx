@@ -22,10 +22,15 @@ const MessagesPage = () => {
   const { messages, forwardMessage } = useChatMessages(activeConversation?.id || null);
   const { toggleMute, deleteConversation, refresh } = useConversations();
 
-  useTabRefresh("/messages", useCallback(() => {
+  const refreshMessages = useCallback(async () => {
     refresh();
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [refresh]));
+  }, [refresh]);
+
+  useTabRefresh("/messages", refreshMessages);
+
+  const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    usePullToRefresh({ onRefresh: refreshMessages });
 
   // Handle deep-link to a specific conversation
   useEffect(() => {
