@@ -59,6 +59,8 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const { images: galleryImages, addImage, removeImage } = useProviderGallery(provider?.id || null);
   const { blockedSlots, addBlock, removeBlock } = useProviderBlockedSlots(provider?.id || null);
   const { bookedDates } = useProviderBookedSlots(provider?.id || null);
+  const isTrainer = provider?.category === "trainer";
+  const { packages: trainingPackages, addPackage: addTrainingPackage, deletePackage: deleteTrainingPackage } = useTrainingPackages(isTrainer ? provider?.id || null : null);
   const { balance } = useProviderBalance(provider?.id || null);
   const { payments: providerPayments } = useProviderPayments(provider?.id || null);
   const { payouts, requestPayout } = useProviderPayouts(provider?.id || null);
