@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Heart, MessageCircle, Share2, Bookmark, BookmarkCheck,
   MoreVertical, Send, MapPin, Calendar, Clock, Users, PawPrint, Trash2,
-  Star, ThumbsUp, CheckCircle2,
+  Star, ThumbsUp, CheckCircle2, MessageSquare,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { Input } from "@/components/ui/input";
