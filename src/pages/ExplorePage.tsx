@@ -66,7 +66,8 @@ const ExplorePage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg">
+      <div className="mx-auto max-w-lg" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+        <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
         {/* Search */}
         <div className="sticky top-0 z-40 bg-card/95 px-4 py-3 backdrop-blur-md">
           <div className="flex items-center gap-2 rounded-xl bg-secondary px-3 py-2.5">

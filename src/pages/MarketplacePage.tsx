@@ -119,7 +119,8 @@ const MarketplacePage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg pb-20">
+      <div className="mx-auto max-w-lg pb-20" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+        <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
         {/* Header */}
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <div>
