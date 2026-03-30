@@ -110,13 +110,7 @@ const Index = () => {
 
             {posts.length > 0 && posts.length % 12 !== 0 && <PeopleYouMayKnow />}
 
-            <div ref={sentinelRef} className="h-1" />
-
-            {loading && posts.length > 0 && (
-              <div className="flex justify-center py-6">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            )}
+            <InfiniteScrollSentinel loading={loading} hasMore={hasMore} onLoadMore={loadMore} itemCount={posts.length} />
           </>
         )}
 
