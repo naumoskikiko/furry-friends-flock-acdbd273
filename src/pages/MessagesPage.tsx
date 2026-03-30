@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useTabRefresh } from "@/hooks/useTabRefresh";
 import { useSearchParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import ConversationList from "@/components/messages/ConversationList";
