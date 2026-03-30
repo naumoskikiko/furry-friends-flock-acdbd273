@@ -229,21 +229,27 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
 
   const handleConfirm = async () => {
     if (!selectedService || !selectedDate || !user) return;
-    // For booking types that don't need time, use a default
     const bookingTime = selectedTime || "09:00";
     setProcessing(true);
     try {
       const dateStr = format(selectedDate, "yyyy-MM-dd");
       const endDateStr = selectedEndDate ? format(selectedEndDate, "yyyy-MM-dd") : undefined;
-      const notesWithDates = endDateStr ? `${notes ? notes + " | " : ""}Check-out: ${endDateStr}` : notes;
+      const durationNote = isTrainer ? ` | Duration: ${selectedDuration}min` : "";
+      const packageNote = selectedUserPackage ? ` | Package: ${selectedUserPackage.package?.name || "Package"}` : "";
+      const notesWithDates = `${endDateStr ? `Check-out: ${endDateStr} | ` : ""}${notes}${durationNote}${packageNote}`.trim();
       const result = await createBooking(provider.id, selectedService.id, dateStr, bookingTime, notesWithDates, selectedPetId || undefined);
 
       if (result?.id) {
+        // Use package session if applicable
+        if (selectedUserPackage) {
+          await useSession(selectedUserPackage.id);
+        }
+
         // Apply credits
         if (creditsApplied > 0) {
           await applyCreditsToPayment(creditsApplied);
         }
-      await processPayment(result.id, provider.id, totalServicePrice);
+        await processPayment(result.id, provider.id, totalServicePrice);
 
         // Send booking message
         try {
@@ -251,7 +257,7 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
           const { sendBookingMessage } = await import("@/hooks/useMessages");
           await sendBookingMessage(convId, {
             booking_id: result.id,
-            service_name: selectedService.service_name,
+            service_name: selectedService.service_name + (isTrainer ? ` (${selectedDuration}min)` : ""),
             date: dateStr + (endDateStr ? ` → ${endDateStr}` : ""),
             time: bookingTime,
             price: totalServicePrice,
