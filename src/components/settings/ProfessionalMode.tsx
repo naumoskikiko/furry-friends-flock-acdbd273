@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap, DollarSign, Sliders, TrendingUp, UserCog, Heart, Coins } from "lucide-react";
+import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap, DollarSign, Sliders, TrendingUp, UserCog, Heart, Coins, CalendarDays, Settings, Package, Home } from "lucide-react";
 import SettingsMapManagement from "./SettingsMapManagement";
 import CareVerificationPanel from "./CareVerificationPanel";
 import CareManagementPanel from "./CareManagementPanel";
@@ -13,6 +13,10 @@ import AlgorithmControlPanel from "./AlgorithmControlPanel";
 import FinancialControlPanel from "./FinancialControlPanel";
 import PetMatchManagementPanel from "./PetMatchManagementPanel";
 import CreditManagementPanel from "./CreditManagementPanel";
+import BookingManagementPanel from "./BookingManagementPanel";
+import ServiceAvailabilityPanel from "./ServiceAvailabilityPanel";
+import OrderManagementPanel from "./OrderManagementPanel";
+import ShelterManagementPanel from "./ShelterManagementPanel";
 import { useIsOwner } from "@/hooks/useIsOwner";
 
 type SubSection =
@@ -28,7 +32,11 @@ type SubSection =
   | "algorithm"
   | "financial"
   | "petmatch"
-  | "credits";
+  | "credits"
+  | "bookings"
+  | "services"
+  | "orders"
+  | "shelter";
 
 const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
@@ -55,9 +63,20 @@ const ProfessionalMode = () => {
         {sub === "financial" && <FinancialControlPanel />}
         {sub === "petmatch" && <PetMatchManagementPanel />}
         {sub === "credits" && <CreditManagementPanel />}
+        {sub === "bookings" && <BookingManagementPanel />}
+        {sub === "services" && <ServiceAvailabilityPanel />}
+        {sub === "orders" && <OrderManagementPanel />}
+        {sub === "shelter" && <ShelterManagementPanel />}
       </div>
     );
   }
+
+  const operationsSections = [
+    { id: "bookings" as const, label: "Booking Management", desc: "View, accept, reject & complete bookings", icon: CalendarDays, color: "bg-blue-500/10 text-blue-500" },
+    { id: "services" as const, label: "Services & Availability", desc: "Manage services, hours & schedules", icon: Settings, color: "bg-teal-500/10 text-teal-500" },
+    { id: "orders" as const, label: "Order Management", desc: "Track, confirm & fulfill orders", icon: Package, color: "bg-indigo-500/10 text-indigo-500" },
+    { id: "shelter" as const, label: "Shelter & Adoption", desc: "Manage adoption listings & status", icon: Home, color: "bg-pink-500/10 text-pink-500" },
+  ];
 
   const sections = [
     { id: "map-management" as const, label: "Map Management", desc: "Add, edit & delete map locations", icon: Map, color: "bg-primary/10 text-primary" },
@@ -77,8 +96,25 @@ const ProfessionalMode = () => {
     { id: "role-management" as const, label: "Role Management", desc: "Assign roles, promote & demote admins", icon: Crown, color: "bg-amber-500/10 text-amber-600" },
   ];
 
+  const renderSection = (items: typeof sections) => items.map(s => (
+    <button
+      key={s.id}
+      onClick={() => setSub(s.id)}
+      className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
+    >
+      <div className={`flex h-9 w-9 items-center justify-center rounded-full ${s.color}`}>
+        <s.icon className="h-4.5 w-4.5" />
+      </div>
+      <div className="flex-1 text-left">
+        <p className="text-sm font-semibold">{s.label}</p>
+        <p className="text-xs text-muted-foreground">{s.desc}</p>
+      </div>
+      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+    </button>
+  ));
+
   return (
-    <div className="px-4 py-4 space-y-3">
+    <div className="px-4 py-4 space-y-3 pb-24">
       <div className="rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 p-4">
         <p className="text-sm font-bold">🛠️ Professional Mode</p>
         <p className="text-xs text-muted-foreground mt-1">
@@ -89,47 +125,23 @@ const ProfessionalMode = () => {
       {/* Platform Dashboard */}
       <PlatformDashboard />
 
+      {/* Operations */}
+      <div className="space-y-1">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-1 pt-2">Operations</p>
+        {renderSection(operationsSections)}
+      </div>
+
       {/* Management Sections */}
       <div className="space-y-1">
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-1 pt-2">Management</p>
-        {sections.map(s => (
-          <button
-            key={s.id}
-            onClick={() => setSub(s.id)}
-            className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
-          >
-            <div className={`flex h-9 w-9 items-center justify-center rounded-full ${s.color}`}>
-              <s.icon className="h-4.5 w-4.5" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="text-sm font-semibold">{s.label}</p>
-              <p className="text-xs text-muted-foreground">{s.desc}</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
-        ))}
+        {renderSection(sections)}
       </div>
 
       {/* Owner-only sections */}
       {isOwner && (
         <div className="space-y-1">
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-1 pt-2">Owner Controls</p>
-          {ownerSections.map(s => (
-            <button
-              key={s.id}
-              onClick={() => setSub(s.id)}
-              className="w-full flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-secondary/60"
-            >
-              <div className={`flex h-9 w-9 items-center justify-center rounded-full ${s.color}`}>
-                <s.icon className="h-4.5 w-4.5" />
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-sm font-semibold">{s.label}</p>
-                <p className="text-xs text-muted-foreground">{s.desc}</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </button>
-          ))}
+          {renderSection(ownerSections)}
         </div>
       )}
     </div>
