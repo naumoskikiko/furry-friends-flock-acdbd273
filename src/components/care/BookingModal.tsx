@@ -8,12 +8,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCredits } from "@/hooks/useCredits";
-import { useBooking, useProviderAvailability, generateTimeSlots, CATEGORIES, type CareProvider, type CareService } from "@/hooks/useCare";
+import { useBooking, useProviderAvailability, generateTimeSlots, CATEGORIES, getBookingTypeForCategory, type CareProvider, type CareService, type BookingType } from "@/hooks/useCare";
 import { useProcessPayment, calculateFees } from "@/hooks/usePayments";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateConversation } from "@/hooks/useMessages";
-import { format, isBefore, startOfDay, isToday } from "date-fns";
+import { format, isBefore, startOfDay, isToday, addDays } from "date-fns";
 
 interface BookingModalProps {
   provider: CareProvider;
@@ -23,15 +23,43 @@ interface BookingModalProps {
   onSuccess?: () => void;
 }
 
-const STEPS = [
-  { key: "service", label: "Service", icon: "🏷️" },
-  { key: "date", label: "Date", icon: "📅" },
-  { key: "time", label: "Time", icon: "🕐" },
-  { key: "details", label: "Details", icon: "📝" },
-  { key: "review", label: "Confirm", icon: "✅" },
-] as const;
-
-type StepKey = typeof STEPS[number]["key"];
+// Dynamic steps based on booking type
+function getStepsForBookingType(bookingType: BookingType) {
+  switch (bookingType) {
+    case "date_range":
+      return [
+        { key: "service", label: "Service", icon: "🏷️" },
+        { key: "dates", label: "Dates", icon: "📅" },
+        { key: "details", label: "Details", icon: "📝" },
+        { key: "review", label: "Confirm", icon: "✅" },
+      ];
+    case "time_slot":
+      return [
+        { key: "service", label: "Service", icon: "🏷️" },
+        { key: "date", label: "Date", icon: "📅" },
+        { key: "time", label: "Time", icon: "🕐" },
+        { key: "details", label: "Details", icon: "📝" },
+        { key: "review", label: "Confirm", icon: "✅" },
+      ];
+    case "date_range_with_time":
+      return [
+        { key: "service", label: "Service", icon: "🏷️" },
+        { key: "dates", label: "Dates", icon: "📅" },
+        { key: "time", label: "Time", icon: "🕐" },
+        { key: "details", label: "Details", icon: "📝" },
+        { key: "review", label: "Confirm", icon: "✅" },
+      ];
+    case "appointment":
+    default:
+      return [
+        { key: "service", label: "Service", icon: "🏷️" },
+        { key: "date", label: "Date", icon: "📅" },
+        { key: "time", label: "Time", icon: "🕐" },
+        { key: "details", label: "Details", icon: "📝" },
+        { key: "review", label: "Confirm", icon: "✅" },
+      ];
+  }
+}
 
 const BookingModal = ({ provider, initialService, services, onClose, onSuccess }: BookingModalProps) => {
   const { user } = useAuth();
