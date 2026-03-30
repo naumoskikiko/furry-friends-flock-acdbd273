@@ -272,10 +272,6 @@ const CarePage = () => {
         </div>
       )}
 
-      {/* Adoption section */}
-      {showAdoption && (
-        <AdoptionSection onClose={() => setShowAdoption(false)} />
-      )}
     </AppLayout>
   );
 };
