@@ -12,6 +12,45 @@ import { useWishlist } from "@/hooks/useWishlist";
 import ProductImage from "@/components/marketplace/ProductImage";
 import { useRankedBusinesses, useRankedProducts } from "@/hooks/useRankedBusinesses";
 
+const StoreRow = ({ b, navigate }: { b: any; navigate: (path: string) => void }) => {
+  const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
+  return (
+    <div
+      onClick={() => navigate(`/store/${b.id}`)}
+      className="flex items-center gap-3 rounded-2xl bg-card p-3 border border-border petkeep-card-hover cursor-pointer"
+    >
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-xl shrink-0 overflow-hidden">
+        {b.logo_url ? (
+          <img src={b.logo_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+        ) : (
+          catInfo?.icon || "🏪"
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1">
+          <h4 className="text-sm font-bold truncate">{b.business_name}</h4>
+          {b.is_verified && <BadgeCheck className="h-3 w-3 text-primary shrink-0" />}
+        </div>
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+          <span className="capitalize">{b.category.replace("_", " ")}</span>
+          {b.avg_rating > 0 && (
+            <span className="flex items-center gap-0.5">
+              <Star className="h-2.5 w-2.5 fill-primary text-primary" />
+              {Number(b.avg_rating).toFixed(1)} ({b.total_reviews})
+            </span>
+          )}
+          {b.location && (
+            <span className="flex items-center gap-0.5">
+              <MapPin className="h-2.5 w-2.5" /> {b.location}
+            </span>
+          )}
+        </div>
+      </div>
+      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+    </div>
+  );
+};
+
 const MarketplacePage = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -46,7 +85,7 @@ const MarketplacePage = () => {
   const { count: wishlistCount } = useWishlist();
 
   // Apply ranking algorithm (boost affects order, not visual)
-  const rankedBusinesses = useRankedBusinesses(businesses);
+  const { promoted: promotedStores, followed: followedStores, others: otherStores, all: rankedBusinesses } = useRankedBusinesses(businesses);
   const rankedProducts = useRankedProducts(products);
 
   const featured = rankedBusinesses.filter((b) => b.avg_rating >= 4.0).slice(0, 6);
@@ -365,46 +404,38 @@ const MarketplacePage = () => {
                   <p className="text-sm font-semibold">No stores found</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {rankedBusinesses.map((b) => {
-                    const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
-                    return (
-                      <div
-                        key={b.id}
-                        onClick={() => navigate(`/store/${b.id}`)}
-                        className="flex items-center gap-3 rounded-2xl bg-card p-3 border border-border petkeep-card-hover cursor-pointer"
-                      >
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-xl shrink-0 overflow-hidden">
-                          {b.logo_url ? (
-                            <img src={b.logo_url} alt="" loading="lazy" className="h-full w-full object-cover" />
-                          ) : (
-                            catInfo?.icon || "🏪"
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1">
-                            <h4 className="text-sm font-bold truncate">{b.business_name}</h4>
-                            {b.is_verified && <BadgeCheck className="h-3 w-3 text-primary shrink-0" />}
-                          </div>
-                          <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
-                            <span className="capitalize">{b.category.replace("_", " ")}</span>
-                            {b.avg_rating > 0 && (
-                              <span className="flex items-center gap-0.5">
-                                <Star className="h-2.5 w-2.5 fill-primary text-primary" />
-                                {Number(b.avg_rating).toFixed(1)} ({b.total_reviews})
-                              </span>
-                            )}
-                            {b.location && (
-                              <span className="flex items-center gap-0.5">
-                                <MapPin className="h-2.5 w-2.5" /> {b.location}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="space-y-4">
+                  {/* Promoted Stores */}
+                  {promotedStores.length > 0 && (
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground mb-2">⚡ Promoted</p>
+                      <div className="space-y-2">
+                        {promotedStores.map((b) => <StoreRow key={b.id} b={b} navigate={navigate} />)}
                       </div>
-                    );
-                  })}
+                    </div>
+                  )}
+
+                  {/* Followed Stores */}
+                  {followedStores.length > 0 && (
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground mb-2">💜 Stores You Follow</p>
+                      <div className="space-y-2">
+                        {followedStores.map((b) => <StoreRow key={b.id} b={b} navigate={navigate} />)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Other Stores */}
+                  {otherStores.length > 0 && (
+                    <div>
+                      {(promotedStores.length > 0 || followedStores.length > 0) && (
+                        <p className="text-xs font-bold text-muted-foreground mb-2">🏪 All Stores</p>
+                      )}
+                      <div className="space-y-2">
+                        {otherStores.map((b) => <StoreRow key={b.id} b={b} navigate={navigate} />)}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
