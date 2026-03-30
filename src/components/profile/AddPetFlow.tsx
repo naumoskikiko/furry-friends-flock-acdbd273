@@ -23,7 +23,7 @@ type Step = "type" | "breed" | "details";
 const AddPetFlow = ({ open, onOpenChange, onPetAdded, editPet }: AddPetFlowProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [step, setStep] = useState<Step>("type");
+  const [step, setStep] = useState<Step>(editPet ? "details" : "type");
   const [saving, setSaving] = useState(false);
   const [breedSearch, setBreedSearch] = useState("");
 
