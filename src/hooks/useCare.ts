@@ -849,7 +849,7 @@ export function useAdoptionListings(filters?: { animal_type?: string; search?: s
   const fetchListings = useCallback(async () => {
     setLoading(true);
     let query = fromTable("adoption_listings")
-      .select("*, provider:care_providers(business_name, photo_url, location, is_verified, user_id)")
+      .select("*, provider:care_providers(business_name, photo_url, location, is_verified, user_id, phone, description)")
       .eq("status", "available")
       .order("created_at", { ascending: false });
 
