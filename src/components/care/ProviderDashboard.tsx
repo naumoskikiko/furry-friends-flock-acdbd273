@@ -57,6 +57,8 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const { bookings, updateBookingStatus } = useProviderBookings(provider?.id || null);
   const { reviews } = useProviderReviews(provider?.id || null);
   const { images: galleryImages, addImage, removeImage } = useProviderGallery(provider?.id || null);
+  const { blockedSlots, addBlock, removeBlock } = useProviderBlockedSlots(provider?.id || null);
+  const { bookedDates } = useProviderBookedSlots(provider?.id || null);
   const { balance } = useProviderBalance(provider?.id || null);
   const { payments: providerPayments } = useProviderPayments(provider?.id || null);
   const { payouts, requestPayout } = useProviderPayouts(provider?.id || null);
