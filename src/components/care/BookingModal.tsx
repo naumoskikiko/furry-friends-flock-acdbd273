@@ -82,18 +82,25 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
   const { blockedSlots } = useProviderBlockedSlots(provider.id);
 
   const bookingType = getBookingTypeForCategory(provider.category);
-  const STEPS = useMemo(() => getStepsForBookingType(bookingType), [bookingType]);
+  const isTrainer = provider.category === "trainer";
+  const STEPS = useMemo(() => getStepsForBookingType(bookingType, isTrainer), [bookingType, isTrainer]);
 
   const [step, setStep] = useState<number>(initialService ? 1 : 0);
   const [selectedService, setSelectedService] = useState<CareService | null>(initialService || null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedEndDate, setSelectedEndDate] = useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = useState("");
+  const [selectedDuration, setSelectedDuration] = useState<number>(60);
+  const [selectedUserPackage, setSelectedUserPackage] = useState<UserTrainingPackage | null>(null);
   const [notes, setNotes] = useState("");
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
   const [useCareCredits, setUseCareCredits] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [userPets, setUserPets] = useState<{ id: string; name: string; animal_type: string; breed: string | null; photo_url: string | null }[]>([]);
+
+  // Training packages (only for trainers)
+  const { packages: trainingPackages } = useTrainingPackages(isTrainer ? provider.id : null);
+  const { userPackages, purchasePackage, useSession } = useUserTrainingPackages(isTrainer ? provider.id : null);
 
   const catInfo = CATEGORIES.find((c) => c.value === provider.category);
 
