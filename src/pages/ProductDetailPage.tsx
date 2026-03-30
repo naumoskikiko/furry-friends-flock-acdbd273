@@ -147,9 +147,14 @@ const ProductDetailPage = () => {
           <button onClick={() => navigate(-1)} className="absolute top-3 left-3 rounded-full bg-background/80 backdrop-blur-sm p-2 z-10">
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <button onClick={() => id && toggleWishlist(id)} className="absolute top-3 right-3 rounded-full bg-background/80 backdrop-blur-sm p-2 z-10">
-            <Heart className={`h-4 w-4 ${wishlisted ? "fill-red-500 text-red-500" : ""}`} />
-          </button>
+          <div className="absolute top-3 right-3 flex gap-2 z-10">
+            <button onClick={() => setShowShareModal(true)} className="rounded-full bg-background/80 backdrop-blur-sm p-2">
+              <Share2 className="h-4 w-4" />
+            </button>
+            <button onClick={() => id && toggleWishlist(id)} className="rounded-full bg-background/80 backdrop-blur-sm p-2">
+              <Heart className={`h-4 w-4 ${wishlisted ? "fill-red-500 text-red-500" : ""}`} />
+            </button>
+          </div>
         </div>
 
         <div className="px-4 pt-4 space-y-4">
