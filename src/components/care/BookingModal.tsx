@@ -598,10 +598,18 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
                       <span className="font-semibold">{selectedTime}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Duration</span>
-                    <span className="font-semibold">{selectedService.duration} min</span>
-                  </div>
+                  {nights > 0 && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Nights</span>
+                      <span className="font-semibold">{nights} night{nights !== 1 ? "s" : ""}</span>
+                    </div>
+                  )}
+                  {!nights && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Duration</span>
+                      <span className="font-semibold">{selectedService.duration} min</span>
+                    </div>
+                  )}
                   {userPets.find(p => p.id === selectedPetId) && (
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">Pet</span>
