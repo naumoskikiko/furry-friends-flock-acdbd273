@@ -69,7 +69,7 @@ const Index = () => {
 
       {/* Content */}
       <div
-        ref={feedRef}
+        className="mx-auto max-w-lg"
         className="mx-auto max-w-lg"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
