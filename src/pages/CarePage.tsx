@@ -6,7 +6,7 @@ import { useCareProviders, useMyProvider, useMyBookings, useProviderAvailability
 import ProviderDetail from "@/components/care/ProviderDetail";
 import ProviderDashboard from "@/components/care/ProviderDashboard";
 import BookingHistory from "@/components/care/BookingHistory";
-import AdoptionSection from "@/components/care/AdoptionSection";
+
 import { useBoostedIds } from "@/hooks/useBoosts";
 import PetMatchTab from "@/components/care/tabs/PetMatchTab";
 
