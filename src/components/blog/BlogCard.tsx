@@ -248,6 +248,10 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
           imageUrl={post.cover_image}
           caption={post.title}
           username={post.username}
+          shareType="blog"
+          postType={post.post_type || "meetup"}
+          eventDate={post.event_date}
+          eventLocation={post.event_location}
           onClose={() => setShareModalOpen(false)}
         />
       )}
