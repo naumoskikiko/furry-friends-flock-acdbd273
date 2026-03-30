@@ -144,6 +144,9 @@ const MarketplaceManagementPanel = () => {
                       {b.is_suspended && (
                         <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full font-bold">Suspended</span>
                       )}
+                      {!b.is_verified && !b.is_suspended && (
+                        <span className="text-[10px] bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded-full font-bold">Pending</span>
+                      )}
                     </div>
                     <p className="text-[11px] text-muted-foreground">
                       {b.profile?.full_name || "Unknown"} · {productCounts[b.id] || 0} products
