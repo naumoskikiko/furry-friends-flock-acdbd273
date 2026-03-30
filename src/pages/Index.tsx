@@ -11,7 +11,8 @@ import BlogFeed from "@/components/blog/BlogFeed";
 import FeedSkeleton from "@/components/feed/FeedSkeleton";
 import PeopleYouMayKnow from "@/components/feed/PeopleYouMayKnow";
 import { useFeed } from "@/hooks/useFeed";
-import { Loader2, Newspaper, Image } from "lucide-react";
+import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
+import { Newspaper, Image } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
