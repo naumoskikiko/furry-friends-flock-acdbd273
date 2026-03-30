@@ -8,8 +8,9 @@ const fromTable = (table: string) => (supabase as any).from(table);
 
 export const useStories = () => {
   const { user } = useAuth();
-  const [storyGroups, setStoryGroups] = useState<StoryGroup[]>([]);
-  const [loading, setLoading] = useState(true);
+  const CACHE_KEY = `stories_${user?.id || "anon"}`;
+  const [storyGroups, setStoryGroups] = useState<StoryGroup[]>(() => cacheGet<StoryGroup[]>(CACHE_KEY) || []);
+  const [loading, setLoading] = useState(!cacheGet<StoryGroup[]>(CACHE_KEY));
   const [hasOwnStory, setHasOwnStory] = useState(false);
 
   const fetchStories = useCallback(async () => {
