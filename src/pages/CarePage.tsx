@@ -256,6 +256,7 @@ const CarePage = () => {
                 );
               })}
             </div>
+            <InfiniteScrollSentinel loading={loading} hasMore={hasMore} onLoadMore={loadMore} itemCount={providers.length} />
           )}
         </div>
       </div>
