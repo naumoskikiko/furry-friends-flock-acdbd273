@@ -68,6 +68,8 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const { blockedSlots, addBlock, removeBlock } = useProviderBlockedSlots(provider?.id || null);
   const { bookedDates } = useProviderBookedSlots(provider?.id || null);
   const isTrainer = provider?.category === "trainer";
+  const isShelter = provider?.category === "shelter";
+  const tabs = getTabsForCategory(provider?.category || "");
   const { packages: trainingPackages, addPackage: addTrainingPackage, deletePackage: deleteTrainingPackage } = useTrainingPackages(isTrainer ? provider?.id || null : null);
   const { balance } = useProviderBalance(provider?.id || null);
   const { payments: providerPayments } = useProviderPayments(provider?.id || null);
