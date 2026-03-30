@@ -655,6 +655,14 @@ const PetMatchTab = () => {
         myPet={activePet}
       />
 
+      {/* AddPetFlow modal for editing (available from all views) */}
+      <AddPetFlow
+        open={showAddPet || !!editPetData}
+        onOpenChange={(open) => { if (!open) { setShowAddPet(false); setEditPetData(null); } }}
+        onPetAdded={() => { setShowAddPet(false); setEditPetData(null); fetchData(); }}
+        editPet={editPetData || undefined}
+      />
+
       {/* Header */}
       <div className="rounded-2xl bg-gradient-to-br from-pink-500/10 via-primary/5 to-accent/10 border border-primary/20 p-4">
         <div className="flex items-center gap-3">
@@ -888,9 +896,16 @@ const PetMatchTab = () => {
                         <p className="text-xs text-muted-foreground">{pet?.breed} · {pet?.gender} · {pet?.age}</p>
                         {listing.looking_for && <p className="text-xs mt-1"><span className="font-semibold">Looking for:</span> {listing.looking_for}</p>}
                       </div>
-                      <button onClick={() => handleDelete(listing.id)} className="rounded-full p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        {pet && (
+                          <button onClick={() => setEditPetData(pet)} className="rounded-full p-1.5 hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors">
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        )}
+                        <button onClick={() => handleDelete(listing.id)} className="rounded-full p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Safety check for own pet */}
@@ -927,14 +942,6 @@ const PetMatchTab = () => {
       {/* ─── ACTIVITY VIEW ──────────────────────────────────────────────────── */}
       {view === "matches" && (
         <div className="space-y-3">
-          {/* AddPetFlow modal for editing */}
-          <AddPetFlow
-            open={showAddPet || !!editPetData}
-            onOpenChange={(open) => { if (!open) { setShowAddPet(false); setEditPetData(null); } }}
-            onPetAdded={() => { setShowAddPet(false); setEditPetData(null); fetchData(); }}
-            editPet={editPetData || undefined}
-          />
-
           <div className="rounded-2xl bg-card border border-border p-6 text-center">
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500/20 to-primary/20">
               <Heart className="h-7 w-7 text-primary" />
