@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   Heart, Plus, PawPrint, Shield, Upload, Trash2, Search, BadgeCheck,
   Star, AlertTriangle, ChevronDown, ChevronUp, MessageCircle, Flame,
-  Eye, Flag, X, Syringe, Calendar, Dog, Pencil, CheckCircle2, Camera, FileText, MapPin, Loader2
+  Eye, Flag, X, Syringe, Calendar, Dog, Pencil, CheckCircle2, Camera, FileText, MapPin, Loader2, Clock
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
