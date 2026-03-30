@@ -896,9 +896,16 @@ const PetMatchTab = () => {
                         <p className="text-xs text-muted-foreground">{pet?.breed} · {pet?.gender} · {pet?.age}</p>
                         {listing.looking_for && <p className="text-xs mt-1"><span className="font-semibold">Looking for:</span> {listing.looking_for}</p>}
                       </div>
-                      <button onClick={() => handleDelete(listing.id)} className="rounded-full p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        {pet && (
+                          <button onClick={() => setEditPetData(pet)} className="rounded-full p-1.5 hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors">
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        )}
+                        <button onClick={() => handleDelete(listing.id)} className="rounded-full p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Safety check for own pet */}
