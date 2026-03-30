@@ -30,32 +30,66 @@ const MessagesPage = () => {
       const openMeetupChat = async () => {
         const { data: blogPost } = await (supabase as any)
           .from("blog_posts")
-          .select("conversation_id, title")
+          .select("conversation_id, title, user_id")
           .eq("id", meetupId)
           .single();
 
-        if (!blogPost?.conversation_id) {
-          toast({ title: "Meetup chat not available", variant: "destructive" });
+        if (!blogPost) {
+          toast({ title: "This meetup is no longer available", variant: "destructive" });
           setSearchParams({}, { replace: true });
           return;
         }
 
-        // Check membership
+        let convId = blogPost.conversation_id;
+
+        // Auto-create chat if missing (fallback for older meetups)
+        if (!convId) {
+          try {
+            const { data: newConvId } = await (supabase as any).rpc("create_meetup_chat", {
+              _blog_post_id: meetupId,
+              _creator_id: blogPost.user_id,
+              _meetup_title: blogPost.title,
+            });
+            convId = newConvId;
+          } catch (e) {
+            console.error("Failed to auto-create meetup chat:", e);
+            toast({ title: "Could not create meetup chat", variant: "destructive" });
+            setSearchParams({}, { replace: true });
+            return;
+          }
+        }
+
+        // Check membership — auto-join if user is a meetup participant but not in chat
         const { data: membership } = await (supabase as any)
           .from("conversation_participants")
           .select("id")
-          .eq("conversation_id", blogPost.conversation_id)
+          .eq("conversation_id", convId)
           .eq("user_id", user.id)
           .maybeSingle();
 
         if (!membership) {
-          toast({ title: "Join the meetup to access the chat", variant: "destructive" });
-          setSearchParams({}, { replace: true });
-          return;
+          // Check if user is a meetup participant
+          const { data: eventPart } = await (supabase as any)
+            .from("blog_event_participants")
+            .select("id")
+            .eq("blog_post_id", meetupId)
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (eventPart) {
+            // Auto-add to chat
+            try {
+              await (supabase as any).rpc("join_meetup_chat", { _blog_post_id: meetupId, _user_id: user.id });
+            } catch {}
+          } else {
+            toast({ title: "Join the meetup to access the chat", variant: "destructive" });
+            setSearchParams({}, { replace: true });
+            return;
+          }
         }
 
         setActiveConversation({
-          id: blogPost.conversation_id,
+          id: convId,
           created_at: new Date().toISOString(),
           other_user: {
             user_id: "group",
