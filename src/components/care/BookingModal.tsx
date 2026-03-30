@@ -120,13 +120,16 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
 
   const finalPrice = selectedService ? Math.max(0, selectedService.price - creditsApplied) : 0;
 
+  const currentStepKey = STEPS[step]?.key;
+
   const canProceed = () => {
-    switch (step) {
-      case 0: return !!selectedService;
-      case 1: return !!selectedDate;
-      case 2: return !!selectedTime;
-      case 3: return true;
-      case 4: return true;
+    switch (currentStepKey) {
+      case "service": return !!selectedService;
+      case "date": return !!selectedDate;
+      case "dates": return !!selectedDate && !!selectedEndDate;
+      case "time": return !!selectedTime;
+      case "details": return true;
+      case "review": return true;
       default: return false;
     }
   };
@@ -141,7 +144,9 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
   };
 
   const handleConfirm = async () => {
-    if (!selectedService || !selectedDate || !selectedTime || !user) return;
+    if (!selectedService || !selectedDate || !user) return;
+    // For booking types that don't need time, use a default
+    const bookingTime = selectedTime || "09:00";
     setProcessing(true);
     try {
       const dateStr = format(selectedDate, "yyyy-MM-dd");
