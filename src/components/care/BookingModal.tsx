@@ -295,7 +295,6 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
              bookingType === "time_slot" ? "Book Walk" :
              bookingType === "date_range_with_time" ? "Book Boarding" : "Book Appointment"}
           </h2>
-          </h2>
           <div className="w-8" />
         </div>
 
