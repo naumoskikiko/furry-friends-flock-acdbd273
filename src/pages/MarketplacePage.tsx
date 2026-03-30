@@ -79,12 +79,17 @@ const MarketplacePage = () => {
     if (q.length >= 2 || q.length === 0) setSearchQuery(q);
   };
 
-  useTabRefresh("/marketplace", useCallback(() => {
+  const refreshMarketplace = useCallback(async () => {
     setSearchQuery("");
     setSearchInput("");
     setActiveTab("discover");
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []));
+  }, []);
+
+  useTabRefresh("/marketplace", refreshMarketplace);
+
+  const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    usePullToRefresh({ onRefresh: refreshMarketplace });
 
   const isBusiness = profile?.role === "business";
   const { isAdmin } = useIsAdmin();
