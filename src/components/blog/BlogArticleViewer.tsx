@@ -226,12 +226,26 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
     setParticipantsCount((c) => newJoined ? c + 1 : Math.max(0, c - 1));
     if (newJoined) {
       await fromTable("blog_event_participants").insert({ blog_post_id: post.id, user_id: user.id });
+      // Auto-join meetup chat
+      try {
+        await (supabase as any).rpc("join_meetup_chat", { _blog_post_id: post.id, _user_id: user.id });
+      } catch {}
       toast({ title: "You joined the event! 🎉" });
     } else {
       await fromTable("blog_event_participants").delete().eq("blog_post_id", post.id).eq("user_id", user.id);
+      // Auto-leave meetup chat
+      try {
+        await (supabase as any).rpc("leave_meetup_chat", { _blog_post_id: post.id, _user_id: user.id });
+      } catch {}
       toast({ title: "Left the event" });
     }
     loadParticipants();
+  };
+
+  const openMeetupChat = () => {
+    if (!post) return;
+    onOpenChange(false);
+    navigate(`/messages?meetup=${post.id}`);
   };
 
   const handleShareArticle = async () => {
