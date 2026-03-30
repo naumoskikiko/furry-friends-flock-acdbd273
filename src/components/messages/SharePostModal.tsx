@@ -14,6 +14,13 @@ interface SharePostModalProps {
   caption: string | null;
   username: string;
   onClose: () => void;
+  /** "post" (default) or "blog" — determines message_type sent */
+  shareType?: "post" | "blog";
+  /** e.g. "meetup", "article", "question" — stored in metadata */
+  postType?: string;
+  /** Extra metadata for blog shares (event info) */
+  eventDate?: string | null;
+  eventLocation?: string | null;
 }
 
 const SharePostModal = ({ postId, imageUrl, caption, username, onClose }: SharePostModalProps) => {
