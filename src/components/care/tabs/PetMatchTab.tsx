@@ -655,6 +655,14 @@ const PetMatchTab = () => {
         myPet={activePet}
       />
 
+      {/* AddPetFlow modal for editing (available from all views) */}
+      <AddPetFlow
+        open={showAddPet || !!editPetData}
+        onOpenChange={(open) => { if (!open) { setShowAddPet(false); setEditPetData(null); } }}
+        onPetAdded={() => { setShowAddPet(false); setEditPetData(null); fetchData(); }}
+        editPet={editPetData || undefined}
+      />
+
       {/* Header */}
       <div className="rounded-2xl bg-gradient-to-br from-pink-500/10 via-primary/5 to-accent/10 border border-primary/20 p-4">
         <div className="flex items-center gap-3">
