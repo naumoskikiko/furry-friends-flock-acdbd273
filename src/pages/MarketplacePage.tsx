@@ -69,7 +69,7 @@ const MarketplacePage = () => {
     activeTab === "stores" ? businessCategory : undefined,
     searchQuery || undefined
   );
-  const { products, loading: prodLoading } = useAllProducts(
+  const { products, loading: prodLoading, hasMore: hasMoreProducts, loadMore: loadMoreProducts } = useAllProducts(
     activeTab === "products" ? productCategory : undefined,
     searchQuery || undefined
   );
