@@ -14,16 +14,18 @@ interface SharePostModalProps {
   caption: string | null;
   username: string;
   onClose: () => void;
-  /** "post" (default) or "blog" — determines message_type sent */
-  shareType?: "post" | "blog";
-  /** e.g. "meetup", "article", "question" — stored in metadata */
+  /** "post" (default), "blog", or "product" — determines message_type sent */
+  shareType?: "post" | "blog" | "product";
+  /** e.g. "meetup", "article", "question", "product" — stored in metadata */
   postType?: string;
   /** Extra metadata for blog shares (event info) */
   eventDate?: string | null;
   eventLocation?: string | null;
+  /** Product price for product shares */
+  productPrice?: number | null;
 }
 
-const SharePostModal = ({ postId, imageUrl, caption, username, onClose, shareType = "post", postType, eventDate, eventLocation }: SharePostModalProps) => {
+const SharePostModal = ({ postId, imageUrl, caption, username, onClose, shareType = "post", postType, eventDate, eventLocation, productPrice }: SharePostModalProps) => {
   const { allConversations } = useConversations();
   const { user } = useAuth();
   const { toast } = useToast();
