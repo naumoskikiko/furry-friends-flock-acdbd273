@@ -619,3 +619,91 @@ export function generateTimeSlots(startTime: string, endTime: string, durationMi
 
   return slots;
 }
+
+// --- Blocked slots management ---
+export function useProviderBlockedSlots(providerId: string | null) {
+  const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
+
+  const fetchBlocked = useCallback(async () => {
+    if (!providerId) { setBlockedSlots([]); return; }
+    const { data } = await fromTable("provider_blocked_slots")
+      .select("*")
+      .eq("provider_id", providerId)
+      .order("blocked_date", { ascending: true });
+    setBlockedSlots((data || []) as BlockedSlot[]);
+  }, [providerId]);
+
+  useEffect(() => { fetchBlocked(); }, [fetchBlocked]);
+
+  const addBlock = useCallback(async (date: string, time?: string, reason?: string) => {
+    if (!providerId) return;
+    await fromTable("provider_blocked_slots").insert({
+      provider_id: providerId,
+      blocked_date: date,
+      blocked_time: time || null,
+      block_type: time ? "time_slot" : "full_day",
+      reason: reason || "",
+    });
+    fetchBlocked();
+  }, [providerId, fetchBlocked]);
+
+  const removeBlock = useCallback(async (blockId: string) => {
+    await fromTable("provider_blocked_slots").delete().eq("id", blockId);
+    fetchBlocked();
+  }, [fetchBlocked]);
+
+  return { blockedSlots, addBlock, removeBlock, refresh: fetchBlocked };
+}
+
+// --- Fetch existing bookings for a provider (for availability checking) ---
+export function useProviderBookedSlots(providerId: string | null) {
+  const [bookedDates, setBookedDates] = useState<Set<string>>(new Set());
+  const [bookedTimeSlots, setBookedTimeSlots] = useState<Map<string, Set<string>>>(new Map());
+
+  const fetchBooked = useCallback(async () => {
+    if (!providerId) return;
+    const { data } = await fromTable("care_bookings")
+      .select("booking_date, booking_time, notes, status")
+      .eq("provider_id", providerId)
+      .in("status", ["pending", "confirmed"]);
+
+    const dates = new Set<string>();
+    const timeMap = new Map<string, Set<string>>();
+
+    (data || []).forEach((b: any) => {
+      const dateStr = b.booking_date;
+      // For date_range bookings, block entire date
+      dates.add(dateStr);
+      
+      // Also track booked time slots per date
+      if (!timeMap.has(dateStr)) timeMap.set(dateStr, new Set());
+      timeMap.get(dateStr)!.add(b.booking_time?.slice(0, 5) || "");
+
+      // If notes contain checkout date, block the range
+      if (b.notes && b.notes.includes("Check-out:")) {
+        const match = b.notes.match(/Check-out:\s*(\d{4}-\d{2}-\d{2})/);
+        if (match) {
+          const checkOut = new Date(match[1]);
+          const checkIn = new Date(dateStr);
+          let current = new Date(checkIn);
+          while (current <= checkOut) {
+            dates.add(current.toISOString().split("T")[0]);
+            current.setDate(current.getDate() + 1);
+          }
+        }
+      }
+    });
+
+    setBookedDates(dates);
+    setBookedTimeSlots(timeMap);
+  }, [providerId]);
+
+  useEffect(() => { fetchBooked(); }, [fetchBooked]);
+
+  return { bookedDates, bookedTimeSlots, refresh: fetchBooked };
+}
+
+// --- Calculate nights between two dates ---
+export function calculateNights(startDate: Date, endDate: Date): number {
+  return Math.max(0, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+}
