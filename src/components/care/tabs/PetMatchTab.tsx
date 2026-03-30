@@ -10,6 +10,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { calculateCompatibility, getBreederTrustScore, isSafeForBreeding } from "@/lib/petMatchAlgorithm";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
@@ -24,6 +26,11 @@ interface Pet {
   neutered: boolean | null;
   vaccinated: boolean | null;
   weight: string | null;
+  temperament?: string | null;
+  medical_notes?: string | null;
+  special_care?: string | null;
+  emergency_contact?: string | null;
+  vet_info?: string | null;
 }
 
 interface PetMatchListing {
@@ -105,17 +112,195 @@ const SafetyIndicators = ({ pet }: { pet: Pet }) => {
   );
 };
 
+// ─── Full Pet Profile Modal ─────────────────────────────────────────────────
+const PetProfileDetailModal = ({
+  listing,
+  open,
+  onOpenChange,
+  myPet,
+}: {
+  listing: PetMatchListing | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  myPet: Pet | null;
+}) => {
+  if (!listing?.pet) return null;
+  const pet = listing.pet;
+  const compatibility = myPet
+    ? calculateCompatibility(myPet as any, pet as any)
+    : null;
+  const { score: trustScore, badges } = getBreederTrustScore(listing);
+
+  const InfoRow = ({ label, value }: { label: string; value: string | null | undefined }) => {
+    if (!value) return null;
+    return (
+      <div className="flex justify-between py-2 border-b border-border last:border-0">
+        <span className="text-sm text-muted-foreground">{label}</span>
+        <span className="text-sm font-semibold">{value}</span>
+      </div>
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+        {/* Image */}
+        <div className="relative aspect-square bg-secondary">
+          {pet.photo_url ? (
+            <img src={pet.photo_url} alt={pet.name} className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <PawPrint className="h-20 w-20 text-muted-foreground/20" />
+            </div>
+          )}
+          {/* Verification badges overlay */}
+          <div className="absolute top-3 left-3 flex flex-col gap-1">
+            {listing.breed_document_url && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-accent/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-bold text-accent-foreground">
+                <BadgeCheck className="h-3 w-3" /> Verified Breed
+              </span>
+            )}
+            {badges.includes("Approved Listing") && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-green-500/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-bold text-white">
+                <Shield className="h-3 w-3" /> Approved
+              </span>
+            )}
+          </div>
+          {/* Compatibility in corner */}
+          {compatibility && (
+            <div className="absolute bottom-3 right-3">
+              <CompatibilityBadge score={compatibility.score} label={compatibility.label} color={compatibility.color} />
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 space-y-3">
+          {/* Name & basic info */}
+          <div>
+            <h2 className="font-display text-xl font-extrabold">{pet.name}</h2>
+            <p className="text-sm text-muted-foreground">{pet.breed || pet.animal_type} · {pet.gender} · {pet.age || "Age unknown"}</p>
+          </div>
+
+          {/* Safety indicators */}
+          <SafetyIndicators pet={pet} />
+
+          {/* Trust score */}
+          <div className="flex items-center gap-2 rounded-xl bg-secondary/60 px-3 py-2">
+            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+            <span className="text-sm font-bold">Trust Score: {trustScore.toFixed(1)}/5</span>
+            <div className="flex gap-1 ml-auto">
+              {badges.map((b, i) => (
+                <span key={i} className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold text-primary">{b}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Compatibility breakdown */}
+          {compatibility && (
+            <div className="space-y-1.5 rounded-xl bg-secondary/40 p-3">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Compatibility Breakdown</p>
+              {compatibility.factors.map((f) => (
+                <div key={f.name} className="flex items-center gap-2">
+                  <span className="text-xs">{f.icon}</span>
+                  <span className="text-[10px] font-semibold flex-1">{f.name}</span>
+                  <div className="h-1.5 w-16 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${f.score >= 70 ? "bg-green-500" : f.score >= 50 ? "bg-amber-400" : "bg-orange-400"}`}
+                      style={{ width: `${f.score}%` }}
+                    />
+                  </div>
+                  <span className="text-[9px] font-bold w-6 text-right">{f.score}%</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Description */}
+          {listing.description && (
+            <div>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Description</p>
+              <p className="text-sm">{listing.description}</p>
+            </div>
+          )}
+
+          {/* Looking for */}
+          {listing.looking_for && (
+            <div className="rounded-xl bg-secondary/60 px-3 py-2">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Looking for</p>
+              <p className="text-sm font-medium mt-0.5">{listing.looking_for}</p>
+            </div>
+          )}
+
+          {/* Detailed info */}
+          <div>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Details</p>
+            <InfoRow label="Animal Type" value={pet.animal_type} />
+            <InfoRow label="Breed" value={pet.breed} />
+            <InfoRow label="Age" value={pet.age} />
+            <InfoRow label="Gender" value={pet.gender} />
+            <InfoRow label="Weight" value={pet.weight ? `${pet.weight} kg` : null} />
+            <InfoRow label="Temperament" value={pet.temperament} />
+            <InfoRow label="Medical Notes" value={pet.medical_notes} />
+            <InfoRow label="Special Care" value={pet.special_care} />
+          </div>
+
+          {/* Vaccination info */}
+          <div className="flex flex-wrap gap-1.5">
+            {pet.vaccinated === true && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/20 px-2.5 py-1 text-xs font-semibold text-green-700 dark:text-green-400">
+                <Syringe className="h-3 w-3" /> Vaccinated ✓
+              </span>
+            )}
+            {pet.vaccinated === false && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/20 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                <Syringe className="h-3 w-3" /> Not Vaccinated
+              </span>
+            )}
+            {pet.neutered === true && (
+              <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold">Neutered/Spayed</span>
+            )}
+            {pet.neutered === false && (
+              <span className="rounded-full bg-blue-100 dark:bg-blue-900/20 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:text-blue-400">Fertile ✓</span>
+            )}
+          </div>
+
+          {/* Owner info */}
+          {listing.profile && (
+            <div className="flex items-center gap-3 rounded-xl bg-secondary/40 p-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={listing.profile.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary/10 font-bold">{listing.profile.full_name?.[0]}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <p className="text-sm font-bold">{listing.profile.full_name}</p>
+                {listing.profile.username && <p className="text-xs text-muted-foreground">@{listing.profile.username}</p>}
+              </div>
+              {badges.includes("Verified Owner") && <Shield className="h-4 w-4 text-primary" />}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 // ─── Premium Pet Card ───────────────────────────────────────────────────────
 const PetMatchCard = ({
   listing,
   myPet,
   onContact,
   onReport,
+  onViewProfile,
+  onLike,
+  onSkip,
 }: {
   listing: PetMatchListing;
   myPet: Pet | null;
   onContact: () => void;
   onReport: () => void;
+  onViewProfile: () => void;
+  onLike: () => void;
+  onSkip: () => void;
 }) => {
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
@@ -131,8 +316,8 @@ const PetMatchCard = ({
 
   return (
     <div className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover transition-all">
-      {/* Photo header */}
-      <div className="relative aspect-[4/3] bg-gradient-to-br from-primary/10 to-accent/10">
+      {/* Photo header - clickable */}
+      <button onClick={onViewProfile} className="relative aspect-[4/3] bg-gradient-to-br from-primary/10 to-accent/10 w-full">
         {pet.photo_url ? (
           <img src={pet.photo_url} alt={pet.name} className="h-full w-full object-cover" />
         ) : (
@@ -154,7 +339,7 @@ const PetMatchCard = ({
         {/* Gradient overlay at bottom */}
         <div className="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
         <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between">
-          <div>
+          <div className="text-left">
             <h3 className="font-display text-lg font-extrabold text-white drop-shadow-md">{pet.name}</h3>
             <p className="text-[11px] text-white/80 font-medium drop-shadow-sm">
               {pet.breed || pet.animal_type} · {pet.gender} · {pet.age || "Age unknown"}
@@ -162,7 +347,7 @@ const PetMatchCard = ({
           </div>
           {compatibility && <CompatibilityBadge score={compatibility.score} label={compatibility.label} color={compatibility.color} />}
         </div>
-      </div>
+      </button>
 
       {/* Content */}
       <div className="p-3.5">
@@ -206,6 +391,28 @@ const PetMatchCard = ({
         {listing.description && (
           <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{listing.description}</p>
         )}
+
+        {/* Like / Skip buttons */}
+        <div className="mt-3 flex items-center justify-center gap-4">
+          <button
+            onClick={onSkip}
+            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <button
+            onClick={onViewProfile}
+            className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary/30 text-primary hover:bg-primary/10 transition-colors"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+          <button
+            onClick={onLike}
+            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-green-500/30 text-green-500 hover:bg-green-500/10 transition-colors"
+          >
+            <Heart className="h-5 w-5" />
+          </button>
+        </div>
 
         {/* Owner & actions */}
         <div className="mt-3 flex items-center justify-between">
@@ -254,13 +461,16 @@ const PetMatchTab = () => {
   const [uploading, setUploading] = useState(false);
   const [filterType, setFilterType] = useState("all");
   const [sortBy, setSortBy] = useState<"compatibility" | "recent" | "trust">("compatibility");
+  const [profileListing, setProfileListing] = useState<PetMatchListing | null>(null);
+  const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set());
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
 
   const fetchData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
 
     const [petsRes, myRes, allRes] = await Promise.all([
-      supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight").eq("owner_id", user.id),
+      supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight, temperament, medical_notes, special_care, emergency_contact, vet_info").eq("owner_id", user.id),
       fromTable("petmatch_listings").select("*").eq("user_id", user.id),
       fromTable("petmatch_listings").select("*").eq("is_active", true).neq("user_id", user.id),
     ]);
@@ -275,7 +485,7 @@ const PetMatchTab = () => {
       const petIds = listings.map((l) => l.pet_id);
       const userIds = [...new Set(listings.map((l) => l.user_id))];
       const [petsData, profilesData] = await Promise.all([
-        supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight").in("id", petIds),
+        supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight, temperament, medical_notes, special_care, emergency_contact, vet_info").in("id", petIds),
         supabase.from("profiles").select("user_id, full_name, avatar_url, username").in("user_id", userIds),
       ]);
       const petsMap = Object.fromEntries((petsData.data || []).map((p: any) => [p.id, p]));
@@ -357,6 +567,15 @@ const PetMatchTab = () => {
     toast({ title: "Report submitted", description: "Our team will review this listing shortly." });
   };
 
+  const handleLike = (listing: PetMatchListing) => {
+    setLikedIds(prev => new Set(prev).add(listing.id));
+    toast({ title: `❤️ You liked ${listing.pet?.name}!`, description: "They'll be notified if it's a mutual match." });
+  };
+
+  const handleSkip = (listing: PetMatchListing) => {
+    setSkippedIds(prev => new Set(prev).add(listing.id));
+  };
+
   const listedPetIds = myListings.map((l) => l.pet_id);
   const availablePets = pets.filter((p) => !listedPetIds.includes(p.id));
   const activePet = pets.find((p) => p.id === activePetFilter) || pets[0] || null;
@@ -364,12 +583,34 @@ const PetMatchTab = () => {
   // Filter & sort listings
   let filteredListings = filterType === "all" ? allListings : allListings.filter((l) => l.pet?.animal_type === filterType);
 
+  // Remove skipped listings
+  filteredListings = filteredListings.filter(l => !skippedIds.has(l.id));
+
+  // Best Match = same breed filter
+  let noExactBreedMatch = false;
   if (sortBy === "compatibility" && activePet) {
-    filteredListings = [...filteredListings].sort((a, b) => {
-      const scoreA = a.pet ? calculateCompatibility(activePet as any, a.pet as any).score : 0;
-      const scoreB = b.pet ? calculateCompatibility(activePet as any, b.pet as any).score : 0;
-      return scoreB - scoreA;
-    });
+    const sameBreedListings = filteredListings.filter(l =>
+      l.pet?.breed && activePet.breed &&
+      l.pet.breed.toLowerCase() === activePet.breed.toLowerCase()
+    );
+
+    if (sameBreedListings.length > 0) {
+      filteredListings = sameBreedListings.sort((a, b) => {
+        const scoreA = a.pet ? calculateCompatibility(activePet as any, a.pet as any).score : 0;
+        const scoreB = b.pet ? calculateCompatibility(activePet as any, b.pet as any).score : 0;
+        return scoreB - scoreA;
+      });
+    } else {
+      noExactBreedMatch = true;
+      // Fallback: show all same animal_type sorted by compatibility
+      filteredListings = [...filteredListings]
+        .filter(l => l.pet?.animal_type === activePet.animal_type)
+        .sort((a, b) => {
+          const scoreA = a.pet ? calculateCompatibility(activePet as any, a.pet as any).score : 0;
+          const scoreB = b.pet ? calculateCompatibility(activePet as any, b.pet as any).score : 0;
+          return scoreB - scoreA;
+        });
+    }
   } else if (sortBy === "recent") {
     filteredListings = [...filteredListings].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   } else if (sortBy === "trust") {
@@ -402,6 +643,14 @@ const PetMatchTab = () => {
 
   return (
     <div className="space-y-4">
+      {/* Pet Profile Detail Modal */}
+      <PetProfileDetailModal
+        listing={profileListing}
+        open={!!profileListing}
+        onOpenChange={(open) => { if (!open) setProfileListing(null); }}
+        myPet={activePet}
+      />
+
       {/* Header */}
       <div className="rounded-2xl bg-gradient-to-br from-pink-500/10 via-primary/5 to-accent/10 border border-primary/20 p-4">
         <div className="flex items-center gap-3">
@@ -497,6 +746,18 @@ const PetMatchTab = () => {
             </select>
           </div>
 
+          {/* No exact breed match message */}
+          {noExactBreedMatch && sortBy === "compatibility" && activePet?.breed && (
+            <div className="rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 p-3 text-center">
+              <p className="text-xs font-semibold text-amber-800 dark:text-amber-400">
+                No exact {activePet.breed} matches found
+              </p>
+              <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-0.5">
+                Showing similar breeds instead
+              </p>
+            </div>
+          )}
+
           {/* Cards */}
           {filteredListings.length === 0 ? (
             <div className="text-center py-12">
@@ -513,6 +774,9 @@ const PetMatchTab = () => {
                   myPet={activePet}
                   onContact={() => handleContact(listing)}
                   onReport={() => handleReport(listing)}
+                  onViewProfile={() => setProfileListing(listing)}
+                  onLike={() => handleLike(listing)}
+                  onSkip={() => handleSkip(listing)}
                 />
               ))}
             </div>
@@ -626,7 +890,7 @@ const PetMatchTab = () => {
                     </div>
 
                     {/* Safety check for own pet */}
-                    {pet && <SafetyIndicators pet={pet} />}
+                    {pet && <SafetyIndicators pet={pet as Pet} />}
 
                     {/* Verification docs */}
                     {!listing.breed_document_url && (
@@ -680,21 +944,12 @@ const PetMatchTab = () => {
               <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">Pending</p>
             </div>
             <div className="rounded-xl bg-card border border-border p-3 text-center">
-              <p className="text-lg font-extrabold text-muted-foreground">{allListings.length}</p>
-              <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">Available</p>
+              <p className="text-lg font-extrabold text-muted-foreground">{likedIds.size}</p>
+              <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">Liked</p>
             </div>
           </div>
 
-          {/* Tips */}
-          <div className="rounded-2xl bg-gradient-to-br from-accent/10 to-primary/5 border border-accent/20 p-4">
-            <h4 className="text-xs font-bold flex items-center gap-1.5">
-              <Flame className="h-3.5 w-3.5 text-primary" /> Boost Your Listing
-            </h4>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              Coming soon: boost your pet's profile to appear at the top of search results and get matched faster.
-            </p>
-          </div>
-
+          {/* Safety Checklist */}
           <div className="rounded-2xl bg-card border border-border p-4">
             <h4 className="text-xs font-bold flex items-center gap-1.5 mb-2">
               <Shield className="h-3.5 w-3.5 text-accent" /> Safety Checklist
