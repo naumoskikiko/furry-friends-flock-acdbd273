@@ -4,6 +4,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import AppLayout from "@/components/AppLayout";
 import { Star, BadgeCheck, MapPin, ChevronRight, Search, Briefcase, Clock, History, Heart } from "lucide-react";
+import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCareProviders, useMyProvider, useMyBookings, useProviderAvailability, CATEGORIES, type CareProvider } from "@/hooks/useCare";
 import ProviderDetail from "@/components/care/ProviderDetail";
