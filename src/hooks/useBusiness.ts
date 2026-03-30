@@ -15,6 +15,7 @@ export interface BusinessProfile {
   avg_rating: number;
   total_reviews: number;
   is_verified: boolean;
+  is_suspended: boolean;
   created_at: string;
   updated_at: string;
   profile?: { full_name: string; avatar_url: string | null; username: string | null };
