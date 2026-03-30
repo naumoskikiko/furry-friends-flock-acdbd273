@@ -540,6 +540,23 @@ const PetMatchTab = () => {
       });
     }
     setAllListings(listings.filter((l) => l.status === "approved"));
+
+    // Fetch verification statuses for own pets
+    if (myPets.length > 0) {
+      const myPetIds = myPets.map(p => p.id);
+      const { data: myVerData } = await fromTable("pet_verifications")
+        .select("pet_id, verification_type, status")
+        .in("pet_id", myPetIds);
+      const verLookup: Record<string, { vaccination: string; neutered: string }> = {};
+      myPets.forEach(p => { verLookup[p.id] = { vaccination: "not_submitted", neutered: "not_submitted" }; });
+      (myVerData || []).forEach((v: any) => {
+        if (!verLookup[v.pet_id]) verLookup[v.pet_id] = { vaccination: "not_submitted", neutered: "not_submitted" };
+        if (v.verification_type === "vaccination") verLookup[v.pet_id].vaccination = v.status;
+        if (v.verification_type === "neutered") verLookup[v.pet_id].neutered = v.status;
+      });
+      setPetVerifications(verLookup);
+    }
+
     setLoading(false);
   }, [user]);
 
