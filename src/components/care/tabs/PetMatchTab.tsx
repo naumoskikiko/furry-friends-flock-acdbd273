@@ -512,14 +512,27 @@ const PetMatchTab = () => {
     if (listings.length > 0) {
       const petIds = listings.map((l) => l.pet_id);
       const userIds = [...new Set(listings.map((l) => l.user_id))];
-      const [petsData, profilesData] = await Promise.all([
-        supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight, temperament, medical_notes, special_care, emergency_contact, vet_info").in("id", petIds),
+      const [petsData, profilesData, verificationsData] = await Promise.all([
+        supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight, temperament, medical_notes, special_care, emergency_contact, vet_info, owner_id").in("id", petIds),
         supabase.from("profiles").select("user_id, full_name, avatar_url, username").in("user_id", userIds),
+        fromTable("pet_verifications").select("pet_id, verification_type, status").in("pet_id", petIds).eq("status", "verified"),
       ]);
       const petsMap = Object.fromEntries((petsData.data || []).map((p: any) => [p.id, p]));
       const profilesMap = Object.fromEntries((profilesData.data || []).map((p: any) => [p.user_id, p]));
+      // Build verification lookup
+      const verMap: Record<string, { vaccination_verified: boolean; neutered_verified: boolean }> = {};
+      (verificationsData.data || []).forEach((v: any) => {
+        if (!verMap[v.pet_id]) verMap[v.pet_id] = { vaccination_verified: false, neutered_verified: false };
+        if (v.verification_type === "vaccination") verMap[v.pet_id].vaccination_verified = true;
+        if (v.verification_type === "neutered") verMap[v.pet_id].neutered_verified = true;
+      });
       listings.forEach((l) => {
-        l.pet = petsMap[l.pet_id];
+        const pet = petsMap[l.pet_id];
+        if (pet && verMap[l.pet_id]) {
+          pet.vaccination_verified = verMap[l.pet_id].vaccination_verified;
+          pet.neutered_verified = verMap[l.pet_id].neutered_verified;
+        }
+        l.pet = pet;
         l.profile = profilesMap[l.user_id];
       });
     }
