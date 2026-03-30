@@ -32,21 +32,6 @@ const Index = () => {
   const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
     usePullToRefresh({ onRefresh: refreshAll });
 
-  // Infinite scroll observer
-  useEffect(() => {
-    if (activeTab !== "feed") return;
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) loadMore();
-      },
-      { rootMargin: "200px" }
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasMore, loading, loadMore, activeTab]);
-
   const showSkeleton = loading && posts.length === 0;
 
   return (
