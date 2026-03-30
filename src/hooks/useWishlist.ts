@@ -22,8 +22,9 @@ export interface WishlistItem {
 
 export function useWishlist() {
   const { user } = useAuth();
-  const [items, setItems] = useState<WishlistItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const CACHE_KEY = `wishlist_${user?.id || "anon"}`;
+  const [items, setItems] = useState<WishlistItem[]>(() => cacheGet<WishlistItem[]>(CACHE_KEY) || []);
+  const [loading, setLoading] = useState(!cacheGet<WishlistItem[]>(CACHE_KEY));
   const [wishlistIds, setWishlistIds] = useState<Set<string>>(new Set());
 
   const refresh = useCallback(async () => {
