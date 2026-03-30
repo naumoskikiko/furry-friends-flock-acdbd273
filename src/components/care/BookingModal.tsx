@@ -150,7 +150,9 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
     setProcessing(true);
     try {
       const dateStr = format(selectedDate, "yyyy-MM-dd");
-      const result = await createBooking(provider.id, selectedService.id, dateStr, selectedTime, notes, selectedPetId || undefined);
+      const endDateStr = selectedEndDate ? format(selectedEndDate, "yyyy-MM-dd") : undefined;
+      const notesWithDates = endDateStr ? `${notes ? notes + " | " : ""}Check-out: ${endDateStr}` : notes;
+      const result = await createBooking(provider.id, selectedService.id, dateStr, bookingTime, notesWithDates, selectedPetId || undefined);
 
       if (result?.id) {
         // Apply credits
