@@ -331,6 +331,24 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
               ))}
             </div>
           )}
+
+          {/* Adoption */}
+          {tab === "adoption" && isShelter && (
+            <div>
+              <button
+                onClick={() => setShowAdoption(true)}
+                className="w-full rounded-2xl bg-card border border-border p-4 text-left petkeep-card-hover transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-2xl">🐾</div>
+                  <div className="flex-1">
+                    <h3 className="font-display text-base font-bold">Browse Pets for Adoption</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">Give a shelter pet a loving home ❤️</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
