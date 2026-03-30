@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
-import { ArrowLeft, Minus, Plus, ShoppingCart, Store, Star, Heart, Send, Flame } from "lucide-react";
+import { ArrowLeft, Minus, Plus, ShoppingCart, Store, Star, Heart, Send, Flame, Share2 } from "lucide-react";
+import SharePostModal from "@/components/messages/SharePostModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/hooks/useCart";
