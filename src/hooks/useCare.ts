@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getOrCreateConversation } from "@/hooks/useMessages";
+import { cacheGet, cacheSet, CacheTTL } from "@/lib/cache";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
