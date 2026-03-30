@@ -85,6 +85,15 @@ export interface GalleryImage {
   created_at: string;
 }
 
+export interface BlockedSlot {
+  id: string;
+  provider_id: string;
+  blocked_date: string;
+  blocked_time: string | null;
+  block_type: string;
+  reason: string;
+  created_at: string;
+}
 const CATEGORIES = [
   { value: "sitter", label: "Pet Sitters", icon: "🐾" },
   { value: "walker", label: "Pet Walker", icon: "🚶" },
