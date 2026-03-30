@@ -30,7 +30,16 @@ import PostDetailPage from "./pages/PostDetailPage";
 import TagFeedPage from "./pages/TagFeedPage";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 3 * 60 * 1000,     // 3 min — cache-first
+      gcTime: 10 * 60 * 1000,       // 10 min garbage collection
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

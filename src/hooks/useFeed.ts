@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { cacheGet, cacheSet, CacheTTL } from "@/lib/cache";
 
 export interface FeedPostData {
   id: string;
@@ -29,8 +30,9 @@ const BATCH_SIZE = 20;
 
 export const useFeed = () => {
   const { user } = useAuth();
-  const [posts, setPosts] = useState<FeedPostData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const CACHE_KEY = `feed_${user?.id || "anon"}`;
+  const [posts, setPosts] = useState<FeedPostData[]>(() => cacheGet<FeedPostData[]>(CACHE_KEY) || []);
+  const [loading, setLoading] = useState(!cacheGet<FeedPostData[]>(CACHE_KEY));
   const [hasMore, setHasMore] = useState(true);
   const offsetRef = useRef(0);
 
@@ -119,8 +121,13 @@ export const useFeed = () => {
 
     if (reset) {
       setPosts(enriched);
+      cacheSet(CACHE_KEY, enriched, CacheTTL.FEED);
     } else {
-      setPosts((prev) => [...prev, ...enriched]);
+      setPosts((prev) => {
+        const merged = [...prev, ...enriched];
+        cacheSet(CACHE_KEY, merged, CacheTTL.FEED);
+        return merged;
+      });
     }
 
     if (!rawPosts || rawPosts.length < BATCH_SIZE) {

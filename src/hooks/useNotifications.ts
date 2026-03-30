@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { cacheGet, cacheSet, CacheTTL } from "@/lib/cache";
 
 export interface NotificationData {
   id: string;
@@ -19,9 +20,10 @@ export interface NotificationData {
 
 export const useNotifications = () => {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const CACHE_KEY = `notif_${user?.id || "anon"}`;
+  const [notifications, setNotifications] = useState<NotificationData[]>(() => cacheGet<NotificationData[]>(CACHE_KEY) || []);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cacheGet<NotificationData[]>(CACHE_KEY));
 
   const enrichNotifications = useCallback(async (raw: any[]): Promise<NotificationData[]> => {
     if (raw.length === 0) return [];
@@ -54,6 +56,7 @@ export const useNotifications = () => {
 
     const enriched = await enrichNotifications(data || []);
     setNotifications(enriched);
+    cacheSet(CACHE_KEY, enriched, CacheTTL.NOTIFICATIONS);
     setUnreadCount(enriched.filter((n) => !n.is_read).length);
     setLoading(false);
   }, [user, enrichNotifications]);

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getOrCreateConversation } from "@/hooks/useMessages";
+import { cacheGet, cacheSet, CacheTTL } from "@/lib/cache";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
@@ -148,8 +149,9 @@ export function isProviderOpen(availability: ProviderAvailability[]): "open" | "
 const PROVIDER_BATCH = 12;
 
 export function useCareProviders(category?: string, searchQuery?: string, emergencyOnly?: boolean) {
-  const [providers, setProviders] = useState<CareProvider[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `care_${category || "all"}_${searchQuery || ""}_${emergencyOnly ? "em" : ""}`;
+  const [providers, setProviders] = useState<CareProvider[]>(() => cacheGet<CareProvider[]>(cacheKey) || []);
+  const [loading, setLoading] = useState(!cacheGet<CareProvider[]>(cacheKey));
   const [hasMore, setHasMore] = useState(true);
   const offsetRef = useRef(0);
 
@@ -182,11 +184,11 @@ export function useCareProviders(category?: string, searchQuery?: string, emerge
       batch.forEach((p) => { p.profile = profileMap.get(p.user_id) as any; });
     }
 
-    if (reset) { setProviders(batch); } else { setProviders(prev => [...prev, ...batch]); }
+    if (reset) { setProviders(batch); cacheSet(cacheKey, batch, CacheTTL.CARE); } else { setProviders(prev => { const merged = [...prev, ...batch]; cacheSet(cacheKey, merged, CacheTTL.CARE); return merged; }); }
     if (batch.length < PROVIDER_BATCH) setHasMore(false);
     offsetRef.current += batch.length;
     setLoading(false);
-  }, [category, searchQuery, emergencyOnly]);
+  }, [category, searchQuery, emergencyOnly, cacheKey]);
 
   useEffect(() => { fetchProviders(true); }, [fetchProviders]);
 

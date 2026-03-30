@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { cacheGet, cacheSet, CacheTTL } from "@/lib/cache";
 
 export interface BusinessProfile {
   id: string;
@@ -145,8 +146,9 @@ export function useBusinessProducts(businessId: string | null) {
 const BUSINESS_BATCH = 12;
 
 export function useAllBusinesses(category?: string, search?: string) {
-  const [businesses, setBusinesses] = useState<BusinessProfile[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `biz_${category || "all"}_${search || ""}`;
+  const [businesses, setBusinesses] = useState<BusinessProfile[]>(() => cacheGet<BusinessProfile[]>(cacheKey) || []);
+  const [loading, setLoading] = useState(!cacheGet<BusinessProfile[]>(cacheKey));
   const [hasMore, setHasMore] = useState(true);
   const offsetRef = useRef(0);
 
@@ -159,11 +161,11 @@ export function useAllBusinesses(category?: string, search?: string) {
     query = query.range(offsetRef.current, offsetRef.current + BUSINESS_BATCH - 1);
     const { data } = await query;
     const batch = (data as unknown as BusinessProfile[]) || [];
-    if (reset) { setBusinesses(batch); } else { setBusinesses(prev => [...prev, ...batch]); }
+    if (reset) { setBusinesses(batch); cacheSet(cacheKey, batch, CacheTTL.MARKETPLACE); } else { setBusinesses(prev => { const merged = [...prev, ...batch]; cacheSet(cacheKey, merged, CacheTTL.MARKETPLACE); return merged; }); }
     if (batch.length < BUSINESS_BATCH) setHasMore(false);
     offsetRef.current += batch.length;
     setLoading(false);
-  }, [category, search]);
+  }, [category, search, cacheKey]);
 
   useEffect(() => { fetchBatch(true); }, [fetchBatch]);
 
@@ -175,8 +177,9 @@ export function useAllBusinesses(category?: string, search?: string) {
 const PRODUCT_BATCH = 12;
 
 export function useAllProducts(category?: string, search?: string) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `prod_${category || "all"}_${search || ""}`;
+  const [products, setProducts] = useState<Product[]>(() => cacheGet<Product[]>(cacheKey) || []);
+  const [loading, setLoading] = useState(!cacheGet<Product[]>(cacheKey));
   const [hasMore, setHasMore] = useState(true);
   const offsetRef = useRef(0);
 
@@ -189,11 +192,11 @@ export function useAllProducts(category?: string, search?: string) {
     query = query.range(offsetRef.current, offsetRef.current + PRODUCT_BATCH - 1);
     const { data } = await query;
     const batch = (data as unknown as Product[]) || [];
-    if (reset) { setProducts(batch); } else { setProducts(prev => [...prev, ...batch]); }
+    if (reset) { setProducts(batch); cacheSet(cacheKey, batch, CacheTTL.MARKETPLACE); } else { setProducts(prev => { const merged = [...prev, ...batch]; cacheSet(cacheKey, merged, CacheTTL.MARKETPLACE); return merged; }); }
     if (batch.length < PRODUCT_BATCH) setHasMore(false);
     offsetRef.current += batch.length;
     setLoading(false);
-  }, [category, search]);
+  }, [category, search, cacheKey]);
 
   useEffect(() => { fetchBatch(true); }, [fetchBatch]);
 

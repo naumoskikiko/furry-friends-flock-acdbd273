@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { cacheGet, cacheSet, CacheTTL } from "@/lib/cache";
 
 export interface Conversation {
   id: string;
@@ -153,8 +154,9 @@ export function isLinkMessage(text: string): boolean {
 // --- Conversations ---
 export function useConversations() {
   const { user } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const CACHE_KEY = `convos_${user?.id || "anon"}`;
+  const [conversations, setConversations] = useState<Conversation[]>(() => cacheGet<Conversation[]>(CACHE_KEY) || []);
+  const [loading, setLoading] = useState(!cacheGet<Conversation[]>(CACHE_KEY));
   const [showArchived, setShowArchived] = useState(false);
 
   const fetchConversations = useCallback(async () => {
@@ -303,6 +305,7 @@ export function useConversations() {
     });
 
     setConversations(convList);
+    cacheSet(CACHE_KEY, convList, CacheTTL.CHAT_LIST);
     setLoading(false);
   }, [user]);
 
