@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { StoryGroup } from "@/components/stories/StoryViewer";
+import { cacheGet, cacheSet } from "@/lib/cache";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
