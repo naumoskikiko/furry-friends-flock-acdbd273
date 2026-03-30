@@ -832,7 +832,7 @@ export interface AdoptionListing {
   created_at: string;
   updated_at: string;
   images?: AdoptionImage[];
-  provider?: { business_name: string; photo_url: string | null; location: string; is_verified: boolean; user_id: string };
+  provider?: { business_name: string; photo_url: string | null; location: string; is_verified: boolean; user_id: string; phone: string | null; description: string | null };
 }
 
 export interface AdoptionImage {
