@@ -12,6 +12,45 @@ import { useWishlist } from "@/hooks/useWishlist";
 import ProductImage from "@/components/marketplace/ProductImage";
 import { useRankedBusinesses, useRankedProducts } from "@/hooks/useRankedBusinesses";
 
+const StoreRow = ({ b, navigate }: { b: any; navigate: (path: string) => void }) => {
+  const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
+  return (
+    <div
+      onClick={() => navigate(`/store/${b.id}`)}
+      className="flex items-center gap-3 rounded-2xl bg-card p-3 border border-border petkeep-card-hover cursor-pointer"
+    >
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-xl shrink-0 overflow-hidden">
+        {b.logo_url ? (
+          <img src={b.logo_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+        ) : (
+          catInfo?.icon || "🏪"
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1">
+          <h4 className="text-sm font-bold truncate">{b.business_name}</h4>
+          {b.is_verified && <BadgeCheck className="h-3 w-3 text-primary shrink-0" />}
+        </div>
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+          <span className="capitalize">{b.category.replace("_", " ")}</span>
+          {b.avg_rating > 0 && (
+            <span className="flex items-center gap-0.5">
+              <Star className="h-2.5 w-2.5 fill-primary text-primary" />
+              {Number(b.avg_rating).toFixed(1)} ({b.total_reviews})
+            </span>
+          )}
+          {b.location && (
+            <span className="flex items-center gap-0.5">
+              <MapPin className="h-2.5 w-2.5" /> {b.location}
+            </span>
+          )}
+        </div>
+      </div>
+      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+    </div>
+  );
+};
+
 const MarketplacePage = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
