@@ -46,7 +46,7 @@ const CarePage = () => {
   
   const boostedProviderIds = useBoostedIds("provider");
 
-  useTabRefresh("/care", useCallback(() => {
+  const refreshCare = useCallback(async () => {
     setSearchQuery("");
     setSearchInput("");
     setActiveCategory("all");
@@ -55,7 +55,12 @@ const CarePage = () => {
     setShowHistory(false);
     setShowPetMatch(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []));
+  }, []);
+
+  useTabRefresh("/care", refreshCare);
+
+  const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    usePullToRefresh({ onRefresh: refreshCare });
 
   const handleSearch = (q: string) => {
     setSearchInput(q);
