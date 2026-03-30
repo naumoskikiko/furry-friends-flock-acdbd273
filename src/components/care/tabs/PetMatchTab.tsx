@@ -628,6 +628,47 @@ const PetMatchTab = () => {
     toast({ title: "Report submitted", description: "Our team will review this listing shortly." });
   };
 
+  const handleVerificationUpload = async (petId: string, type: string, file: File) => {
+    if (!user) return;
+    setVerificationUploading(`${petId}_${type}`);
+    const filePath = `${user.id}/${petId}/${type}_${Date.now()}_${file.name}`;
+    const { error: uploadErr } = await supabase.storage
+      .from("pet-verification-docs")
+      .upload(filePath, file, { upsert: true });
+    if (uploadErr) {
+      toast({ title: "Upload failed", description: uploadErr.message, variant: "destructive" });
+      setVerificationUploading(null);
+      return;
+    }
+    const { data: urlData } = await supabase.storage
+      .from("pet-verification-docs")
+      .createSignedUrl(filePath, 60 * 60 * 24 * 365);
+    const { data: existing } = await fromTable("pet_verifications")
+      .select("id, status")
+      .eq("pet_id", petId)
+      .eq("verification_type", type);
+    for (const ex of (existing || [])) {
+      if (ex.status !== "verified") {
+        await fromTable("pet_verifications").delete().eq("id", ex.id);
+      }
+    }
+    const { error: insertErr } = await fromTable("pet_verifications").insert({
+      pet_id: petId,
+      owner_id: user.id,
+      verification_type: type,
+      document_url: urlData?.signedUrl || filePath,
+      document_name: file.name,
+      status: "pending",
+    });
+    if (insertErr) {
+      toast({ title: "Error", description: insertErr.message, variant: "destructive" });
+    } else {
+      toast({ title: "Proof submitted for review! ⏳" });
+    }
+    setVerificationUploading(null);
+    fetchData();
+  };
+
   const handleLike = (listing: PetMatchListing) => {
     setLikedIds(prev => new Set(prev).add(listing.id));
     toast({ title: `❤️ You liked ${listing.pet?.name}!`, description: "They'll be notified if it's a mutual match." });
