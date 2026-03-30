@@ -388,6 +388,7 @@ const ProfilePage = () => {
         isOwner={true}
         onEdit={(p) => { setEditPet(p); setAddPetOpen(true); }}
         onDelete={handleDeletePet}
+        onPetUpdated={() => { setViewPet(null); fetchData(); }}
       />
 
       {/* Add/Edit Pet Flow */}
