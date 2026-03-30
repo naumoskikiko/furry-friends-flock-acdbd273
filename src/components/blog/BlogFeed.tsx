@@ -16,13 +16,18 @@ const CATEGORIES = [
   { value: "pet-lifestyle", label: "🐾 Lifestyle" },
 ];
 
-const BlogFeed = () => {
+interface BlogFeedProps {
+  openBlogId?: string;
+}
+
+const BlogFeed = ({ openBlogId }: BlogFeedProps) => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<BlogPostData[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("all");
   const [selectedPost, setSelectedPost] = useState<BlogPostData | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [openedDeepLink, setOpenedDeepLink] = useState(false);
 
   const fetchBlogs = useCallback(async () => {
     setLoading(true);
@@ -125,6 +130,38 @@ const BlogFeed = () => {
   useEffect(() => {
     fetchBlogs();
   }, [fetchBlogs]);
+
+  // Deep-link: auto-open a blog post by id (from chat share)
+  useEffect(() => {
+    if (!openBlogId || openedDeepLink || loading || posts.length === 0) return;
+    const target = posts.find((p) => p.id === openBlogId);
+    if (target) {
+      setSelectedPost(target);
+      setOpenedDeepLink(true);
+    } else if (!loading) {
+      // Post not in current category filter — fetch directly
+      (async () => {
+        const { data } = await (supabase as any).from("blog_posts").select("*").eq("id", openBlogId).single();
+        if (data) {
+          const profileRes = await supabase.from("profiles").select("full_name, avatar_url").eq("user_id", data.user_id).single();
+          const blogPost: BlogPostData = {
+            ...data,
+            preview_text: data.preview_text || "",
+            tags: data.tags || [],
+            username: profileRes.data?.full_name || "User",
+            avatar_url: profileRes.data?.avatar_url || null,
+            is_liked: false,
+            is_saved: false,
+            post_type: data.post_type || "article",
+            participants_count: 0,
+            is_joined: false,
+          };
+          setSelectedPost(blogPost);
+        }
+        setOpenedDeepLink(true);
+      })();
+    }
+  }, [openBlogId, openedDeepLink, loading, posts]);
 
   return (
     <div>

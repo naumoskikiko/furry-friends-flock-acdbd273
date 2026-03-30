@@ -14,9 +14,16 @@ interface SharePostModalProps {
   caption: string | null;
   username: string;
   onClose: () => void;
+  /** "post" (default) or "blog" — determines message_type sent */
+  shareType?: "post" | "blog";
+  /** e.g. "meetup", "article", "question" — stored in metadata */
+  postType?: string;
+  /** Extra metadata for blog shares (event info) */
+  eventDate?: string | null;
+  eventLocation?: string | null;
 }
 
-const SharePostModal = ({ postId, imageUrl, caption, username, onClose }: SharePostModalProps) => {
+const SharePostModal = ({ postId, imageUrl, caption, username, onClose, shareType = "post", postType, eventDate, eventLocation }: SharePostModalProps) => {
   const { allConversations } = useConversations();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -32,12 +39,23 @@ const SharePostModal = ({ postId, imageUrl, caption, username, onClose }: ShareP
     if (!user) return;
     setSending(conv.id);
     try {
+      const isBlog = shareType === "blog";
+      const msgType = isBlog ? "blog_share" : "post_share";
+      const emoji = postType === "meetup" ? "📍" : isBlog ? "📝" : "📷";
       await fromTable("messages").insert({
         conversation_id: conv.id,
         sender_id: user.id,
-        message_text: `📷 Shared a post`,
-        message_type: "post_share",
-        metadata: { post_id: postId, image_url: imageUrl, caption, username },
+        message_text: `${emoji} Shared ${postType === "meetup" ? "a meetup" : isBlog ? "an article" : "a post"}`,
+        message_type: msgType,
+        metadata: {
+          post_id: postId,
+          image_url: imageUrl,
+          caption,
+          username,
+          post_type: postType || (isBlog ? "article" : "post"),
+          ...(eventDate && { event_date: eventDate }),
+          ...(eventLocation && { event_location: eventLocation }),
+        },
       });
       toast({ title: `Post sent to ${conv.other_user.full_name}` });
       onClose();

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import FeedHeader from "@/components/FeedHeader";
 import StoriesBar from "@/components/StoriesBar";
@@ -12,7 +12,9 @@ import { Loader2, Newspaper, Image } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"feed" | "blog">("feed");
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<"feed" | "blog">(() => searchParams.get("blog") ? "blog" : "feed");
+  const openBlogId = searchParams.get("blog") || undefined;
   const { posts, loading, hasMore, loadMore, refreshFeed } = useFeed();
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -143,7 +145,7 @@ const Index = () => {
           </>
         )}
 
-        {activeTab === "blog" && <BlogFeed />}
+        {activeTab === "blog" && <BlogFeed openBlogId={openBlogId} />}
       </div>
     </AppLayout>
   );
