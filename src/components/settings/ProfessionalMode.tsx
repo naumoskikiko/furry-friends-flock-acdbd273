@@ -96,7 +96,7 @@ const ProfessionalMode = () => {
     { id: "role-management" as const, label: "Role Management", desc: "Assign roles, promote & demote admins", icon: Crown, color: "bg-amber-500/10 text-amber-600" },
   ];
 
-  const renderSection = (items: typeof sections) => items.map(s => (
+  const renderSection = (items: { id: SubSection; label: string; desc: string; icon: any; color: string }[]) => items.map(s => (
     <button
       key={s.id}
       onClick={() => setSub(s.id)}
