@@ -4,7 +4,7 @@ import {
   ArrowLeft, Send, Check, CheckCheck, Search, X, MoreVertical,
   Pencil, Trash2, Flag, ChevronUp, Reply, Forward, Mic, Calendar,
   WifiOff, RefreshCw, ExternalLink, Link2, Image, AlertCircle,
-  CheckCircle2, XCircle, Ban, Settings, Square,
+  CheckCircle2, XCircle, Ban, Settings, Square, MapPin,
 } from "lucide-react";
 import ChatSettingsModal from "./ChatSettingsModal";
 import VoiceMessageBubble from "./VoiceMessageBubble";
