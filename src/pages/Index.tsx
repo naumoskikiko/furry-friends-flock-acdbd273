@@ -22,6 +22,13 @@ const Index = () => {
   const pullStartY = useRef(0);
   const feedRef = useRef<HTMLDivElement>(null);
 
+  useTabRefresh("/", useCallback(async () => {
+    setRefreshing(true);
+    await refreshFeed();
+    setRefreshing(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [refreshFeed]));
+
   // Pull to refresh
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     pullStartY.current = e.touches[0].clientY;

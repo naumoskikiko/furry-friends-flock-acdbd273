@@ -85,6 +85,12 @@ const ProfilePage = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  useTabRefresh("/profile", useCallback(() => {
+    fetchData();
+    refreshProfile();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [fetchData, refreshProfile]));
+
   const handleSaveProfile = async () => {
     if (!user) return;
     setSaving(true);

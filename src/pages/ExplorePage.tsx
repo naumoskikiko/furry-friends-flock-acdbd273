@@ -1,4 +1,5 @@
-import { Suspense, lazy, useState, useEffect, useRef } from "react";
+import { Suspense, lazy, useState, useEffect, useRef, useCallback } from "react";
+import { useTabRefresh } from "@/hooks/useTabRefresh";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { Search, MapPin, Locate, Maximize2, ChevronRight } from "lucide-react";

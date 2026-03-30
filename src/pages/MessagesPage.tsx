@@ -20,6 +20,11 @@ const MessagesPage = () => {
   const { messages, forwardMessage } = useChatMessages(activeConversation?.id || null);
   const { toggleMute, deleteConversation, refresh } = useConversations();
 
+  useTabRefresh("/messages", useCallback(() => {
+    refresh();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [refresh]));
+
   // Handle deep-link to a specific conversation
   useEffect(() => {
     const convId = searchParams.get("conversation");
