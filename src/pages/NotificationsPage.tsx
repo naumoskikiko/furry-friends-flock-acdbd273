@@ -24,7 +24,13 @@ const notificationIcon = (type: string) => {
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
-  const { notifications, loading, markAllRead, markRead } = useNotifications();
+  const { notifications, loading, markAllRead, markRead, refresh } = useNotifications();
+
+  const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    usePullToRefresh({ onRefresh: useCallback(async () => {
+      await refresh();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, [refresh]) });
 
   // Group by today / earlier
   const now = new Date();
