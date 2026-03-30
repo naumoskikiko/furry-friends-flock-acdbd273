@@ -1476,6 +1476,56 @@ export type Database = {
         }
         Relationships: []
       }
+      pet_verifications: {
+        Row: {
+          created_at: string
+          document_name: string
+          document_url: string
+          id: string
+          owner_id: string
+          pet_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_notes: string | null
+          status: string
+          verification_type: string
+        }
+        Insert: {
+          created_at?: string
+          document_name?: string
+          document_url: string
+          id?: string
+          owner_id: string
+          pet_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          verification_type?: string
+        }
+        Update: {
+          created_at?: string
+          document_name?: string
+          document_url?: string
+          id?: string
+          owner_id?: string
+          pet_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          verification_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pet_verifications_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       petmatch_listings: {
         Row: {
           breed_document_name: string | null
