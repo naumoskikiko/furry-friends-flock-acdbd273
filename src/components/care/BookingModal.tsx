@@ -199,7 +199,11 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
           <button onClick={handleBack} className="rounded-full p-1.5 hover:bg-secondary transition-colors">
             {step === 0 ? <X className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           </button>
-          <h2 className="font-display text-base font-bold">Book Appointment</h2>
+          <h2 className="font-display text-base font-bold">
+            {bookingType === "date_range" ? "Book Stay" : 
+             bookingType === "time_slot" ? "Book Walk" :
+             bookingType === "date_range_with_time" ? "Book Boarding" : "Book Appointment"}
+          </h2>
           <div className="w-8" />
         </div>
 
