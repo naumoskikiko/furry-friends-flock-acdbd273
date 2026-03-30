@@ -38,10 +38,10 @@ export function useExplore() {
   const [searchQuery, setSearchQuery] = useState("");
   const [findMyPet, setFindMyPet] = useState(false);
   const [center, setCenter] = useState<[number, number]>(SKOPJE);
-  const [dbPlaces, setDbPlaces] = useState<any[]>([]);
-  const [sitterProfiles, setSitterProfiles] = useState<any[]>([]);
+  const [dbPlaces, setDbPlaces] = useState<any[]>(() => cacheGet<any[]>("explore_places") || []);
+  const [sitterProfiles, setSitterProfiles] = useState<any[]>(() => cacheGet<any[]>("explore_sitters") || []);
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cacheGet<any[]>("explore_places"));
 
   useEffect(() => {
     const load = async () => {
