@@ -935,14 +935,6 @@ const PetMatchTab = () => {
       {/* ─── ACTIVITY VIEW ──────────────────────────────────────────────────── */}
       {view === "matches" && (
         <div className="space-y-3">
-          {/* AddPetFlow modal for editing */}
-          <AddPetFlow
-            open={showAddPet || !!editPetData}
-            onOpenChange={(open) => { if (!open) { setShowAddPet(false); setEditPetData(null); } }}
-            onPetAdded={() => { setShowAddPet(false); setEditPetData(null); fetchData(); }}
-            editPet={editPetData || undefined}
-          />
-
           <div className="rounded-2xl bg-card border border-border p-6 text-center">
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500/20 to-primary/20">
               <Heart className="h-7 w-7 text-primary" />
