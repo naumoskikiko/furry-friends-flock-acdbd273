@@ -493,6 +493,8 @@ const PetMatchTab = () => {
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [editPetData, setEditPetData] = useState<any>(null);
   const [showAddPet, setShowAddPet] = useState(false);
+  const [petVerifications, setPetVerifications] = useState<Record<string, { vaccination: string; neutered: string }>>({});
+  const [verificationUploading, setVerificationUploading] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
