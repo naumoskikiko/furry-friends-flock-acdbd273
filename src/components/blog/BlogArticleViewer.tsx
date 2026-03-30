@@ -685,7 +685,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                     <p className="mt-1 text-sm leading-relaxed">{c.content}</p>
 
                     {/* "This was helpful" button — only for question owner, not on own comments */}
-                    {isQuestion && isOwner && c.user_id !== user?.id && !c.is_helpful && (
+                    {isQuestion && isOwner && c.user_id !== user?.id && !c.is_helpful && !hasHelpfulAnswer && (
                       <button
                         onClick={() => markHelpful(c)}
                         className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-[11px] font-semibold text-muted-foreground hover:text-accent hover:bg-accent/10 transition-colors active:scale-95"
