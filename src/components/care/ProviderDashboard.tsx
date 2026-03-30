@@ -170,7 +170,7 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
                 className="mt-1 w-full rounded-xl bg-secondary px-3 py-2.5 text-sm outline-none" placeholder="Happy Paws Vet" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-muted-foreground">Category *</label>
+              <label className="text-xs font-semibold text-muted-foreground">Service Type *</label>
               <div className="mt-1 flex flex-wrap gap-2">
                 {CATEGORIES.map((c) => (
                   <button key={c.value} onClick={() => setFormCategory(c.value)}
@@ -178,6 +178,16 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
                     {c.icon} {c.label}
                   </button>
                 ))}
+              </div>
+              {/* Booking type indicator */}
+              <div className="mt-2 rounded-xl bg-primary/5 border border-primary/20 p-3 flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary shrink-0" />
+                <div>
+                  <p className="text-xs font-semibold text-primary">Booking System</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {getBookingTypeLabel(getBookingTypeForCategory(formCategory))}
+                  </p>
+                </div>
               </div>
             </div>
             <div>
