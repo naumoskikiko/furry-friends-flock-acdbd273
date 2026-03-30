@@ -588,7 +588,7 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-border shrink-0">
-          {step < 4 ? (
+          {currentStepKey !== "review" ? (
             <button
               onClick={handleNext}
               disabled={!canProceed()}
