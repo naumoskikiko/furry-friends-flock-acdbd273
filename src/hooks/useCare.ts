@@ -527,8 +527,13 @@ export function useMyProvider() {
 
   const updateProvider = useCallback(async (updates: Partial<CareProvider>) => {
     if (!user || !provider) return;
+    // Auto-update booking_mode when category changes
+    const finalUpdates: any = { ...updates, updated_at: new Date().toISOString() };
+    if (updates.category) {
+      finalUpdates.booking_mode = getBookingTypeForCategory(updates.category);
+    }
     const { data } = await fromTable("care_providers")
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(finalUpdates)
       .eq("id", provider.id)
       .select("*")
       .single();
