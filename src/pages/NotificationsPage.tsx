@@ -1,6 +1,9 @@
+import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useNotifications, NotificationData } from "@/hooks/useNotifications";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { ArrowLeft, Bell, Check, Heart, MessageCircle, UserPlus, Bookmark, Newspaper, ShoppingBag } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 

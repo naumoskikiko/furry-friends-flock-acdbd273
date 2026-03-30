@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTabRefresh } from "@/hooks/useTabRefresh";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { useSearchParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import ConversationList from "@/components/messages/ConversationList";
