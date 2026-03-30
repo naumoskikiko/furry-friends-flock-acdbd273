@@ -23,7 +23,7 @@ interface SharePostModalProps {
   eventLocation?: string | null;
 }
 
-const SharePostModal = ({ postId, imageUrl, caption, username, onClose }: SharePostModalProps) => {
+const SharePostModal = ({ postId, imageUrl, caption, username, onClose, shareType = "post", postType, eventDate, eventLocation }: SharePostModalProps) => {
   const { allConversations } = useConversations();
   const { user } = useAuth();
   const { toast } = useToast();
