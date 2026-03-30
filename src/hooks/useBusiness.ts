@@ -15,6 +15,7 @@ export interface BusinessProfile {
   avg_rating: number;
   total_reviews: number;
   is_verified: boolean;
+  is_suspended: boolean;
   created_at: string;
   updated_at: string;
   profile?: { full_name: string; avatar_url: string | null; username: string | null };
@@ -148,7 +149,7 @@ export function useAllBusinesses(category?: string, search?: string) {
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
-      let query = fromTable("business_profiles").select("*").eq("is_suspended", false).order("avg_rating", { ascending: false });
+      let query = fromTable("business_profiles").select("*").eq("is_suspended", false).eq("is_verified", true).order("avg_rating", { ascending: false });
       if (category && category !== "all") query = query.eq("category", category);
       if (search) query = query.ilike("business_name", `%${search}%`);
       const { data } = await query;

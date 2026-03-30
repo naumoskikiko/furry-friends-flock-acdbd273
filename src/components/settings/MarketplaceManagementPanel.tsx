@@ -24,6 +24,7 @@ const MarketplaceManagementPanel = () => {
   const [businesses, setBusinesses] = useState<BizRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | "pending" | "verified" | "suspended">("all");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [productCounts, setProductCounts] = useState<Record<string, number>>({});
 
@@ -31,6 +32,9 @@ const MarketplaceManagementPanel = () => {
     setLoading(true);
     let q = fromTable("business_profiles").select("*").order("created_at", { ascending: false });
     if (search) q = q.ilike("business_name", `%${search}%`);
+    if (filter === "pending") q = q.eq("is_verified", false).eq("is_suspended", false);
+    if (filter === "verified") q = q.eq("is_verified", true);
+    if (filter === "suspended") q = q.eq("is_suspended", true);
     const { data } = await q;
     const biz = (data as any as BizRow[]) || [];
 
@@ -55,7 +59,7 @@ const MarketplaceManagementPanel = () => {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [search]);
+  useEffect(() => { load(); }, [search, filter]);
 
   const toggleSuspend = async (biz: BizRow) => {
     await fromTable("business_profiles").update({ is_suspended: !biz.is_suspended } as any).eq("id", biz.id);
@@ -93,6 +97,26 @@ const MarketplaceManagementPanel = () => {
         />
       </div>
 
+      {/* Filter tabs */}
+      <div className="flex gap-2">
+        {([
+          { key: "all" as const, label: "All" },
+          { key: "pending" as const, label: "⏳ Pending" },
+          { key: "verified" as const, label: "✅ Verified" },
+          { key: "suspended" as const, label: "🚫 Suspended" },
+        ]).map(f => (
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+              filter === f.key ? "petkeep-gradient text-primary-foreground" : "bg-secondary text-secondary-foreground"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <div className="flex justify-center py-10">
           <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
@@ -119,6 +143,9 @@ const MarketplaceManagementPanel = () => {
                       {b.is_verified && <ShieldCheck className="h-3.5 w-3.5 text-primary shrink-0" />}
                       {b.is_suspended && (
                         <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full font-bold">Suspended</span>
+                      )}
+                      {!b.is_verified && !b.is_suspended && (
+                        <span className="text-[10px] bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded-full font-bold">Pending</span>
                       )}
                     </div>
                     <p className="text-[11px] text-muted-foreground">
