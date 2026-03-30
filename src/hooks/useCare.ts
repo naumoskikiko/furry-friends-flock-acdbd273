@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getOrCreateConversation } from "@/hooks/useMessages";
@@ -145,12 +145,16 @@ export function isProviderOpen(availability: ProviderAvailability[]): "open" | "
   return "closed";
 }
 
-// --- Browse providers ---
+const PROVIDER_BATCH = 12;
+
 export function useCareProviders(category?: string, searchQuery?: string, emergencyOnly?: boolean) {
   const [providers, setProviders] = useState<CareProvider[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const offsetRef = useRef(0);
 
-  const fetchProviders = useCallback(async () => {
+  const fetchProviders = useCallback(async (reset = false) => {
+    if (reset) { offsetRef.current = 0; setHasMore(true); }
     setLoading(true);
     let query = fromTable("care_providers")
       .select("*")
@@ -159,42 +163,36 @@ export function useCareProviders(category?: string, searchQuery?: string, emerge
       .eq("is_banned", false)
       .order("avg_rating", { ascending: false });
 
-    if (category && category !== "all") {
-      query = query.eq("category", category);
-    }
-    if (searchQuery && searchQuery.trim()) {
-      query = query.ilike("business_name", `%${searchQuery.trim()}%`);
-    }
-    if (emergencyOnly) {
-      query = query.eq("emergency_available", true);
-    }
+    if (category && category !== "all") query = query.eq("category", category);
+    if (searchQuery && searchQuery.trim()) query = query.ilike("business_name", `%${searchQuery.trim()}%`);
+    if (emergencyOnly) query = query.eq("emergency_available", true);
 
+    query = query.range(offsetRef.current, offsetRef.current + PROVIDER_BATCH - 1);
     const { data } = await query;
-    const providerList = (data || []) as CareProvider[];
+    const batch = (data || []) as CareProvider[];
 
     // Fetch profiles for providers
-    if (providerList.length > 0) {
-      const userIds = [...new Set(providerList.map((p) => p.user_id))];
+    if (batch.length > 0) {
+      const userIds = [...new Set(batch.map((p) => p.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, full_name, username, avatar_url")
         .in("user_id", userIds);
-
       const profileMap = new Map((profiles || []).map((p) => [p.user_id, p]));
-      providerList.forEach((p) => {
-        p.profile = profileMap.get(p.user_id) as any;
-      });
+      batch.forEach((p) => { p.profile = profileMap.get(p.user_id) as any; });
     }
 
-    setProviders(providerList);
+    if (reset) { setProviders(batch); } else { setProviders(prev => [...prev, ...batch]); }
+    if (batch.length < PROVIDER_BATCH) setHasMore(false);
+    offsetRef.current += batch.length;
     setLoading(false);
   }, [category, searchQuery, emergencyOnly]);
 
-  useEffect(() => {
-    fetchProviders();
-  }, [fetchProviders]);
+  useEffect(() => { fetchProviders(true); }, [fetchProviders]);
 
-  return { providers, loading, refresh: fetchProviders };
+  const loadMore = useCallback(() => { if (hasMore && !loading) fetchProviders(false); }, [hasMore, loading, fetchProviders]);
+
+  return { providers, loading, hasMore, loadMore, refresh: () => fetchProviders(true) };
 }
 
 // --- Provider services ---
@@ -842,11 +840,16 @@ export interface AdoptionImage {
   display_order: number;
 }
 
+const ADOPTION_BATCH = 12;
+
 export function useAdoptionListings(filters?: { animal_type?: string; search?: string }) {
   const [listings, setListings] = useState<AdoptionListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const offsetRef = useRef(0);
 
-  const fetchListings = useCallback(async () => {
+  const fetchListings = useCallback(async (reset = false) => {
+    if (reset) { offsetRef.current = 0; setHasMore(true); }
     setLoading(true);
     let query = fromTable("adoption_listings")
       .select("*, provider:care_providers(business_name, photo_url, location, is_verified, user_id, phone, description)")
@@ -860,10 +863,9 @@ export function useAdoptionListings(filters?: { animal_type?: string; search?: s
       query = query.or(`name.ilike.%${filters.search}%,breed.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
     }
 
+    query = query.range(offsetRef.current, offsetRef.current + ADOPTION_BATCH - 1);
     const { data } = await query;
     const items = (data || []) as AdoptionListing[];
-
-    // Only show listings from verified shelters
     const verified = items.filter(i => i.provider?.is_verified);
 
     // Fetch images
@@ -878,12 +880,17 @@ export function useAdoptionListings(filters?: { animal_type?: string; search?: s
       verified.forEach(l => { l.images = imgMap.get(l.id) || []; });
     }
 
-    setListings(verified);
+    if (reset) { setListings(verified); } else { setListings(prev => [...prev, ...verified]); }
+    if (items.length < ADOPTION_BATCH) setHasMore(false);
+    offsetRef.current += items.length;
     setLoading(false);
   }, [filters?.animal_type, filters?.search]);
 
-  useEffect(() => { fetchListings(); }, [fetchListings]);
-  return { listings, loading, refresh: fetchListings };
+  useEffect(() => { fetchListings(true); }, [fetchListings]);
+
+  const loadMore = useCallback(() => { if (hasMore && !loading) fetchListings(false); }, [hasMore, loading, fetchListings]);
+
+  return { listings, loading, hasMore, loadMore, refresh: () => fetchListings(true) };
 }
 
 export function useShelterListings(providerId: string | null) {

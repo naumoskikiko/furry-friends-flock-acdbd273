@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useTabRefresh } from "@/hooks/useTabRefresh";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
@@ -11,7 +11,8 @@ import BlogFeed from "@/components/blog/BlogFeed";
 import FeedSkeleton from "@/components/feed/FeedSkeleton";
 import PeopleYouMayKnow from "@/components/feed/PeopleYouMayKnow";
 import { useFeed } from "@/hooks/useFeed";
-import { Loader2, Newspaper, Image } from "lucide-react";
+import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
+import { Newspaper, Image } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -19,8 +20,7 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<"feed" | "blog">(() => searchParams.get("blog") ? "blog" : "feed");
   const openBlogId = searchParams.get("blog") || undefined;
   const { posts, loading, hasMore, loadMore, refreshFeed } = useFeed();
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const feedRef = useRef<HTMLDivElement>(null);
+  
 
   const refreshAll = useCallback(async () => {
     await refreshFeed();
@@ -31,21 +31,6 @@ const Index = () => {
 
   const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
     usePullToRefresh({ onRefresh: refreshAll });
-
-  // Infinite scroll observer
-  useEffect(() => {
-    if (activeTab !== "feed") return;
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) loadMore();
-      },
-      { rootMargin: "200px" }
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasMore, loading, loadMore, activeTab]);
 
   const showSkeleton = loading && posts.length === 0;
 
@@ -84,7 +69,6 @@ const Index = () => {
 
       {/* Content */}
       <div
-        ref={feedRef}
         className="mx-auto max-w-lg"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -125,13 +109,7 @@ const Index = () => {
 
             {posts.length > 0 && posts.length % 12 !== 0 && <PeopleYouMayKnow />}
 
-            <div ref={sentinelRef} className="h-1" />
-
-            {loading && posts.length > 0 && (
-              <div className="flex justify-center py-6">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            )}
+            <InfiniteScrollSentinel loading={loading} hasMore={hasMore} onLoadMore={loadMore} itemCount={posts.length} />
           </>
         )}
 

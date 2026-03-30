@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -142,42 +142,62 @@ export function useBusinessProducts(businessId: string | null) {
   return { products, loading, addProduct, updateProduct, deleteProduct, refresh };
 }
 
+const BUSINESS_BATCH = 12;
+
 export function useAllBusinesses(category?: string, search?: string) {
   const [businesses, setBusinesses] = useState<BusinessProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const offsetRef = useRef(0);
 
-  useEffect(() => {
-    const fetch = async () => {
-      setLoading(true);
-      let query = fromTable("business_profiles").select("*").eq("is_suspended", false).eq("is_verified", true).order("avg_rating", { ascending: false });
-      if (category && category !== "all") query = query.eq("category", category);
-      if (search) query = query.ilike("business_name", `%${search}%`);
-      const { data } = await query;
-      setBusinesses((data as unknown as BusinessProfile[]) || []);
-      setLoading(false);
-    };
-    fetch();
+  const fetchBatch = useCallback(async (reset = false) => {
+    if (reset) { offsetRef.current = 0; setHasMore(true); }
+    setLoading(true);
+    let query = fromTable("business_profiles").select("*").eq("is_suspended", false).eq("is_verified", true).order("avg_rating", { ascending: false });
+    if (category && category !== "all") query = query.eq("category", category);
+    if (search) query = query.ilike("business_name", `%${search}%`);
+    query = query.range(offsetRef.current, offsetRef.current + BUSINESS_BATCH - 1);
+    const { data } = await query;
+    const batch = (data as unknown as BusinessProfile[]) || [];
+    if (reset) { setBusinesses(batch); } else { setBusinesses(prev => [...prev, ...batch]); }
+    if (batch.length < BUSINESS_BATCH) setHasMore(false);
+    offsetRef.current += batch.length;
+    setLoading(false);
   }, [category, search]);
 
-  return { businesses, loading };
+  useEffect(() => { fetchBatch(true); }, [fetchBatch]);
+
+  const loadMore = useCallback(() => { if (hasMore && !loading) fetchBatch(false); }, [hasMore, loading, fetchBatch]);
+
+  return { businesses, loading, hasMore, loadMore, refresh: () => fetchBatch(true) };
 }
+
+const PRODUCT_BATCH = 12;
 
 export function useAllProducts(category?: string, search?: string) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const offsetRef = useRef(0);
 
-  useEffect(() => {
-    const fetch = async () => {
-      setLoading(true);
-      let query = fromTable("products").select("*").eq("is_active", true).order("created_at", { ascending: false });
-      if (category && category !== "all") query = query.eq("category", category);
-      if (search) query = query.ilike("name", `%${search}%`);
-      const { data } = await query;
-      setProducts((data as unknown as Product[]) || []);
-      setLoading(false);
-    };
-    fetch();
+  const fetchBatch = useCallback(async (reset = false) => {
+    if (reset) { offsetRef.current = 0; setHasMore(true); }
+    setLoading(true);
+    let query = fromTable("products").select("*").eq("is_active", true).order("created_at", { ascending: false });
+    if (category && category !== "all") query = query.eq("category", category);
+    if (search) query = query.ilike("name", `%${search}%`);
+    query = query.range(offsetRef.current, offsetRef.current + PRODUCT_BATCH - 1);
+    const { data } = await query;
+    const batch = (data as unknown as Product[]) || [];
+    if (reset) { setProducts(batch); } else { setProducts(prev => [...prev, ...batch]); }
+    if (batch.length < PRODUCT_BATCH) setHasMore(false);
+    offsetRef.current += batch.length;
+    setLoading(false);
   }, [category, search]);
 
-  return { products, loading };
+  useEffect(() => { fetchBatch(true); }, [fetchBatch]);
+
+  const loadMore = useCallback(() => { if (hasMore && !loading) fetchBatch(false); }, [hasMore, loading, fetchBatch]);
+
+  return { products, loading, hasMore, loadMore, refresh: () => fetchBatch(true) };
 }

@@ -5,6 +5,7 @@ import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { Search, ChevronRight, Star, MapPin, Store, Package, Plus, BadgeCheck, ShoppingCart, Heart } from "lucide-react";
+import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAllBusinesses, useAllProducts, useMyBusiness, BUSINESS_CATEGORIES, PRODUCT_CATEGORIES } from "@/hooks/useBusiness";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -65,11 +66,11 @@ const MarketplacePage = () => {
   const [businessCategory, setBusinessCategory] = useState("all");
   const [showDashboard, setShowDashboard] = useState(false);
 
-  const { businesses, loading: bizLoading } = useAllBusinesses(
+  const { businesses, loading: bizLoading, hasMore: hasMoreBusinesses, loadMore: loadMoreBusinesses } = useAllBusinesses(
     activeTab === "stores" ? businessCategory : undefined,
     searchQuery || undefined
   );
-  const { products, loading: prodLoading } = useAllProducts(
+  const { products, loading: prodLoading, hasMore: hasMoreProducts, loadMore: loadMoreProducts } = useAllProducts(
     activeTab === "products" ? productCategory : undefined,
     searchQuery || undefined
   );
@@ -348,38 +349,41 @@ const MarketplacePage = () => {
                   <p className="text-sm font-semibold">No products found</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {rankedProducts.map((p) => {
-                    const outOfStock = p.stock !== null && p.stock !== undefined && p.stock <= 0;
-                    return (
-                      <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
-                        <div className="relative cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
-                          <ProductImage src={p.image_url} alt={p.name} category={p.category} size="lg" aspectRatio="square" className="rounded-none" />
-                          {outOfStock && (
-                            <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
-                              <span className="text-xs font-bold text-destructive">Out of stock</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-2.5">
-                          <h4 className="text-xs font-bold truncate cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>{p.name}</h4>
-                          {p.description && <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{p.description}</p>}
-                          <div className="flex items-center justify-between mt-1.5">
-                            <p className="text-sm font-extrabold text-primary">{p.price} MKD</p>
-                            {!outOfStock && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleQuickAdd(p.id, p.name); }}
-                                className="flex h-7 w-7 items-center justify-center rounded-full petkeep-gradient text-primary-foreground"
-                              >
-                                <Plus className="h-3.5 w-3.5" />
-                              </button>
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    {rankedProducts.map((p) => {
+                      const outOfStock = p.stock !== null && p.stock !== undefined && p.stock <= 0;
+                      return (
+                        <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
+                          <div className="relative cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
+                            <ProductImage src={p.image_url} alt={p.name} category={p.category} size="lg" aspectRatio="square" className="rounded-none" />
+                            {outOfStock && (
+                              <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                                <span className="text-xs font-bold text-destructive">Out of stock</span>
+                              </div>
                             )}
                           </div>
+                          <div className="p-2.5">
+                            <h4 className="text-xs font-bold truncate cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>{p.name}</h4>
+                            {p.description && <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{p.description}</p>}
+                            <div className="flex items-center justify-between mt-1.5">
+                              <p className="text-sm font-extrabold text-primary">{p.price} MKD</p>
+                              {!outOfStock && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleQuickAdd(p.id, p.name); }}
+                                  className="flex h-7 w-7 items-center justify-center rounded-full petkeep-gradient text-primary-foreground"
+                                >
+                                  <Plus className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                  <InfiniteScrollSentinel loading={prodLoading} hasMore={hasMoreProducts} onLoadMore={loadMoreProducts} itemCount={products.length} />
+                </>
               )}
             </div>
           </>
@@ -454,6 +458,7 @@ const MarketplacePage = () => {
                   )}
                 </div>
               )}
+              <InfiniteScrollSentinel loading={bizLoading} hasMore={hasMoreBusinesses} onLoadMore={loadMoreBusinesses} itemCount={businesses.length} />
             </div>
           </>
         )}

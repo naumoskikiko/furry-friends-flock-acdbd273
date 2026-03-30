@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Search, MapPin, ChevronLeft, MessageSquare, Phone, Heart, Send } from "lucide-react";
+import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
 import { useAdoptionListings, type AdoptionListing } from "@/hooks/useCare";
 import { animalTypes } from "@/data/petBreeds";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -28,7 +29,7 @@ const AdoptionSection = ({ onClose }: Props) => {
   const [requestMessage, setRequestMessage] = useState("");
   const [sendingRequest, setSendingRequest] = useState(false);
 
-  const { listings, loading } = useAdoptionListings({
+  const { listings, loading, hasMore, loadMore } = useAdoptionListings({
     animal_type: filterType,
     search: searchQuery,
   });
@@ -321,42 +322,45 @@ const AdoptionSection = ({ onClose }: Props) => {
               <p className="text-xs text-muted-foreground mt-1">Check back later for new listings</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {listings.map((listing) => {
-                const emoji = animalTypes.find(a => a.value === listing.animal_type)?.emoji || "🐾";
-                const isAdopted = listing.status === "adopted";
-                return (
-                  <button key={listing.id} onClick={() => setSelectedListing(listing)}
-                    className="rounded-2xl bg-card border border-border overflow-hidden text-left petkeep-card-hover transition-all relative">
-                    {isAdopted && (
-                      <div className="absolute top-2 right-2 z-10 rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold text-primary-foreground">
-                        Adopted 🏠
-                      </div>
-                    )}
-                    <div className="h-32 bg-secondary flex items-center justify-center">
-                      {listing.images && listing.images.length > 0 ? (
-                        <img src={listing.images[0].image_url} alt={listing.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-4xl">{emoji}</span>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <p className="text-sm font-bold truncate">{listing.name}</p>
-                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5">
-                        {listing.breed && <span className="truncate">{listing.breed}</span>}
-                        {listing.age && <span>· {listing.age}</span>}
-                      </div>
-                      {listing.provider?.location && (
-                        <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground mt-1">
-                          <MapPin className="h-2.5 w-2.5" />
-                          <span className="truncate">{listing.provider.location}</span>
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                {listings.map((listing) => {
+                  const emoji = animalTypes.find(a => a.value === listing.animal_type)?.emoji || "🐾";
+                  const isAdopted = listing.status === "adopted";
+                  return (
+                    <button key={listing.id} onClick={() => setSelectedListing(listing)}
+                      className="rounded-2xl bg-card border border-border overflow-hidden text-left petkeep-card-hover transition-all relative">
+                      {isAdopted && (
+                        <div className="absolute top-2 right-2 z-10 rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold text-primary-foreground">
+                          Adopted 🏠
                         </div>
                       )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                      <div className="h-32 bg-secondary flex items-center justify-center">
+                        {listing.images && listing.images.length > 0 ? (
+                          <img src={listing.images[0].image_url} alt={listing.name} className="w-full h-full object-cover" loading="lazy" />
+                        ) : (
+                          <span className="text-4xl">{emoji}</span>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <p className="text-sm font-bold truncate">{listing.name}</p>
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5">
+                          {listing.breed && <span className="truncate">{listing.breed}</span>}
+                          {listing.age && <span>· {listing.age}</span>}
+                        </div>
+                        {listing.provider?.location && (
+                          <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground mt-1">
+                            <MapPin className="h-2.5 w-2.5" />
+                            <span className="truncate">{listing.provider.location}</span>
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <InfiniteScrollSentinel loading={loading} hasMore={hasMore} onLoadMore={loadMore} itemCount={listings.length} />
+            </>
           )}
         </div>
       </div>
