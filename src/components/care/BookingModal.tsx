@@ -69,9 +69,13 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
   const { balance: creditBalance, applyCreditsToPayment } = useCredits();
   const availability = useProviderAvailability(provider.id);
 
+  const bookingType = getBookingTypeForCategory(provider.category);
+  const STEPS = useMemo(() => getStepsForBookingType(bookingType), [bookingType]);
+
   const [step, setStep] = useState<number>(initialService ? 1 : 0);
   const [selectedService, setSelectedService] = useState<CareService | null>(initialService || null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
