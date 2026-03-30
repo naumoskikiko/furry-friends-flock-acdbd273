@@ -927,6 +927,14 @@ const PetMatchTab = () => {
       {/* ─── ACTIVITY VIEW ──────────────────────────────────────────────────── */}
       {view === "matches" && (
         <div className="space-y-3">
+          {/* AddPetFlow modal for editing */}
+          <AddPetFlow
+            open={showAddPet || !!editPetData}
+            onOpenChange={(open) => { if (!open) { setShowAddPet(false); setEditPetData(null); } }}
+            onPetAdded={() => { setShowAddPet(false); setEditPetData(null); fetchData(); }}
+            editPet={editPetData || undefined}
+          />
+
           <div className="rounded-2xl bg-card border border-border p-6 text-center">
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-pink-500/20 to-primary/20">
               <Heart className="h-7 w-7 text-primary" />
@@ -953,27 +961,90 @@ const PetMatchTab = () => {
             </div>
           </div>
 
-          {/* Safety Checklist */}
-          <div className="rounded-2xl bg-card border border-border p-4">
-            <h4 className="text-xs font-bold flex items-center gap-1.5 mb-2">
-              <Shield className="h-3.5 w-3.5 text-accent" /> Safety Checklist
-            </h4>
-            <div className="space-y-1.5">
-              {[
-                { label: "Breed documents uploaded", done: myListings.some(l => l.breed_document_url) },
-                { label: "At least one approved listing", done: myListings.some(l => l.status === "approved") },
-                { label: "Pet vaccination up to date", done: pets.some(p => p.vaccinated === true) },
-                { label: "Profile photo added", done: pets.some(p => p.photo_url) },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <div className={`h-4 w-4 rounded-full flex items-center justify-center text-[8px] font-bold ${item.done ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"}`}>
-                    {item.done ? "✓" : "○"}
-                  </div>
-                  <span className={`text-xs ${item.done ? "font-semibold" : "text-muted-foreground"}`}>{item.label}</span>
-                </div>
-              ))}
+          {/* Smart Safety Checklist */}
+          {pets.length === 0 ? (
+            <div className="rounded-2xl bg-card border border-border p-6 text-center">
+              <PawPrint className="h-10 w-10 mx-auto text-muted-foreground/30 mb-2" />
+              <h4 className="text-sm font-bold">Add a pet to complete your safety checklist</h4>
+              <p className="text-xs text-muted-foreground mt-1">Your checklist will auto-generate from your pet profiles.</p>
+              <button
+                onClick={() => setShowAddPet(true)}
+                className="mt-3 petkeep-gradient rounded-xl px-5 py-2 text-xs font-bold text-primary-foreground"
+              >
+                <Plus className="h-3.5 w-3.5 inline mr-1" /> Add Pet
+              </button>
             </div>
-          </div>
+          ) : (
+            pets.map((pet) => {
+              const checks = [
+                { label: "Profile photo added", done: !!pet.photo_url, icon: <Camera className="h-3.5 w-3.5" /> },
+                { label: "Breed specified", done: !!pet.breed && pet.breed.trim() !== "", icon: <Dog className="h-3.5 w-3.5" /> },
+                { label: "Age specified", done: !!pet.age && pet.age.trim() !== "", icon: <Calendar className="h-3.5 w-3.5" /> },
+                { label: "Gender specified", done: !!pet.gender && pet.gender.trim() !== "", icon: <PawPrint className="h-3.5 w-3.5" /> },
+                { label: "Vaccination info", done: pet.vaccinated === true, icon: <Syringe className="h-3.5 w-3.5" /> },
+                { label: "Medical notes", done: !!pet.medical_notes && pet.medical_notes.trim() !== "", icon: <FileText className="h-3.5 w-3.5" /> },
+                { label: "Weight recorded", done: !!pet.weight && pet.weight.trim() !== "", icon: <PawPrint className="h-3.5 w-3.5" /> },
+                { label: "Breed documents uploaded", done: myListings.some(l => l.pet_id === pet.id && l.breed_document_url), icon: <BadgeCheck className="h-3.5 w-3.5" /> },
+              ];
+              const completedCount = checks.filter(c => c.done).length;
+              const percentage = Math.round((completedCount / checks.length) * 100);
+              const isComplete = percentage === 100;
+
+              return (
+                <div key={pet.id} className="rounded-2xl bg-card border border-border overflow-hidden">
+                  {/* Pet header */}
+                  <div className="flex items-center gap-3 p-3 border-b border-border">
+                    {pet.photo_url ? (
+                      <img src={pet.photo_url} alt={pet.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-primary/20" />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary ring-2 ring-primary/20">
+                        <PawPrint className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold truncate">{pet.name}</p>
+                        {isComplete && (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-green-100 dark:bg-green-900/20 px-2 py-0.5 text-[9px] font-bold text-green-700 dark:text-green-400">
+                            <CheckCircle2 className="h-3 w-3" /> Complete
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">{pet.breed || pet.animal_type}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-extrabold text-primary">{percentage}%</p>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="px-3 pt-2">
+                    <Progress value={percentage} className="h-1.5" />
+                  </div>
+
+                  {/* Checklist items */}
+                  <div className="p-3 space-y-1.5">
+                    {checks.map((item, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <div className={`h-5 w-5 rounded-full flex items-center justify-center ${item.done ? "bg-green-500 text-white" : "bg-muted text-muted-foreground"}`}>
+                          {item.done ? <CheckCircle2 className="h-3 w-3" /> : item.icon}
+                        </div>
+                        <span className={`text-xs flex-1 ${item.done ? "font-semibold line-through text-muted-foreground" : "text-foreground"}`}>{item.label}</span>
+                        {!item.done && (
+                          <button
+                            onClick={() => setEditPetData(pet)}
+                            className="rounded-lg bg-primary/10 px-2 py-0.5 text-[9px] font-bold text-primary hover:bg-primary/20 transition-colors"
+                          >
+                            <Pencil className="h-2.5 w-2.5 inline mr-0.5" /> Add
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       )}
     </div>
