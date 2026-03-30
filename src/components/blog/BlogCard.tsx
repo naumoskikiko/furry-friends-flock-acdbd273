@@ -116,8 +116,9 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
     } else {
       await (supabase as any).from("blog_event_participants").delete().eq("blog_post_id", post.id).eq("user_id", user.id);
       try {
-        await (supabase as any).rpc("leave_meetup_chat", { _blog_post_id: post.id, _user_id: user.id });
-      } catch {}
+        const { error } = await (supabase as any).rpc("leave_meetup_chat", { _blog_post_id: post.id, _user_id: user.id });
+        if (error) console.error("leave_meetup_chat error:", error);
+      } catch (e) { console.error("leave_meetup_chat exception:", e); }
       toast({ title: "Left the event" });
     }
   };
