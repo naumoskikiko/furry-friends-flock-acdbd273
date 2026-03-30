@@ -200,63 +200,64 @@ const CarePage = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {allProviders.map((p) => {
-                const catInfo = CATEGORIES.find((c) => c.value === p.category);
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => setSelectedProvider(p)}
-                    className="w-full rounded-2xl bg-card p-4 border border-border text-left petkeep-card-hover transition-all"
-                  >
-                    <div className="flex items-start gap-3">
-                      <Avatar className="h-14 w-14">
-                        <AvatarImage src={p.photo_url || p.profile?.avatar_url || undefined} />
-                        <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-xl font-bold text-primary-foreground">
-                          {catInfo?.icon || "🐾"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <h3 className="font-display text-base font-bold truncate">{p.business_name}</h3>
-                          {p.is_verified && <BadgeCheck className="h-4 w-4 text-primary shrink-0" />}
-                          
-                        </div>
-                        <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-                          <span className="flex items-center gap-0.5">
-                            <Star className="h-3 w-3 fill-primary text-primary" />
-                            {Number(p.avg_rating).toFixed(1)}
-                          </span>
-                          <span>({p.total_reviews} reviews)</span>
-                          {p.location && (
+            <>
+              <div className="space-y-3">
+                {allProviders.map((p) => {
+                  const catInfo = CATEGORIES.find((c) => c.value === p.category);
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => setSelectedProvider(p)}
+                      className="w-full rounded-2xl bg-card p-4 border border-border text-left petkeep-card-hover transition-all"
+                    >
+                      <div className="flex items-start gap-3">
+                        <Avatar className="h-14 w-14">
+                          <AvatarImage src={p.photo_url || p.profile?.avatar_url || undefined} />
+                          <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-xl font-bold text-primary-foreground">
+                            {catInfo?.icon || "🐾"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-display text-base font-bold truncate">{p.business_name}</h3>
+                            {p.is_verified && <BadgeCheck className="h-4 w-4 text-primary shrink-0" />}
+                          </div>
+                          <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                             <span className="flex items-center gap-0.5">
-                              <MapPin className="h-3 w-3" />
-                              {p.location}
+                              <Star className="h-3 w-3 fill-primary text-primary" />
+                              {Number(p.avg_rating).toFixed(1)}
                             </span>
+                            <span>({p.total_reviews} reviews)</span>
+                            {p.location && (
+                              <span className="flex items-center gap-0.5">
+                                <MapPin className="h-3 w-3" />
+                                {p.location}
+                              </span>
+                            )}
+                            <ProviderStatusBadge providerId={p.id} />
+                          </div>
+                          {p.description && (
+                            <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{p.description}</p>
                           )}
-                          <ProviderStatusBadge providerId={p.id} />
-                        </div>
-                        {p.description && (
-                          <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{p.description}</p>
-                        )}
-                        <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-                          <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold">
-                            {catInfo?.icon} {catInfo?.label || p.category}
-                          </span>
-                          {p.response_time_minutes && (
-                            <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground flex items-center gap-0.5">
-                              <Clock className="h-2.5 w-2.5" /> ~{p.response_time_minutes}min
+                          <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                            <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold">
+                              {catInfo?.icon} {catInfo?.label || p.category}
                             </span>
-                          )}
+                            {p.response_time_minutes && (
+                              <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground flex items-center gap-0.5">
+                                <Clock className="h-2.5 w-2.5" /> ~{p.response_time_minutes}min
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground mt-2 shrink-0" />
                       </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground mt-2 shrink-0" />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            <InfiniteScrollSentinel loading={loading} hasMore={hasMore} onLoadMore={loadMore} itemCount={providers.length} />
+                    </button>
+                  );
+                })}
+              </div>
+              <InfiniteScrollSentinel loading={loading} hasMore={hasMore} onLoadMore={loadMore} itemCount={providers.length} />
+            </>
           )}
         </div>
       </div>
