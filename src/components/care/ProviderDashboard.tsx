@@ -5,7 +5,7 @@ import {
   BarChart3, Calendar, Star, BadgeCheck, Shield, FileCheck, ShieldCheck,
   MessageSquare, TrendingUp, Bell, Settings, Briefcase, Heart
 } from "lucide-react";
-import { useMyProvider, useProviderServices, useProviderAvailability, useProviderBookings, useProviderReviews, useProviderGallery, CATEGORIES, DAY_NAMES } from "@/hooks/useCare";
+import { useMyProvider, useProviderServices, useProviderAvailability, useProviderBookings, useProviderReviews, useProviderGallery, CATEGORIES, DAY_NAMES, getBookingTypeForCategory, getBookingTypeLabel } from "@/hooks/useCare";
 import { useProviderBalance, useProviderPayments, useProviderPayouts } from "@/hooks/usePayments";
 import { useProviderVerifications, VERIFICATION_TYPES } from "@/hooks/useVerification";
 import { useToast } from "@/hooks/use-toast";
