@@ -7,8 +7,10 @@ import ForwardModal from "@/components/messages/ForwardModal";
 import { type Conversation, type Message, useChatMessages, useConversations } from "@/hooks/useMessages";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MessagesPage = () => {
+  const { user } = useAuth();
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [forwardingMessageId, setForwardingMessageId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -21,7 +23,59 @@ const MessagesPage = () => {
   useEffect(() => {
     const convId = searchParams.get("conversation");
     const userId = searchParams.get("userId");
-    if (convId && userId && !activeConversation) {
+    const meetupId = searchParams.get("meetup");
+
+    if (meetupId && user && !activeConversation) {
+      // Open meetup chat by looking up conversation_id from blog_posts
+      const openMeetupChat = async () => {
+        const { data: blogPost } = await (supabase as any)
+          .from("blog_posts")
+          .select("conversation_id, title")
+          .eq("id", meetupId)
+          .single();
+
+        if (!blogPost?.conversation_id) {
+          toast({ title: "Meetup chat not available", variant: "destructive" });
+          setSearchParams({}, { replace: true });
+          return;
+        }
+
+        // Check membership
+        const { data: membership } = await (supabase as any)
+          .from("conversation_participants")
+          .select("id")
+          .eq("conversation_id", blogPost.conversation_id)
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!membership) {
+          toast({ title: "Join the meetup to access the chat", variant: "destructive" });
+          setSearchParams({}, { replace: true });
+          return;
+        }
+
+        setActiveConversation({
+          id: blogPost.conversation_id,
+          created_at: new Date().toISOString(),
+          other_user: {
+            user_id: "group",
+            full_name: "📍 " + blogPost.title,
+            username: null,
+            avatar_url: null,
+            last_active_at: null,
+          },
+          unread_count: 0,
+          is_pinned: false,
+          is_archived: false,
+          is_muted: false,
+          is_group: true,
+          group_name: "📍 " + blogPost.title,
+          meetup_id: meetupId,
+        });
+        setSearchParams({}, { replace: true });
+      };
+      openMeetupChat();
+    } else if (convId && userId && !activeConversation) {
       const loadConversation = async () => {
         const { data: profile } = await supabase
           .from("profiles")
@@ -49,7 +103,7 @@ const MessagesPage = () => {
       };
       loadConversation();
     }
-  }, [searchParams]);
+  }, [searchParams, user]);
 
   const forwardingMessage = forwardingMessageId
     ? messages.find((m) => m.id === forwardingMessageId) || null
