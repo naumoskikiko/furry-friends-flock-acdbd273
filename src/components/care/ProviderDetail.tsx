@@ -35,7 +35,8 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<"services" | "reviews" | "hours" | "gallery">("services");
+  const [tab, setTab] = useState<"services" | "reviews" | "hours" | "gallery" | "adoption">("services");
+  const [showAdoption, setShowAdoption] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingService, setBookingService] = useState<CareService | null>(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
