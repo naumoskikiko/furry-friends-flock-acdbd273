@@ -56,6 +56,7 @@ export const useNotifications = () => {
 
     const enriched = await enrichNotifications(data || []);
     setNotifications(enriched);
+    cacheSet(CACHE_KEY, enriched, CacheTTL.NOTIFICATIONS);
     setUnreadCount(enriched.filter((n) => !n.is_read).length);
     setLoading(false);
   }, [user, enrichNotifications]);
