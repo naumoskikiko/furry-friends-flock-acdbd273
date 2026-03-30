@@ -690,6 +690,11 @@ const PetMatchTab = () => {
         open={!!profileListing}
         onOpenChange={(open) => { if (!open) setProfileListing(null); }}
         myPet={activePet}
+        onMessageOwner={(userId) => {
+          setProfileListing(null);
+          const username = profileListing?.profile?.username;
+          if (username) navigate(`/user/${username}`);
+        }}
       />
 
       {/* AddPetFlow modal for editing (available from all views) */}
