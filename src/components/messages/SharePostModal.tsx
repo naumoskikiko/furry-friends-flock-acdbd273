@@ -39,12 +39,23 @@ const SharePostModal = ({ postId, imageUrl, caption, username, onClose, shareTyp
     if (!user) return;
     setSending(conv.id);
     try {
+      const isBlog = shareType === "blog";
+      const msgType = isBlog ? "blog_share" : "post_share";
+      const emoji = postType === "meetup" ? "📍" : isBlog ? "📝" : "📷";
       await fromTable("messages").insert({
         conversation_id: conv.id,
         sender_id: user.id,
-        message_text: `📷 Shared a post`,
-        message_type: "post_share",
-        metadata: { post_id: postId, image_url: imageUrl, caption, username },
+        message_text: `${emoji} Shared ${postType === "meetup" ? "a meetup" : isBlog ? "an article" : "a post"}`,
+        message_type: msgType,
+        metadata: {
+          post_id: postId,
+          image_url: imageUrl,
+          caption,
+          username,
+          post_type: postType || (isBlog ? "article" : "post"),
+          ...(eventDate && { event_date: eventDate }),
+          ...(eventLocation && { event_location: eventLocation }),
+        },
       });
       toast({ title: `Post sent to ${conv.other_user.full_name}` });
       onClose();
