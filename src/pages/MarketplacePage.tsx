@@ -381,6 +381,7 @@ const MarketplacePage = () => {
                     );
                   })}
                 </div>
+                <InfiniteScrollSentinel loading={prodLoading} hasMore={hasMoreProducts} onLoadMore={loadMoreProducts} itemCount={products.length} />
               )}
             </div>
           </>
