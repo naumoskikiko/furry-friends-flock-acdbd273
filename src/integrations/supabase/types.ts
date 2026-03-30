@@ -14,6 +14,94 @@ export type Database = {
   }
   public: {
     Tables: {
+      adoption_images: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string
+          listing_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url: string
+          listing_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          listing_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adoption_images_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "adoption_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      adoption_listings: {
+        Row: {
+          age: string | null
+          animal_type: string
+          breed: string | null
+          created_at: string
+          description: string | null
+          gender: string | null
+          id: string
+          location: string | null
+          name: string
+          provider_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age?: string | null
+          animal_type?: string
+          breed?: string | null
+          created_at?: string
+          description?: string | null
+          gender?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          provider_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age?: string | null
+          animal_type?: string
+          breed?: string | null
+          created_at?: string
+          description?: string | null
+          gender?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          provider_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adoption_listings_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "care_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blocked_users: {
         Row: {
           blocked_id: string

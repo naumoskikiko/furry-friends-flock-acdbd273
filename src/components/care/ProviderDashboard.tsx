@@ -5,7 +5,7 @@ import {
   BarChart3, Calendar, Star, BadgeCheck, Shield, FileCheck, ShieldCheck,
   MessageSquare, TrendingUp, Bell, Settings, Briefcase, Heart
 } from "lucide-react";
-import { useMyProvider, useProviderServices, useProviderAvailability, useProviderBookings, useProviderReviews, useProviderGallery, useProviderBlockedSlots, useProviderBookedSlots, useTrainingPackages, CATEGORIES, DAY_NAMES, getBookingTypeForCategory, getBookingTypeLabel } from "@/hooks/useCare";
+import { useMyProvider, useProviderServices, useProviderAvailability, useProviderBookings, useProviderReviews, useProviderGallery, useProviderBlockedSlots, useProviderBookedSlots, useTrainingPackages, useShelterListings, CATEGORIES, DAY_NAMES, getBookingTypeForCategory, getBookingTypeLabel } from "@/hooks/useCare";
 import { useProviderBalance, useProviderPayments, useProviderPayouts } from "@/hooks/usePayments";
 import { useProviderVerifications, VERIFICATION_TYPES } from "@/hooks/useVerification";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +21,7 @@ import CareReviewsTab from "./tabs/CareReviewsTab";
 import CareAnalyticsTab from "./tabs/CareAnalyticsTab";
 import CareNotificationsTab from "./tabs/CareNotificationsTab";
 import PetMatchTab from "./tabs/PetMatchTab";
+import ShelterAdoptionTab from "./tabs/ShelterAdoptionTab";
 
 const NORTH_MACEDONIA_TOWNS = [
   "Skopje", "Bitola", "Kumanovo", "Tetovo", "Ohrid", "Prilep", "Veles", "Štip",
@@ -35,20 +36,27 @@ interface ProviderDashboardProps {
   onClose: () => void;
 }
 
-type TabKey = "overview" | "bookings" | "services" | "hours" | "reviews" | "earnings" | "verification" | "settings" | "analytics" | "notifications";
+type TabKey = "overview" | "bookings" | "services" | "hours" | "reviews" | "earnings" | "verification" | "settings" | "analytics" | "notifications" | "adoption";
 
-const tabs: { key: TabKey; label: string; icon: any }[] = [
-  { key: "overview", label: "Overview", icon: BarChart3 },
-  { key: "bookings", label: "Bookings", icon: Calendar },
-  { key: "services", label: "Services", icon: Briefcase },
-  { key: "hours", label: "Availability", icon: Clock },
-  { key: "earnings", label: "Earnings", icon: DollarSign },
-  { key: "reviews", label: "Reviews", icon: Star },
-  { key: "analytics", label: "Analytics", icon: TrendingUp },
-  { key: "verification", label: "Verification", icon: ShieldCheck },
-  { key: "settings", label: "Settings", icon: Settings },
-  { key: "notifications", label: "Notifications", icon: Bell },
-];
+const getTabsForCategory = (category: string): { key: TabKey; label: string; icon: any }[] => {
+  const base: { key: TabKey; label: string; icon: any }[] = [
+    { key: "overview", label: "Overview", icon: BarChart3 },
+    { key: "bookings", label: "Bookings", icon: Calendar },
+    { key: "services", label: "Services", icon: Briefcase },
+    { key: "hours", label: "Availability", icon: Clock },
+    { key: "earnings", label: "Earnings", icon: DollarSign },
+    { key: "reviews", label: "Reviews", icon: Star },
+    { key: "analytics", label: "Analytics", icon: TrendingUp },
+    { key: "verification", label: "Verification", icon: ShieldCheck },
+    { key: "settings", label: "Settings", icon: Settings },
+    { key: "notifications", label: "Notifications", icon: Bell },
+  ];
+  if (category === "shelter") {
+    // Insert adoption tab after overview
+    base.splice(1, 0, { key: "adoption", label: "Adoption", icon: Heart });
+  }
+  return base;
+};
 
 const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const { provider, loading, createProvider, updateProvider, addService, deleteService, setAvailability } = useMyProvider();
@@ -60,6 +68,8 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const { blockedSlots, addBlock, removeBlock } = useProviderBlockedSlots(provider?.id || null);
   const { bookedDates } = useProviderBookedSlots(provider?.id || null);
   const isTrainer = provider?.category === "trainer";
+  const isShelter = provider?.category === "shelter";
+  const tabs = getTabsForCategory(provider?.category || "");
   const { packages: trainingPackages, addPackage: addTrainingPackage, deletePackage: deleteTrainingPackage } = useTrainingPackages(isTrainer ? provider?.id || null : null);
   const { balance } = useProviderBalance(provider?.id || null);
   const { payments: providerPayments } = useProviderPayments(provider?.id || null);
@@ -241,6 +251,8 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
             onTabChange={(t) => setTab(t as TabKey)}
           />
         );
+      case "adoption":
+        return isShelter && provider ? <ShelterAdoptionTab providerId={provider.id} /> : null;
       case "bookings":
         return <CareBookingsTab bookings={bookings} updateBookingStatus={updateBookingStatus} />;
       case "services":

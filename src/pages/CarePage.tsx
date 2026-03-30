@@ -6,6 +6,7 @@ import { useCareProviders, useMyProvider, useMyBookings, useProviderAvailability
 import ProviderDetail from "@/components/care/ProviderDetail";
 import ProviderDashboard from "@/components/care/ProviderDashboard";
 import BookingHistory from "@/components/care/BookingHistory";
+import AdoptionSection from "@/components/care/AdoptionSection";
 import { useBoostedIds } from "@/hooks/useBoosts";
 import PetMatchTab from "@/components/care/tabs/PetMatchTab";
 
@@ -39,6 +40,7 @@ const CarePage = () => {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showPetMatch, setShowPetMatch] = useState(false);
+  const [showAdoption, setShowAdoption] = useState(false);
   const boostedProviderIds = useBoostedIds("provider");
 
   const handleSearch = (q: string) => {
@@ -159,6 +161,23 @@ const CarePage = () => {
           </div>
         )}
 
+        {/* Adopt a Pet section */}
+        {!searchQuery && (
+          <div className="px-4 pb-4">
+            <button onClick={() => setShowAdoption(true)}
+              className="w-full rounded-2xl bg-card border border-border p-4 text-left petkeep-card-hover transition-all">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-2xl">🐾</div>
+                <div className="flex-1">
+                  <h3 className="font-display text-base font-bold">Adopt a Pet</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Give a shelter pet a loving home ❤️</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </button>
+          </div>
+        )}
+
         {/* All providers */}
         <div className="px-4 pb-4">
           {!searchQuery && <h3 className="font-display text-base font-bold mb-2">All Providers</h3>}
@@ -267,6 +286,11 @@ const CarePage = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Adoption section */}
+      {showAdoption && (
+        <AdoptionSection onClose={() => setShowAdoption(false)} />
       )}
     </AppLayout>
   );

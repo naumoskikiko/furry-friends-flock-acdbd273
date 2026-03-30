@@ -815,3 +815,136 @@ export function useUserTrainingPackages(providerId: string | null) {
 
   return { userPackages, purchasePackage, useSession, refresh: fetchUserPackages };
 }
+
+// --- Adoption listings (shelters) ---
+export interface AdoptionListing {
+  id: string;
+  provider_id: string;
+  user_id: string;
+  name: string;
+  animal_type: string;
+  breed: string;
+  age: string;
+  gender: string;
+  description: string;
+  location: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  images?: AdoptionImage[];
+  provider?: { business_name: string; photo_url: string | null; location: string; is_verified: boolean; user_id: string };
+}
+
+export interface AdoptionImage {
+  id: string;
+  listing_id: string;
+  image_url: string;
+  display_order: number;
+}
+
+export function useAdoptionListings(filters?: { animal_type?: string; search?: string }) {
+  const [listings, setListings] = useState<AdoptionListing[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchListings = useCallback(async () => {
+    setLoading(true);
+    let query = fromTable("adoption_listings")
+      .select("*, provider:care_providers(business_name, photo_url, location, is_verified, user_id)")
+      .eq("status", "available")
+      .order("created_at", { ascending: false });
+
+    if (filters?.animal_type && filters.animal_type !== "all") {
+      query = query.eq("animal_type", filters.animal_type);
+    }
+    if (filters?.search) {
+      query = query.or(`name.ilike.%${filters.search}%,breed.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+    }
+
+    const { data } = await query;
+    const items = (data || []) as AdoptionListing[];
+
+    // Only show listings from verified shelters
+    const verified = items.filter(i => i.provider?.is_verified);
+
+    // Fetch images
+    if (verified.length > 0) {
+      const ids = verified.map(l => l.id);
+      const { data: imgs } = await fromTable("adoption_images").select("*").in("listing_id", ids).order("display_order");
+      const imgMap = new Map<string, AdoptionImage[]>();
+      (imgs || []).forEach((img: AdoptionImage) => {
+        if (!imgMap.has(img.listing_id)) imgMap.set(img.listing_id, []);
+        imgMap.get(img.listing_id)!.push(img);
+      });
+      verified.forEach(l => { l.images = imgMap.get(l.id) || []; });
+    }
+
+    setListings(verified);
+    setLoading(false);
+  }, [filters?.animal_type, filters?.search]);
+
+  useEffect(() => { fetchListings(); }, [fetchListings]);
+  return { listings, loading, refresh: fetchListings };
+}
+
+export function useShelterListings(providerId: string | null) {
+  const [listings, setListings] = useState<AdoptionListing[]>([]);
+  const { user } = useAuth();
+
+  const fetchListings = useCallback(async () => {
+    if (!providerId) { setListings([]); return; }
+    const { data } = await fromTable("adoption_listings")
+      .select("*")
+      .eq("provider_id", providerId)
+      .order("created_at", { ascending: false });
+
+    const items = (data || []) as AdoptionListing[];
+
+    if (items.length > 0) {
+      const ids = items.map(l => l.id);
+      const { data: imgs } = await fromTable("adoption_images").select("*").in("listing_id", ids).order("display_order");
+      const imgMap = new Map<string, AdoptionImage[]>();
+      (imgs || []).forEach((img: AdoptionImage) => {
+        if (!imgMap.has(img.listing_id)) imgMap.set(img.listing_id, []);
+        imgMap.get(img.listing_id)!.push(img);
+      });
+      items.forEach(l => { l.images = imgMap.get(l.id) || []; });
+    }
+
+    setListings(items);
+  }, [providerId]);
+
+  useEffect(() => { fetchListings(); }, [fetchListings]);
+
+  const addListing = useCallback(async (listing: Partial<AdoptionListing>, imageUrls: string[]) => {
+    if (!providerId || !user) return;
+    const { data, error } = await fromTable("adoption_listings")
+      .insert({ ...listing, provider_id: providerId, user_id: user.id })
+      .select("*")
+      .single();
+    if (error) throw error;
+    if (data && imageUrls.length > 0) {
+      await fromTable("adoption_images").insert(
+        imageUrls.map((url, i) => ({ listing_id: (data as any).id, image_url: url, display_order: i }))
+      );
+    }
+    fetchListings();
+    return data;
+  }, [providerId, user, fetchListings]);
+
+  const updateListing = useCallback(async (id: string, updates: Partial<AdoptionListing>) => {
+    await fromTable("adoption_listings").update({ ...updates, updated_at: new Date().toISOString() }).eq("id", id);
+    fetchListings();
+  }, [fetchListings]);
+
+  const deleteListing = useCallback(async (id: string) => {
+    await fromTable("adoption_listings").delete().eq("id", id);
+    fetchListings();
+  }, [fetchListings]);
+
+  const addImage = useCallback(async (listingId: string, imageUrl: string, order: number = 0) => {
+    await fromTable("adoption_images").insert({ listing_id: listingId, image_url: imageUrl, display_order: order });
+    fetchListings();
+  }, [fetchListings]);
+
+  return { listings, addListing, updateListing, deleteListing, addImage, refresh: fetchListings };
+}
