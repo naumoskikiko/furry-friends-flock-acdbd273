@@ -513,9 +513,12 @@ export function useMyProvider() {
 
   const createProvider = useCallback(async (providerData: Partial<CareProvider>) => {
     if (!user) return null;
+    const category = providerData.category || "vet-clinic";
+    const bookingMode = getBookingTypeForCategory(category);
     const { data, error } = await fromTable("care_providers").insert({
       ...providerData,
       user_id: user.id,
+      booking_mode: bookingMode,
     }).select("*").single();
     if (error) throw error;
     setProvider(data as CareProvider);
