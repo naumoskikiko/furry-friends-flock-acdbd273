@@ -41,13 +41,14 @@ const SharePostModal = ({ postId, imageUrl, caption, username, onClose, shareTyp
     if (!user) return;
     setSending(conv.id);
     try {
+      const isProduct = shareType === "product";
       const isBlog = shareType === "blog";
-      const msgType = isBlog ? "blog_share" : "post_share";
-      const emoji = postType === "meetup" ? "📍" : isBlog ? "📝" : "📷";
+      const msgType = isProduct ? "product_share" : isBlog ? "blog_share" : "post_share";
+      const emoji = isProduct ? "🛒" : postType === "meetup" ? "📍" : isBlog ? "📝" : "📷";
       await fromTable("messages").insert({
         conversation_id: conv.id,
         sender_id: user.id,
-        message_text: `${emoji} Shared ${postType === "meetup" ? "a meetup" : isBlog ? "an article" : "a post"}`,
+        message_text: `${emoji} Shared ${isProduct ? "a product" : postType === "meetup" ? "a meetup" : isBlog ? "an article" : "a post"}`,
         message_type: msgType,
         metadata: {
           post_id: postId,
