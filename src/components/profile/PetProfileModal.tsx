@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Pencil, Trash2, Camera, X, Save } from "lucide-react";
+import { Pencil, Trash2, Camera, X, Save, MessageCircle } from "lucide-react";
+import PetVerificationSection from "./PetVerificationSection";
 import { animalTypes, temperaments } from "@/data/petBreeds";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,9 +20,10 @@ interface PetProfileModalProps {
   onEdit: (pet: any) => void;
   onDelete: (petId: string) => void;
   onPetUpdated?: () => void;
+  onContact?: (ownerId: string) => void;
 }
 
-const PetProfileModal = ({ pet, open, onOpenChange, isOwner, onEdit, onDelete, onPetUpdated }: PetProfileModalProps) => {
+const PetProfileModal = ({ pet, open, onOpenChange, isOwner, onEdit, onDelete, onPetUpdated, onContact }: PetProfileModalProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
@@ -274,6 +276,23 @@ const PetProfileModal = ({ pet, open, onOpenChange, isOwner, onEdit, onDelete, o
             <InfoRow label="Emergency Contact" value={editing ? form.emergency_contact : pet.emergency_contact} field="emergency_contact" />
             <InfoRow label="Vet Info" value={editing ? form.vet_info : pet.vet_info} field="vet_info" />
           </div>
+
+          {/* Verification section - owner view */}
+          {isOwner && !editing && (
+            <div className="mt-4">
+              <PetVerificationSection petId={pet.id} onStatusChange={onPetUpdated} />
+            </div>
+          )}
+
+          {/* Contact button - non-owner view */}
+          {!isOwner && onContact && pet.owner_id && (
+            <Button
+              onClick={() => onContact(pet.owner_id)}
+              className="w-full mt-4 petkeep-gradient text-primary-foreground font-bold"
+            >
+              <MessageCircle className="h-4 w-4 mr-2" /> Message Owner
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

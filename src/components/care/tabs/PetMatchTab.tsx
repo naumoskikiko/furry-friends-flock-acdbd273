@@ -33,6 +33,9 @@ interface Pet {
   special_care?: string | null;
   emergency_contact?: string | null;
   vet_info?: string | null;
+  owner_id?: string;
+  vaccination_verified?: boolean;
+  neutered_verified?: boolean;
 }
 
 interface PetMatchListing {
@@ -96,13 +99,22 @@ const SafetyIndicators = ({ pet }: { pet: Pet }) => {
   return (
     <div className="flex flex-wrap gap-1 mt-1.5">
       {pet.vaccinated === true && (
-        <span className="inline-flex items-center gap-0.5 rounded-full bg-green-100 dark:bg-green-900/20 px-1.5 py-0.5 text-[9px] font-semibold text-green-700 dark:text-green-400">
-          <Syringe className="h-2.5 w-2.5" /> Vaccinated
+        <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
+          pet.vaccination_verified
+            ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+            : "bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400"
+        }`}>
+          <Syringe className="h-2.5 w-2.5" /> {pet.vaccination_verified ? "✅ Vaccinated" : "⏳ Vaccinated (Pending)"}
         </span>
       )}
       {pet.neutered === false && (
         <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-100 dark:bg-blue-900/20 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700 dark:text-blue-400">
           ✓ Fertile
+        </span>
+      )}
+      {pet.neutered === true && pet.neutered_verified && (
+        <span className="inline-flex items-center gap-0.5 rounded-full bg-green-100 dark:bg-green-900/20 px-1.5 py-0.5 text-[9px] font-semibold text-green-700 dark:text-green-400">
+          ✅ Neutered/Spayed
         </span>
       )}
       {!safety.safe && safety.warnings.map((w, i) => (
@@ -120,11 +132,13 @@ const PetProfileDetailModal = ({
   open,
   onOpenChange,
   myPet,
+  onMessageOwner,
 }: {
   listing: PetMatchListing | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   myPet: Pet | null;
+  onMessageOwner?: (userId: string) => void;
 }) => {
   if (!listing?.pet) return null;
   const pet = listing.pet;
@@ -266,7 +280,7 @@ const PetProfileDetailModal = ({
             )}
           </div>
 
-          {/* Owner info */}
+          {/* Owner info + Message button */}
           {listing.profile && (
             <div className="flex items-center gap-3 rounded-xl bg-secondary/40 p-3">
               <Avatar className="h-10 w-10">
@@ -279,6 +293,16 @@ const PetProfileDetailModal = ({
               </div>
               {badges.includes("Verified Owner") && <Shield className="h-4 w-4 text-primary" />}
             </div>
+          )}
+
+          {/* Message Owner button */}
+          {onMessageOwner && listing.user_id && (
+            <button
+              onClick={() => onMessageOwner(listing.user_id)}
+              className="w-full flex items-center justify-center gap-2 rounded-xl petkeep-gradient py-3 text-sm font-bold text-primary-foreground"
+            >
+              <MessageCircle className="h-4 w-4" /> Message Owner
+            </button>
           )}
         </div>
       </DialogContent>
@@ -488,14 +512,27 @@ const PetMatchTab = () => {
     if (listings.length > 0) {
       const petIds = listings.map((l) => l.pet_id);
       const userIds = [...new Set(listings.map((l) => l.user_id))];
-      const [petsData, profilesData] = await Promise.all([
-        supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight, temperament, medical_notes, special_care, emergency_contact, vet_info").in("id", petIds),
+      const [petsData, profilesData, verificationsData] = await Promise.all([
+        supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight, temperament, medical_notes, special_care, emergency_contact, vet_info, owner_id").in("id", petIds),
         supabase.from("profiles").select("user_id, full_name, avatar_url, username").in("user_id", userIds),
+        fromTable("pet_verifications").select("pet_id, verification_type, status").in("pet_id", petIds).eq("status", "verified"),
       ]);
       const petsMap = Object.fromEntries((petsData.data || []).map((p: any) => [p.id, p]));
       const profilesMap = Object.fromEntries((profilesData.data || []).map((p: any) => [p.user_id, p]));
+      // Build verification lookup
+      const verMap: Record<string, { vaccination_verified: boolean; neutered_verified: boolean }> = {};
+      (verificationsData.data || []).forEach((v: any) => {
+        if (!verMap[v.pet_id]) verMap[v.pet_id] = { vaccination_verified: false, neutered_verified: false };
+        if (v.verification_type === "vaccination") verMap[v.pet_id].vaccination_verified = true;
+        if (v.verification_type === "neutered") verMap[v.pet_id].neutered_verified = true;
+      });
       listings.forEach((l) => {
-        l.pet = petsMap[l.pet_id];
+        const pet = petsMap[l.pet_id];
+        if (pet && verMap[l.pet_id]) {
+          pet.vaccination_verified = verMap[l.pet_id].vaccination_verified;
+          pet.neutered_verified = verMap[l.pet_id].neutered_verified;
+        }
+        l.pet = pet;
         l.profile = profilesMap[l.user_id];
       });
     }
@@ -653,6 +690,11 @@ const PetMatchTab = () => {
         open={!!profileListing}
         onOpenChange={(open) => { if (!open) setProfileListing(null); }}
         myPet={activePet}
+        onMessageOwner={(userId) => {
+          setProfileListing(null);
+          const username = profileListing?.profile?.username;
+          if (username) navigate(`/user/${username}`);
+        }}
       />
 
       {/* AddPetFlow modal for editing (available from all views) */}
