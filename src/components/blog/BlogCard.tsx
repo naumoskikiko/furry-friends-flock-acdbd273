@@ -109,9 +109,15 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
     setParticipantsCount((c) => newJoined ? c + 1 : Math.max(0, c - 1));
     if (newJoined) {
       await (supabase as any).from("blog_event_participants").insert({ blog_post_id: post.id, user_id: user.id });
+      try {
+        await (supabase as any).rpc("join_meetup_chat", { _blog_post_id: post.id, _user_id: user.id });
+      } catch {}
       toast({ title: "You joined the event! 🎉" });
     } else {
       await (supabase as any).from("blog_event_participants").delete().eq("blog_post_id", post.id).eq("user_id", user.id);
+      try {
+        await (supabase as any).rpc("leave_meetup_chat", { _blog_post_id: post.id, _user_id: user.id });
+      } catch {}
       toast({ title: "Left the event" });
     }
   };
