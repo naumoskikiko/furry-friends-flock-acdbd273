@@ -840,11 +840,16 @@ export interface AdoptionImage {
   display_order: number;
 }
 
+const ADOPTION_BATCH = 12;
+
 export function useAdoptionListings(filters?: { animal_type?: string; search?: string }) {
   const [listings, setListings] = useState<AdoptionListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const offsetRef = useRef(0);
 
-  const fetchListings = useCallback(async () => {
+  const fetchListings = useCallback(async (reset = false) => {
+    if (reset) { offsetRef.current = 0; setHasMore(true); }
     setLoading(true);
     let query = fromTable("adoption_listings")
       .select("*, provider:care_providers(business_name, photo_url, location, is_verified, user_id, phone, description)")
@@ -858,10 +863,9 @@ export function useAdoptionListings(filters?: { animal_type?: string; search?: s
       query = query.or(`name.ilike.%${filters.search}%,breed.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
     }
 
+    query = query.range(offsetRef.current, offsetRef.current + ADOPTION_BATCH - 1);
     const { data } = await query;
     const items = (data || []) as AdoptionListing[];
-
-    // Only show listings from verified shelters
     const verified = items.filter(i => i.provider?.is_verified);
 
     // Fetch images
@@ -876,12 +880,17 @@ export function useAdoptionListings(filters?: { animal_type?: string; search?: s
       verified.forEach(l => { l.images = imgMap.get(l.id) || []; });
     }
 
-    setListings(verified);
+    if (reset) { setListings(verified); } else { setListings(prev => [...prev, ...verified]); }
+    if (items.length < ADOPTION_BATCH) setHasMore(false);
+    offsetRef.current += items.length;
     setLoading(false);
   }, [filters?.animal_type, filters?.search]);
 
-  useEffect(() => { fetchListings(); }, [fetchListings]);
-  return { listings, loading, refresh: fetchListings };
+  useEffect(() => { fetchListings(true); }, [fetchListings]);
+
+  const loadMore = useCallback(() => { if (hasMore && !loading) fetchListings(false); }, [hasMore, loading, fetchListings]);
+
+  return { listings, loading, hasMore, loadMore, refresh: () => fetchListings(true) };
 }
 
 export function useShelterListings(providerId: string | null) {
