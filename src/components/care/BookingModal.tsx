@@ -231,7 +231,7 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
             service_name: selectedService.service_name,
             date: dateStr + (endDateStr ? ` → ${endDateStr}` : ""),
             time: bookingTime,
-            price: selectedService.price,
+            price: totalServicePrice,
             pet_name: userPets.find(p => p.id === selectedPetId)?.name || undefined,
             status: "pending",
           });
