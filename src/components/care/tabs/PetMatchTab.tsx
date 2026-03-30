@@ -698,12 +698,22 @@ const PetMatchTab = () => {
         }}
       />
 
-      {/* AddPetFlow modal for editing (available from all views) */}
+      {/* PetProfileModal for editing (same card-based edit as profile) */}
+      <PetProfileModal
+        pet={editPetData}
+        open={!!editPetData}
+        onOpenChange={(open) => { if (!open) setEditPetData(null); }}
+        isOwner={true}
+        onEdit={() => {}}
+        onDelete={() => {}}
+        onPetUpdated={() => { setEditPetData(null); fetchData(); }}
+      />
+
+      {/* AddPetFlow for adding new pets */}
       <AddPetFlow
-        open={showAddPet || !!editPetData}
-        onOpenChange={(open) => { if (!open) { setShowAddPet(false); setEditPetData(null); } }}
-        onPetAdded={() => { setShowAddPet(false); setEditPetData(null); fetchData(); }}
-        editPet={editPetData || undefined}
+        open={showAddPet}
+        onOpenChange={(open) => { if (!open) setShowAddPet(false); }}
+        onPetAdded={() => { setShowAddPet(false); fetchData(); }}
       />
 
       {/* Header */}
