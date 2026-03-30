@@ -133,6 +133,7 @@ export type Database = {
           category: string
           comments_count: number
           content: string
+          conversation_id: string | null
           cover_image: string | null
           created_at: string
           event_date: string | null
@@ -156,6 +157,7 @@ export type Database = {
           category?: string
           comments_count?: number
           content?: string
+          conversation_id?: string | null
           cover_image?: string | null
           created_at?: string
           event_date?: string | null
@@ -179,6 +181,7 @@ export type Database = {
           category?: string
           comments_count?: number
           content?: string
+          conversation_id?: string | null
           cover_image?: string | null
           created_at?: string
           event_date?: string | null
@@ -198,7 +201,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "blog_posts_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       blog_saves: {
         Row: {
@@ -2577,6 +2588,14 @@ export type Database = {
         Args: { _group_name: string; _participant_ids: string[] }
         Returns: string
       }
+      create_meetup_chat: {
+        Args: {
+          _blog_post_id: string
+          _creator_id: string
+          _meetup_title: string
+        }
+        Returns: string
+      }
       group_add_member: {
         Args: { _conversation_id: string; _target_user_id: string }
         Returns: undefined
@@ -2613,6 +2632,14 @@ export type Database = {
       is_order_buyer: {
         Args: { _order_id: string; _user_id: string }
         Returns: boolean
+      }
+      join_meetup_chat: {
+        Args: { _blog_post_id: string; _user_id: string }
+        Returns: undefined
+      }
+      leave_meetup_chat: {
+        Args: { _blog_post_id: string; _user_id: string }
+        Returns: undefined
       }
       process_care_payment: {
         Args: {
