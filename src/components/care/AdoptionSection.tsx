@@ -29,7 +29,7 @@ const AdoptionSection = ({ onClose }: Props) => {
   const [requestMessage, setRequestMessage] = useState("");
   const [sendingRequest, setSendingRequest] = useState(false);
 
-  const { listings, loading } = useAdoptionListings({
+  const { listings, loading, hasMore, loadMore } = useAdoptionListings({
     animal_type: filterType,
     search: searchQuery,
   });
