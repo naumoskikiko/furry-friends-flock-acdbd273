@@ -146,8 +146,9 @@ export function useBusinessProducts(businessId: string | null) {
 const BUSINESS_BATCH = 12;
 
 export function useAllBusinesses(category?: string, search?: string) {
-  const [businesses, setBusinesses] = useState<BusinessProfile[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `biz_${category || "all"}_${search || ""}`;
+  const [businesses, setBusinesses] = useState<BusinessProfile[]>(() => cacheGet<BusinessProfile[]>(cacheKey) || []);
+  const [loading, setLoading] = useState(!cacheGet<BusinessProfile[]>(cacheKey));
   const [hasMore, setHasMore] = useState(true);
   const offsetRef = useRef(0);
 
@@ -160,11 +161,11 @@ export function useAllBusinesses(category?: string, search?: string) {
     query = query.range(offsetRef.current, offsetRef.current + BUSINESS_BATCH - 1);
     const { data } = await query;
     const batch = (data as unknown as BusinessProfile[]) || [];
-    if (reset) { setBusinesses(batch); } else { setBusinesses(prev => [...prev, ...batch]); }
+    if (reset) { setBusinesses(batch); cacheSet(cacheKey, batch, CacheTTL.MARKETPLACE); } else { setBusinesses(prev => { const merged = [...prev, ...batch]; cacheSet(cacheKey, merged, CacheTTL.MARKETPLACE); return merged; }); }
     if (batch.length < BUSINESS_BATCH) setHasMore(false);
     offsetRef.current += batch.length;
     setLoading(false);
-  }, [category, search]);
+  }, [category, search, cacheKey]);
 
   useEffect(() => { fetchBatch(true); }, [fetchBatch]);
 
