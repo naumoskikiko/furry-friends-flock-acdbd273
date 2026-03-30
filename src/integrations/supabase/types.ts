@@ -2042,6 +2042,44 @@ export type Database = {
           },
         ]
       }
+      provider_blocked_slots: {
+        Row: {
+          block_type: string
+          blocked_date: string
+          blocked_time: string | null
+          created_at: string
+          id: string
+          provider_id: string
+          reason: string | null
+        }
+        Insert: {
+          block_type?: string
+          blocked_date: string
+          blocked_time?: string | null
+          created_at?: string
+          id?: string
+          provider_id: string
+          reason?: string | null
+        }
+        Update: {
+          block_type?: string
+          blocked_date?: string
+          blocked_time?: string | null
+          created_at?: string
+          id?: string
+          provider_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_blocked_slots_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "care_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       provider_gallery: {
         Row: {
           caption: string | null
