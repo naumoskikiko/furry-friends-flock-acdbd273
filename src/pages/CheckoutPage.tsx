@@ -326,13 +326,13 @@ const CheckoutPage = () => {
                     <Coins className="h-4 w-4 text-primary" />
                     <div>
                       <h3 className="text-sm font-bold">Use PetKeep Credits</h3>
-                      <p className="text-[10px] text-muted-foreground">Balance: {creditBalance.toFixed(2)} credits ({creditBalance.toFixed(2)} MKD)</p>
+                      <p className="text-[10px] text-muted-foreground">Balance: {creditBalance.toFixed(2)} credits · Max usable: {maxCreditsAllowed.toFixed(2)} (4% limit)</p>
                     </div>
                   </div>
                   <Switch checked={useCreditsToggle} onCheckedChange={setUseCreditsToggle} />
                 </div>
                 {useCreditsToggle && creditsApplied > 0 && (
-                  <p className="text-xs text-primary font-semibold mt-2">-{creditsApplied.toFixed(2)} MKD will be deducted</p>
+                  <p className="text-xs text-primary font-semibold mt-2">-{creditsApplied.toFixed(2)} MKD will be deducted (up to 4% of order)</p>
                 )}
               </div>
             )}
