@@ -305,6 +305,7 @@ export function useConversations() {
     });
 
     setConversations(convList);
+    cacheSet(CACHE_KEY, convList, CacheTTL.CHAT_LIST);
     setLoading(false);
   }, [user]);
 
