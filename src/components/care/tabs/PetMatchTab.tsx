@@ -14,6 +14,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { Progress } from "@/components/ui/progress";
 import AddPetFlow from "@/components/profile/AddPetFlow";
+import PetProfileModal from "@/components/profile/PetProfileModal";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
