@@ -466,6 +466,8 @@ const PetMatchTab = () => {
   const [profileListing, setProfileListing] = useState<PetMatchListing | null>(null);
   const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set());
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  const [editPetData, setEditPetData] = useState<any>(null);
+  const [showAddPet, setShowAddPet] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
