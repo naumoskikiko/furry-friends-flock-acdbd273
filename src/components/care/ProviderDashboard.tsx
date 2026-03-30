@@ -5,7 +5,7 @@ import {
   BarChart3, Calendar, Star, BadgeCheck, Shield, FileCheck, ShieldCheck,
   MessageSquare, TrendingUp, Bell, Settings, Briefcase, Heart
 } from "lucide-react";
-import { useMyProvider, useProviderServices, useProviderAvailability, useProviderBookings, useProviderReviews, useProviderGallery, useProviderBlockedSlots, useProviderBookedSlots, CATEGORIES, DAY_NAMES, getBookingTypeForCategory, getBookingTypeLabel } from "@/hooks/useCare";
+import { useMyProvider, useProviderServices, useProviderAvailability, useProviderBookings, useProviderReviews, useProviderGallery, useProviderBlockedSlots, useProviderBookedSlots, useTrainingPackages, CATEGORIES, DAY_NAMES, getBookingTypeForCategory, getBookingTypeLabel } from "@/hooks/useCare";
 import { useProviderBalance, useProviderPayments, useProviderPayouts } from "@/hooks/usePayments";
 import { useProviderVerifications, VERIFICATION_TYPES } from "@/hooks/useVerification";
 import { useToast } from "@/hooks/use-toast";
@@ -59,6 +59,8 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const { images: galleryImages, addImage, removeImage } = useProviderGallery(provider?.id || null);
   const { blockedSlots, addBlock, removeBlock } = useProviderBlockedSlots(provider?.id || null);
   const { bookedDates } = useProviderBookedSlots(provider?.id || null);
+  const isTrainer = provider?.category === "trainer";
+  const { packages: trainingPackages, addPackage: addTrainingPackage, deletePackage: deleteTrainingPackage } = useTrainingPackages(isTrainer ? provider?.id || null : null);
   const { balance } = useProviderBalance(provider?.id || null);
   const { payments: providerPayments } = useProviderPayments(provider?.id || null);
   const { payouts, requestPayout } = useProviderPayouts(provider?.id || null);
@@ -242,7 +244,7 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
       case "bookings":
         return <CareBookingsTab bookings={bookings} updateBookingStatus={updateBookingStatus} />;
       case "services":
-        return <CareServicesTab services={services} addService={addService} deleteService={deleteService} />;
+        return <CareServicesTab services={services} addService={addService} deleteService={deleteService} isTrainer={isTrainer} trainingPackages={trainingPackages} addTrainingPackage={addTrainingPackage} deleteTrainingPackage={deleteTrainingPackage} />;
       case "earnings":
         return <CareEarningsTab balance={balance} payments={providerPayments} payouts={payouts} requestPayout={requestPayout} />;
       case "reviews":

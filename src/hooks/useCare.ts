@@ -707,3 +707,111 @@ export function useProviderBookedSlots(providerId: string | null) {
 export function calculateNights(startDate: Date, endDate: Date): number {
   return Math.max(0, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
 }
+
+// --- Training packages ---
+export interface TrainingPackage {
+  id: string;
+  provider_id: string;
+  name: string;
+  description: string;
+  total_sessions: number;
+  price: number;
+  session_duration: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface UserTrainingPackage {
+  id: string;
+  user_id: string;
+  package_id: string;
+  provider_id: string;
+  total_sessions: number;
+  used_sessions: number;
+  status: string;
+  purchased_at: string;
+  expires_at: string | null;
+  package?: TrainingPackage;
+}
+
+export function useTrainingPackages(providerId: string | null) {
+  const [packages, setPackages] = useState<TrainingPackage[]>([]);
+
+  const fetchPackages = useCallback(async () => {
+    if (!providerId) { setPackages([]); return; }
+    const { data } = await fromTable("training_packages")
+      .select("*")
+      .eq("provider_id", providerId)
+      .eq("is_active", true)
+      .order("price", { ascending: true });
+    setPackages((data || []) as TrainingPackage[]);
+  }, [providerId]);
+
+  useEffect(() => { fetchPackages(); }, [fetchPackages]);
+
+  const addPackage = useCallback(async (pkg: Partial<TrainingPackage>) => {
+    if (!providerId) return;
+    await fromTable("training_packages").insert({ ...pkg, provider_id: providerId });
+    fetchPackages();
+  }, [providerId, fetchPackages]);
+
+  const deletePackage = useCallback(async (pkgId: string) => {
+    await fromTable("training_packages").update({ is_active: false }).eq("id", pkgId);
+    fetchPackages();
+  }, [fetchPackages]);
+
+  return { packages, addPackage, deletePackage, refresh: fetchPackages };
+}
+
+export function useUserTrainingPackages(providerId: string | null) {
+  const { user } = useAuth();
+  const [userPackages, setUserPackages] = useState<UserTrainingPackage[]>([]);
+
+  const fetchUserPackages = useCallback(async () => {
+    if (!user || !providerId) { setUserPackages([]); return; }
+    const { data } = await fromTable("user_training_packages")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("provider_id", providerId)
+      .eq("status", "active");
+
+    const pkgList = (data || []) as UserTrainingPackage[];
+    
+    // Enrich with package info
+    if (pkgList.length > 0) {
+      const pkgIds = [...new Set(pkgList.map(p => p.package_id))];
+      const { data: pkgs } = await fromTable("training_packages").select("*").in("id", pkgIds);
+      const pkgMap = new Map((pkgs || []).map((p: any) => [p.id, p]));
+      pkgList.forEach(up => { up.package = pkgMap.get(up.package_id) as any; });
+    }
+
+    setUserPackages(pkgList);
+  }, [user, providerId]);
+
+  useEffect(() => { fetchUserPackages(); }, [fetchUserPackages]);
+
+  const purchasePackage = useCallback(async (pkg: TrainingPackage) => {
+    if (!user || !providerId) return null;
+    const { data, error } = await fromTable("user_training_packages").insert({
+      user_id: user.id,
+      package_id: pkg.id,
+      provider_id: providerId,
+      total_sessions: pkg.total_sessions,
+    }).select("*").single();
+    if (error) throw error;
+    fetchUserPackages();
+    return data;
+  }, [user, providerId, fetchUserPackages]);
+
+  const useSession = useCallback(async (userPkgId: string) => {
+    const pkg = userPackages.find(p => p.id === userPkgId);
+    if (!pkg) return;
+    const newUsed = pkg.used_sessions + 1;
+    const updates: any = { used_sessions: newUsed };
+    if (newUsed >= pkg.total_sessions) updates.status = "completed";
+    await fromTable("user_training_packages").update(updates).eq("id", userPkgId);
+    fetchUserPackages();
+  }, [userPackages, fetchUserPackages]);
+
+  return { userPackages, purchasePackage, useSession, refresh: fetchUserPackages };
+}

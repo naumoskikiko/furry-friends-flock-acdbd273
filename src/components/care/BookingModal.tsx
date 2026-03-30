@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCredits } from "@/hooks/useCredits";
-import { useBooking, useProviderAvailability, useProviderBookedSlots, useProviderBlockedSlots, generateTimeSlots, calculateNights, CATEGORIES, getBookingTypeForCategory, type CareProvider, type CareService, type BookingType } from "@/hooks/useCare";
+import { useBooking, useProviderAvailability, useProviderBookedSlots, useProviderBlockedSlots, useTrainingPackages, useUserTrainingPackages, generateTimeSlots, calculateNights, CATEGORIES, getBookingTypeForCategory, type CareProvider, type CareService, type BookingType, type TrainingPackage, type UserTrainingPackage } from "@/hooks/useCare";
 import { useProcessPayment, calculateFees } from "@/hooks/usePayments";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +24,17 @@ interface BookingModalProps {
 }
 
 // Dynamic steps based on booking type
-function getStepsForBookingType(bookingType: BookingType) {
+function getStepsForBookingType(bookingType: BookingType, isTrainer: boolean) {
+  if (isTrainer) {
+    return [
+      { key: "service", label: "Service", icon: "🏷️" },
+      { key: "duration", label: "Duration", icon: "⏱️" },
+      { key: "date", label: "Date", icon: "📅" },
+      { key: "time", label: "Time", icon: "🕐" },
+      { key: "details", label: "Details", icon: "📝" },
+      { key: "review", label: "Confirm", icon: "✅" },
+    ];
+  }
   switch (bookingType) {
     case "date_range":
       return [
@@ -72,18 +82,25 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
   const { blockedSlots } = useProviderBlockedSlots(provider.id);
 
   const bookingType = getBookingTypeForCategory(provider.category);
-  const STEPS = useMemo(() => getStepsForBookingType(bookingType), [bookingType]);
+  const isTrainer = provider.category === "trainer";
+  const STEPS = useMemo(() => getStepsForBookingType(bookingType, isTrainer), [bookingType, isTrainer]);
 
   const [step, setStep] = useState<number>(initialService ? 1 : 0);
   const [selectedService, setSelectedService] = useState<CareService | null>(initialService || null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedEndDate, setSelectedEndDate] = useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = useState("");
+  const [selectedDuration, setSelectedDuration] = useState<number>(60);
+  const [selectedUserPackage, setSelectedUserPackage] = useState<UserTrainingPackage | null>(null);
   const [notes, setNotes] = useState("");
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
   const [useCareCredits, setUseCareCredits] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [userPets, setUserPets] = useState<{ id: string; name: string; animal_type: string; breed: string | null; photo_url: string | null }[]>([]);
+
+  // Training packages (only for trainers)
+  const { packages: trainingPackages } = useTrainingPackages(isTrainer ? provider.id : null);
+  const { userPackages, purchasePackage, useSession } = useUserTrainingPackages(isTrainer ? provider.id : null);
 
   const catInfo = CATEGORIES.find((c) => c.value === provider.category);
 
@@ -146,18 +163,19 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
     return false;
   };
 
-  // Time slots: filter out booked and blocked times
+  // Time slots: filter out booked and blocked times — use selectedDuration for trainers
   const timeSlots = useMemo(() => {
     if (!selectedDate || !selectedService) return [];
     const dayOfWeek = selectedDate.getDay();
     const dayAvail = availability.find((a) => a.day_of_week === dayOfWeek && a.is_available);
     if (!dayAvail) return [];
-    const allSlots = generateTimeSlots(dayAvail.start_time, dayAvail.end_time, selectedService.duration);
+    const duration = isTrainer ? selectedDuration : selectedService.duration;
+    const allSlots = generateTimeSlots(dayAvail.start_time, dayAvail.end_time, duration);
     const dateStr = format(selectedDate, "yyyy-MM-dd");
     const bookedTimes = bookedTimeSlots.get(dateStr) || new Set();
     const blockedTimes = blockedTimeSlotsMap.get(dateStr) || new Set();
     return allSlots.filter((t) => !bookedTimes.has(t) && !blockedTimes.has(t));
-  }, [selectedDate, selectedService, availability, bookedTimeSlots, blockedTimeSlotsMap]);
+  }, [selectedDate, selectedService, selectedDuration, isTrainer, availability, bookedTimeSlots, blockedTimeSlotsMap]);
 
   // Night-based pricing for pet sitting
   const nights = useMemo(() => {
@@ -165,19 +183,23 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
     return calculateNights(selectedDate, selectedEndDate);
   }, [bookingType, selectedDate, selectedEndDate]);
 
+  // If using a package, price = 0 (already paid)
+  const isUsingPackage = !!selectedUserPackage;
+
   const totalServicePrice = useMemo(() => {
+    if (isUsingPackage) return 0;
     if (!selectedService) return 0;
     if (bookingType === "date_range" && nights > 0) {
       return selectedService.price * nights;
     }
     return selectedService.price;
-  }, [selectedService, bookingType, nights]);
+  }, [selectedService, bookingType, nights, isUsingPackage]);
 
   // Price calculation
   const creditsApplied = useMemo(() => {
-    if (!selectedService || !useCareCredits) return 0;
+    if (!selectedService || !useCareCredits || isUsingPackage) return 0;
     return Math.min(creditBalance, totalServicePrice);
-  }, [selectedService, useCareCredits, creditBalance, totalServicePrice]);
+  }, [selectedService, useCareCredits, creditBalance, totalServicePrice, isUsingPackage]);
 
   const finalPrice = Math.max(0, totalServicePrice - creditsApplied);
 
@@ -186,6 +208,7 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
   const canProceed = () => {
     switch (currentStepKey) {
       case "service": return !!selectedService;
+      case "duration": return selectedDuration > 0;
       case "date": return !!selectedDate;
       case "dates": return !!selectedDate && !!selectedEndDate;
       case "time": return !!selectedTime;
@@ -206,21 +229,27 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
 
   const handleConfirm = async () => {
     if (!selectedService || !selectedDate || !user) return;
-    // For booking types that don't need time, use a default
     const bookingTime = selectedTime || "09:00";
     setProcessing(true);
     try {
       const dateStr = format(selectedDate, "yyyy-MM-dd");
       const endDateStr = selectedEndDate ? format(selectedEndDate, "yyyy-MM-dd") : undefined;
-      const notesWithDates = endDateStr ? `${notes ? notes + " | " : ""}Check-out: ${endDateStr}` : notes;
+      const durationNote = isTrainer ? ` | Duration: ${selectedDuration}min` : "";
+      const packageNote = selectedUserPackage ? ` | Package: ${selectedUserPackage.package?.name || "Package"}` : "";
+      const notesWithDates = `${endDateStr ? `Check-out: ${endDateStr} | ` : ""}${notes}${durationNote}${packageNote}`.trim();
       const result = await createBooking(provider.id, selectedService.id, dateStr, bookingTime, notesWithDates, selectedPetId || undefined);
 
       if (result?.id) {
+        // Use package session if applicable
+        if (selectedUserPackage) {
+          await useSession(selectedUserPackage.id);
+        }
+
         // Apply credits
         if (creditsApplied > 0) {
           await applyCreditsToPayment(creditsApplied);
         }
-      await processPayment(result.id, provider.id, totalServicePrice);
+        await processPayment(result.id, provider.id, totalServicePrice);
 
         // Send booking message
         try {
@@ -228,7 +257,7 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
           const { sendBookingMessage } = await import("@/hooks/useMessages");
           await sendBookingMessage(convId, {
             booking_id: result.id,
-            service_name: selectedService.service_name,
+            service_name: selectedService.service_name + (isTrainer ? ` (${selectedDuration}min)` : ""),
             date: dateStr + (endDateStr ? ` → ${endDateStr}` : ""),
             time: bookingTime,
             price: totalServicePrice,
@@ -261,7 +290,8 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
             {step === 0 ? <X className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           </button>
           <h2 className="font-display text-base font-bold">
-            {bookingType === "date_range" ? "Book Stay" : 
+            {isTrainer ? "Book Training Session" :
+             bookingType === "date_range" ? "Book Stay" : 
              bookingType === "time_slot" ? "Book Walk" :
              bookingType === "date_range_with_time" ? "Book Boarding" : "Book Appointment"}
           </h2>
@@ -347,6 +377,109 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
                   </div>
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Duration step (trainers only) */}
+          {currentStepKey === "duration" && (
+            <div className="space-y-4">
+              <p className="text-sm font-bold">Session Duration</p>
+              <div className="grid grid-cols-2 gap-3">
+                {[30, 60, 90, 120].map((dur) => (
+                  <button
+                    key={dur}
+                    onClick={() => setSelectedDuration(dur)}
+                    className={`rounded-2xl p-4 border-2 text-center transition-all ${
+                      selectedDuration === dur
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/30"
+                    }`}
+                  >
+                    <Clock className={`h-5 w-5 mx-auto mb-1 ${selectedDuration === dur ? "text-primary" : "text-muted-foreground"}`} />
+                    <p className="text-sm font-bold">{dur} min</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {dur === 30 ? "Quick session" : dur === 60 ? "Standard" : dur === 90 ? "Extended" : "Full training"}
+                    </p>
+                  </button>
+                ))}
+              </div>
+
+              {/* Training packages section */}
+              {(trainingPackages.length > 0 || userPackages.length > 0) && (
+                <div className="space-y-3 pt-2">
+                  {/* Active user packages */}
+                  {userPackages.length > 0 && (
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground mb-2">📦 Your Packages</p>
+                      {userPackages.map((up) => (
+                        <button
+                          key={up.id}
+                          onClick={() => setSelectedUserPackage(selectedUserPackage?.id === up.id ? null : up)}
+                          className={`w-full rounded-xl p-3 border-2 text-left mb-2 transition-all ${
+                            selectedUserPackage?.id === up.id
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/30"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs font-bold">{up.package?.name || "Training Package"}</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {up.total_sessions - up.used_sessions} of {up.total_sessions} sessions remaining
+                              </p>
+                            </div>
+                            <span className="text-xs font-bold text-primary">
+                              {selectedUserPackage?.id === up.id ? "✓ Using" : "Use"}
+                            </span>
+                          </div>
+                          <div className="mt-1.5 h-1.5 rounded-full bg-secondary overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-primary transition-all"
+                              style={{ width: `${((up.total_sessions - up.used_sessions) / up.total_sessions) * 100}%` }}
+                            />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Available packages to buy */}
+                  {trainingPackages.length > 0 && (
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground mb-2">🎓 Training Packages</p>
+                      {trainingPackages.map((pkg) => (
+                        <div key={pkg.id} className="rounded-xl border border-border p-3 mb-2">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs font-bold">{pkg.name}</p>
+                              {pkg.description && <p className="text-[10px] text-muted-foreground">{pkg.description}</p>}
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                {pkg.total_sessions} sessions · {pkg.session_duration}min each
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs font-bold text-primary">{pkg.price} MKD</p>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await purchasePackage(pkg);
+                                    toast({ title: "Package purchased! 🎉", description: `${pkg.total_sessions} sessions ready to use` });
+                                  } catch (e: any) {
+                                    toast({ title: "Failed", description: e.message, variant: "destructive" });
+                                  }
+                                }}
+                                className="mt-1 text-[10px] font-bold text-primary underline"
+                              >
+                                Buy Package
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -607,7 +740,13 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
                   {!nights && (
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">Duration</span>
-                      <span className="font-semibold">{selectedService.duration} min</span>
+                      <span className="font-semibold">{isTrainer ? selectedDuration : selectedService.duration} min</span>
+                    </div>
+                  )}
+                  {selectedUserPackage && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Package</span>
+                      <span className="font-semibold text-primary">📦 {selectedUserPackage.package?.name || "Training Package"}</span>
                     </div>
                   )}
                   {userPets.find(p => p.id === selectedPetId) && (

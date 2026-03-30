@@ -2529,6 +2529,50 @@ export type Database = {
           },
         ]
       }
+      training_packages: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          provider_id: string
+          session_duration: number
+          total_sessions: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          price?: number
+          provider_id: string
+          session_duration?: number
+          total_sessions?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          provider_id?: string
+          session_duration?: number
+          total_sessions?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_packages_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "care_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -2612,6 +2656,57 @@ export type Database = {
           vet_phone?: string | null
         }
         Relationships: []
+      }
+      user_training_packages: {
+        Row: {
+          expires_at: string | null
+          id: string
+          package_id: string
+          provider_id: string
+          purchased_at: string
+          status: string
+          total_sessions: number
+          used_sessions: number
+          user_id: string
+        }
+        Insert: {
+          expires_at?: string | null
+          id?: string
+          package_id: string
+          provider_id: string
+          purchased_at?: string
+          status?: string
+          total_sessions: number
+          used_sessions?: number
+          user_id: string
+        }
+        Update: {
+          expires_at?: string | null
+          id?: string
+          package_id?: string
+          provider_id?: string
+          purchased_at?: string
+          status?: string
+          total_sessions?: number
+          used_sessions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_training_packages_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "training_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_training_packages_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "care_providers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
