@@ -69,6 +69,7 @@ const ProfessionalMode = () => {
         {sub === "services" && <ServiceAvailabilityPanel />}
         {sub === "orders" && <OrderManagementPanel />}
         {sub === "shelter" && <ShelterManagementPanel />}
+        {sub === "pet-verification" && <PetVerificationReviewPanel />}
       </div>
     );
   }
