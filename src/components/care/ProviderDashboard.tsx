@@ -21,6 +21,7 @@ import CareReviewsTab from "./tabs/CareReviewsTab";
 import CareAnalyticsTab from "./tabs/CareAnalyticsTab";
 import CareNotificationsTab from "./tabs/CareNotificationsTab";
 import PetMatchTab from "./tabs/PetMatchTab";
+import ShelterAdoptionTab from "./tabs/ShelterAdoptionTab";
 
 const NORTH_MACEDONIA_TOWNS = [
   "Skopje", "Bitola", "Kumanovo", "Tetovo", "Ohrid", "Prilep", "Veles", "Štip",
