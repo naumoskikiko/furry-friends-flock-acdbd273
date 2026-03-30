@@ -280,7 +280,7 @@ const PetProfileDetailModal = ({
             )}
           </div>
 
-          {/* Owner info */}
+          {/* Owner info + Message button */}
           {listing.profile && (
             <div className="flex items-center gap-3 rounded-xl bg-secondary/40 p-3">
               <Avatar className="h-10 w-10">
@@ -293,6 +293,16 @@ const PetProfileDetailModal = ({
               </div>
               {badges.includes("Verified Owner") && <Shield className="h-4 w-4 text-primary" />}
             </div>
+          )}
+
+          {/* Message Owner button */}
+          {onMessageOwner && listing.user_id && (
+            <button
+              onClick={() => onMessageOwner(listing.user_id)}
+              className="w-full flex items-center justify-center gap-2 rounded-xl petkeep-gradient py-3 text-sm font-bold text-primary-foreground"
+            >
+              <MessageCircle className="h-4 w-4" /> Message Owner
+            </button>
           )}
         </div>
       </DialogContent>
