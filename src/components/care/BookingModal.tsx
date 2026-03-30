@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCredits } from "@/hooks/useCredits";
-import { useBooking, useProviderAvailability, useProviderBookedSlots, useProviderBlockedSlots, generateTimeSlots, calculateNights, CATEGORIES, getBookingTypeForCategory, type CareProvider, type CareService, type BookingType } from "@/hooks/useCare";
+import { useBooking, useProviderAvailability, useProviderBookedSlots, useProviderBlockedSlots, useTrainingPackages, useUserTrainingPackages, generateTimeSlots, calculateNights, CATEGORIES, getBookingTypeForCategory, type CareProvider, type CareService, type BookingType, type TrainingPackage, type UserTrainingPackage } from "@/hooks/useCare";
 import { useProcessPayment, calculateFees } from "@/hooks/usePayments";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
