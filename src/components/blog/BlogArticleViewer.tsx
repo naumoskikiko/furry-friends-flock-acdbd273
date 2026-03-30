@@ -545,6 +545,17 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
               >
                 {joined ? "✓ You're Going — Tap to Leave" : "Join This Event"}
               </button>
+
+              {/* Open Chat button — only visible when joined */}
+              {joined && (
+                <button
+                  onClick={openMeetupChat}
+                  className="w-full rounded-xl py-3 text-sm font-bold transition-all active:scale-[0.98] bg-secondary text-foreground border border-border flex items-center justify-center gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Open MeetUP Chat
+                </button>
+              )}
             </div>
           )}
 
