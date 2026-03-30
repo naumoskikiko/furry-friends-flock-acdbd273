@@ -20,7 +20,7 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<"feed" | "blog">(() => searchParams.get("blog") ? "blog" : "feed");
   const openBlogId = searchParams.get("blog") || undefined;
   const { posts, loading, hasMore, loadMore, refreshFeed } = useFeed();
-  const feedRef = useRef<HTMLDivElement>(null);
+  
 
   const refreshAll = useCallback(async () => {
     await refreshFeed();
