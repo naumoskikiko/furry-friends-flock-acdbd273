@@ -121,8 +121,13 @@ export const useFeed = () => {
 
     if (reset) {
       setPosts(enriched);
+      cacheSet(CACHE_KEY, enriched, CacheTTL.FEED);
     } else {
-      setPosts((prev) => [...prev, ...enriched]);
+      setPosts((prev) => {
+        const merged = [...prev, ...enriched];
+        cacheSet(CACHE_KEY, merged, CacheTTL.FEED);
+        return merged;
+      });
     }
 
     if (!rawPosts || rawPosts.length < BATCH_SIZE) {
