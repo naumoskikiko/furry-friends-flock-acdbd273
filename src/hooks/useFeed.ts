@@ -30,8 +30,9 @@ const BATCH_SIZE = 20;
 
 export const useFeed = () => {
   const { user } = useAuth();
-  const [posts, setPosts] = useState<FeedPostData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const CACHE_KEY = `feed_${user?.id || "anon"}`;
+  const [posts, setPosts] = useState<FeedPostData[]>(() => cacheGet<FeedPostData[]>(CACHE_KEY) || []);
+  const [loading, setLoading] = useState(!cacheGet<FeedPostData[]>(CACHE_KEY));
   const [hasMore, setHasMore] = useState(true);
   const offsetRef = useRef(0);
 
