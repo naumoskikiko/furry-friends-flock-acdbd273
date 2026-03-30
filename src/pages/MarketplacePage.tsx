@@ -66,7 +66,7 @@ const MarketplacePage = () => {
   const [businessCategory, setBusinessCategory] = useState("all");
   const [showDashboard, setShowDashboard] = useState(false);
 
-  const { businesses, loading: bizLoading } = useAllBusinesses(
+  const { businesses, loading: bizLoading, hasMore: hasMoreBusinesses, loadMore: loadMoreBusinesses } = useAllBusinesses(
     activeTab === "stores" ? businessCategory : undefined,
     searchQuery || undefined
   );
