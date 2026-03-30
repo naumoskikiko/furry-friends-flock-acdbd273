@@ -122,8 +122,9 @@ export function useCreateOrder() {
 
 export function useMyOrders() {
   const { user } = useAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const CACHE_KEY = `orders_${user?.id || "anon"}`;
+  const [orders, setOrders] = useState<Order[]>(() => cacheGet<Order[]>(CACHE_KEY) || []);
+  const [loading, setLoading] = useState(!cacheGet<Order[]>(CACHE_KEY));
 
   const refresh = useCallback(async () => {
     if (!user) return;
