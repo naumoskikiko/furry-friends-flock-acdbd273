@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Search, MapPin, ChevronLeft, MessageSquare, Phone, Heart, Send } from "lucide-react";
+import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
 import { useAdoptionListings, type AdoptionListing } from "@/hooks/useCare";
 import { animalTypes } from "@/data/petBreeds";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
