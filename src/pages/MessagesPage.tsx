@@ -30,14 +30,33 @@ const MessagesPage = () => {
       const openMeetupChat = async () => {
         const { data: blogPost } = await (supabase as any)
           .from("blog_posts")
-          .select("conversation_id, title")
+          .select("conversation_id, title, user_id")
           .eq("id", meetupId)
           .single();
 
-        if (!blogPost?.conversation_id) {
-          toast({ title: "Meetup chat not available", variant: "destructive" });
+        if (!blogPost) {
+          toast({ title: "This meetup is no longer available", variant: "destructive" });
           setSearchParams({}, { replace: true });
           return;
+        }
+
+        let convId = blogPost.conversation_id;
+
+        // Auto-create chat if missing (fallback for older meetups)
+        if (!convId) {
+          try {
+            const { data: newConvId } = await (supabase as any).rpc("create_meetup_chat", {
+              _blog_post_id: meetupId,
+              _creator_id: blogPost.user_id,
+              _meetup_title: blogPost.title,
+            });
+            convId = newConvId;
+          } catch (e) {
+            console.error("Failed to auto-create meetup chat:", e);
+            toast({ title: "Could not create meetup chat", variant: "destructive" });
+            setSearchParams({}, { replace: true });
+            return;
+          }
         }
 
         // Check membership
