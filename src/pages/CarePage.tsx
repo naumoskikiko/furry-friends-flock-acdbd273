@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useTabRefresh } from "@/hooks/useTabRefresh";
 import AppLayout from "@/components/AppLayout";
 import { Star, BadgeCheck, MapPin, ChevronRight, Search, Briefcase, Clock, History, Heart } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -42,6 +43,17 @@ const CarePage = () => {
   const [showPetMatch, setShowPetMatch] = useState(false);
   
   const boostedProviderIds = useBoostedIds("provider");
+
+  useTabRefresh("/care", useCallback(() => {
+    setSearchQuery("");
+    setSearchInput("");
+    setActiveCategory("all");
+    setSelectedProvider(null);
+    setShowDashboard(false);
+    setShowHistory(false);
+    setShowPetMatch(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []));
 
   const handleSearch = (q: string) => {
     setSearchInput(q);

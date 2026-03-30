@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useTabRefresh } from "@/hooks/useTabRefresh";
 import { useSearchParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import ConversationList from "@/components/messages/ConversationList";
@@ -18,6 +19,11 @@ const MessagesPage = () => {
 
   const { messages, forwardMessage } = useChatMessages(activeConversation?.id || null);
   const { toggleMute, deleteConversation, refresh } = useConversations();
+
+  useTabRefresh("/messages", useCallback(() => {
+    refresh();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [refresh]));
 
   // Handle deep-link to a specific conversation
   useEffect(() => {

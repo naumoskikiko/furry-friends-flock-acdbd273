@@ -1,6 +1,6 @@
 import { Home, Map, ShoppingBag, Heart, MessageCircle, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -24,6 +24,8 @@ const BottomNav = ({ onBeforeNavigate }: BottomNavProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [refreshingTab, setRefreshingTab] = useState<string | null>(null);
+  const lastTapRef = useRef<{ path: string; time: number }>({ path: "", time: 0 });
 
   const fetchCount = useCallback(async () => {
     if (!user) return;
@@ -60,23 +62,45 @@ const BottomNav = ({ onBeforeNavigate }: BottomNavProps) => {
     return () => { supabase.removeChannel(channel); };
   }, [user, fetchCount]);
 
+  const handleTabClick = (path: string) => {
+    const now = Date.now();
+    const isActive = location.pathname === path;
+    const last = lastTapRef.current;
+    const isDoubleTap = isActive && last.path === path && now - last.time < 400;
+
+    lastTapRef.current = { path, time: now };
+
+    if (isDoubleTap) {
+      // Double tap on active tab → refresh
+      setRefreshingTab(path);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      // Dispatch custom event for pages to listen to
+      window.dispatchEvent(new CustomEvent("tab-refresh", { detail: { path } }));
+      setTimeout(() => setRefreshingTab(null), 600);
+    } else {
+      onBeforeNavigate?.();
+      navigate(path);
+    }
+  };
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md">
       <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-1">
         {tabs.map(({ path, icon: Icon, label }) => {
           const isActive = location.pathname === path;
           const showBadge = path === "/messages" && unreadCount > 0;
+          const isRefreshing = refreshingTab === path;
           return (
             <button
               key={path}
-              onClick={() => { onBeforeNavigate?.(); navigate(path); }}
+              onClick={() => handleTabClick(path)}
               className={`relative flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 transition-colors ${
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Icon className={`h-5 w-5 ${isActive ? "stroke-[2.5]" : ""}`} />
+              <Icon className={`h-5 w-5 transition-transform duration-300 ${isActive ? "stroke-[2.5]" : ""} ${isRefreshing ? "animate-spin" : ""}`} />
               {showBadge && (
                 <span className="absolute -top-0.5 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
                   {unreadCount > 9 ? "9+" : unreadCount}

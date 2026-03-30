@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTabRefresh } from "@/hooks/useTabRefresh";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import FeedHeader from "@/components/FeedHeader";
@@ -20,6 +21,13 @@ const Index = () => {
   const [refreshing, setRefreshing] = useState(false);
   const pullStartY = useRef(0);
   const feedRef = useRef<HTMLDivElement>(null);
+
+  useTabRefresh("/", useCallback(async () => {
+    setRefreshing(true);
+    await refreshFeed();
+    setRefreshing(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [refreshFeed]));
 
   // Pull to refresh
   const handleTouchStart = useCallback((e: React.TouchEvent) => {

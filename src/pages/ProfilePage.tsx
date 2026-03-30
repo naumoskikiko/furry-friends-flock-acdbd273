@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTabRefresh } from "@/hooks/useTabRefresh";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -83,6 +84,12 @@ const ProfilePage = () => {
   }, [user]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  useTabRefresh("/profile", useCallback(() => {
+    fetchData();
+    refreshProfile();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [fetchData, refreshProfile]));
 
   const handleSaveProfile = async () => {
     if (!user) return;
