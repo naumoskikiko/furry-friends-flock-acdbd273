@@ -24,7 +24,17 @@ interface BookingModalProps {
 }
 
 // Dynamic steps based on booking type
-function getStepsForBookingType(bookingType: BookingType) {
+function getStepsForBookingType(bookingType: BookingType, isTrainer: boolean) {
+  if (isTrainer) {
+    return [
+      { key: "service", label: "Service", icon: "🏷️" },
+      { key: "duration", label: "Duration", icon: "⏱️" },
+      { key: "date", label: "Date", icon: "📅" },
+      { key: "time", label: "Time", icon: "🕐" },
+      { key: "details", label: "Details", icon: "📝" },
+      { key: "review", label: "Confirm", icon: "✅" },
+    ];
+  }
   switch (bookingType) {
     case "date_range":
       return [
