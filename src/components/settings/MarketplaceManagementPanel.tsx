@@ -59,7 +59,7 @@ const MarketplaceManagementPanel = () => {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [search]);
+  useEffect(() => { load(); }, [search, filter]);
 
   const toggleSuspend = async (biz: BizRow) => {
     await fromTable("business_profiles").update({ is_suspended: !biz.is_suspended } as any).eq("id", biz.id);
