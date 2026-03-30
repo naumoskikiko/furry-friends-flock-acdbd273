@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import AdoptionSection from "@/components/care/AdoptionSection";
 import { createPortal } from "react-dom";
 import {
   Star, BadgeCheck, MapPin, Clock, DollarSign,
@@ -34,7 +35,8 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<"services" | "reviews" | "hours" | "gallery">("services");
+  const [tab, setTab] = useState<"services" | "reviews" | "hours" | "gallery" | "adoption">("services");
+  const [showAdoption, setShowAdoption] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingService, setBookingService] = useState<CareService | null>(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -66,7 +68,9 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
   };
 
   const isOwnProfile = user?.id === provider.user_id;
+  const isShelter = provider.category === "shelter";
   const tabs = [
+    ...(isShelter ? [{ key: "adoption" as const, label: "🐾 Adopt" }] : []),
     { key: "services" as const, label: "Services" },
     { key: "reviews" as const, label: "Reviews" },
     { key: "hours" as const, label: "Hours" },
@@ -329,10 +333,28 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
               ))}
             </div>
           )}
+
+          {/* Adoption */}
+          {tab === "adoption" && isShelter && (
+            <div>
+              <button
+                onClick={() => setShowAdoption(true)}
+                className="w-full rounded-2xl bg-card border border-border p-4 text-left petkeep-card-hover transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-2xl">🐾</div>
+                  <div className="flex-1">
+                    <h3 className="font-display text-base font-bold">Browse Pets for Adoption</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">Give a shelter pet a loving home ❤️</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Booking Modal - portaled to body to avoid stacking context issues */}
+      {/* Booking Modal */}
       {showBookingModal && createPortal(
         <BookingModal
           provider={provider}
@@ -341,6 +363,11 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
           onClose={() => setShowBookingModal(false)}
         />,
         document.body
+      )}
+
+      {/* Adoption section for shelter */}
+      {showAdoption && (
+        <AdoptionSection onClose={() => setShowAdoption(false)} />
       )}
     </div>
   );
