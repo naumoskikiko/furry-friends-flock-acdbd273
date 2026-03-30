@@ -35,6 +35,13 @@ const ExplorePage = () => {
 
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
+  useTabRefresh("/explore", useCallback(() => {
+    setSearchQuery("");
+    setSearchInput("");
+    setActiveFilter("all");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []));
+
   const handleResultClick = (r: any) => {
     if (r.type === "User") {
       navigate(`/user/${r.username || r.id}`);
