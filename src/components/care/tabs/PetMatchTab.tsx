@@ -99,13 +99,22 @@ const SafetyIndicators = ({ pet }: { pet: Pet }) => {
   return (
     <div className="flex flex-wrap gap-1 mt-1.5">
       {pet.vaccinated === true && (
-        <span className="inline-flex items-center gap-0.5 rounded-full bg-green-100 dark:bg-green-900/20 px-1.5 py-0.5 text-[9px] font-semibold text-green-700 dark:text-green-400">
-          <Syringe className="h-2.5 w-2.5" /> Vaccinated
+        <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
+          pet.vaccination_verified
+            ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+            : "bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400"
+        }`}>
+          <Syringe className="h-2.5 w-2.5" /> {pet.vaccination_verified ? "✅ Vaccinated" : "⏳ Vaccinated (Pending)"}
         </span>
       )}
       {pet.neutered === false && (
         <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-100 dark:bg-blue-900/20 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700 dark:text-blue-400">
           ✓ Fertile
+        </span>
+      )}
+      {pet.neutered === true && pet.neutered_verified && (
+        <span className="inline-flex items-center gap-0.5 rounded-full bg-green-100 dark:bg-green-900/20 px-1.5 py-0.5 text-[9px] font-semibold text-green-700 dark:text-green-400">
+          ✅ Neutered/Spayed
         </span>
       )}
       {!safety.safe && safety.warnings.map((w, i) => (
