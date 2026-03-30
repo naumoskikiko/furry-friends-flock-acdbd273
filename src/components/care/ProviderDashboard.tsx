@@ -254,37 +254,127 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
 
       case "hours":
         return (
-          <div className="space-y-2">
-            {DAY_NAMES.map((day, i) => {
-              const avail = availability.find((a) => a.day_of_week === i);
-              const isAvailable = avail?.is_available ?? false;
-              const start = avail?.start_time?.slice(0, 5) || "09:00";
-              const end = avail?.end_time?.slice(0, 5) || "17:00";
-              return (
-                <div key={i} className="rounded-xl bg-card border border-border p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold">{day}</span>
-                    <button
-                      onClick={() => handleSetAvailability(i, start, end, !isAvailable)}
-                      className={`rounded-full px-3 py-1 text-[10px] font-bold transition-colors ${isAvailable ? "bg-accent/10 text-accent" : "bg-secondary text-muted-foreground"}`}
-                    >
-                      {isAvailable ? "Open" : "Closed"}
-                    </button>
-                  </div>
-                  {isAvailable && (
-                    <div className="flex items-center gap-2 mt-2">
-                      <input type="time" defaultValue={start}
-                        onBlur={(e) => handleSetAvailability(i, e.target.value, end, true)}
-                        className="rounded-lg bg-secondary px-2 py-1.5 text-xs outline-none" />
-                      <span className="text-xs text-muted-foreground">to</span>
-                      <input type="time" defaultValue={end}
-                        onBlur={(e) => handleSetAvailability(i, start, e.target.value, true)}
-                        className="rounded-lg bg-secondary px-2 py-1.5 text-xs outline-none" />
+          <div className="space-y-4">
+            {/* Weekly schedule */}
+            <div>
+              <h3 className="text-sm font-bold mb-2 flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" /> Weekly Schedule
+              </h3>
+              <div className="space-y-2">
+                {DAY_NAMES.map((day, i) => {
+                  const avail = availability.find((a) => a.day_of_week === i);
+                  const isAvailable = avail?.is_available ?? false;
+                  const start = avail?.start_time?.slice(0, 5) || "09:00";
+                  const end = avail?.end_time?.slice(0, 5) || "17:00";
+                  return (
+                    <div key={i} className="rounded-xl bg-card border border-border p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold">{day}</span>
+                        <button
+                          onClick={() => handleSetAvailability(i, start, end, !isAvailable)}
+                          className={`rounded-full px-3 py-1 text-[10px] font-bold transition-colors ${isAvailable ? "bg-accent/10 text-accent" : "bg-secondary text-muted-foreground"}`}
+                        >
+                          {isAvailable ? "Open" : "Closed"}
+                        </button>
+                      </div>
+                      {isAvailable && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <input type="time" defaultValue={start}
+                            onBlur={(e) => handleSetAvailability(i, e.target.value, end, true)}
+                            className="rounded-lg bg-secondary px-2 py-1.5 text-xs outline-none" />
+                          <span className="text-xs text-muted-foreground">to</span>
+                          <input type="time" defaultValue={end}
+                            onBlur={(e) => handleSetAvailability(i, start, e.target.value, true)}
+                            className="rounded-lg bg-secondary px-2 py-1.5 text-xs outline-none" />
+                        </div>
+                      )}
                     </div>
-                  )}
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Block time / busy hours */}
+            <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <X className="h-4 w-4 text-destructive" />
+                <h3 className="text-sm font-bold">Block Time / Busy Hours</h3>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Block specific dates or time slots. Users won't be able to book during blocked periods.
+              </p>
+              <div className="space-y-2">
+                <div>
+                  <label className="text-[10px] font-semibold text-muted-foreground">Date to block</label>
+                  <input type="date" value={blockDate} onChange={(e) => setBlockDate(e.target.value)}
+                    min={new Date().toISOString().split("T")[0]}
+                    className="mt-0.5 w-full rounded-xl bg-secondary px-3 py-2 text-xs outline-none" />
                 </div>
-              );
-            })}
+                <div>
+                  <label className="text-[10px] font-semibold text-muted-foreground">Time slot (leave empty to block full day)</label>
+                  <input type="time" value={blockTime} onChange={(e) => setBlockTime(e.target.value)}
+                    className="mt-0.5 w-full rounded-xl bg-secondary px-3 py-2 text-xs outline-none" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-semibold text-muted-foreground">Reason (optional)</label>
+                  <input value={blockReason} onChange={(e) => setBlockReason(e.target.value)} placeholder="e.g. Personal day"
+                    className="mt-0.5 w-full rounded-xl bg-secondary px-3 py-2 text-xs outline-none" />
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!blockDate) return;
+                    await addBlock(blockDate, blockTime || undefined, blockReason || undefined);
+                    toast({ title: blockTime ? "Time slot blocked" : "Full day blocked" });
+                    setBlockDate(""); setBlockTime(""); setBlockReason("");
+                  }}
+                  disabled={!blockDate}
+                  className="w-full rounded-xl py-2 text-xs font-bold bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
+                >
+                  Block {blockTime ? "Time Slot" : "Full Day"}
+                </button>
+              </div>
+            </div>
+
+            {/* Active blocks + booked dates */}
+            {(blockedSlots.length > 0 || bookedDates.size > 0) && (
+              <div className="rounded-2xl bg-card border border-border p-4 space-y-3">
+                <h3 className="text-sm font-bold flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-primary" /> Calendar Overview
+                </h3>
+
+                {/* Blocked slots */}
+                {blockedSlots.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-semibold text-destructive">🚫 Blocked</p>
+                    {blockedSlots.map((b) => (
+                      <div key={b.id} className="flex items-center justify-between rounded-lg bg-destructive/5 border border-destructive/10 px-3 py-2">
+                        <div>
+                          <span className="text-xs font-semibold">{b.blocked_date}</span>
+                          {b.blocked_time && <span className="text-xs text-muted-foreground ml-2">@ {b.blocked_time.slice(0, 5)}</span>}
+                          {b.reason && <span className="text-[10px] text-muted-foreground ml-2">({b.reason})</span>}
+                        </div>
+                        <button onClick={() => removeBlock(b.id)} className="rounded-full p-1 hover:bg-destructive/10">
+                          <Trash2 className="h-3 w-3 text-destructive" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Booked dates */}
+                {bookedDates.size > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-semibold text-primary">📅 Booked Dates</p>
+                    <div className="flex flex-wrap gap-1">
+                      {Array.from(bookedDates).sort().slice(0, 20).map((d) => (
+                        <span key={d} className="rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[10px] font-semibold">{d}</span>
+                      ))}
+                      {bookedDates.size > 20 && <span className="text-[10px] text-muted-foreground">+{bookedDates.size - 20} more</span>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         );
 
