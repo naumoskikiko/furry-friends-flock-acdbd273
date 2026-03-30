@@ -220,7 +220,7 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
         if (creditsApplied > 0) {
           await applyCreditsToPayment(creditsApplied);
         }
-        await processPayment(result.id, provider.id, selectedService.price);
+      await processPayment(result.id, provider.id, totalServicePrice);
 
         // Send booking message
         try {
