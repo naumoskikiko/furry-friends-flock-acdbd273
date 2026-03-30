@@ -1081,6 +1081,98 @@ const PetMatchTab = () => {
             </div>
           </div>
 
+          {/* ─── VERIFICATION WARNINGS (High Priority) ──────────────────────── */}
+          {pets.length > 0 && (() => {
+            const warnings: { petId: string; petName: string; petPhoto: string | null; type: string; label: string; desc: string; status: string }[] = [];
+            pets.forEach(pet => {
+              const ver = petVerifications[pet.id];
+              if (!ver) {
+                warnings.push({ petId: pet.id, petName: pet.name, petPhoto: pet.photo_url, type: "vaccination", label: "Vaccination Proof", desc: "Add vaccination proof to verify your pet", status: "not_submitted" });
+                warnings.push({ petId: pet.id, petName: pet.name, petPhoto: pet.photo_url, type: "neutered", label: "Neutered/Spayed Proof", desc: "Add neutered/spayed proof to continue", status: "not_submitted" });
+                return;
+              }
+              if (ver.vaccination !== "verified") {
+                warnings.push({ petId: pet.id, petName: pet.name, petPhoto: pet.photo_url, type: "vaccination", label: "Vaccination Proof", desc: ver.vaccination === "pending" ? "Vaccination proof is pending review" : ver.vaccination === "rejected" ? "Vaccination proof was rejected — please re-upload" : "Add vaccination proof to verify your pet", status: ver.vaccination });
+              }
+              if (ver.neutered !== "verified") {
+                warnings.push({ petId: pet.id, petName: pet.name, petPhoto: pet.photo_url, type: "neutered", label: "Neutered/Spayed Proof", desc: ver.neutered === "pending" ? "Neutered/spayed proof is pending review" : ver.neutered === "rejected" ? "Neutered/spayed proof was rejected — please re-upload" : "Add neutered/spayed proof to continue", status: ver.neutered });
+              }
+            });
+            if (warnings.length === 0) return null;
+            return (
+              <div className="space-y-2">
+                {warnings.map((w, i) => {
+                  const isUploading = verificationUploading === `${w.petId}_${w.type}`;
+                  const isPending = w.status === "pending";
+                  const isRejected = w.status === "rejected";
+                  return (
+                    <div key={i} className={`rounded-2xl border p-3 ${
+                      isPending ? "bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/30" :
+                      isRejected ? "bg-destructive/5 border-destructive/20" :
+                      "bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-800/30"
+                    }`}>
+                      <div className="flex items-start gap-3">
+                        {w.petPhoto ? (
+                          <img src={w.petPhoto} alt={w.petName} className="h-10 w-10 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary shrink-0">
+                            <PawPrint className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            {isPending ? (
+                              <Clock className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                            ) : isRejected ? (
+                              <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                            ) : (
+                              <Shield className="h-3.5 w-3.5 text-orange-600 shrink-0" />
+                            )}
+                            <p className="text-xs font-bold truncate">
+                              {w.petName} — {w.label}
+                            </p>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{w.desc}</p>
+                          {!isPending && (
+                            <p className="text-[9px] text-muted-foreground/70 mt-0.5">
+                              ⚠️ Verification required to appear in PetMatch
+                            </p>
+                          )}
+                          {isPending && (
+                            <span className="inline-flex items-center gap-1 mt-1.5 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-[9px] font-bold text-amber-700 dark:text-amber-400">
+                              <Clock className="h-2.5 w-2.5" /> Pending ⏳
+                            </span>
+                          )}
+                        </div>
+                        {!isPending && (
+                          <label className={`shrink-0 inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-[10px] font-bold cursor-pointer transition-colors ${
+                            isUploading ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:opacity-90"
+                          }`}>
+                            {isUploading ? (
+                              <><Loader2 className="h-3 w-3 animate-spin" /> Uploading...</>
+                            ) : (
+                              <><Upload className="h-3 w-3" /> Upload Proof</>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              className="hidden"
+                              disabled={isUploading}
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (f) handleVerificationUpload(w.petId, w.type, f);
+                              }}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
           {/* Smart Safety Checklist */}
           {pets.length === 0 ? (
             <div className="rounded-2xl bg-card border border-border p-6 text-center">
