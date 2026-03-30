@@ -87,11 +87,16 @@ const ProfilePage = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  useTabRefresh("/profile", useCallback(() => {
-    fetchData();
+  const refreshAll = useCallback(async () => {
+    await fetchData();
     refreshProfile();
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [fetchData, refreshProfile]));
+  }, [fetchData, refreshProfile]);
+
+  useTabRefresh("/profile", refreshAll);
+
+  const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    usePullToRefresh({ onRefresh: refreshAll });
 
   const handleSaveProfile = async () => {
     if (!user) return;
