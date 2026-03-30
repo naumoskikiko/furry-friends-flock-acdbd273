@@ -352,7 +352,7 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
         </div>
       </div>
 
-      {/* Booking Modal - portaled to body to avoid stacking context issues */}
+      {/* Booking Modal */}
       {showBookingModal && createPortal(
         <BookingModal
           provider={provider}
@@ -361,6 +361,11 @@ const ProviderDetail = ({ provider, onClose }: ProviderDetailProps) => {
           onClose={() => setShowBookingModal(false)}
         />,
         document.body
+      )}
+
+      {/* Adoption section for shelter */}
+      {showAdoption && (
+        <AdoptionSection onClose={() => setShowAdoption(false)} />
       )}
     </div>
   );
