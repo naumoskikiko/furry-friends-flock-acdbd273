@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
-import { ArrowLeft, Minus, Plus, ShoppingCart, Store, Star, Heart, Send, Flame } from "lucide-react";
+import { ArrowLeft, Minus, Plus, ShoppingCart, Store, Star, Heart, Send, Flame, Share2 } from "lucide-react";
+import SharePostModal from "@/components/messages/SharePostModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/hooks/useCart";
@@ -38,6 +39,7 @@ const ProductDetailPage = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Best seller check
   const [isBestSeller, setIsBestSeller] = useState(false);
@@ -145,9 +147,14 @@ const ProductDetailPage = () => {
           <button onClick={() => navigate(-1)} className="absolute top-3 left-3 rounded-full bg-background/80 backdrop-blur-sm p-2 z-10">
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <button onClick={() => id && toggleWishlist(id)} className="absolute top-3 right-3 rounded-full bg-background/80 backdrop-blur-sm p-2 z-10">
-            <Heart className={`h-4 w-4 ${wishlisted ? "fill-red-500 text-red-500" : ""}`} />
-          </button>
+          <div className="absolute top-3 right-3 flex gap-2 z-10">
+            <button onClick={() => setShowShareModal(true)} className="rounded-full bg-background/80 backdrop-blur-sm p-2">
+              <Share2 className="h-4 w-4" />
+            </button>
+            <button onClick={() => id && toggleWishlist(id)} className="rounded-full bg-background/80 backdrop-blur-sm p-2">
+              <Heart className={`h-4 w-4 ${wishlisted ? "fill-red-500 text-red-500" : ""}`} />
+            </button>
+          </div>
         </div>
 
         <div className="px-4 pt-4 space-y-4">
@@ -336,6 +343,21 @@ const ProductDetailPage = () => {
           </div>
         )}
       </div>
+
+      {showShareModal && product && (
+        <SharePostModal
+          postId={product.id}
+          imageUrl={product.image_url}
+          caption={product.name}
+          username={business?.business_name || "Store"}
+          onClose={() => setShowShareModal(false)}
+          shareType="product"
+          postType="product"
+          eventDate={null}
+          eventLocation={null}
+          productPrice={product.price}
+        />
+      )}
     </AppLayout>
   );
 };

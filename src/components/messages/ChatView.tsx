@@ -4,7 +4,7 @@ import {
   ArrowLeft, Send, Check, CheckCheck, Search, X, MoreVertical,
   Pencil, Trash2, Flag, ChevronUp, Reply, Forward, Mic, Calendar,
   WifiOff, RefreshCw, ExternalLink, Link2, Image, AlertCircle,
-  CheckCircle2, XCircle, Ban, Settings, Square, MapPin,
+  CheckCircle2, XCircle, Ban, Settings, Square, MapPin, ShoppingCart,
 } from "lucide-react";
 import ChatSettingsModal from "./ChatSettingsModal";
 import VoiceMessageBubble from "./VoiceMessageBubble";
@@ -724,6 +724,71 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
                         <p className={`text-[10px] mt-0.5 ${isMine ? "text-primary-foreground/50" : "text-muted-foreground"}`}>
                           Tap to view {isMeetup ? "meetup" : "article"}
                         </p>
+                        <div className={`flex items-center gap-1 mt-1 ${isMine ? "justify-end" : ""}`}>
+                          <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                            {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                          </span>
+                          {isMine && (msg.is_read
+                            ? <CheckCheck className="h-3 w-3 text-blue-400" />
+                            : <Check className="h-3 w-3 text-primary-foreground/60" />
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                );
+              }
+
+              // Product share card
+              if (msg.message_type === "product_share" && msg.metadata) {
+                return (
+                  <div
+                    key={msg.id}
+                    ref={(el) => { if (el) messageRefs.current.set(msg.id, el); }}
+                    className={`group flex items-end gap-1.5 ${isMine ? "justify-end" : "justify-start"}`}
+                  >
+                    <button
+                      onClick={async () => {
+                        try {
+                          const { data } = await (supabaseClient as any)
+                            .from("products")
+                            .select("id, is_active")
+                            .eq("id", msg.metadata.post_id)
+                            .single();
+                          if (!data) {
+                            toast({ title: "This product is no longer available", variant: "destructive" });
+                            return;
+                          }
+                          navigate(`/product/${msg.metadata.post_id}`);
+                        } catch {
+                          toast({ title: "Failed to open product", variant: "destructive" });
+                        }
+                      }}
+                      className={`max-w-[80%] rounded-2xl overflow-hidden text-left shadow-sm transition-transform active:scale-[0.98] ${
+                        isMine ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-secondary text-secondary-foreground rounded-bl-sm"
+                      }`}
+                    >
+                      {msg.metadata.image_url && (
+                        <img src={msg.metadata.image_url} alt="" className="w-full h-40 object-cover" />
+                      )}
+                      <div className="px-3.5 py-2">
+                        <p className={`text-[11px] font-semibold flex items-center gap-1 ${isMine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                          <ShoppingCart className="h-3 w-3" /> Shared a product
+                        </p>
+                        {msg.metadata.caption && (
+                          <p className="text-xs font-bold mt-0.5 line-clamp-2">{msg.metadata.caption}</p>
+                        )}
+                        {msg.metadata.price != null && (
+                          <p className={`text-sm font-extrabold mt-0.5 ${isMine ? "text-primary-foreground" : "text-primary"}`}>
+                            {Number(msg.metadata.price).toLocaleString()} MKD
+                          </p>
+                        )}
+                        {msg.metadata.username && (
+                          <p className={`text-[10px] mt-0.5 flex items-center gap-1 ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                            {msg.metadata.username}
+                          </p>
+                        )}
+                        <p className={`text-[10px] mt-0.5 ${isMine ? "text-primary-foreground/50" : "text-muted-foreground"}`}>Tap to view product</p>
                         <div className={`flex items-center gap-1 mt-1 ${isMine ? "justify-end" : ""}`}>
                           <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                             {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
