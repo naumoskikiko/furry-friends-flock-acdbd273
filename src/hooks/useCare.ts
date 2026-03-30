@@ -96,6 +96,32 @@ const CATEGORIES = [
 
 export { CATEGORIES };
 
+// Booking type determined by service category
+export type BookingType = "date_range" | "time_slot" | "appointment" | "date_range_with_time";
+
+export const CATEGORY_BOOKING_TYPE: Record<string, BookingType> = {
+  sitter: "date_range",
+  walker: "time_slot",
+  "grooming-salon": "appointment",
+  "vet-clinic": "appointment",
+  trainer: "appointment",
+  shelter: "date_range_with_time",
+};
+
+export function getBookingTypeForCategory(category: string): BookingType {
+  return CATEGORY_BOOKING_TYPE[category] || "appointment";
+}
+
+export function getBookingTypeLabel(bookingType: BookingType): string {
+  switch (bookingType) {
+    case "date_range": return "Date Range (Start → End)";
+    case "time_slot": return "Time Slot Picker";
+    case "appointment": return "Appointment Slots";
+    case "date_range_with_time": return "Date Range + Time";
+    default: return "Appointment";
+  }
+}
+
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 export { DAY_NAMES };
 
@@ -487,9 +513,12 @@ export function useMyProvider() {
 
   const createProvider = useCallback(async (providerData: Partial<CareProvider>) => {
     if (!user) return null;
+    const category = providerData.category || "vet-clinic";
+    const bookingMode = getBookingTypeForCategory(category);
     const { data, error } = await fromTable("care_providers").insert({
       ...providerData,
       user_id: user.id,
+      booking_mode: bookingMode,
     }).select("*").single();
     if (error) throw error;
     setProvider(data as CareProvider);
@@ -498,8 +527,13 @@ export function useMyProvider() {
 
   const updateProvider = useCallback(async (updates: Partial<CareProvider>) => {
     if (!user || !provider) return;
+    // Auto-update booking_mode when category changes
+    const finalUpdates: any = { ...updates, updated_at: new Date().toISOString() };
+    if (updates.category) {
+      finalUpdates.booking_mode = getBookingTypeForCategory(updates.category);
+    }
     const { data } = await fromTable("care_providers")
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(finalUpdates)
       .eq("id", provider.id)
       .select("*")
       .single();

@@ -8,12 +8,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCredits } from "@/hooks/useCredits";
-import { useBooking, useProviderAvailability, generateTimeSlots, CATEGORIES, type CareProvider, type CareService } from "@/hooks/useCare";
+import { useBooking, useProviderAvailability, generateTimeSlots, CATEGORIES, getBookingTypeForCategory, type CareProvider, type CareService, type BookingType } from "@/hooks/useCare";
 import { useProcessPayment, calculateFees } from "@/hooks/usePayments";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateConversation } from "@/hooks/useMessages";
-import { format, isBefore, startOfDay, isToday } from "date-fns";
+import { format, isBefore, startOfDay, isToday, addDays } from "date-fns";
 
 interface BookingModalProps {
   provider: CareProvider;
@@ -23,15 +23,43 @@ interface BookingModalProps {
   onSuccess?: () => void;
 }
 
-const STEPS = [
-  { key: "service", label: "Service", icon: "🏷️" },
-  { key: "date", label: "Date", icon: "📅" },
-  { key: "time", label: "Time", icon: "🕐" },
-  { key: "details", label: "Details", icon: "📝" },
-  { key: "review", label: "Confirm", icon: "✅" },
-] as const;
-
-type StepKey = typeof STEPS[number]["key"];
+// Dynamic steps based on booking type
+function getStepsForBookingType(bookingType: BookingType) {
+  switch (bookingType) {
+    case "date_range":
+      return [
+        { key: "service", label: "Service", icon: "🏷️" },
+        { key: "dates", label: "Dates", icon: "📅" },
+        { key: "details", label: "Details", icon: "📝" },
+        { key: "review", label: "Confirm", icon: "✅" },
+      ];
+    case "time_slot":
+      return [
+        { key: "service", label: "Service", icon: "🏷️" },
+        { key: "date", label: "Date", icon: "📅" },
+        { key: "time", label: "Time", icon: "🕐" },
+        { key: "details", label: "Details", icon: "📝" },
+        { key: "review", label: "Confirm", icon: "✅" },
+      ];
+    case "date_range_with_time":
+      return [
+        { key: "service", label: "Service", icon: "🏷️" },
+        { key: "dates", label: "Dates", icon: "📅" },
+        { key: "time", label: "Time", icon: "🕐" },
+        { key: "details", label: "Details", icon: "📝" },
+        { key: "review", label: "Confirm", icon: "✅" },
+      ];
+    case "appointment":
+    default:
+      return [
+        { key: "service", label: "Service", icon: "🏷️" },
+        { key: "date", label: "Date", icon: "📅" },
+        { key: "time", label: "Time", icon: "🕐" },
+        { key: "details", label: "Details", icon: "📝" },
+        { key: "review", label: "Confirm", icon: "✅" },
+      ];
+  }
+}
 
 const BookingModal = ({ provider, initialService, services, onClose, onSuccess }: BookingModalProps) => {
   const { user } = useAuth();
@@ -41,9 +69,13 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
   const { balance: creditBalance, applyCreditsToPayment } = useCredits();
   const availability = useProviderAvailability(provider.id);
 
+  const bookingType = getBookingTypeForCategory(provider.category);
+  const STEPS = useMemo(() => getStepsForBookingType(bookingType), [bookingType]);
+
   const [step, setStep] = useState<number>(initialService ? 1 : 0);
   const [selectedService, setSelectedService] = useState<CareService | null>(initialService || null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
@@ -88,13 +120,16 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
 
   const finalPrice = selectedService ? Math.max(0, selectedService.price - creditsApplied) : 0;
 
+  const currentStepKey = STEPS[step]?.key;
+
   const canProceed = () => {
-    switch (step) {
-      case 0: return !!selectedService;
-      case 1: return !!selectedDate;
-      case 2: return !!selectedTime;
-      case 3: return true;
-      case 4: return true;
+    switch (currentStepKey) {
+      case "service": return !!selectedService;
+      case "date": return !!selectedDate;
+      case "dates": return !!selectedDate && !!selectedEndDate;
+      case "time": return !!selectedTime;
+      case "details": return true;
+      case "review": return true;
       default: return false;
     }
   };
@@ -109,11 +144,15 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
   };
 
   const handleConfirm = async () => {
-    if (!selectedService || !selectedDate || !selectedTime || !user) return;
+    if (!selectedService || !selectedDate || !user) return;
+    // For booking types that don't need time, use a default
+    const bookingTime = selectedTime || "09:00";
     setProcessing(true);
     try {
       const dateStr = format(selectedDate, "yyyy-MM-dd");
-      const result = await createBooking(provider.id, selectedService.id, dateStr, selectedTime, notes, selectedPetId || undefined);
+      const endDateStr = selectedEndDate ? format(selectedEndDate, "yyyy-MM-dd") : undefined;
+      const notesWithDates = endDateStr ? `${notes ? notes + " | " : ""}Check-out: ${endDateStr}` : notes;
+      const result = await createBooking(provider.id, selectedService.id, dateStr, bookingTime, notesWithDates, selectedPetId || undefined);
 
       if (result?.id) {
         // Apply credits
@@ -129,8 +168,8 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
           await sendBookingMessage(convId, {
             booking_id: result.id,
             service_name: selectedService.service_name,
-            date: dateStr,
-            time: selectedTime,
+            date: dateStr + (endDateStr ? ` → ${endDateStr}` : ""),
+            time: bookingTime,
             price: selectedService.price,
             pet_name: userPets.find(p => p.id === selectedPetId)?.name || undefined,
             status: "pending",
@@ -160,7 +199,11 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
           <button onClick={handleBack} className="rounded-full p-1.5 hover:bg-secondary transition-colors">
             {step === 0 ? <X className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           </button>
-          <h2 className="font-display text-base font-bold">Book Appointment</h2>
+          <h2 className="font-display text-base font-bold">
+            {bookingType === "date_range" ? "Book Stay" : 
+             bookingType === "time_slot" ? "Book Walk" :
+             bookingType === "date_range_with_time" ? "Book Boarding" : "Book Appointment"}
+          </h2>
           <div className="w-8" />
         </div>
 
@@ -195,8 +238,8 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
-          {/* Step 0: Service selection */}
-          {step === 0 && (
+          {/* Service selection */}
+          {currentStepKey === "service" && (
             <div className="space-y-3">
               <p className="text-sm font-bold">Select a Service</p>
               {services.map((s) => (
@@ -228,7 +271,6 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
                       {selectedService?.id === s.id && <Check className="h-3 w-3 text-primary-foreground" />}
                     </div>
                   </div>
-                  {/* Provider info */}
                   <div className="flex items-center gap-2 mt-3 pt-2 border-t border-border/50">
                     <Avatar className="h-5 w-5">
                       <AvatarImage src={provider.photo_url || provider.profile?.avatar_url || undefined} />
@@ -247,8 +289,8 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
             </div>
           )}
 
-          {/* Step 1: Date selection */}
-          {step === 1 && (
+          {/* Single date selection (appointment / time_slot) */}
+          {currentStepKey === "date" && (
             <div className="space-y-3">
               <p className="text-sm font-bold">Choose a Date</p>
               <div className="flex justify-center">
@@ -278,13 +320,97 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
             </div>
           )}
 
-          {/* Step 2: Time selection */}
-          {step === 2 && (
+          {/* Date range selection (date_range / date_range_with_time) */}
+          {currentStepKey === "dates" && (
+            <div className="space-y-4">
+              <p className="text-sm font-bold">
+                {bookingType === "date_range" ? "Select Check-in & Check-out" : "Select Start & End Date"}
+              </p>
+              
+              {/* Start date */}
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">
+                  {bookingType === "date_range" ? "📅 Check-in Date" : "📅 Start Date"}
+                </label>
+                <div className="flex justify-center">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(d) => {
+                      setSelectedDate(d);
+                      if (d && selectedEndDate && isBefore(selectedEndDate, d)) {
+                        setSelectedEndDate(undefined);
+                      }
+                    }}
+                    disabled={isDateDisabled}
+                    className="p-3 pointer-events-auto rounded-2xl border border-border"
+                    classNames={{
+                      day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-xl",
+                      day_today: "bg-accent/20 text-accent-foreground font-bold rounded-xl",
+                      day: "h-10 w-10 p-0 font-medium rounded-xl hover:bg-secondary transition-colors aria-selected:opacity-100",
+                      head_cell: "text-muted-foreground rounded-md w-10 font-semibold text-[0.75rem]",
+                      cell: "h-10 w-10 text-center text-sm p-0 relative",
+                      nav_button: "h-8 w-8 bg-secondary hover:bg-secondary/80 rounded-xl p-0 opacity-70 hover:opacity-100 transition-all",
+                      caption_label: "text-sm font-bold",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* End date */}
+              {selectedDate && (
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block">
+                    {bookingType === "date_range" ? "📅 Check-out Date" : "📅 End Date"}
+                  </label>
+                  <div className="flex justify-center">
+                    <Calendar
+                      mode="single"
+                      selected={selectedEndDate}
+                      onSelect={setSelectedEndDate}
+                      disabled={(date) => isDateDisabled(date) || isBefore(date, addDays(selectedDate!, 1))}
+                      className="p-3 pointer-events-auto rounded-2xl border border-border"
+                      classNames={{
+                        day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-xl",
+                        day_today: "bg-accent/20 text-accent-foreground font-bold rounded-xl",
+                        day: "h-10 w-10 p-0 font-medium rounded-xl hover:bg-secondary transition-colors aria-selected:opacity-100",
+                        head_cell: "text-muted-foreground rounded-md w-10 font-semibold text-[0.75rem]",
+                        cell: "h-10 w-10 text-center text-sm p-0 relative",
+                        nav_button: "h-8 w-8 bg-secondary hover:bg-secondary/80 rounded-xl p-0 opacity-70 hover:opacity-100 transition-all",
+                        caption_label: "text-sm font-bold",
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Summary */}
+              {selectedDate && selectedEndDate && (
+                <div className="rounded-xl bg-primary/5 border border-primary/20 p-3 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-semibold">
+                      {format(selectedDate, "MMM d")} → {format(selectedEndDate, "MMM d, yyyy")}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground ml-6">
+                    {Math.ceil((selectedEndDate.getTime() - selectedDate.getTime()) / (1000 * 60 * 60 * 24))} days
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Time selection */}
+          {currentStepKey === "time" && (
             <div className="space-y-3">
-              <p className="text-sm font-bold">Choose a Time</p>
+              <p className="text-sm font-bold">
+                {bookingType === "time_slot" ? "Choose a Time Slot" : "Choose a Time"}
+              </p>
               {selectedDate && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <CalendarIcon className="h-3 w-3" /> {format(selectedDate, "EEEE, MMM d")}
+                  {selectedEndDate && ` → ${format(selectedEndDate, "MMM d")}`}
                 </p>
               )}
               {timeSlots.length === 0 ? (
@@ -314,8 +440,8 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
             </div>
           )}
 
-          {/* Step 3: Details */}
-          {step === 3 && (
+          {/* Details */}
+          {currentStepKey === "details" && (
             <div className="space-y-4">
               <p className="text-sm font-bold">Add Details</p>
 
@@ -366,8 +492,8 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
             </div>
           )}
 
-          {/* Step 4: Review & confirm */}
-          {step === 4 && selectedService && selectedDate && (
+          {/* Review & confirm */}
+          {currentStepKey === "review" && selectedService && selectedDate && (
             <div className="space-y-4">
               <p className="text-sm font-bold">Review & Confirm</p>
 
@@ -393,13 +519,21 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
                     <span className="font-semibold">{selectedService.service_name}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Date</span>
-                    <span className="font-semibold">{format(selectedDate, "EEE, MMM d, yyyy")}</span>
+                    <span className="text-muted-foreground">
+                      {selectedEndDate ? "Dates" : "Date"}
+                    </span>
+                    <span className="font-semibold">
+                      {format(selectedDate, "EEE, MMM d")}
+                      {selectedEndDate && ` → ${format(selectedEndDate, "MMM d, yyyy")}`}
+                      {!selectedEndDate && `, ${format(selectedDate, "yyyy")}`}
+                    </span>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Time</span>
-                    <span className="font-semibold">{selectedTime}</span>
-                  </div>
+                  {selectedTime && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Time</span>
+                      <span className="font-semibold">{selectedTime}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Duration</span>
                     <span className="font-semibold">{selectedService.duration} min</span>
@@ -458,7 +592,7 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-border shrink-0">
-          {step < 4 ? (
+          {currentStepKey !== "review" ? (
             <button
               onClick={handleNext}
               disabled={!canProceed()}
