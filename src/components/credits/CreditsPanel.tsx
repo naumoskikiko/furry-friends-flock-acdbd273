@@ -187,7 +187,7 @@ const CreditsPanel = () => {
         <CardContent className="space-y-3">
           <div>
             <div className="flex justify-between text-xs mb-1">
-              <span>Daily ({dailyEarned.toFixed(1)} / {dailyLimit}) · Ads {dailyAdWatches}/{adLimit}</span>
+              <span>Daily ({dailyEarned.toFixed(1)} / {dailyLimit})</span>
               <span className="text-muted-foreground">{dailyPct.toFixed(0)}%</span>
             </div>
             <Progress value={dailyPct} className="h-2" />
