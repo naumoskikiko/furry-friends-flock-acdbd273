@@ -77,6 +77,13 @@ const MarketplacePage = () => {
     if (q.length >= 2 || q.length === 0) setSearchQuery(q);
   };
 
+  useTabRefresh("/marketplace", useCallback(() => {
+    setSearchQuery("");
+    setSearchInput("");
+    setActiveTab("discover");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []));
+
   const isBusiness = profile?.role === "business";
   const { isAdmin } = useIsAdmin();
   const { itemCount, totalPrice, addToCart } = useCart();

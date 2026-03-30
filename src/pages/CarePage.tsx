@@ -44,6 +44,17 @@ const CarePage = () => {
   
   const boostedProviderIds = useBoostedIds("provider");
 
+  useTabRefresh("/care", useCallback(() => {
+    setSearchQuery("");
+    setSearchInput("");
+    setActiveCategory("all");
+    setSelectedProvider(null);
+    setShowDashboard(false);
+    setShowHistory(false);
+    setShowPetMatch(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []));
+
   const handleSearch = (q: string) => {
     setSearchInput(q);
     if (q.length >= 2 || q.length === 0) setSearchQuery(q);
