@@ -37,11 +37,16 @@ const ExplorePage = () => {
 
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
-  useTabRefresh("/explore", useCallback(() => {
+  const refreshExplore = useCallback(async () => {
     setSearchQuery("");
     setActiveFilter("All");
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [setSearchQuery, setActiveFilter]));
+  }, [setSearchQuery, setActiveFilter]);
+
+  useTabRefresh("/explore", refreshExplore);
+
+  const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
+    usePullToRefresh({ onRefresh: refreshExplore });
 
   const handleResultClick = (r: any) => {
     if (r.type === "User") {
