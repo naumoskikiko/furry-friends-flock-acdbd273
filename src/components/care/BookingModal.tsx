@@ -168,8 +168,8 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
           await sendBookingMessage(convId, {
             booking_id: result.id,
             service_name: selectedService.service_name,
-            date: dateStr,
-            time: selectedTime,
+            date: dateStr + (endDateStr ? ` → ${endDateStr}` : ""),
+            time: bookingTime,
             price: selectedService.price,
             pet_name: userPets.find(p => p.id === selectedPetId)?.name || undefined,
             status: "pending",
