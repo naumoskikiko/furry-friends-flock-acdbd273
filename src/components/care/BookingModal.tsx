@@ -429,7 +429,7 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
                       mode="single"
                       selected={selectedEndDate}
                       onSelect={setSelectedEndDate}
-                      disabled={(date) => isDateDisabled(date) || isBefore(date, addDays(selectedDate!, 1))}
+                      disabled={isEndDateDisabled}
                       className="p-3 pointer-events-auto rounded-2xl border border-border"
                       classNames={{
                         day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-xl",
