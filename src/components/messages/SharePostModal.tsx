@@ -55,9 +55,10 @@ const SharePostModal = ({ postId, imageUrl, caption, username, onClose, shareTyp
           image_url: imageUrl,
           caption,
           username,
-          post_type: postType || (isBlog ? "article" : "post"),
+          post_type: postType || (isProduct ? "product" : isBlog ? "article" : "post"),
           ...(eventDate && { event_date: eventDate }),
           ...(eventLocation && { event_location: eventLocation }),
+          ...(productPrice != null && { price: productPrice }),
         },
       });
       toast({ title: `Post sent to ${conv.other_user.full_name}` });
