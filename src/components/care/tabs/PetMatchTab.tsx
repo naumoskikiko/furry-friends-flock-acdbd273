@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   Heart, Plus, PawPrint, Shield, Upload, Trash2, Search, BadgeCheck,
   Star, AlertTriangle, ChevronDown, ChevronUp, MessageCircle, Flame,
-  Eye, Flag, X, Syringe, Calendar, Dog
+  Eye, Flag, X, Syringe, Calendar, Dog, Pencil, CheckCircle2, Camera, FileText, MapPin
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +12,8 @@ import { useNavigate } from "react-router-dom";
 import { calculateCompatibility, getBreederTrustScore, isSafeForBreeding } from "@/lib/petMatchAlgorithm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
+import { Progress } from "@/components/ui/progress";
+import AddPetFlow from "@/components/profile/AddPetFlow";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
