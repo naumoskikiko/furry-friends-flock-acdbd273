@@ -62,7 +62,8 @@ const CheckoutPage = () => {
   // Platform fee is deducted server-side, not shown to users
   const discount = appliedCoupon?.discount || 0;
   const subtotalAfterDiscount = Math.max(0, totalPrice + DELIVERY_FEE - discount);
-  const creditsApplied = useCreditsToggle ? Math.min(creditBalance, subtotalAfterDiscount) : 0;
+  const maxCreditsAllowed = Math.floor(totalPrice * 0.04 * 100) / 100; // 4% of product subtotal
+  const creditsApplied = useCreditsToggle ? Math.min(creditBalance, maxCreditsAllowed, subtotalAfterDiscount) : 0;
   const grandTotal = Math.max(0, subtotalAfterDiscount - creditsApplied);
 
   const shippingValid = useMemo(() => shippingSchema.safeParse(shipping).success, [shipping]);
@@ -325,13 +326,13 @@ const CheckoutPage = () => {
                     <Coins className="h-4 w-4 text-primary" />
                     <div>
                       <h3 className="text-sm font-bold">Use PetKeep Credits</h3>
-                      <p className="text-[10px] text-muted-foreground">Balance: {creditBalance.toFixed(2)} credits ({creditBalance.toFixed(2)} MKD)</p>
+                      <p className="text-[10px] text-muted-foreground">Balance: {creditBalance.toFixed(2)} credits · Max usable: {maxCreditsAllowed.toFixed(2)} (4% limit)</p>
                     </div>
                   </div>
                   <Switch checked={useCreditsToggle} onCheckedChange={setUseCreditsToggle} />
                 </div>
                 {useCreditsToggle && creditsApplied > 0 && (
-                  <p className="text-xs text-primary font-semibold mt-2">-{creditsApplied.toFixed(2)} MKD will be deducted</p>
+                  <p className="text-xs text-primary font-semibold mt-2">-{creditsApplied.toFixed(2)} MKD will be deducted (up to 4% of order)</p>
                 )}
               </div>
             )}
