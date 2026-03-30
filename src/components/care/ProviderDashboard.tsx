@@ -89,6 +89,11 @@ const ProviderDashboard = ({ onClose }: ProviderDashboardProps) => {
   const [bookingMode, setBookingMode] = useState((provider as any)?.booking_mode || "instant");
   const [galleryUrl, setGalleryUrl] = useState("");
 
+  // Blocking
+  const [blockDate, setBlockDate] = useState("");
+  const [blockTime, setBlockTime] = useState("");
+  const [blockReason, setBlockReason] = useState("");
+
   // Verification
   const [verDocType, setVerDocType] = useState("license");
   const [uploadingVerDoc, setUploadingVerDoc] = useState(false);
