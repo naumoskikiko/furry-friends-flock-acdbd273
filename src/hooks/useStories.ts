@@ -2,13 +2,15 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { StoryGroup } from "@/components/stories/StoryViewer";
+import { cacheGet, cacheSet } from "@/lib/cache";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
 export const useStories = () => {
   const { user } = useAuth();
-  const [storyGroups, setStoryGroups] = useState<StoryGroup[]>([]);
-  const [loading, setLoading] = useState(true);
+  const CACHE_KEY = `stories_${user?.id || "anon"}`;
+  const [storyGroups, setStoryGroups] = useState<StoryGroup[]>(() => cacheGet<StoryGroup[]>(CACHE_KEY) || []);
+  const [loading, setLoading] = useState(!cacheGet<StoryGroup[]>(CACHE_KEY));
   const [hasOwnStory, setHasOwnStory] = useState(false);
 
   const fetchStories = useCallback(async () => {
@@ -109,6 +111,7 @@ export const useStories = () => {
     }
 
     setStoryGroups(groups);
+    cacheSet(CACHE_KEY, groups, 2 * 60 * 1000);
     setHasOwnStory(groups.some((g) => g.user_id === user?.id));
     setLoading(false);
   }, [user]);

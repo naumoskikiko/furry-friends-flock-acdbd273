@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { MapMarker } from "@/components/explore/ExploreMap";
 import type { NearbyItem } from "@/components/explore/NearbySection";
 import { getCategoryEmoji } from "@/hooks/usePlaces";
+import { cacheGet, cacheSet, CacheTTL } from "@/lib/cache";
 
 const SKOPJE: [number, number] = [41.9981, 21.4254];
 
@@ -37,10 +38,10 @@ export function useExplore() {
   const [searchQuery, setSearchQuery] = useState("");
   const [findMyPet, setFindMyPet] = useState(false);
   const [center, setCenter] = useState<[number, number]>(SKOPJE);
-  const [dbPlaces, setDbPlaces] = useState<any[]>([]);
-  const [sitterProfiles, setSitterProfiles] = useState<any[]>([]);
+  const [dbPlaces, setDbPlaces] = useState<any[]>(() => cacheGet<any[]>("explore_places") || []);
+  const [sitterProfiles, setSitterProfiles] = useState<any[]>(() => cacheGet<any[]>("explore_sitters") || []);
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cacheGet<any[]>("explore_places"));
 
   useEffect(() => {
     const load = async () => {
@@ -52,6 +53,7 @@ export function useExplore() {
       ]);
 
       setDbPlaces(places || []);
+      cacheSet("explore_places", places || [], CacheTTL.FEED);
 
       const sitterIds = (sitters || []).map((s: any) => s.user_id);
       let sitterProfileData: any[] = [];
@@ -60,12 +62,12 @@ export function useExplore() {
         sitterProfileData = data || [];
       }
 
-      setSitterProfiles(
-        (sitters || []).map((s: any) => {
-          const p = sitterProfileData.find((pr: any) => pr.user_id === s.user_id);
-          return { ...s, profile: p };
-        })
-      );
+      const enrichedSitters = (sitters || []).map((s: any) => {
+        const p = sitterProfileData.find((pr: any) => pr.user_id === s.user_id);
+        return { ...s, profile: p };
+      });
+      setSitterProfiles(enrichedSitters);
+      cacheSet("explore_sitters", enrichedSitters, CacheTTL.FEED);
       setUserProfiles(profiles || []);
       setLoading(false);
     };

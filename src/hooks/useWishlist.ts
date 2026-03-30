@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { cacheGet, cacheSet, CacheTTL } from "@/lib/cache";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
@@ -21,8 +22,9 @@ export interface WishlistItem {
 
 export function useWishlist() {
   const { user } = useAuth();
-  const [items, setItems] = useState<WishlistItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const CACHE_KEY = `wishlist_${user?.id || "anon"}`;
+  const [items, setItems] = useState<WishlistItem[]>(() => cacheGet<WishlistItem[]>(CACHE_KEY) || []);
+  const [loading, setLoading] = useState(!cacheGet<WishlistItem[]>(CACHE_KEY));
   const [wishlistIds, setWishlistIds] = useState<Set<string>>(new Set());
 
   const refresh = useCallback(async () => {
@@ -46,6 +48,7 @@ export function useWishlist() {
     }
 
     setItems(list);
+    cacheSet(CACHE_KEY, list, CacheTTL.MARKETPLACE);
     setWishlistIds(new Set(list.map((i) => i.product_id)));
     setLoading(false);
   }, [user]);

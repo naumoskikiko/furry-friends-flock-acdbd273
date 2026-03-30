@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { cacheGet, cacheSet, CacheTTL } from "@/lib/cache";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
@@ -121,8 +122,9 @@ export function useCreateOrder() {
 
 export function useMyOrders() {
   const { user } = useAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const CACHE_KEY = `orders_${user?.id || "anon"}`;
+  const [orders, setOrders] = useState<Order[]>(() => cacheGet<Order[]>(CACHE_KEY) || []);
+  const [loading, setLoading] = useState(!cacheGet<Order[]>(CACHE_KEY));
 
   const refresh = useCallback(async () => {
     if (!user) return;
@@ -164,6 +166,7 @@ export function useMyOrders() {
     }
 
     setOrders(orderList);
+    cacheSet(CACHE_KEY, orderList, CacheTTL.CARE);
     setLoading(false);
   }, [user]);
 
