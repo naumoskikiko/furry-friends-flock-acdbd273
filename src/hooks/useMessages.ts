@@ -34,6 +34,7 @@ export interface Conversation {
   is_muted: boolean;
   draft?: string;
   meetup_id?: string;
+  meetup_ended?: boolean;
 }
 
 export interface Message {
