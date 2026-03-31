@@ -79,6 +79,21 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
 
   const isMeetup = post?.post_type === "meetup";
 
+  // Determine if meetup has ended
+  const isMeetupEnded = (() => {
+    if (!isMeetup || !post) return false;
+    if ((post as any).status === "ended") return true;
+    if (post.event_date && post.event_end_time) {
+      const endDateTime = new Date(`${post.event_date}T${post.event_end_time}`);
+      return endDateTime <= new Date();
+    }
+    if (post.event_date) {
+      const eventDay = new Date(post.event_date + "T23:59:59");
+      return eventDay <= new Date();
+    }
+    return false;
+  })();
+
   useEffect(() => {
     if (post && open) {
       setLiked(post.is_liked);
