@@ -236,6 +236,7 @@ export type Database = {
           likes_count: number
           post_type: string
           preview_text: string | null
+          status: string
           tags: string[] | null
           title: string
           updated_at: string
@@ -260,6 +261,7 @@ export type Database = {
           likes_count?: number
           post_type?: string
           preview_text?: string | null
+          status?: string
           tags?: string[] | null
           title: string
           updated_at?: string
@@ -284,6 +286,7 @@ export type Database = {
           likes_count?: number
           post_type?: string
           preview_text?: string | null
+          status?: string
           tags?: string[] | null
           title?: string
           updated_at?: string
