@@ -308,6 +308,18 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   const deleteArticle = async () => {
     if (!user || !post) return;
     setDeleting(true);
+
+    // For meetups, also clean up conversation
+    if (isMeetup && (post as any).conversation_id) {
+      try {
+        await fromTable("messages").delete().eq("conversation_id", (post as any).conversation_id);
+        await fromTable("conversation_participants").delete().eq("conversation_id", (post as any).conversation_id);
+        await fromTable("conversations").delete().eq("id", (post as any).conversation_id);
+      } catch (e) {
+        console.error("Error cleaning up meetup conversation:", e);
+      }
+    }
+
     // Delete related data first
     await Promise.all([
       fromTable("blog_comments").delete().eq("blog_post_id", post.id),
@@ -320,7 +332,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
     setShowDeleteConfirm(false);
     onOpenChange(false);
     onRefresh();
-    toast({ title: "Article deleted" });
+    toast({ title: isMeetup ? "Meetup deleted" : "Article deleted" });
   };
 
   const isOwner = user?.id === post?.user_id;
