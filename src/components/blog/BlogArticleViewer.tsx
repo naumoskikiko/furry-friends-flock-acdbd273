@@ -470,7 +470,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                 className="text-destructive gap-2"
                 onClick={() => setShowDeleteConfirm(true)}
               >
-                <Trash2 className="h-4 w-4" /> Delete Article
+                <Trash2 className="h-4 w-4" /> Delete {isMeetup ? "Meetup" : isQuestion ? "Question" : "Article"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
