@@ -231,16 +231,22 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
               <span className="text-xs font-medium">{post.username}</span>
             </button>
 
-            <button
-              onClick={toggleJoin}
-              className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all active:scale-95 ${
-                joined
-                  ? "bg-primary/10 text-primary border border-primary"
-                  : "bg-primary text-primary-foreground shadow-sm"
-              }`}
-            >
-              {joined ? "✓ Joined" : "Join"}
-            </button>
+            {isMeetupEnded ? (
+              <span className="rounded-full px-4 py-1.5 text-xs font-bold bg-muted text-muted-foreground">
+                Ended
+              </span>
+            ) : (
+              <button
+                onClick={toggleJoin}
+                className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+                  joined
+                    ? "bg-primary/10 text-primary border border-primary"
+                    : "bg-primary text-primary-foreground shadow-sm"
+                }`}
+              >
+                {joined ? "✓ Joined" : "Join"}
+              </button>
+            )}
           </div>
 
           {/* Actions */}
