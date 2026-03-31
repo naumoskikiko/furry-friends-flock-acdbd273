@@ -104,6 +104,7 @@ const BlogFeed = ({ openBlogId }: BlogFeedProps) => {
         is_liked: likedSet.has(p.id),
         is_saved: savedSet.has(p.id),
         post_type: p.post_type || "article",
+        status: p.status || "active",
         event_date: p.event_date,
         event_start_time: p.event_start_time,
         event_end_time: p.event_end_time,
