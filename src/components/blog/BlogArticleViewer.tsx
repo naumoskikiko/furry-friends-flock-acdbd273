@@ -796,9 +796,9 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Article</AlertDialogTitle>
+            <AlertDialogTitle>Are you sure you want to delete this?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this article and all its comments. This action cannot be undone.
+              This will permanently delete this {isMeetup ? "meetup and its chat" : isQuestion ? "question" : "article"} along with all related data (comments, likes, etc.). This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

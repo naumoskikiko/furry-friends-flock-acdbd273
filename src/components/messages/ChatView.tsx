@@ -1132,6 +1132,7 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
           </p>
         )}
       </div>
+      )}
       {/* Story viewer from chat */}
       {storyViewerData?.open && (
         <StoryViewer
