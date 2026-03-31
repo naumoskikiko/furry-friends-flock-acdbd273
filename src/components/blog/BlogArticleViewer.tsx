@@ -822,6 +822,18 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {post && (
+        <EditBlogModal
+          post={post}
+          open={showEditModal}
+          onOpenChange={setShowEditModal}
+          onUpdated={() => {
+            onOpenChange(false);
+            onRefresh();
+          }}
+        />
+      )}
     </>
   );
 };
