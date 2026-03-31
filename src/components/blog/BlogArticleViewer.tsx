@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Heart, MessageCircle, Share2, Bookmark, BookmarkCheck,
   MoreVertical, Send, MapPin, Calendar, Clock, Users, PawPrint, Trash2,
-  Star, ThumbsUp, CheckCircle2, MessageSquare,
+  Star, ThumbsUp, CheckCircle2, MessageSquare, Pencil,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCredits } from "@/hooks/useCredits";
 import { createNotification } from "@/hooks/useNotifications";
 import type { BlogPostData } from "./BlogCard";
-
+import EditBlogModal from "./EditBlogModal";
 const fromTable = (table: string) => (supabase as any).from(table);
 
 const CATEGORY_META: Record<string, { label: string; icon: string }> = {
@@ -75,6 +75,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isMeetup = post?.post_type === "meetup";
@@ -466,6 +467,14 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {!isMeetupEnded && (
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => setShowEditModal(true)}
+                >
+                  <Pencil className="h-4 w-4" /> Edit {isMeetup ? "Meetup" : isQuestion ? "Question" : "Article"}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 className="text-destructive gap-2"
                 onClick={() => setShowDeleteConfirm(true)}
@@ -813,6 +822,18 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {post && (
+        <EditBlogModal
+          post={post}
+          open={showEditModal}
+          onOpenChange={setShowEditModal}
+          onUpdated={() => {
+            onOpenChange(false);
+            onRefresh();
+          }}
+        />
+      )}
     </>
   );
 };
