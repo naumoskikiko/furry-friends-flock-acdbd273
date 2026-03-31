@@ -556,17 +556,33 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                 </div>
               )}
 
+              {/* Ended banner */}
+              {isMeetupEnded && (
+                <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-center">
+                  <p className="text-sm font-bold text-destructive">This meetup has ended</p>
+                </div>
+              )}
+
               {/* Join button */}
-              <button
-                onClick={toggleJoin}
-                className={`w-full rounded-xl py-3 text-sm font-bold transition-all active:scale-[0.98] ${
-                  joined
-                    ? "bg-primary/10 text-primary border-2 border-primary"
-                    : "bg-primary text-primary-foreground shadow-md"
-                }`}
-              >
-                {joined ? "✓ You're Going — Tap to Leave" : "Join This Event"}
-              </button>
+              {!isMeetupEnded ? (
+                <button
+                  onClick={toggleJoin}
+                  className={`w-full rounded-xl py-3 text-sm font-bold transition-all active:scale-[0.98] ${
+                    joined
+                      ? "bg-primary/10 text-primary border-2 border-primary"
+                      : "bg-primary text-primary-foreground shadow-md"
+                  }`}
+                >
+                  {joined ? "✓ You're Going — Tap to Leave" : "Join This Event"}
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="w-full rounded-xl py-3 text-sm font-bold bg-muted text-muted-foreground cursor-not-allowed"
+                >
+                  Event Ended
+                </button>
+              )}
 
               {/* Open Chat button — only visible when joined */}
               {joined && (
@@ -575,7 +591,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                   className="w-full rounded-xl py-3 text-sm font-bold transition-all active:scale-[0.98] bg-secondary text-foreground border border-border flex items-center justify-center gap-2"
                 >
                   <MessageSquare className="h-4 w-4" />
-                  Open MeetUP Chat
+                  {isMeetupEnded ? "View MeetUP Chat" : "Open MeetUP Chat"}
                 </button>
               )}
             </div>
