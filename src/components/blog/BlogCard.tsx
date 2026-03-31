@@ -34,6 +34,7 @@ export interface BlogPostData {
   is_liked: boolean;
   is_saved: boolean;
   post_type?: string;
+  status?: string;
   event_date?: string | null;
   event_start_time?: string | null;
   event_end_time?: string | null;
