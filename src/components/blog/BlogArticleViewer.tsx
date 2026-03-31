@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCredits } from "@/hooks/useCredits";
 import { createNotification } from "@/hooks/useNotifications";
 import type { BlogPostData } from "./BlogCard";
-
+import EditBlogModal from "./EditBlogModal";
 const fromTable = (table: string) => (supabase as any).from(table);
 
 const CATEGORY_META: Record<string, { label: string; icon: string }> = {
