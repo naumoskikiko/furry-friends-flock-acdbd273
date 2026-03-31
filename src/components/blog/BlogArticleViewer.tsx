@@ -467,6 +467,14 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {!isMeetupEnded && (
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => setShowEditModal(true)}
+                >
+                  <Pencil className="h-4 w-4" /> Edit {isMeetup ? "Meetup" : isQuestion ? "Question" : "Article"}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 className="text-destructive gap-2"
                 onClick={() => setShowDeleteConfirm(true)}
