@@ -34,6 +34,7 @@ export interface BlogPostData {
   is_liked: boolean;
   is_saved: boolean;
   post_type?: string;
+  status?: string;
   event_date?: string | null;
   event_start_time?: string | null;
   event_end_time?: string | null;
@@ -65,6 +66,21 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
   const initials = post.username.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   const isMeetup = post.post_type === "meetup";
   const isQuestion = post.post_type === "question";
+
+  // Determine if meetup has ended
+  const isMeetupEnded = (() => {
+    if (!isMeetup) return false;
+    if ((post as any).status === "ended") return true;
+    if (post.event_date && post.event_end_time) {
+      const endDateTime = new Date(`${post.event_date}T${post.event_end_time}`);
+      return endDateTime <= new Date();
+    }
+    if (post.event_date) {
+      const eventDay = new Date(post.event_date + "T23:59:59");
+      return eventDay <= new Date();
+    }
+    return false;
+  })();
 
   const toggleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -216,16 +232,22 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
               <span className="text-xs font-medium">{post.username}</span>
             </button>
 
-            <button
-              onClick={toggleJoin}
-              className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all active:scale-95 ${
-                joined
-                  ? "bg-primary/10 text-primary border border-primary"
-                  : "bg-primary text-primary-foreground shadow-sm"
-              }`}
-            >
-              {joined ? "✓ Joined" : "Join"}
-            </button>
+            {isMeetupEnded ? (
+              <span className="rounded-full px-4 py-1.5 text-xs font-bold bg-muted text-muted-foreground">
+                Ended
+              </span>
+            ) : (
+              <button
+                onClick={toggleJoin}
+                className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+                  joined
+                    ? "bg-primary/10 text-primary border border-primary"
+                    : "bg-primary text-primary-foreground shadow-sm"
+                }`}
+              >
+                {joined ? "✓ Joined" : "Join"}
+              </button>
+            )}
           </div>
 
           {/* Actions */}

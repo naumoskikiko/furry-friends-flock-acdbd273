@@ -104,6 +104,7 @@ const BlogFeed = ({ openBlogId }: BlogFeedProps) => {
         is_liked: likedSet.has(p.id),
         is_saved: savedSet.has(p.id),
         post_type: p.post_type || "article",
+        status: p.status || "active",
         event_date: p.event_date,
         event_start_time: p.event_start_time,
         event_end_time: p.event_end_time,
@@ -115,12 +116,12 @@ const BlogFeed = ({ openBlogId }: BlogFeedProps) => {
       };
     });
 
-    // MeetUP posts always appear first, then the rest by created_at (already sorted)
+    // Active MeetUP posts always appear first, ended ones go to normal position
     const sorted = [...enriched].sort((a, b) => {
-      const aIsMeetup = a.post_type === "meetup" ? 1 : 0;
-      const bIsMeetup = b.post_type === "meetup" ? 1 : 0;
+      const aIsMeetup = (a.post_type === "meetup" && a.status !== "ended") ? 1 : 0;
+      const bIsMeetup = (b.post_type === "meetup" && b.status !== "ended") ? 1 : 0;
       if (aIsMeetup !== bIsMeetup) return bIsMeetup - aIsMeetup;
-      return 0; // preserve existing created_at order within each group
+      return 0;
     });
 
     setPosts(sorted);

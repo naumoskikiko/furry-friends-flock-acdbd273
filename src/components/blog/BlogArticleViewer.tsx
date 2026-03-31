@@ -79,6 +79,21 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
 
   const isMeetup = post?.post_type === "meetup";
 
+  // Determine if meetup has ended
+  const isMeetupEnded = (() => {
+    if (!isMeetup || !post) return false;
+    if ((post as any).status === "ended") return true;
+    if (post.event_date && post.event_end_time) {
+      const endDateTime = new Date(`${post.event_date}T${post.event_end_time}`);
+      return endDateTime <= new Date();
+    }
+    if (post.event_date) {
+      const eventDay = new Date(post.event_date + "T23:59:59");
+      return eventDay <= new Date();
+    }
+    return false;
+  })();
+
   useEffect(() => {
     if (post && open) {
       setLiked(post.is_liked);
@@ -293,6 +308,18 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   const deleteArticle = async () => {
     if (!user || !post) return;
     setDeleting(true);
+
+    // For meetups, also clean up conversation
+    if (isMeetup && (post as any).conversation_id) {
+      try {
+        await fromTable("messages").delete().eq("conversation_id", (post as any).conversation_id);
+        await fromTable("conversation_participants").delete().eq("conversation_id", (post as any).conversation_id);
+        await fromTable("conversations").delete().eq("id", (post as any).conversation_id);
+      } catch (e) {
+        console.error("Error cleaning up meetup conversation:", e);
+      }
+    }
+
     // Delete related data first
     await Promise.all([
       fromTable("blog_comments").delete().eq("blog_post_id", post.id),
@@ -305,7 +332,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
     setShowDeleteConfirm(false);
     onOpenChange(false);
     onRefresh();
-    toast({ title: "Article deleted" });
+    toast({ title: isMeetup ? "Meetup deleted" : "Article deleted" });
   };
 
   const isOwner = user?.id === post?.user_id;
@@ -443,7 +470,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                 className="text-destructive gap-2"
                 onClick={() => setShowDeleteConfirm(true)}
               >
-                <Trash2 className="h-4 w-4" /> Delete Article
+                <Trash2 className="h-4 w-4" /> Delete {isMeetup ? "Meetup" : isQuestion ? "Question" : "Article"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -541,17 +568,33 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                 </div>
               )}
 
+              {/* Ended banner */}
+              {isMeetupEnded && (
+                <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-center">
+                  <p className="text-sm font-bold text-destructive">This meetup has ended</p>
+                </div>
+              )}
+
               {/* Join button */}
-              <button
-                onClick={toggleJoin}
-                className={`w-full rounded-xl py-3 text-sm font-bold transition-all active:scale-[0.98] ${
-                  joined
-                    ? "bg-primary/10 text-primary border-2 border-primary"
-                    : "bg-primary text-primary-foreground shadow-md"
-                }`}
-              >
-                {joined ? "✓ You're Going — Tap to Leave" : "Join This Event"}
-              </button>
+              {!isMeetupEnded ? (
+                <button
+                  onClick={toggleJoin}
+                  className={`w-full rounded-xl py-3 text-sm font-bold transition-all active:scale-[0.98] ${
+                    joined
+                      ? "bg-primary/10 text-primary border-2 border-primary"
+                      : "bg-primary text-primary-foreground shadow-md"
+                  }`}
+                >
+                  {joined ? "✓ You're Going — Tap to Leave" : "Join This Event"}
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="w-full rounded-xl py-3 text-sm font-bold bg-muted text-muted-foreground cursor-not-allowed"
+                >
+                  Event Ended
+                </button>
+              )}
 
               {/* Open Chat button — only visible when joined */}
               {joined && (
@@ -560,7 +603,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                   className="w-full rounded-xl py-3 text-sm font-bold transition-all active:scale-[0.98] bg-secondary text-foreground border border-border flex items-center justify-center gap-2"
                 >
                   <MessageSquare className="h-4 w-4" />
-                  Open MeetUP Chat
+                  {isMeetupEnded ? "View MeetUP Chat" : "Open MeetUP Chat"}
                 </button>
               )}
             </div>
@@ -753,9 +796,9 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Article</AlertDialogTitle>
+            <AlertDialogTitle>Are you sure you want to delete this?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this article and all its comments. This action cannot be undone.
+              This will permanently delete this {isMeetup ? "meetup and its chat" : isQuestion ? "question" : "article"} along with all related data (comments, likes, etc.). This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

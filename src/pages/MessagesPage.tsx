@@ -43,7 +43,7 @@ const MessagesPage = () => {
       const openMeetupChat = async () => {
         const { data: blogPost } = await (supabase as any)
           .from("blog_posts")
-          .select("conversation_id, title, user_id")
+          .select("conversation_id, title, user_id, event_date, event_end_time, status")
           .eq("id", meetupId)
           .single();
 
@@ -101,6 +101,18 @@ const MessagesPage = () => {
           }
         }
 
+        // Determine if meetup has ended
+        let meetupEnded = false;
+        if (blogPost.event_date) {
+          if (blogPost.event_end_time) {
+            const endDt = new Date(`${blogPost.event_date}T${blogPost.event_end_time}`);
+            meetupEnded = endDt <= new Date();
+          } else {
+            meetupEnded = new Date(blogPost.event_date + "T23:59:59") <= new Date();
+          }
+        }
+        if (blogPost.status === "ended") meetupEnded = true;
+
         setActiveConversation({
           id: convId,
           created_at: new Date().toISOString(),
@@ -118,6 +130,7 @@ const MessagesPage = () => {
           is_group: true,
           group_name: "📍 " + blogPost.title,
           meetup_id: meetupId,
+          meetup_ended: meetupEnded,
         });
         setSearchParams({}, { replace: true });
       };
