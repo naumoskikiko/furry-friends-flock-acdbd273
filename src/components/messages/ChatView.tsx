@@ -1018,7 +1018,12 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
         </div>
       )}
 
-      {/* Input */}
+      {/* Input — check if meetup chat is ended */}
+      {conversation.meetup_ended ? (
+        <div className="border-t border-border px-4 py-3 bg-muted/50 shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-center">
+          <p className="text-sm font-medium text-muted-foreground">📍 This meetup has ended — chat is read-only</p>
+        </div>
+      ) : (
       <div className="border-t border-border px-3 py-2 bg-card shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {/* Voice recording UI */}
         {voiceRecorder.isRecording ? (
