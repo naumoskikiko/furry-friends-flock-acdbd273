@@ -43,7 +43,7 @@ const MessagesPage = () => {
       const openMeetupChat = async () => {
         const { data: blogPost } = await (supabase as any)
           .from("blog_posts")
-          .select("conversation_id, title, user_id")
+          .select("conversation_id, title, user_id, event_date, event_end_time, status")
           .eq("id", meetupId)
           .single();
 
