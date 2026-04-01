@@ -76,6 +76,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isMeetup = post?.post_type === "meetup";
@@ -97,6 +98,15 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
 
   useEffect(() => {
     if (post && open) {
+      setUnavailable(false);
+      // Verify the post still exists in DB (handles auto-deleted meetups)
+      (async () => {
+        const { data } = await fromTable("blog_posts").select("id").eq("id", post.id).maybeSingle();
+        if (!data) {
+          setUnavailable(true);
+          return;
+        }
+      })();
       setLiked(post.is_liked);
       setLikesCount(post.likes_count);
       setJoined(post.is_joined || false);
@@ -432,6 +442,26 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   const initials = post.username.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   const readTime = Math.max(1, Math.ceil(post.content.length / 1000));
   const paragraphs = post.content.split("\n").filter((p) => p.trim());
+
+  if (unavailable) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-background flex flex-col">
+        <div className="shrink-0 z-[115] relative flex items-center border-b border-border bg-background px-4 py-3">
+          <button onClick={() => { onOpenChange(false); onRefresh(); }} className="rounded-full p-1.5 hover:bg-secondary transition-colors">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center px-6">
+          <div className="text-center space-y-3">
+            <div className="text-4xl">📍</div>
+            <h2 className="text-lg font-bold">This meetup is no longer available</h2>
+            <p className="text-sm text-muted-foreground">It may have ended and been removed automatically.</p>
+            <Button variant="outline" onClick={() => { onOpenChange(false); onRefresh(); }}>Go Back</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

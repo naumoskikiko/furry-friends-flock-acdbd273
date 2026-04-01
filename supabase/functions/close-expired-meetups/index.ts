@@ -17,14 +17,12 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Find active meetups whose event_date + event_end_time has passed
-    const now = new Date().toISOString();
-    const today = now.slice(0, 10); // YYYY-MM-DD
-    const currentTime = now.slice(11, 16); // HH:MM
+    const now = new Date();
+    const nowISO = now.toISOString();
+    const today = nowISO.slice(0, 10);
+    const currentTime = nowISO.slice(11, 16);
 
-    // Get meetups that should be closed:
-    // 1. event_date < today (past days)
-    // 2. event_date = today AND event_end_time <= currentTime
+    // ── Phase 1: Close active meetups whose end time has passed ──
     const { data: expiredMeetups, error: fetchError } = await supabase
       .from("blog_posts")
       .select("id, conversation_id, title, event_date, event_end_time")
@@ -40,40 +38,102 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!expiredMeetups || expiredMeetups.length === 0) {
-      return new Response(JSON.stringify({ closed: 0 }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    let closedCount = 0;
+    if (expiredMeetups && expiredMeetups.length > 0) {
+      const meetupIds = expiredMeetups.map((m: any) => m.id);
+
+      const { error: updateError } = await supabase
+        .from("blog_posts")
+        .update({ status: "ended" })
+        .in("id", meetupIds);
+
+      if (updateError) {
+        console.error("Error updating meetup status:", updateError);
+      }
+
+      for (const meetup of expiredMeetups) {
+        if (meetup.conversation_id) {
+          await supabase.from("messages").insert({
+            conversation_id: meetup.conversation_id,
+            sender_id: "00000000-0000-0000-0000-000000000000",
+            message_text: `📍 This meetup "${meetup.title}" has ended. The chat is now read-only.`,
+            message_type: "system",
+          });
+        }
+      }
+
+      closedCount = meetupIds.length;
+      console.log(`Closed ${closedCount} expired meetups`);
     }
 
-    const meetupIds = expiredMeetups.map((m: any) => m.id);
+    // ── Phase 2: Delete ended meetups that ended 15+ minutes ago ──
+    const deleteThreshold = new Date(now.getTime() - 15 * 60 * 1000);
+    const delDate = deleteThreshold.toISOString().slice(0, 10);
+    const delTime = deleteThreshold.toISOString().slice(11, 16);
 
-    // Mark meetups as ended
-    const { error: updateError } = await supabase
+    const { data: meetupsToDelete, error: delFetchError } = await supabase
       .from("blog_posts")
-      .update({ status: "ended" })
-      .in("id", meetupIds);
+      .select("id, conversation_id, title, event_date, event_end_time")
+      .eq("post_type", "meetup")
+      .eq("status", "ended")
+      .or(`event_date.lt.${delDate},and(event_date.eq.${delDate},event_end_time.lte.${delTime})`);
 
-    if (updateError) {
-      console.error("Error updating meetup status:", updateError);
+    if (delFetchError) {
+      console.error("Error fetching meetups to delete:", delFetchError);
     }
 
-    // Send system message to each meetup chat
-    for (const meetup of expiredMeetups) {
-      if (meetup.conversation_id) {
-        await supabase.from("messages").insert({
-          conversation_id: meetup.conversation_id,
-          sender_id: "00000000-0000-0000-0000-000000000000",
-          message_text: `📍 This meetup "${meetup.title}" has ended. The chat is now read-only.`,
-          message_type: "system",
-        });
+    let deletedCount = 0;
+    if (meetupsToDelete && meetupsToDelete.length > 0) {
+      const deleteIds = meetupsToDelete.map((m: any) => m.id);
+      const conversationIds = meetupsToDelete
+        .map((m: any) => m.conversation_id)
+        .filter(Boolean);
+
+      // Delete related data in correct order (children first)
+      // 1. Blog engagement data
+      await supabase.from("blog_event_participants").delete().in("blog_post_id", deleteIds);
+      await supabase.from("blog_comments").delete().in("blog_post_id", deleteIds);
+      await supabase.from("blog_likes").delete().in("blog_post_id", deleteIds);
+      await supabase.from("blog_saves").delete().in("blog_post_id", deleteIds);
+
+      // 2. Chat data (messages, participants, conversations)
+      if (conversationIds.length > 0) {
+        // Get message ids for deleted_messages cleanup
+        const { data: msgs } = await supabase
+          .from("messages")
+          .select("id")
+          .in("conversation_id", conversationIds);
+
+        if (msgs && msgs.length > 0) {
+          const msgIds = msgs.map((m: any) => m.id);
+          await supabase.from("deleted_messages").delete().in("message_id", msgIds);
+        }
+
+        await supabase.from("messages").delete().in("conversation_id", conversationIds);
+        await supabase.from("conversation_participants").delete().in("conversation_id", conversationIds);
+      }
+
+      // 3. Delete the blog posts themselves (this clears conversation_id FK)
+      const { error: deletePostsError } = await supabase
+        .from("blog_posts")
+        .delete()
+        .in("id", deleteIds);
+
+      if (deletePostsError) {
+        console.error("Error deleting meetup posts:", deletePostsError);
+      } else {
+        deletedCount = deleteIds.length;
+        console.log(`Deleted ${deletedCount} ended meetups: ${meetupsToDelete.map((m: any) => m.title).join(", ")}`);
+      }
+
+      // 4. Delete orphaned conversations
+      if (conversationIds.length > 0) {
+        await supabase.from("conversations").delete().in("id", conversationIds);
       }
     }
 
-    console.log(`Closed ${meetupIds.length} expired meetups`);
-
     return new Response(
-      JSON.stringify({ closed: meetupIds.length, ids: meetupIds }),
+      JSON.stringify({ closed: closedCount, deleted: deletedCount }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
