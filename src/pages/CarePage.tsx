@@ -7,9 +7,9 @@ import { Star, BadgeCheck, MapPin, ChevronRight, Search, Briefcase, Clock, Histo
 import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCareProviders, useMyProvider, useMyBookings, useProviderAvailability, CATEGORIES, type CareProvider } from "@/hooks/useCare";
-import ProviderDetail from "@/components/care/ProviderDetail";
 import ProviderDashboard from "@/components/care/ProviderDashboard";
 import BookingHistory from "@/components/care/BookingHistory";
+import { useNavigate } from "react-router-dom";
 
 import { useBoostedIds } from "@/hooks/useBoosts";
 import PetMatchTab from "@/components/care/tabs/PetMatchTab";
@@ -35,12 +35,12 @@ const ProviderStatusBadge = ({ providerId }: { providerId: string }) => {
 };
 
 const CarePage = () => {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const { providers, loading, hasMore, loadMore } = useCareProviders(activeCategory, searchQuery);
   const { provider: myProvider } = useMyProvider();
-  const [selectedProvider, setSelectedProvider] = useState<CareProvider | null>(null);
   const [showDashboard, setShowDashboard] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showPetMatch, setShowPetMatch] = useState(false);
@@ -51,7 +51,7 @@ const CarePage = () => {
     setSearchQuery("");
     setSearchInput("");
     setActiveCategory("all");
-    setSelectedProvider(null);
+    
     setShowDashboard(false);
     setShowHistory(false);
     setShowPetMatch(false);
@@ -152,7 +152,7 @@ const CarePage = () => {
                 return (
                   <button
                     key={p.id}
-                    onClick={() => setSelectedProvider(p)}
+                    onClick={() => navigate(`/provider/${p.id}`)}
                     className="min-w-[200px] rounded-2xl bg-card border border-border p-3.5 text-left petkeep-card-hover shrink-0"
                   >
                     <div className="flex items-center gap-2.5">
@@ -207,7 +207,7 @@ const CarePage = () => {
                   return (
                     <button
                       key={p.id}
-                      onClick={() => setSelectedProvider(p)}
+                      onClick={() => navigate(`/provider/${p.id}`)}
                       className="w-full rounded-2xl bg-card p-4 border border-border text-left petkeep-card-hover transition-all"
                     >
                       <div className="flex items-start gap-3">
@@ -262,10 +262,6 @@ const CarePage = () => {
         </div>
       </div>
 
-      {/* Provider detail modal */}
-      {selectedProvider && (
-        <ProviderDetail provider={selectedProvider} onClose={() => setSelectedProvider(null)} />
-      )}
 
       {/* Provider dashboard */}
       {showDashboard && (

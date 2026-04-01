@@ -28,6 +28,7 @@ import CreditsPage from "./pages/CreditsPage";
 import LikedProductsPage from "./pages/LikedProductsPage";
 import PostDetailPage from "./pages/PostDetailPage";
 import TagFeedPage from "./pages/TagFeedPage";
+import ProviderPage from "./pages/ProviderPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -72,6 +73,7 @@ const App = () => (
             <Route path="/liked-products" element={<ProtectedRoute><LikedProductsPage /></ProtectedRoute>} />
             <Route path="/post/:id" element={<ProtectedRoute><PostDetailPage /></ProtectedRoute>} />
             <Route path="/tag/:tag" element={<ProtectedRoute><TagFeedPage /></ProtectedRoute>} />
+            <Route path="/provider/:id" element={<ProtectedRoute><ProviderPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
