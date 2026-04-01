@@ -76,6 +76,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isMeetup = post?.post_type === "meetup";
