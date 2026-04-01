@@ -152,7 +152,7 @@ const CarePage = () => {
                 return (
                   <button
                     key={p.id}
-                    onClick={() => setSelectedProvider(p)}
+                    onClick={() => navigate(`/provider/${p.id}`)}
                     className="min-w-[200px] rounded-2xl bg-card border border-border p-3.5 text-left petkeep-card-hover shrink-0"
                   >
                     <div className="flex items-center gap-2.5">
