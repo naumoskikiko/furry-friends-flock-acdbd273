@@ -207,7 +207,7 @@ const CarePage = () => {
                   return (
                     <button
                       key={p.id}
-                      onClick={() => setSelectedProvider(p)}
+                      onClick={() => navigate(`/provider/${p.id}`)}
                       className="w-full rounded-2xl bg-card p-4 border border-border text-left petkeep-card-hover transition-all"
                     >
                       <div className="flex items-start gap-3">
