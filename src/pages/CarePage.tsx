@@ -262,10 +262,6 @@ const CarePage = () => {
         </div>
       </div>
 
-      {/* Provider detail modal */}
-      {selectedProvider && (
-        <ProviderDetail provider={selectedProvider} onClose={() => setSelectedProvider(null)} />
-      )}
 
       {/* Provider dashboard */}
       {showDashboard && (
