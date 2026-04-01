@@ -98,6 +98,15 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
 
   useEffect(() => {
     if (post && open) {
+      setUnavailable(false);
+      // Verify the post still exists in DB (handles auto-deleted meetups)
+      (async () => {
+        const { data } = await fromTable("blog_posts").select("id").eq("id", post.id).maybeSingle();
+        if (!data) {
+          setUnavailable(true);
+          return;
+        }
+      })();
       setLiked(post.is_liked);
       setLikesCount(post.likes_count);
       setJoined(post.is_joined || false);
