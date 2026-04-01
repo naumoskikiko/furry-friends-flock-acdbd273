@@ -443,6 +443,26 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   const readTime = Math.max(1, Math.ceil(post.content.length / 1000));
   const paragraphs = post.content.split("\n").filter((p) => p.trim());
 
+  if (unavailable) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-background flex flex-col">
+        <div className="shrink-0 z-[115] relative flex items-center border-b border-border bg-background px-4 py-3">
+          <button onClick={() => { onOpenChange(false); onRefresh(); }} className="rounded-full p-1.5 hover:bg-secondary transition-colors">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center px-6">
+          <div className="text-center space-y-3">
+            <div className="text-4xl">📍</div>
+            <h2 className="text-lg font-bold">This meetup is no longer available</h2>
+            <p className="text-sm text-muted-foreground">It may have ended and been removed automatically.</p>
+            <Button variant="outline" onClick={() => { onOpenChange(false); onRefresh(); }}>Go Back</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
     <div className="fixed inset-0 z-[100] bg-background flex flex-col">
