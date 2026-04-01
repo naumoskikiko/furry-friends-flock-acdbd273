@@ -51,7 +51,7 @@ const CarePage = () => {
     setSearchQuery("");
     setSearchInput("");
     setActiveCategory("all");
-    setSelectedProvider(null);
+    
     setShowDashboard(false);
     setShowHistory(false);
     setShowPetMatch(false);
