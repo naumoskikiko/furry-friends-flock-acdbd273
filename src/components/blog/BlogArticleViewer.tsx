@@ -445,7 +445,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
       </div>
 
       {/* Fixed header */}
-      <div className="shrink-0 z-[105] flex items-center justify-between border-b border-border bg-background px-4 py-3">
+      <div className="shrink-0 z-[115] relative flex items-center justify-between border-b border-border bg-background px-4 py-3">
         <button onClick={() => onOpenChange(false)} className="rounded-full p-1.5 hover:bg-secondary transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </button>
