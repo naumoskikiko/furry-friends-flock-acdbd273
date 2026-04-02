@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, MapPin, Grid3X3, UserPlus, UserCheck, MessageCircle,
-  Share2, BadgeCheck, PawPrint, Tag, Star, ChevronRight, Briefcase,
+  Share2, BadgeCheck, PawPrint, Tag, Star, ChevronRight, Briefcase, AlertTriangle,
 } from "lucide-react";
 import PostGrid from "@/components/profile/PostGrid";
 import PetCard from "@/components/profile/PetCard";
