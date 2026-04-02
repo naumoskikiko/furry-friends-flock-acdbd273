@@ -24,6 +24,7 @@ import { useCredits } from "@/hooks/useCredits";
 import { createNotification } from "@/hooks/useNotifications";
 import type { BlogPostData } from "./BlogCard";
 import EditBlogModal from "./EditBlogModal";
+import ReportModal from "@/components/ReportModal";
 const fromTable = (table: string) => (supabase as any).from(table);
 
 const CATEGORY_META: Record<string, { label: string; icon: string }> = {
