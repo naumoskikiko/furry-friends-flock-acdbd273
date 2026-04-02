@@ -549,6 +549,14 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
           lng={post.longitude}
         />
       )}
+
+      <ReportModal
+        open={showReport}
+        onOpenChange={setShowReport}
+        reportedUserId={post.user_id}
+        contentId={post.id}
+        contentType="post"
+      />
     </article>
   );
 };
