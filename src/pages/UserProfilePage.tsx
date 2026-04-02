@@ -47,6 +47,7 @@ const UserProfilePage = () => {
 
   // Share modal
   const [shareOpen, setShareOpen] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   // Swipe tabs
   const tabTouchRef = useRef({ x: 0, time: 0 });
