@@ -515,6 +515,19 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        ) : user && user.id !== post.user_id ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="rounded-full p-1.5 hover:bg-secondary transition-colors">
+                <MoreVertical className="h-5 w-5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem className="text-destructive gap-2" onClick={() => setShowReport(true)}>
+                <AlertTriangle className="h-4 w-4" /> Report
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
           <div className="w-5" />
         )}
