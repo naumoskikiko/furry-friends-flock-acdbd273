@@ -284,6 +284,12 @@ const UserProfilePage = () => {
           >
             <Share2 className="h-4 w-4" />
           </button>
+          <button
+            onClick={() => setShowReport(true)}
+            className="rounded-xl py-2 px-3.5 text-sm font-bold flex items-center justify-center bg-secondary text-destructive transition-all active:scale-[0.97]"
+          >
+            <AlertTriangle className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Provider card */}
