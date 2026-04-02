@@ -90,6 +90,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   const [muted, setMuted] = useState(true);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [locationMapOpen, setLocationMapOpen] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   const lastTapRef = useRef(0);
   const videoRef = useRef<HTMLVideoElement>(null);
