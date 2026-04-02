@@ -347,7 +347,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
                 <DropdownMenuItem onClick={handleUnfollow}>
                   <UserMinus className="mr-2 h-4 w-4" /> Unfollow
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowReport(true)}>
                   <Flag className="mr-2 h-4 w-4" /> Report
                 </DropdownMenuItem>
                 {isAdmin && (
