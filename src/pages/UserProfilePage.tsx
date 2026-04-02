@@ -492,6 +492,13 @@ const UserProfilePage = () => {
           onClose={() => setShareOpen(false)}
         />
       )}
+
+      <ReportModal
+        open={showReport}
+        onOpenChange={setShowReport}
+        reportedUserId={profile?.user_id}
+        contentType="user"
+      />
     </AppLayout>
   );
 };
