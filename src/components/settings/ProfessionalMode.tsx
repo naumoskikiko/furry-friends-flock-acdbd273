@@ -96,6 +96,7 @@ const ProfessionalMode = () => {
     { id: "financial" as const, label: "Financial Control", desc: "Revenue, commissions & transactions", icon: DollarSign, color: "bg-emerald-500/10 text-emerald-600" },
     { id: "analytics" as const, label: "Platform Analytics", desc: "Top stores, providers & growth metrics", icon: TrendingUp, color: "bg-indigo-500/10 text-indigo-500" },
     { id: "credits" as const, label: "PetKeep Credits", desc: "Manage credit economy & user balances", icon: Coins, color: "bg-amber-500/10 text-amber-500" },
+    { id: "reports" as const, label: "Reports Management", desc: "Review & resolve user reports", icon: AlertTriangle, color: "bg-destructive/10 text-destructive" },
   ];
 
   const ownerSections = [

@@ -879,6 +879,14 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
           }}
         />
       )}
+
+      <ReportModal
+        open={showReport}
+        onOpenChange={setShowReport}
+        reportedUserId={post?.user_id}
+        contentId={post?.id}
+        contentType={post?.post_type === "meetup" ? "meetup" : post?.post_type === "question" ? "question" : "article"}
+      />
     </>
   );
 };
