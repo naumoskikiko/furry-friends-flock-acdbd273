@@ -16,6 +16,7 @@ import ProfileShareModal from "@/components/profile/ProfileShareModal";
 import { getOrCreateConversation } from "@/hooks/useMessages";
 import { createNotification } from "@/hooks/useNotifications";
 import { animalTypes } from "@/data/petBreeds";
+import ReportModal from "@/components/ReportModal";
 
 type TabType = "posts" | "pets" | "tagged";
 
