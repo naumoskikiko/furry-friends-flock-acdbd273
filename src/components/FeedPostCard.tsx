@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { FeedPostData } from "@/hooks/useFeed";
 import StoryLocationMap from "@/components/stories/StoryLocationMap";
+import ReportModal from "@/components/ReportModal";
 
 interface FeedPostCardProps {
   post: FeedPostData;
@@ -90,6 +91,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   const [muted, setMuted] = useState(true);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [locationMapOpen, setLocationMapOpen] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   const lastTapRef = useRef(0);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -346,7 +348,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
                 <DropdownMenuItem onClick={handleUnfollow}>
                   <UserMinus className="mr-2 h-4 w-4" /> Unfollow
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowReport(true)}>
                   <Flag className="mr-2 h-4 w-4" /> Report
                 </DropdownMenuItem>
                 {isAdmin && (
@@ -547,6 +549,14 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
           lng={post.longitude}
         />
       )}
+
+      <ReportModal
+        open={showReport}
+        onOpenChange={setShowReport}
+        reportedUserId={post.user_id}
+        contentId={post.id}
+        contentType="post"
+      />
     </article>
   );
 };
