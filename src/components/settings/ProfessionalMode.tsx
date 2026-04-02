@@ -39,7 +39,8 @@ type SubSection =
   | "services"
   | "orders"
   | "shelter"
-  | "pet-verification";
+  | "pet-verification"
+  | "reports";
 
 const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
