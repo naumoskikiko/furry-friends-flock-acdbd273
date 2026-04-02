@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, MapPin, Grid3X3, UserPlus, UserCheck, MessageCircle,
-  Share2, BadgeCheck, PawPrint, Tag, Star, ChevronRight, Briefcase,
+  Share2, BadgeCheck, PawPrint, Tag, Star, ChevronRight, Briefcase, AlertTriangle,
 } from "lucide-react";
 import PostGrid from "@/components/profile/PostGrid";
 import PetCard from "@/components/profile/PetCard";
@@ -16,6 +16,7 @@ import ProfileShareModal from "@/components/profile/ProfileShareModal";
 import { getOrCreateConversation } from "@/hooks/useMessages";
 import { createNotification } from "@/hooks/useNotifications";
 import { animalTypes } from "@/data/petBreeds";
+import ReportModal from "@/components/ReportModal";
 
 type TabType = "posts" | "pets" | "tagged";
 
@@ -46,6 +47,7 @@ const UserProfilePage = () => {
 
   // Share modal
   const [shareOpen, setShareOpen] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   // Swipe tabs
   const tabTouchRef = useRef({ x: 0, time: 0 });
@@ -282,6 +284,12 @@ const UserProfilePage = () => {
           >
             <Share2 className="h-4 w-4" />
           </button>
+          <button
+            onClick={() => setShowReport(true)}
+            className="rounded-xl py-2 px-3.5 text-sm font-bold flex items-center justify-center bg-secondary text-destructive transition-all active:scale-[0.97]"
+          >
+            <AlertTriangle className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Provider card */}
@@ -484,6 +492,13 @@ const UserProfilePage = () => {
           onClose={() => setShareOpen(false)}
         />
       )}
+
+      <ReportModal
+        open={showReport}
+        onOpenChange={setShowReport}
+        reportedUserId={profile?.user_id}
+        contentType="user"
+      />
     </AppLayout>
   );
 };
