@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       adoption_images: {
         Row: {
           created_at: string
@@ -1085,6 +1118,35 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      message_read_status: {
+        Row: {
+          id: string
+          message_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          message_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_read_status_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       message_reports: {
         Row: {
@@ -2776,6 +2838,39 @@ export type Database = {
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          device_info: string | null
+          id: string
+          ip_address: string | null
+          is_active: boolean
+          last_active_at: string
+          login_at: string
+          logout_at: string | null
+          user_id: string
+        }
+        Insert: {
+          device_info?: string | null
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          last_active_at?: string
+          login_at?: string
+          logout_at?: string | null
+          user_id: string
+        }
+        Update: {
+          device_info?: string | null
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          last_active_at?: string
+          login_at?: string
+          logout_at?: string | null
           user_id?: string
         }
         Relationships: []
