@@ -172,8 +172,10 @@ export const useStories = () => {
     });
   }, [storyGroups, user]);
 
+  const refreshStories = useCallback(() => fetchStories(true), [fetchStories]);
+
   return {
-    storyGroups, loading, hasOwnStory, refreshStories: fetchStories,
+    storyGroups, loading, hasOwnStory, refreshStories,
     likeStory, unlikeStory, recordView, deleteStory,
   };
 };
