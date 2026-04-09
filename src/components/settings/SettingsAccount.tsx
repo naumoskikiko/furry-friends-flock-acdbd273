@@ -200,17 +200,6 @@ const SettingsAccount = () => {
           </span>
         </div>
       </div>
-
-      {/* Professional Mode */}
-      <div className="border-t border-border pt-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold">Professional Mode</p>
-            <p className="text-xs text-muted-foreground">Unlock analytics & insights</p>
-          </div>
-          <Switch checked={professionalMode} onCheckedChange={toggleProfessionalMode} />
-        </div>
-      </div>
     </div>
   );
 };
