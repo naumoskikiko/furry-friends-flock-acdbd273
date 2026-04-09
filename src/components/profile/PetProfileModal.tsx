@@ -284,6 +284,13 @@ const PetProfileModal = ({ pet, open, onOpenChange, isOwner, onEdit, onDelete, o
             <InfoRow label="Vet Info" value={editing ? form.vet_info : pet.vet_info} field="vet_info" />
           </div>
 
+          {/* Medications section - owner view */}
+          {isOwner && !editing && pet.id && (
+            <div className="mt-4 rounded-2xl bg-card p-4 petkeep-card-shadow">
+              <PetMedicationsSection petId={pet.id} petName={pet.name} />
+            </div>
+          )}
+
           {/* Verification section - owner view */}
           {isOwner && !editing && (
             <div className="mt-4">
