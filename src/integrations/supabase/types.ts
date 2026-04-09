@@ -1124,6 +1124,7 @@ export type Database = {
           created_at: string
           id: string
           medication_id: string
+          notification_sent: boolean
           owner_id: string
           scheduled_at: string
           status: string
@@ -1133,6 +1134,7 @@ export type Database = {
           created_at?: string
           id?: string
           medication_id: string
+          notification_sent?: boolean
           owner_id: string
           scheduled_at: string
           status?: string
@@ -1142,6 +1144,7 @@ export type Database = {
           created_at?: string
           id?: string
           medication_id?: string
+          notification_sent?: boolean
           owner_id?: string
           scheduled_at?: string
           status?: string
@@ -1528,6 +1531,7 @@ export type Database = {
           repeat_type: string
           start_date: string
           times: string[]
+          timezone: string
           updated_at: string
         }
         Insert: {
@@ -1544,6 +1548,7 @@ export type Database = {
           repeat_type?: string
           start_date?: string
           times?: string[]
+          timezone?: string
           updated_at?: string
         }
         Update: {
@@ -1560,6 +1565,7 @@ export type Database = {
           repeat_type?: string
           start_date?: string
           times?: string[]
+          timezone?: string
           updated_at?: string
         }
         Relationships: [
@@ -2502,6 +2508,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      push_tokens: {
+        Row: {
+          created_at: string
+          device_info: string | null
+          fcm_token: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_info?: string | null
+          fcm_token: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_info?: string | null
+          fcm_token?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       reports: {
         Row: {
