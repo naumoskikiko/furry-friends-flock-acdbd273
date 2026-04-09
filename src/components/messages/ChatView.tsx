@@ -67,6 +67,7 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
   const typingTimeout = useRef<ReturnType<typeof setTimeout>>();
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const draftTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const justSentRef = useRef(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -96,13 +97,17 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
     el.style.height = Math.min(el.scrollHeight, 120) + "px";
   }, []);
 
-  // Save draft on unmount & cancel pending draft timeout
+  // Save draft on unmount only (not on every text change)
+  const textRef = useRef(text);
+  textRef.current = text;
   useEffect(() => {
     return () => {
       if (draftTimeout.current) clearTimeout(draftTimeout.current);
-      if (text.trim()) saveDraft(conversation.id, text);
+      if (!justSentRef.current && textRef.current.trim()) {
+        saveDraft(conversation.id, textRef.current);
+      }
     };
-  }, [conversation.id, text]);
+  }, [conversation.id]);
 
   const handleTextChange = (value: string) => {
     setText(value);
@@ -123,8 +128,10 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
     setTyping(false);
     // Cancel any pending draft save so it doesn't re-save old text
     if (draftTimeout.current) clearTimeout(draftTimeout.current);
+    justSentRef.current = true;
     saveDraft(conversation.id, "");
     await sendMessage(msg, replyId);
+    justSentRef.current = false;
     inputRef.current?.focus();
   };
 
