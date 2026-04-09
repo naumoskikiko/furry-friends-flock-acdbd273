@@ -179,13 +179,6 @@ const SettingsAccount = () => {
         {saving ? "Saving..." : "Save Changes"}
       </Button>
 
-      {/* Change Password */}
-      <div className="border-t border-border pt-4">
-        <Button variant="outline" className="w-full" onClick={handleChangePassword}>
-          Change Password
-        </Button>
-      </div>
-
       {/* Role display */}
       <div className="border-t border-border pt-4">
         <div className="flex items-center justify-between">
