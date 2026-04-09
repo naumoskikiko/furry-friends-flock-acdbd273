@@ -39,7 +39,7 @@ export const requestNotificationPermission = async (): Promise<string | null> =>
 
     // VAPID key - you'll need to generate this from Firebase Console > Cloud Messaging > Web Push certificates
     const token = await getToken(messaging, {
-      vapidKey: undefined, // Will use default if service worker is registered
+      vapidKey: "d2N0C-DWaC47y1eHRZH-VitYwgx37ADOeqGxVwlSFJo",
     });
 
     console.log("FCM Token:", token);
