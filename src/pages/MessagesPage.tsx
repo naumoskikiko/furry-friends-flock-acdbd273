@@ -198,11 +198,6 @@ const MessagesPage = () => {
   return (
     <AppLayout>
       <div className={`mx-auto max-w-lg ${activeConversation ? "h-[calc(100dvh-4rem)] flex flex-col overflow-hidden" : ""}`}>
-        {!activeConversation && (
-          <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-            <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
-          </div>
-        )}
         {activeConversation ? (
           <ChatView
             conversation={activeConversation}
@@ -213,7 +208,10 @@ const MessagesPage = () => {
             onClearChat={handleClearChat}
           />
         ) : (
-          <ConversationList onSelect={setActiveConversation} />
+          <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+            <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
+            <ConversationList onSelect={setActiveConversation} />
+          </div>
         )}
       </div>
 
