@@ -58,6 +58,7 @@ interface StoryViewerProps {
 
 const STORY_DURATION = 5000;
 const TAP_THRESHOLD = 10;
+const NAV_DEBOUNCE_MS = 100;
 const SWIPE_THRESHOLD = 60;
 const LONG_PRESS_MS = 200;
 
@@ -99,6 +100,7 @@ const StoryViewer = ({
   // Video ref
   const videoRef = useRef<HTMLVideoElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastNavRef = useRef<number>(0);
 
   const group = groups[groupIndex];
   const story = group?.stories[storyIndex];
@@ -116,6 +118,10 @@ const StoryViewer = ({
   // --- Navigation ---
   const goNext = useCallback(() => {
     if (!group) return;
+    const now = Date.now();
+    if (now - lastNavRef.current < NAV_DEBOUNCE_MS) return;
+    lastNavRef.current = now;
+
     if (storyIndex < group.stories.length - 1) {
       setStoryIndex(s => s + 1);
     } else if (groupIndex < groups.length - 1) {
@@ -127,6 +133,10 @@ const StoryViewer = ({
   }, [group, storyIndex, groupIndex, groups.length, onClose]);
 
   const goPrev = useCallback(() => {
+    const now = Date.now();
+    if (now - lastNavRef.current < NAV_DEBOUNCE_MS) return;
+    lastNavRef.current = now;
+
     if (storyIndex > 0) {
       setStoryIndex(s => s - 1);
     } else if (groupIndex > 0) {
@@ -137,6 +147,10 @@ const StoryViewer = ({
   }, [storyIndex, groupIndex, groups]);
 
   const goNextGroup = useCallback(() => {
+    const now = Date.now();
+    if (now - lastNavRef.current < NAV_DEBOUNCE_MS) return;
+    lastNavRef.current = now;
+
     if (groupIndex < groups.length - 1) {
       setGroupIndex(g => g + 1);
       setStoryIndex(0);
@@ -146,6 +160,10 @@ const StoryViewer = ({
   }, [groupIndex, groups.length, onClose]);
 
   const goPrevGroup = useCallback(() => {
+    const now = Date.now();
+    if (now - lastNavRef.current < NAV_DEBOUNCE_MS) return;
+    lastNavRef.current = now;
+
     if (groupIndex > 0) {
       setGroupIndex(g => g - 1);
       setStoryIndex(0);
@@ -365,6 +383,10 @@ const StoryViewer = ({
 
   const handleDeleteStory = async () => {
     if (!story) return;
+
+    // Extract storage path from media_url for cleanup
+    const mediaPath = story.media_url.split("/story-media/").pop();
+
     const { error } = await supabase.from("stories").delete().eq("id", story.id);
     if (error) {
       console.error("Delete story error:", error);
@@ -372,20 +394,32 @@ const StoryViewer = ({
       setConfirmDeleteOpen(false);
       return;
     }
+
+    // Clean up storage media (best-effort, don't block on failure)
+    if (mediaPath) {
+      supabase.storage.from("story-media").remove([decodeURIComponent(mediaPath)]).catch(() => {});
+    }
+
     toast({ title: isMine ? "Story deleted" : "Story removed by admin" });
     setConfirmDeleteOpen(false);
     setShowMenu(false);
 
+    // Capture navigation info before parent removes story from array
+    const storiesInGroup = group.stories.length;
+    const currentStoryIdx = storyIndex;
+    const currentGroupIdx = groupIndex;
+    const totalGroups = groups.length;
+
     // Call parent callback for optimistic removal
     onDelete?.(story.id);
 
-    // Navigate: if more stories in group, go to next; otherwise close or next group
-    if (group.stories.length > 1) {
-      // Story will be removed from array by parent, adjust index
-      if (storyIndex >= group.stories.length - 1) {
-        setStoryIndex(Math.max(0, storyIndex - 1));
+    // Navigate: if more stories in group, stay or go back; otherwise next group or close
+    if (storiesInGroup > 1) {
+      if (currentStoryIdx >= storiesInGroup - 1) {
+        setStoryIndex(Math.max(0, currentStoryIdx - 1));
       }
-    } else if (groupIndex < groups.length - 1) {
+      // else storyIndex stays, next story slides in
+    } else if (currentGroupIdx < totalGroups - 1) {
       setGroupIndex(g => g + 1);
       setStoryIndex(0);
     } else {
