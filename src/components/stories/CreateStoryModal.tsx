@@ -15,7 +15,7 @@ import LocationSearch from "./LocationSearch";
 interface CreateStoryModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onStoryCreated: () => void;
+  onStoryCreated: () => void | Promise<void>;
   pets: any[];
 }
 
