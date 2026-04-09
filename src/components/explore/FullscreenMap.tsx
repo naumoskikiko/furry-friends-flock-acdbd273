@@ -291,7 +291,15 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
           </button>
         </div>
 
-        {/* Find My Pet badge */}
+        {/* Following indicator */}
+        {isFollowing && (
+          <div className="absolute top-3 left-3 z-[1000] rounded-full bg-primary/90 px-3 py-1.5 shadow-lg flex items-center gap-1.5 animate-in fade-in duration-200">
+            <Crosshair className="h-3 w-3 text-primary-foreground" />
+            <p className="text-[11px] font-bold text-primary-foreground">Following your location</p>
+          </div>
+        )}
+
+
         {findMyPet && (
           <div className="absolute top-3 left-3 z-[1000] rounded-full bg-accent/90 px-3 py-1.5 shadow-lg">
             <p className="text-[11px] font-bold text-accent-foreground">🐾 Find My Pet Active</p>
