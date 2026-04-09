@@ -1,33 +1,26 @@
 
 
-## Fix "This Was Helpful" — Root Causes & Plan
+## Fix: 2FA Login Flow
 
-### Problems Identified
+### Problem
+Current flow: Login → Sign out → Show 2FA → Re-login. The re-login fails because credentials may be invalid or the session was invalidated.
 
-1. **No UPDATE policy on `blog_comments`** — The RLS policies only allow SELECT, INSERT, and DELETE. The `update({ is_helpful: true })` call silently fails because there's no UPDATE permission.
+### Solution
+Keep the session alive after the first login. Only navigate to "/" after TOTP verification succeeds. Sign out only if the user cancels or fails verification.
 
-2. **`createNotification` arguments are swapped** — The function signature is `createNotification(actorId, userId, ...)` but the code passes `(comment.user_id, user.id, ...)`, meaning it tries to notify the question asker instead of the answer author.
+### Changes
 
-3. **`earnCredits` rewards the wrong user** — The `useCredits` hook always awards credits to the currently logged-in user (the question asker). The answer author should receive the credits instead. Since `earnCredits` only works for the current user, we need a different approach to award credits to another user.
+**File: `src/pages/AuthPage.tsx`**
 
-### Plan
+1. In `handleLogin` (line 115-121): Remove `await supabase.auth.signOut()`. Instead, just set `pendingUserId` and switch to 2FA view while keeping the session.
 
-**Step 1: Add UPDATE RLS policy on `blog_comments`**
-- Create a migration adding an UPDATE policy that allows the **article owner** to update `is_helpful` on comments belonging to their articles.
-- Policy: authenticated users can update `blog_comments` where the associated `blog_post` has `user_id = auth.uid()`, restricted to only the `is_helpful` column.
+2. In `verify2FA` (lines 72-78): Remove the second `signInWithPassword` call. On success, just `navigate("/")` — the session is already active from step 1.
 
-**Step 2: Fix notification parameter order**
-- Swap `createNotification(comment.user_id, user.id, ...)` → `createNotification(user.id, comment.user_id, ...)` so the answer author receives the notification.
+3. In the "Back to login" button (line 180): Add `supabase.auth.signOut()` when leaving the 2FA view, so canceling properly cleans up.
 
-**Step 3: Award credits to the answer author (not the current user)**
-- Since `earnCredits` only works for the logged-in user, directly insert into `credits`, `credit_transactions`, and `credit_daily_log` for the answer author's `user_id` using Supabase calls in `markHelpful`.
-- This bypasses the hook (which is scoped to the current user) and correctly credits the other user.
-
-**Step 4: Add error handling**
-- Check the result of the `update` call and only proceed with credits/notification if it succeeded.
-- Show error toast if the update fails.
-
-### Files Changed
-- **Migration**: New SQL migration for UPDATE policy on `blog_comments`
-- **Modified**: `src/components/blog/BlogArticleViewer.tsx` — fix `markHelpful` logic
+### Flow After Fix
+1. User enters email + password → `signInWithPassword` succeeds
+2. 2FA detected → show code input (session stays active)
+3. Code verified → navigate to "/"
+4. Code fails or user cancels → sign out
 
