@@ -181,7 +181,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (action === "setup") {
+    const userId = claimsData.claims.sub as string;
+    const userEmail = (claimsData.claims.email as string) || "user";
+
       const secret = generateBase32Secret();
       const email = user.email || "user";
       const otpauthUrl = `otpauth://totp/PetKeep:${email}?secret=${secret}&issuer=PetKeep`;
