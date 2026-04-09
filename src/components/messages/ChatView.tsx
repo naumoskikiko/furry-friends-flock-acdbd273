@@ -96,9 +96,10 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
     el.style.height = Math.min(el.scrollHeight, 120) + "px";
   }, []);
 
-  // Save draft on unmount
+  // Save draft on unmount & cancel pending draft timeout
   useEffect(() => {
     return () => {
+      if (draftTimeout.current) clearTimeout(draftTimeout.current);
       if (text.trim()) saveDraft(conversation.id, text);
     };
   }, [conversation.id, text]);
@@ -120,6 +121,8 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
     setText("");
     setReplyTo(null);
     setTyping(false);
+    // Cancel any pending draft save so it doesn't re-save old text
+    if (draftTimeout.current) clearTimeout(draftTimeout.current);
     saveDraft(conversation.id, "");
     await sendMessage(msg, replyId);
     inputRef.current?.focus();
