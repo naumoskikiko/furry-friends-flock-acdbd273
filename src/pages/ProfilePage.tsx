@@ -158,8 +158,8 @@ const ProfilePage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-        <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
+      <div className="mx-auto max-w-lg">
+        {/* Header — outside pull-to-refresh */}
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4">
           <button onClick={() => setCreatePostOpen(true)} className="rounded-full p-2 hover:bg-secondary">
