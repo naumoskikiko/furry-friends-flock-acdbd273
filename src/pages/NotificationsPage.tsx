@@ -22,7 +22,7 @@ const FILTER_PILLS = [
   { key: "system", label: "System", icon: <Shield className="h-3.5 w-3.5" /> },
 ] as const;
 
-type FilterKey = (typeof FILTER_PILLS)[number]["key"];
+type FilterKey = (typeof FILTER_PILLS)[number]["key"] | string;
 
 const TYPE_TO_FILTER: Record<string, FilterKey> = {
   like: "social", comment: "social", follow: "social", mention: "social", save: "social",
@@ -235,7 +235,32 @@ const NotificationsPage = () => {
             <span className="text-muted-foreground">{n.message}</span>
           </p>
           <p className="mt-0.5 text-[10px] text-muted-foreground">{timeAgo}</p>
-        </div>
+            {/* Custom filter pills */}
+            {customFilters.map((cf) => {
+              const unread = countByFilter(cf.name);
+              const isActive = activeFilter === cf.name;
+              return (
+                <button
+                  key={`custom-${cf.name}`}
+                  onClick={() => setActiveFilter(cf.name)}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
+                    isActive
+                      ? "bg-accent text-accent-foreground shadow-sm"
+                      : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                  }`}
+                >
+                  🎛️ {cf.name}
+                  {unread > 0 && (
+                    <span className={`ml-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold ${
+                      isActive ? "bg-accent-foreground/20 text-accent-foreground" : "bg-primary/10 text-primary"
+                    }`}>
+                      {unread > 99 ? "99+" : unread}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
         {!n.is_read && (
           <div className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />
