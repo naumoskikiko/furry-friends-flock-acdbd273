@@ -383,6 +383,10 @@ const StoryViewer = ({
 
   const handleDeleteStory = async () => {
     if (!story) return;
+
+    // Extract storage path from media_url for cleanup
+    const mediaPath = story.media_url.split("/story-media/").pop();
+
     const { error } = await supabase.from("stories").delete().eq("id", story.id);
     if (error) {
       console.error("Delete story error:", error);
@@ -390,20 +394,32 @@ const StoryViewer = ({
       setConfirmDeleteOpen(false);
       return;
     }
+
+    // Clean up storage media (best-effort, don't block on failure)
+    if (mediaPath) {
+      supabase.storage.from("story-media").remove([decodeURIComponent(mediaPath)]).catch(() => {});
+    }
+
     toast({ title: isMine ? "Story deleted" : "Story removed by admin" });
     setConfirmDeleteOpen(false);
     setShowMenu(false);
 
+    // Capture navigation info before parent removes story from array
+    const storiesInGroup = group.stories.length;
+    const currentStoryIdx = storyIndex;
+    const currentGroupIdx = groupIndex;
+    const totalGroups = groups.length;
+
     // Call parent callback for optimistic removal
     onDelete?.(story.id);
 
-    // Navigate: if more stories in group, go to next; otherwise close or next group
-    if (group.stories.length > 1) {
-      // Story will be removed from array by parent, adjust index
-      if (storyIndex >= group.stories.length - 1) {
-        setStoryIndex(Math.max(0, storyIndex - 1));
+    // Navigate: if more stories in group, stay or go back; otherwise next group or close
+    if (storiesInGroup > 1) {
+      if (currentStoryIdx >= storiesInGroup - 1) {
+        setStoryIndex(Math.max(0, currentStoryIdx - 1));
       }
-    } else if (groupIndex < groups.length - 1) {
+      // else storyIndex stays, next story slides in
+    } else if (currentGroupIdx < totalGroups - 1) {
       setGroupIndex(g => g + 1);
       setStoryIndex(0);
     } else {
