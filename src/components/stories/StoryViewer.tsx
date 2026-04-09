@@ -647,7 +647,7 @@ const StoryViewer = ({
       </AlertDialog>
 
       {/* Close menu on outside click */}
-      {showMenu && (
+      {showMenu && !confirmDeleteOpen && (
         <div className="fixed inset-0 z-[101]" onClick={() => setShowMenu(false)} />
       )}
 
