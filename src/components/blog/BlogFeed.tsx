@@ -216,7 +216,7 @@ const BlogFeed = ({ openBlogId }: BlogFeedProps) => {
         )}
 
         {posts.map((post) => (
-          <BlogCard key={post.id} post={post} onOpen={setSelectedPost} onLikeChange={fetchBlogs} />
+          <BlogCard key={post.id} post={post} onOpen={setSelectedPost} />
         ))}
       </div>
 
