@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useActiveBoosts, type Boost } from "@/hooks/useBoosts";
-import { rankStores, rankProducts, type BoostInfo } from "@/lib/rankingAlgorithm";
+import { rankStores, rankProducts, interleaveStores, type BoostInfo } from "@/lib/rankingAlgorithm";
 import type { BusinessProfile, Product } from "@/hooks/useBusiness";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -75,21 +75,78 @@ export function useRankedBusinesses(businesses: BusinessProfile[]) {
       }
     }
 
-    // Combined flat list: promoted → followed → others
-    const all = [...promoted, ...followed, ...others];
+    // Interleave naturally: boosted mixed with followed and organic
+    const all = interleaveStores(promoted, followed, others);
 
     return { promoted, followed, others, all };
   }, [businesses, storeBoosts, followedIds]);
 }
 
+// Fetch engagement metrics for products (likes, saves, reviews)
+function useProductEngagement(productIds: string[]) {
+  const [engMap, setEngMap] = useState<Map<string, { likes: number; saves: number; reviews: number; avgRating: number }>>(new Map());
+
+  useEffect(() => {
+    if (productIds.length === 0) return;
+
+    const load = async () => {
+      const map = new Map<string, { likes: number; saves: number; reviews: number; avgRating: number }>();
+
+      // Fetch wishlist counts (saves/likes)
+      const { data: wishlistData } = await supabase
+        .from("product_wishlist")
+        .select("product_id")
+        .in("product_id", productIds);
+
+      // Fetch review stats
+      const { data: reviewData } = await supabase
+        .from("product_reviews")
+        .select("product_id, rating")
+        .in("product_id", productIds);
+
+      // Aggregate
+      const wishCounts: Record<string, number> = {};
+      for (const w of wishlistData || []) {
+        wishCounts[w.product_id] = (wishCounts[w.product_id] || 0) + 1;
+      }
+
+      const reviewAgg: Record<string, { count: number; sum: number }> = {};
+      for (const r of reviewData || []) {
+        if (!reviewAgg[r.product_id]) reviewAgg[r.product_id] = { count: 0, sum: 0 };
+        reviewAgg[r.product_id].count++;
+        reviewAgg[r.product_id].sum += r.rating;
+      }
+
+      for (const id of productIds) {
+        const saves = wishCounts[id] || 0;
+        const rev = reviewAgg[id] || { count: 0, sum: 0 };
+        map.set(id, {
+          likes: saves, // wishlist = likes
+          saves,
+          reviews: rev.count,
+          avgRating: rev.count > 0 ? rev.sum / rev.count : 0,
+        });
+      }
+
+      setEngMap(map);
+    };
+
+    load();
+  }, [productIds.join(",")]);
+
+  return engMap;
+}
+
 export function useRankedProducts(products: Product[]) {
   const { boosts: productBoosts } = useActiveBoosts("product");
   const { boosts: storeBoosts } = useActiveBoosts("store");
+  const productIds = useMemo(() => products.map((p) => p.id), [products]);
+  const engagementMap = useProductEngagement(productIds);
 
   return useMemo(() => {
     if (products.length === 0) return products;
     const prodBoostMap = boostsToMap(productBoosts);
     const storeBoostMap = boostsToMap(storeBoosts);
-    return rankProducts(products, prodBoostMap, storeBoostMap);
-  }, [products, productBoosts, storeBoosts]);
+    return rankProducts(products, prodBoostMap, storeBoostMap, engagementMap);
+  }, [products, productBoosts, storeBoosts, engagementMap]);
 }
