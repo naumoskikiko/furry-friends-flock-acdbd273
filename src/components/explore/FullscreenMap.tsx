@@ -181,10 +181,13 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
       }).addTo(map);
     }
 
-    map.flyTo([userLocation.lat, userLocation.lng], 16, {
-      animate: true,
-      duration: 1,
-    });
+    // Only fly to user location if following mode is active
+    if (followingRef.current) {
+      map.flyTo([userLocation.lat, userLocation.lng], 16, {
+        animate: true,
+        duration: 1,
+      });
+    }
   }, [userLocation]);
 
   // Show error toast
