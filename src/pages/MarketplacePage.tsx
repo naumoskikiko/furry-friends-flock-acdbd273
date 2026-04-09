@@ -466,6 +466,7 @@ const MarketplacePage = () => {
             </div>
           </>
         )}
+        </div>
       </div>
 
       {/* Floating cart */}
