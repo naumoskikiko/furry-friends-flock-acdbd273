@@ -67,6 +67,7 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
   const typingTimeout = useRef<ReturnType<typeof setTimeout>>();
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const draftTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const justSentRef = useRef(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
