@@ -17,6 +17,7 @@ interface Props {
 
 const PetMedicationsSection = ({ petId, petName }: Props) => {
   const { medications, loading, addMedication, updateMedication, deleteMedication, markAsTaken, getTodaySchedule } = useMedications(petId);
+  const { permissionStatus, enablePush, loading: pushLoading } = usePushNotifications();
   const [showAdd, setShowAdd] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState<string | null>(null);
@@ -57,9 +58,20 @@ const PetMedicationsSection = ({ petId, petName }: Props) => {
           <Pill className="h-4 w-4 text-primary" />
           <p className="text-sm font-bold">Medications</p>
         </div>
-        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setShowAdd(!showAdd)}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> Add
-        </Button>
+        <div className="flex items-center gap-1">
+          {permissionStatus !== "granted" ? (
+            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={enablePush} disabled={pushLoading}>
+              <BellOff className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Enable Push
+            </Button>
+          ) : (
+            <span className="flex items-center gap-1 text-[10px] text-petkeep-green font-bold">
+              <Bell className="h-3 w-3" /> Push On
+            </span>
+          )}
+          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setShowAdd(!showAdd)}>
+            <Plus className="h-3.5 w-3.5 mr-1" /> Add
+          </Button>
+        </div>
       </div>
 
       {/* Add form */}
