@@ -47,13 +47,14 @@ const FindMyPetUpgrade = ({ onUpgrade }: Props) => {
       <div className="w-full mt-8 rounded-2xl bg-card p-5 petkeep-card-shadow text-center">
         <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">FindMyPet Premium</p>
         <div className="mt-2 flex items-baseline justify-center gap-1">
-          <span className="text-3xl font-bold font-display">$2</span>
-          <span className="text-sm text-muted-foreground">/month</span>
+          <span className="text-3xl font-bold font-display">€5</span>
+          <span className="text-sm text-muted-foreground">/month per tracker</span>
         </div>
+        <p className="text-xs text-muted-foreground mt-1">or €50/year (save 17%)</p>
         <Button onClick={onUpgrade} className="w-full mt-4 rounded-xl text-base h-12 petkeep-gradient">
-          Upgrade for $2/month
+          Get Started
         </Button>
-        <p className="text-[10px] text-muted-foreground mt-2">Cancel anytime • No commitment</p>
+        <p className="text-[10px] text-muted-foreground mt-2">Pay per tracker • Cancel anytime</p>
       </div>
     </div>
   );
