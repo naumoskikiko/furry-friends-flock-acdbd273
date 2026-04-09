@@ -40,6 +40,7 @@ export interface MedicationInput {
   repeat_type: string;
   repeat_days?: number[];
   notes?: string;
+  timezone?: string;
 }
 
 export const useMedications = (petId?: string) => {
@@ -81,6 +82,7 @@ export const useMedications = (petId?: string) => {
       ...input,
       owner_id: user.id,
       repeat_days: input.repeat_days || [],
+      timezone: input.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
     }).select().single();
     if (error) {
       toast({ title: "Error adding medication", description: error.message, variant: "destructive" });
