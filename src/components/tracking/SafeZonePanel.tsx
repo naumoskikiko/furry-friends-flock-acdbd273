@@ -15,6 +15,7 @@ interface Props {
 }
 
 const RADIUS_OPTIONS = [
+  { label: "50m", value: 50 },
   { label: "100m", value: 100 },
   { label: "250m", value: 250 },
   { label: "500m", value: 500 },
