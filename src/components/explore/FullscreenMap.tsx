@@ -85,6 +85,11 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
       markersLayerRef.current = L.layerGroup().addTo(map);
       mapRef.current = map;
 
+      // Stop following when user interacts with map
+      map.on('dragstart', () => {
+        followingRef.current = false;
+        setIsFollowing(false);
+      });
 
       setTimeout(() => map.invalidateSize(), 100);
       setMapReady(true);
