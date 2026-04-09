@@ -277,6 +277,10 @@ const ProfilePage = () => {
           </button>
         </div>
 
+        {/* Pull-to-refresh content area — below profile header */}
+        <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+          <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
+
         {/* My Pets */}
         <div className="px-4 pb-4">
           <div className="flex items-center justify-between">
