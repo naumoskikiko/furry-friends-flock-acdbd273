@@ -90,12 +90,26 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const authKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY");
+
+    if (!supabaseUrl || !serviceKey || !authKey) {
+      return json(
+        {
+          error: "Server configuration error",
+          missing: {
+            supabaseUrl: !supabaseUrl,
+            serviceKey: !serviceKey,
+            authKey: !authKey,
+          },
+        },
+        500
+      );
+    }
 
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
-    const supabaseAuth = createClient(supabaseUrl, publishableKey);
+    const supabaseAuth = createClient(supabaseUrl, authKey);
 
     const authHeader = req.headers.get("Authorization");
     const body = await req.json();
