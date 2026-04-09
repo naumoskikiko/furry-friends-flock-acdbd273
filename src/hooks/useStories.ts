@@ -13,7 +13,10 @@ export const useStories = () => {
   const [loading, setLoading] = useState(!cacheGet<StoryGroup[]>(CACHE_KEY));
   const [hasOwnStory, setHasOwnStory] = useState(false);
 
-  const fetchStories = useCallback(async () => {
+  const fetchStories = useCallback(async (skipCache = false) => {
+    if (skipCache) {
+      cacheSet(CACHE_KEY, null, 0);
+    }
     setLoading(true);
 
     // Get followed user IDs
