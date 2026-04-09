@@ -42,7 +42,9 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
   const [panelExpanded, setPanelExpanded] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState<MapMarker | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
   const prevSelectedRef = useRef<string | null>(null);
+  const followingRef = useRef(false);
 
   const filteredMarkers = searchQuery.trim()
     ? markers.filter(
