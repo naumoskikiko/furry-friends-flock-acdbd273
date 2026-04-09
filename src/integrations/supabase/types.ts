@@ -2745,6 +2745,60 @@ export type Database = {
         }
         Relationships: []
       }
+      totp_backup_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          id: string
+          is_used: boolean
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          id?: string
+          is_used?: boolean
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          id?: string
+          is_used?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      totp_secrets: {
+        Row: {
+          app_name: string
+          created_at: string
+          encrypted_secret: string
+          id: string
+          is_verified: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_name?: string
+          created_at?: string
+          encrypted_secret: string
+          id?: string
+          is_verified?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_name?: string
+          created_at?: string
+          encrypted_secret?: string
+          id?: string
+          is_verified?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tracker_locations: {
         Row: {
           battery_level: number | null
