@@ -48,10 +48,10 @@ export interface BlogPostData {
 interface BlogCardProps {
   post: BlogPostData;
   onOpen: (post: BlogPostData) => void;
-  onLikeChange: () => void;
+  onLikeChange?: () => void;
 }
 
-const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
+const BlogCard = ({ post, onOpen }: BlogCardProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -96,7 +96,6 @@ const BlogCard = ({ post, onOpen, onLikeChange }: BlogCardProps) => {
       await (supabase as any).from("blog_likes").delete().eq("blog_post_id", post.id).eq("user_id", user.id);
       await (supabase as any).from("blog_posts").update({ likes_count: Math.max(0, likesCount - 1) }).eq("id", post.id);
     }
-    onLikeChange();
   };
 
   const toggleSave = async (e: React.MouseEvent) => {
