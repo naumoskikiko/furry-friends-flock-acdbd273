@@ -70,17 +70,11 @@ const AuthPage = () => {
       );
       const data = await res.json();
       if (data.success) {
-        // Re-sign in now that 2FA is verified
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
         setLoading(false);
-        if (error) {
-          toast({ title: "Login failed", description: error.message, variant: "destructive" });
-        } else {
-          if (data.backup_used) {
-            toast({ title: "Logged in with backup code", description: "Consider generating new backup codes in Settings." });
-          }
-          navigate("/");
+        if (data.backup_used) {
+          toast({ title: "Logged in with backup code", description: "Consider generating new backup codes in Settings." });
         }
+        navigate("/");
       } else {
         setLoading(false);
         toast({ title: "Invalid code", description: data.error || "Try again", variant: "destructive" });
@@ -113,8 +107,7 @@ const AuthPage = () => {
     // Check if 2FA is enabled
     const has2FA = await check2FAStatus(userId);
     if (has2FA) {
-      // Sign out and require 2FA
-      await supabase.auth.signOut();
+      // Keep session alive, show 2FA input
       setPendingUserId(userId);
       setView("2fa");
       setLoading(false);
@@ -177,7 +170,7 @@ const AuthPage = () => {
         <Card className="petkeep-card-shadow border-0">
           <CardHeader className="pb-4">
             {view !== "login" && (
-              <button onClick={() => { setView("login"); setTotpCode(""); setPendingUserId(null); }} className="mb-2 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+              <button onClick={() => { if (view === "2fa") { supabase.auth.signOut(); } setView("login"); setTotpCode(""); setPendingUserId(null); }} className="mb-2 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-4 w-4" /> Back to login
               </button>
             )}
