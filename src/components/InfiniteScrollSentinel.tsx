@@ -9,6 +9,8 @@ interface Props {
   rootMargin?: string;
   /** Total items loaded — hides "end" message if 0 */
   itemCount?: number;
+  /** Custom end-of-list message */
+  endMessage?: string;
 }
 
 const InfiniteScrollSentinel = ({ loading, hasMore, onLoadMore, rootMargin = "200px", itemCount = 1 }: Props) => {
