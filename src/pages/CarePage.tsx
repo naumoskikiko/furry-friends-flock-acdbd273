@@ -76,9 +76,8 @@ const CarePage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-        <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
-        {/* Header */}
+      <div className="mx-auto max-w-lg">
+        {/* Header — outside pull-to-refresh */}
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-extrabold">Pet Care</h1>
@@ -112,7 +111,7 @@ const CarePage = () => {
           </div>
         </div>
 
-        {/* Search */}
+        {/* Search — outside pull-to-refresh */}
         <div className="px-4 pb-3">
           <div className="flex items-center gap-2 rounded-xl bg-secondary px-3 py-2.5">
             <Search className="h-4 w-4 text-muted-foreground" />
@@ -125,7 +124,7 @@ const CarePage = () => {
           </div>
         </div>
 
-        {/* Category filters */}
+        {/* Category filters — outside pull-to-refresh */}
         <div className="flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-hide">
           {allCategories.map((c) => (
             <button
@@ -141,6 +140,10 @@ const CarePage = () => {
             </button>
           ))}
         </div>
+
+        {/* Pull-to-refresh content area */}
+        <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+          <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
 
         {/* Featured section */}
         {featured.length > 0 && !searchQuery && (
