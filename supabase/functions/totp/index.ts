@@ -170,24 +170,24 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseUser = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user } } = await supabaseUser.auth.getUser();
-    if (!user) {
+    // Use admin client to get user from JWT - bypasses session check
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(authHeader.replace("Bearer ", ""));
+    if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    const userId = user.id;
+    const userEmail = user.email || "user";
+
     if (action === "setup") {
       const secret = generateBase32Secret();
-      const email = user.email || "user";
-      const otpauthUrl = `otpauth://totp/PetKeep:${email}?secret=${secret}&issuer=PetKeep`;
+      const otpauthUrl = `otpauth://totp/PetKeep:${userEmail}?secret=${secret}&issuer=PetKeep`;
 
       // Upsert secret (not verified yet)
       await supabaseAdmin.from("totp_secrets").upsert({
-        user_id: user.id,
+        user_id: userId,
         encrypted_secret: secret,
         is_verified: false,
         app_name: "PetKeep",
@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
       const { data: totp } = await supabaseAdmin
         .from("totp_secrets")
         .select("encrypted_secret")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .single();
 
       if (!totp) {
@@ -226,19 +226,17 @@ Deno.serve(async (req) => {
       }
 
       // Mark as verified
-      await supabaseAdmin.from("totp_secrets").update({ is_verified: true }).eq("user_id", user.id);
+      await supabaseAdmin.from("totp_secrets").update({ is_verified: true }).eq("user_id", userId);
 
       // Update user_settings
-      await supabaseAdmin.from("user_settings").update({ two_factor_enabled: true }).eq("user_id", user.id);
+      await supabaseAdmin.from("user_settings").update({ two_factor_enabled: true }).eq("user_id", userId);
 
       // Generate backup codes
       const backupCodes = generateBackupCodes(8);
-      // Delete old backup codes
-      await supabaseAdmin.from("totp_backup_codes").delete().eq("user_id", user.id);
-      // Insert new hashed codes
+      await supabaseAdmin.from("totp_backup_codes").delete().eq("user_id", userId);
       const inserts = await Promise.all(
         backupCodes.map(async (code) => ({
-          user_id: user.id,
+          user_id: userId,
           code_hash: await hashCode(code),
         }))
       );
@@ -260,7 +258,7 @@ Deno.serve(async (req) => {
       const { data: totp } = await supabaseAdmin
         .from("totp_secrets")
         .select("encrypted_secret")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .single();
 
       if (!totp) {
@@ -276,9 +274,9 @@ Deno.serve(async (req) => {
         });
       }
 
-      await supabaseAdmin.from("totp_secrets").delete().eq("user_id", user.id);
-      await supabaseAdmin.from("totp_backup_codes").delete().eq("user_id", user.id);
-      await supabaseAdmin.from("user_settings").update({ two_factor_enabled: false }).eq("user_id", user.id);
+      await supabaseAdmin.from("totp_secrets").delete().eq("user_id", userId);
+      await supabaseAdmin.from("totp_backup_codes").delete().eq("user_id", userId);
+      await supabaseAdmin.from("user_settings").update({ two_factor_enabled: false }).eq("user_id", userId);
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
