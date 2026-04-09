@@ -1,11 +1,11 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// TOTP implementation
 const BASE32_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
 function generateBase32Secret(length = 32): string {
@@ -53,7 +53,6 @@ async function generateTOTP(secret: string, timeStep = 30, digits = 6, offset = 
 }
 
 async function verifyTOTP(secret: string, token: string): Promise<boolean> {
-  // Allow ±1 time step window
   for (const offset of [-1, 0, 1]) {
     const expected = await generateTOTP(secret, 30, 6, offset);
     if (expected === token) return true;
@@ -78,6 +77,13 @@ async function hashCode(code: string): Promise<string> {
   return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -86,22 +92,21 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const publishableKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
+
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
+    const supabaseAuth = createClient(supabaseUrl, publishableKey);
 
     const authHeader = req.headers.get("Authorization");
     const body = await req.json();
     const { action } = body;
 
-    // For login verification, we don't require auth token (user isn't logged in yet)
     if (action === "verify-login") {
       const { user_id, token } = body;
       if (!user_id || !token) {
-        return new Response(JSON.stringify({ error: "Missing user_id or token" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ error: "Missing user_id or token" }, 400);
       }
 
-      // Check TOTP secret
       const { data: totp } = await supabaseAdmin
         .from("totp_secrets")
         .select("encrypted_secret, is_verified")
@@ -109,19 +114,14 @@ Deno.serve(async (req) => {
         .single();
 
       if (!totp || !totp.is_verified) {
-        return new Response(JSON.stringify({ error: "2FA not enabled" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ error: "2FA not enabled" }, 400);
       }
 
       const valid = await verifyTOTP(totp.encrypted_secret, token);
       if (valid) {
-        return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ success: true });
       }
 
-      // Check backup codes
       const { data: backupCodes } = await supabaseAdmin
         .from("totp_backup_codes")
         .select("*")
@@ -133,77 +133,63 @@ Deno.serve(async (req) => {
         const match = backupCodes.find((c: any) => c.code_hash === tokenHash);
         if (match) {
           await supabaseAdmin.from("totp_backup_codes").update({ is_used: true }).eq("id", match.id);
-          return new Response(JSON.stringify({ success: true, backup_used: true }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+          return json({ success: true, backup_used: true });
         }
       }
 
-      return new Response(JSON.stringify({ error: "Invalid code" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Invalid code" }, 401);
     }
 
-    // For check-status, allow with just user_id (pre-login check)
     if (action === "check-status") {
       const { user_id } = body;
       if (!user_id) {
-        return new Response(JSON.stringify({ error: "Missing user_id" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ error: "Missing user_id" }, 400);
       }
+
       const { data: totp } = await supabaseAdmin
         .from("totp_secrets")
         .select("is_verified")
         .eq("user_id", user_id)
         .single();
 
-      return new Response(JSON.stringify({ enabled: totp?.is_verified === true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ enabled: totp?.is_verified === true });
     }
 
-    // All other actions require authentication
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!authHeader?.startsWith("Bearer ")) {
+      return json({ error: "Unauthorized" }, 401);
     }
 
-    // Use admin client to get user from JWT - bypasses session check
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(authHeader.replace("Bearer ", ""));
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const jwt = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(jwt);
+
+    if (claimsError || !claimsData?.claims?.sub) {
+      return json({ error: "Unauthorized" }, 401);
     }
 
-    const userId = user.id;
-    const userEmail = user.email || "user";
+    const userId = String(claimsData.claims.sub);
+    const userEmail = String(claimsData.claims.email ?? "user");
 
     if (action === "setup") {
       const secret = generateBase32Secret();
       const otpauthUrl = `otpauth://totp/PetKeep:${userEmail}?secret=${secret}&issuer=PetKeep`;
 
-      // Upsert secret (not verified yet)
-      await supabaseAdmin.from("totp_secrets").upsert({
-        user_id: userId,
-        encrypted_secret: secret,
-        is_verified: false,
-        app_name: "PetKeep",
-      }, { onConflict: "user_id" });
+      await supabaseAdmin.from("totp_secrets").upsert(
+        {
+          user_id: userId,
+          encrypted_secret: secret,
+          is_verified: false,
+          app_name: "PetKeep",
+        },
+        { onConflict: "user_id" }
+      );
 
-      return new Response(JSON.stringify({ secret, otpauth_url: otpauthUrl }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ secret, otpauth_url: otpauthUrl });
     }
 
     if (action === "verify-setup") {
       const { token } = body;
       if (!token || token.length !== 6) {
-        return new Response(JSON.stringify({ error: "Invalid token format" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ error: "Invalid token format" }, 400);
       }
 
       const { data: totp } = await supabaseAdmin
@@ -213,25 +199,17 @@ Deno.serve(async (req) => {
         .single();
 
       if (!totp) {
-        return new Response(JSON.stringify({ error: "No TOTP setup found" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ error: "No TOTP setup found" }, 400);
       }
 
       const valid = await verifyTOTP(totp.encrypted_secret, token);
       if (!valid) {
-        return new Response(JSON.stringify({ error: "Invalid code. Check your authenticator app." }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ error: "Invalid code. Check your authenticator app." }, 400);
       }
 
-      // Mark as verified
       await supabaseAdmin.from("totp_secrets").update({ is_verified: true }).eq("user_id", userId);
-
-      // Update user_settings
       await supabaseAdmin.from("user_settings").update({ two_factor_enabled: true }).eq("user_id", userId);
 
-      // Generate backup codes
       const backupCodes = generateBackupCodes(8);
       await supabaseAdmin.from("totp_backup_codes").delete().eq("user_id", userId);
       const inserts = await Promise.all(
@@ -242,17 +220,13 @@ Deno.serve(async (req) => {
       );
       await supabaseAdmin.from("totp_backup_codes").insert(inserts);
 
-      return new Response(JSON.stringify({ success: true, backup_codes: backupCodes }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ success: true, backup_codes: backupCodes });
     }
 
     if (action === "disable") {
       const { token } = body;
       if (!token) {
-        return new Response(JSON.stringify({ error: "Code required to disable 2FA" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ error: "Code required to disable 2FA" }, 400);
       }
 
       const { data: totp } = await supabaseAdmin
@@ -262,33 +236,23 @@ Deno.serve(async (req) => {
         .single();
 
       if (!totp) {
-        return new Response(JSON.stringify({ error: "2FA not set up" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ error: "2FA not set up" }, 400);
       }
 
       const valid = await verifyTOTP(totp.encrypted_secret, token);
       if (!valid) {
-        return new Response(JSON.stringify({ error: "Invalid code" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return json({ error: "Invalid code" }, 401);
       }
 
       await supabaseAdmin.from("totp_secrets").delete().eq("user_id", userId);
       await supabaseAdmin.from("totp_backup_codes").delete().eq("user_id", userId);
       await supabaseAdmin.from("user_settings").update({ two_factor_enabled: false }).eq("user_id", userId);
 
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ success: true });
     }
 
-    return new Response(JSON.stringify({ error: "Invalid action" }), {
-      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: "Invalid action" }, 400);
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: err instanceof Error ? err.message : "Unknown error" }, 500);
   }
 });
