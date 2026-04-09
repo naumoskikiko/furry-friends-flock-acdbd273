@@ -118,6 +118,10 @@ const StoryViewer = ({
   // --- Navigation ---
   const goNext = useCallback(() => {
     if (!group) return;
+    const now = Date.now();
+    if (now - lastNavRef.current < NAV_DEBOUNCE_MS) return;
+    lastNavRef.current = now;
+
     if (storyIndex < group.stories.length - 1) {
       setStoryIndex(s => s + 1);
     } else if (groupIndex < groups.length - 1) {
@@ -129,6 +133,10 @@ const StoryViewer = ({
   }, [group, storyIndex, groupIndex, groups.length, onClose]);
 
   const goPrev = useCallback(() => {
+    const now = Date.now();
+    if (now - lastNavRef.current < NAV_DEBOUNCE_MS) return;
+    lastNavRef.current = now;
+
     if (storyIndex > 0) {
       setStoryIndex(s => s - 1);
     } else if (groupIndex > 0) {
@@ -139,6 +147,10 @@ const StoryViewer = ({
   }, [storyIndex, groupIndex, groups]);
 
   const goNextGroup = useCallback(() => {
+    const now = Date.now();
+    if (now - lastNavRef.current < NAV_DEBOUNCE_MS) return;
+    lastNavRef.current = now;
+
     if (groupIndex < groups.length - 1) {
       setGroupIndex(g => g + 1);
       setStoryIndex(0);
@@ -148,6 +160,10 @@ const StoryViewer = ({
   }, [groupIndex, groups.length, onClose]);
 
   const goPrevGroup = useCallback(() => {
+    const now = Date.now();
+    if (now - lastNavRef.current < NAV_DEBOUNCE_MS) return;
+    lastNavRef.current = now;
+
     if (groupIndex > 0) {
       setGroupIndex(g => g - 1);
       setStoryIndex(0);
