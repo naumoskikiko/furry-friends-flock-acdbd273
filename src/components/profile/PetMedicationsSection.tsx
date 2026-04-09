@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useMedications, MedicationInput, Medication } from "@/hooks/useMedications";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Pill, Plus, Clock, Check, X, Trash2, AlertTriangle, ChevronDown, ChevronUp, History,
+  Pill, Plus, Clock, Check, X, Trash2, AlertTriangle, ChevronDown, ChevronUp, History, Bell, BellOff,
 } from "lucide-react";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
