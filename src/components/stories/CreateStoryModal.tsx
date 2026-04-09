@@ -268,9 +268,10 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
     setUploadProgress(100);
     setUploading(false);
     toast({ title: files.length > 1 ? `${files.length} stories published!` : "Story published!" });
-    resetForm();
     onOpenChange(false);
-    onStoryCreated();
+    resetForm();
+    // Refresh stories AFTER closing modal so the new story appears immediately
+    await onStoryCreated();
   };
 
   function handleDeleteDraft(draftId: string) {
