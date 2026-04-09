@@ -3,7 +3,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, MessageCircle, ShoppingBag, CalendarCheck, PawPrint, MapPin, Shield, Bell } from "lucide-react";
+import { Heart, MessageCircle, ShoppingBag, CalendarCheck, PawPrint, MapPin, Shield, Bell, X } from "lucide-react";
+
+const AVAILABLE_TYPES = ["Social", "Messages", "Orders", "Bookings", "PetMatch", "Tracking", "System"];
+
+interface CustomFilter {
+  name: string;
+  types: string[];
+}
 
 type NotifKey =
   | "push_booking_request" | "push_booking_confirmation" | "push_new_message"
