@@ -97,13 +97,17 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
     el.style.height = Math.min(el.scrollHeight, 120) + "px";
   }, []);
 
-  // Save draft on unmount & cancel pending draft timeout
+  // Save draft on unmount only (not on every text change)
+  const textRef = useRef(text);
+  textRef.current = text;
   useEffect(() => {
     return () => {
       if (draftTimeout.current) clearTimeout(draftTimeout.current);
-      if (text.trim()) saveDraft(conversation.id, text);
+      if (!justSentRef.current && textRef.current.trim()) {
+        saveDraft(conversation.id, textRef.current);
+      }
     };
-  }, [conversation.id, text]);
+  }, [conversation.id]);
 
   const handleTextChange = (value: string) => {
     setText(value);
