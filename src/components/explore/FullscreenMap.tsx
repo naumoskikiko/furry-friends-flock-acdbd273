@@ -42,7 +42,9 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
   const [panelExpanded, setPanelExpanded] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState<MapMarker | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
   const prevSelectedRef = useRef<string | null>(null);
+  const followingRef = useRef(false);
 
   const filteredMarkers = searchQuery.trim()
     ? markers.filter(
@@ -83,6 +85,11 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
       markersLayerRef.current = L.layerGroup().addTo(map);
       mapRef.current = map;
 
+      // Stop following when user interacts with map
+      map.on('dragstart', () => {
+        followingRef.current = false;
+        setIsFollowing(false);
+      });
 
       setTimeout(() => map.invalidateSize(), 100);
       setMapReady(true);
@@ -153,6 +160,8 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
   const handleZoomOut = () => mapRef.current?.zoomOut();
 
   const handleCenterOnMe = () => {
+    followingRef.current = true;
+    setIsFollowing(true);
     requestLocation();
     startWatching();
   };
@@ -172,10 +181,13 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
       }).addTo(map);
     }
 
-    map.flyTo([userLocation.lat, userLocation.lng], 16, {
-      animate: true,
-      duration: 1,
-    });
+    // Only fly to user location if following mode is active
+    if (followingRef.current) {
+      map.flyTo([userLocation.lat, userLocation.lng], 16, {
+        animate: true,
+        duration: 1,
+      });
+    }
   }, [userLocation]);
 
   // Show error toast
@@ -279,7 +291,15 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
           </button>
         </div>
 
-        {/* Find My Pet badge */}
+        {/* Following indicator */}
+        {isFollowing && (
+          <div className="absolute top-3 left-3 z-[1000] rounded-full bg-primary/90 px-3 py-1.5 shadow-lg flex items-center gap-1.5 animate-in fade-in duration-200">
+            <Crosshair className="h-3 w-3 text-primary-foreground" />
+            <p className="text-[11px] font-bold text-primary-foreground">Following your location</p>
+          </div>
+        )}
+
+
         {findMyPet && (
           <div className="absolute top-3 left-3 z-[1000] rounded-full bg-accent/90 px-3 py-1.5 shadow-lg">
             <p className="text-[11px] font-bold text-accent-foreground">🐾 Find My Pet Active</p>
