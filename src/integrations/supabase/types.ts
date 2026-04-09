@@ -2780,6 +2780,53 @@ export type Database = {
           },
         ]
       }
+      tracker_subscriptions: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          plan: string
+          price: number
+          start_date: string
+          status: string
+          tracker_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          plan?: string
+          price?: number
+          start_date?: string
+          status?: string
+          tracker_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          plan?: string
+          price?: number
+          start_date?: string
+          status?: string
+          tracker_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracker_subscriptions_tracker_id_fkey"
+            columns: ["tracker_id"]
+            isOneToOne: false
+            referencedRelation: "pet_trackers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_packages: {
         Row: {
           created_at: string
@@ -3069,6 +3116,10 @@ export type Database = {
       }
       reduce_product_stock: {
         Args: { _product_id: string; _quantity: number }
+        Returns: boolean
+      }
+      tracker_has_active_sub: {
+        Args: { _tracker_id: string }
         Returns: boolean
       }
       user_owns_order_items: {

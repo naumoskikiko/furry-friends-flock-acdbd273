@@ -14,6 +14,17 @@ export interface PetTracker {
   created_at: string;
 }
 
+export interface TrackerSubscription {
+  id: string;
+  tracker_id: string;
+  user_id: string;
+  plan: "monthly" | "yearly";
+  price: number;
+  start_date: string;
+  end_date: string;
+  status: "active" | "expired" | "cancelled";
+}
+
 export interface TrackerLocation {
   id: string;
   tracker_id: string;
@@ -34,7 +45,7 @@ export interface SafeZone {
   created_at: string;
 }
 
-// ─── Subscription ───────────────────────────────────────────
+// ─── User has ANY active tracker subscription (gate for page access) ──
 export function useSubscription() {
   const { user } = useAuth();
   const [hasSubscription, setHasSubscription] = useState(false);
@@ -44,11 +55,11 @@ export function useSubscription() {
     if (!user) { setLoading(false); return; }
     const check = async () => {
       const { data } = await supabase
-        .from("pet_subscriptions")
-        .select("id, status, expires_at")
+        .from("tracker_subscriptions")
+        .select("id")
         .eq("user_id", user.id)
         .eq("status", "active")
-        .gte("expires_at", new Date().toISOString())
+        .gte("end_date", new Date().toISOString())
         .limit(1);
       setHasSubscription((data || []).length > 0);
       setLoading(false);
@@ -56,17 +67,79 @@ export function useSubscription() {
     check();
   }, [user]);
 
+  // Legacy activate just marks user as having accessed FindMyPet
   const activate = async () => {
-    if (!user) return;
-    await supabase.from("pet_subscriptions").insert({
-      user_id: user.id,
-      plan: "findmypet_premium",
-      status: "active",
-    });
     setHasSubscription(true);
   };
 
   return { hasSubscription, loading, activate };
+}
+
+// ─── Per-Tracker Subscriptions ──────────────────────────────
+export function useTrackerSubscriptions() {
+  const { user } = useAuth();
+  const [subs, setSubs] = useState<TrackerSubscription[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchSubs = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("tracker_subscriptions")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    setSubs((data as TrackerSubscription[]) || []);
+    setLoading(false);
+  }, [user]);
+
+  useEffect(() => { fetchSubs(); }, [fetchSubs]);
+
+  const getTrackerSub = useCallback((trackerId: string): TrackerSubscription | null => {
+    const now = new Date().toISOString();
+    return subs.find(s => s.tracker_id === trackerId && s.status === "active" && s.end_date > now) || null;
+  }, [subs]);
+
+  const isTrackerActive = useCallback((trackerId: string): boolean => {
+    return getTrackerSub(trackerId) !== null;
+  }, [getTrackerSub]);
+
+  const activateTracker = async (trackerId: string, plan: "monthly" | "yearly") => {
+    if (!user) return;
+    const now = new Date();
+    const endDate = new Date(now);
+    if (plan === "monthly") {
+      endDate.setDate(endDate.getDate() + 30);
+    } else {
+      endDate.setDate(endDate.getDate() + 365);
+    }
+    const price = plan === "monthly" ? 5 : 50;
+
+    const { error } = await supabase.from("tracker_subscriptions").insert({
+      tracker_id: trackerId,
+      user_id: user.id,
+      plan,
+      price,
+      start_date: now.toISOString(),
+      end_date: endDate.toISOString(),
+      status: "active",
+    });
+    if (error) throw error;
+    await fetchSubs();
+  };
+
+  const renewTracker = async (trackerId: string, plan: "monthly" | "yearly") => {
+    if (!user) return;
+    // Expire old subs for this tracker
+    await supabase
+      .from("tracker_subscriptions")
+      .update({ status: "expired" })
+      .eq("tracker_id", trackerId)
+      .eq("user_id", user.id);
+
+    await activateTracker(trackerId, plan);
+  };
+
+  return { subs, loading, getTrackerSub, isTrackerActive, activateTracker, renewTracker, refetch: fetchSubs };
 }
 
 // ─── Trackers ───────────────────────────────────────────────
@@ -96,12 +169,13 @@ export function useTrackers() {
     pet_photo?: string;
   }) => {
     if (!user) return;
-    const { error } = await supabase.from("pet_trackers").insert({
+    const { data, error } = await supabase.from("pet_trackers").insert({
       ...tracker,
       user_id: user.id,
-    });
+    }).select().single();
     if (error) throw error;
     await fetchTrackers();
+    return data as PetTracker;
   };
 
   return { trackers, loading, addTracker, refetch: fetchTrackers };
@@ -208,7 +282,7 @@ export function useSafeZones(trackerId: string | null) {
 
 // ─── Safe Zone Alert Check ──────────────────────────────────
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371000; // meters
+  const R = 6371000;
   const toRad = (d: number) => (d * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
@@ -236,7 +310,6 @@ export function useSafeZoneAlerts(location: TrackerLocation | null, zones: SafeZ
       }
     }
 
-    // Reset alert when pet returns
     setAlerted((prev) => {
       const next = new Set(prev);
       for (const id of prev) {
