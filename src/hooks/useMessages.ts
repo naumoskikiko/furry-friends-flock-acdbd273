@@ -50,6 +50,7 @@ export interface Message {
   forwarded_from_id: string | null;
   message_type: string;
   metadata: any | null;
+  client_status?: "sending" | "failed" | "queued";
 }
 
 export interface PendingMessage {
@@ -60,6 +61,7 @@ export interface PendingMessage {
   metadata?: any;
   status: "pending" | "sending" | "failed";
   timestamp: number;
+  conversationId?: string;
 }
 
 const fromTable = (table: string) => (supabase as any).from(table);
@@ -100,6 +102,67 @@ function addToQueue(msg: PendingMessage) {
 function removeFromQueue(id: string) {
   const queue = getOfflineQueue().filter((m) => m.id !== id);
   setOfflineQueue(queue);
+}
+
+function attachClientTempId(metadata: any, clientTempId: string) {
+  if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
+    return { ...metadata, client_temp_id: clientTempId };
+  }
+  return { client_temp_id: clientTempId };
+}
+
+function getClientTempId(message: Pick<Message, "id" | "metadata">) {
+  const metadataTempId =
+    message.metadata &&
+    typeof message.metadata === "object" &&
+    !Array.isArray(message.metadata)
+      ? (message.metadata as Record<string, any>).client_temp_id
+      : undefined;
+
+  return metadataTempId || (message.id.startsWith("optimistic_") ? message.id : undefined);
+}
+
+function sortMessages(items: Message[]) {
+  return [...items].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+}
+
+function dedupeMessages(items: Message[]) {
+  const byId = new Map<string, Message>();
+  items.forEach((item) => byId.set(item.id, item));
+  return sortMessages(Array.from(byId.values()));
+}
+
+function upsertMessage(items: Message[], incoming: Message) {
+  const incomingTempId = getClientTempId(incoming);
+  let replaced = false;
+
+  const next = items.map((item) => {
+    if (item.id === incoming.id) {
+      replaced = true;
+      return incoming;
+    }
+
+    if (incomingTempId && getClientTempId(item) === incomingTempId) {
+      replaced = true;
+      return incoming;
+    }
+
+    return item;
+  });
+
+  return replaced ? sortMessages(next) : dedupeMessages([...items, incoming]);
+}
+
+function mergeFetchedMessages(existing: Message[], fetched: Message[]) {
+  const localOnly = existing.filter((item) => {
+    if (!item.client_status) return false;
+    const tempId = getClientTempId(item);
+    return !tempId || !fetched.some((serverItem) => getClientTempId(serverItem) === tempId);
+  });
+
+  return dedupeMessages([...fetched, ...localOnly]);
 }
 
 // --- Connection status ---
@@ -476,17 +539,18 @@ export function useChatMessages(conversationId: string | null) {
         setPendingMessages((prev) =>
           prev.map((m) => (m.id === pending.id ? { ...m, status: "sending" as const } : m))
         );
-        const { error } = await fromTable("messages").insert({
+        const { data, error } = await fromTable("messages").insert({
           conversation_id: conversationId,
           sender_id: user.id,
           message_text: pending.text,
           reply_to_id: pending.replyToId || null,
           message_type: pending.messageType,
           metadata: pending.metadata || null,
-        });
-        if (!error) {
+        }).select("*").single();
+        if (!error && data) {
           removeFromQueue(pending.id);
           setPendingMessages((prev) => prev.filter((m) => m.id !== pending.id));
+          setMessages((prev) => upsertMessage(prev, data as Message));
         } else {
           setPendingMessages((prev) =>
             prev.map((m) => (m.id === pending.id ? { ...m, status: "failed" as const } : m))
@@ -520,9 +584,9 @@ export function useChatMessages(conversationId: string | null) {
       const msgs = ((data as Message[]) || []).reverse();
 
       if (before) {
-        setMessages((prev) => [...msgs, ...prev]);
+        setMessages((prev) => dedupeMessages([...msgs, ...prev]));
       } else {
-        setMessages(msgs);
+        setMessages((prev) => mergeFetchedMessages(prev, msgs));
       }
 
       setHasMore((data?.length || 0) >= MESSAGES_PAGE_SIZE);
@@ -564,13 +628,7 @@ export function useChatMessages(conversationId: string | null) {
         { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
         (payload) => {
           const newMsg = payload.new as Message;
-          setMessages((prev) => {
-            // Deduplicate: skip if already present (by real ID)
-            if (prev.find((m) => m.id === newMsg.id)) return prev;
-            // If this is our own message, it was already shown optimistically — skip
-            if (user && newMsg.sender_id === user.id) return prev;
-            return [...prev, newMsg];
-          });
+          setMessages((prev) => upsertMessage(prev, newMsg));
           if (user && newMsg.sender_id !== user.id) {
             fromTable("messages").update({ is_read: true }).eq("id", newMsg.id).then();
           }
@@ -581,7 +639,7 @@ export function useChatMessages(conversationId: string | null) {
         { event: "UPDATE", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
         (payload) => {
           const updated = payload.new as Message;
-          setMessages((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+          setMessages((prev) => upsertMessage(prev, updated));
         }
       )
       .on(
@@ -622,15 +680,17 @@ export function useChatMessages(conversationId: string | null) {
       saveDraft(conversationId, "");
 
       const optimisticId = `optimistic_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const cleanText = text.trim();
+      const optimisticMetadata = attachClientTempId(metadata, optimisticId);
 
       if (!navigator.onLine) {
         // Queue for offline
-        const pending: PendingMessage & { conversationId: string } = {
+        const pending: PendingMessage = {
           id: optimisticId,
-          text: text.trim(),
+          text: cleanText,
           replyToId,
           messageType,
-          metadata,
+          metadata: optimisticMetadata,
           status: "pending",
           timestamp: Date.now(),
           conversationId,
@@ -645,7 +705,7 @@ export function useChatMessages(conversationId: string | null) {
         id: optimisticId,
         conversation_id: conversationId,
         sender_id: user.id,
-        message_text: text.trim(),
+        message_text: cleanText,
         created_at: new Date().toISOString(),
         is_read: false,
         edited_at: null,
@@ -653,38 +713,36 @@ export function useChatMessages(conversationId: string | null) {
         reply_to_id: replyToId || null,
         forwarded_from_id: null,
         message_type: messageType,
-        metadata: metadata || null,
+        metadata: optimisticMetadata,
+        client_status: "sending",
       };
-      setMessages((prev) => [...prev, optimisticMsg]);
+      setMessages((prev) => dedupeMessages([...prev, optimisticMsg]));
 
       const { data, error } = await fromTable("messages").insert({
         conversation_id: conversationId,
         sender_id: user.id,
-        message_text: text.trim(),
+        message_text: cleanText,
         reply_to_id: replyToId || null,
         message_type: messageType,
-        metadata: metadata || null,
-      }).select("id").single();
+        metadata: optimisticMetadata,
+      }).select("*").single();
 
       if (error) {
         // Remove optimistic message, add to pending with failed status
         setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
-        const failedPending: PendingMessage & { conversationId: string } = {
+        const failedPending: PendingMessage = {
           id: optimisticId,
-          text: text.trim(),
+          text: cleanText,
           replyToId,
           messageType,
-          metadata,
+          metadata: optimisticMetadata,
           status: "failed",
           timestamp: Date.now(),
           conversationId,
         };
-        setPendingMessages((prev) => [...prev, failedPending]);
+        setPendingMessages((prev) => [...prev.filter((m) => m.id !== optimisticId), failedPending]);
       } else if (data) {
-        // Replace optimistic message with real ID so realtime deduplicates
-        setMessages((prev) =>
-          prev.map((m) => m.id === optimisticId ? { ...m, id: data.id } : m)
-        );
+        setMessages((prev) => upsertMessage(prev, data as Message));
       }
     },
     [conversationId, user]
@@ -701,18 +759,19 @@ export function useChatMessages(conversationId: string | null) {
         prev.map((m) => (m.id === pendingId ? { ...m, status: "sending" as const } : m))
       );
 
-      const { error } = await fromTable("messages").insert({
+      const { data, error } = await fromTable("messages").insert({
         conversation_id: conversationId,
         sender_id: user.id,
         message_text: pending.text,
         reply_to_id: pending.replyToId || null,
         message_type: pending.messageType,
         metadata: pending.metadata || null,
-      });
+      }).select("*").single();
 
-      if (!error) {
+      if (!error && data) {
         removeFromQueue(pendingId);
         setPendingMessages((prev) => prev.filter((m) => m.id !== pendingId));
+        setMessages((prev) => upsertMessage(prev, data as Message));
       } else {
         setPendingMessages((prev) =>
           prev.map((m) => (m.id === pendingId ? { ...m, status: "failed" as const } : m))

@@ -258,6 +258,20 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
     return messages.find((m) => m.id === replyToId);
   };
 
+  const renderOwnMessageStatus = (msg: Message) => {
+    if (msg.client_status === "sending") {
+      return (
+        <span className="text-[9px] text-primary-foreground/60 flex items-center gap-1">
+          <RefreshCw className="h-2.5 w-2.5 animate-spin" /> Sending
+        </span>
+      );
+    }
+
+    return msg.is_read
+      ? <CheckCheck className="h-3 w-3 text-blue-400" />
+      : <Check className="h-3 w-3 text-primary-foreground/60" />;
+  };
+
   // Render link preview inline
   const renderMessageText = (text: string, isMine: boolean) => {
     const links = extractLinks(text);
@@ -427,7 +441,7 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
             {messages.map((msg) => {
               const isMine = msg.sender_id === user?.id;
               const isHighlighted = searchResults.includes(msg.id);
-              const canEdit = isMine && Date.now() - new Date(msg.created_at).getTime() < 15 * 60 * 1000;
+              const canEdit = isMine && !msg.client_status && Date.now() - new Date(msg.created_at).getTime() < 15 * 60 * 1000;
               const replyPreview = getReplyPreview(msg.reply_to_id);
 
               // Appointment card (legacy)
@@ -582,10 +596,7 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
                         <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                           {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
                         </span>
-                        {isMine && (msg.is_read
-                          ? <CheckCheck className="h-3 w-3 text-blue-400" />
-                          : <Check className="h-3 w-3 text-primary-foreground/60" />
-                        )}
+                        {isMine && renderOwnMessageStatus(msg)}
                       </div>
                     </div>
                   </div>
@@ -618,10 +629,7 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
                           <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                             {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
                           </span>
-                          {isMine && (msg.is_read
-                            ? <CheckCheck className="h-3 w-3 text-blue-400" />
-                            : <Check className="h-3 w-3 text-primary-foreground/60" />
-                          )}
+                          {isMine && renderOwnMessageStatus(msg)}
                         </div>
                       </div>
                     </button>
@@ -663,10 +671,7 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
                           <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                             {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
                           </span>
-                          {isMine && (msg.is_read
-                            ? <CheckCheck className="h-3 w-3 text-blue-400" />
-                            : <Check className="h-3 w-3 text-primary-foreground/60" />
-                          )}
+                          {isMine && renderOwnMessageStatus(msg)}
                         </div>
                       </div>
                     </button>
@@ -738,10 +743,7 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
                           <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                             {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
                           </span>
-                          {isMine && (msg.is_read
-                            ? <CheckCheck className="h-3 w-3 text-blue-400" />
-                            : <Check className="h-3 w-3 text-primary-foreground/60" />
-                          )}
+                          {isMine && renderOwnMessageStatus(msg)}
                         </div>
                       </div>
                     </button>
@@ -803,10 +805,7 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
                           <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                             {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
                           </span>
-                          {isMine && (msg.is_read
-                            ? <CheckCheck className="h-3 w-3 text-blue-400" />
-                            : <Check className="h-3 w-3 text-primary-foreground/60" />
-                          )}
+                          {isMine && renderOwnMessageStatus(msg)}
                         </div>
                       </div>
                     </button>
@@ -895,10 +894,7 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
                       <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                         {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
                       </span>
-                      {isMine && (msg.is_read
-                        ? <CheckCheck className="h-3 w-3 text-blue-400" />
-                        : <Check className="h-3 w-3 text-primary-foreground/60" />
-                      )}
+                      {isMine && renderOwnMessageStatus(msg)}
                     </div>
                   </div>
 
