@@ -343,6 +343,7 @@ const ProfilePage = () => {
             <p className="text-xs text-muted-foreground">Posts you're tagged in will appear here</p>
           </div>
         )}
+        </div>
       </div>
 
       {/* Edit Profile Dialog */}
