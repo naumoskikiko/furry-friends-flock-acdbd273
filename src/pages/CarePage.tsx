@@ -263,6 +263,7 @@ const CarePage = () => {
             </>
           )}
         </div>
+        </div>
       </div>
 
 
