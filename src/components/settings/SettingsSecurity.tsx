@@ -268,21 +268,6 @@ const SettingsSecurity = () => {
         </div>
       </div>
 
-      {/* Connected Accounts */}
-      <div className="rounded-2xl bg-card p-4 petkeep-card-shadow space-y-3">
-        <p className="text-sm font-bold">Connected Accounts</p>
-        {["Google", "Apple"].map((provider) => (
-          <div key={provider} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-            <div className="flex items-center gap-2">
-              <Globe className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">{provider}</span>
-            </div>
-            <Button variant="outline" size="sm" className="text-xs h-7">
-              Connect
-            </Button>
-          </div>
-        ))}
-      </div>
 
       {/* Logout Other Devices */}
       <Button variant="outline" className="w-full" onClick={() => toast({ title: "All other sessions signed out" })}>
