@@ -67,7 +67,7 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content — pull-to-refresh only applies here, below header + stories + tabs */}
       <div
         className="mx-auto max-w-lg"
         onTouchStart={handleTouchStart}
