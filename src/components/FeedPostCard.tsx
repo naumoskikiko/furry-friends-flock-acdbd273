@@ -192,7 +192,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     setSaved(newSaved);
     if (newSaved) {
       await (supabase as any).from("saved_posts").insert({ post_id: post.id, user_id: user.id });
-      createNotification(user.id, post.user_id, "save", "post", post.id, "saved your post");
+      // No notification for saves
       toast({ title: "Post saved" });
     } else {
       await (supabase as any).from("saved_posts").delete().eq("post_id", post.id).eq("user_id", user.id);
