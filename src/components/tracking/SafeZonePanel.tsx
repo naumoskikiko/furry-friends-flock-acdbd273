@@ -26,7 +26,7 @@ const RADIUS_OPTIONS = [
 const SafeZonePanel = ({ zones, onAdd, onRemove, onToggle, onClose, mapCenter }: Props) => {
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("Home");
-  const [radius, setRadius] = useState(500);
+  const [radius, setRadius] = useState(50);
 
   const handleAdd = () => {
     onAdd({ name: name.trim() || "Safe Zone", center_lat: mapCenter[0], center_lng: mapCenter[1], radius });
