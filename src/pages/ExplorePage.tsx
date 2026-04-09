@@ -66,8 +66,46 @@ const ExplorePage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-        <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
+      <div className="mx-auto max-w-lg">
+        {/* Search — stays outside pull-to-refresh */}
+        <div className="sticky top-0 z-40 bg-card/95 px-4 py-3 backdrop-blur-md">
+          <div className="flex items-center gap-2 rounded-xl bg-secondary px-3 py-2.5">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && searchQuery.trim()) {
+                  handleSeeMore("users");
+                }
+              }}
+              placeholder="Search places, users, @username..."
+              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground font-body"
+            />
+          </div>
+
+          {/* Filter chips */}
+          <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-hide">
+            {FILTERS.map((f) => (
+              <button
+                key={f}
+                onClick={() => setActiveFilter(f)}
+                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
+                  activeFilter === f
+                    ? "petkeep-gradient text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground hover:bg-muted"
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Pull-to-refresh content area */}
+        <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+          <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
         {/* Search */}
         <div className="sticky top-0 z-40 bg-card/95 px-4 py-3 backdrop-blur-md">
           <div className="flex items-center gap-2 rounded-xl bg-secondary px-3 py-2.5">
