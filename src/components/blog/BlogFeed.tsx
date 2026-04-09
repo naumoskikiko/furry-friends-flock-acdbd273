@@ -201,7 +201,7 @@ const BlogFeed = ({ openBlogId }: BlogFeedProps) => {
 
       {/* Blog posts */}
       <div className="mt-3">
-        {loading && (
+        {loading && posts.length === 0 && (
           <div className="flex justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>

@@ -172,7 +172,6 @@ const TagFeedPage = () => {
                       setSelectedArticle(p);
                       setArticleViewerOpen(true);
                     }}
-                    onLikeChange={() => {}}
                   />
                 ))}
               </div>
