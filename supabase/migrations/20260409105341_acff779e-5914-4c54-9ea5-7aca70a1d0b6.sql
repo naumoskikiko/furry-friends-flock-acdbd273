@@ -1,0 +1,1 @@
+ALTER TABLE public.safe_zones ALTER COLUMN radius SET DEFAULT 50;

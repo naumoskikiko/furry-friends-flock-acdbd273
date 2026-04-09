@@ -28,7 +28,7 @@ const TrackerDashboard = ({ tracker, onBack }: Props) => {
   const location = useTrackerLocation(tracker.id);
   const { zones, addZone, removeZone, toggleZone } = useSafeZones(tracker.id);
   const batteryLevel = useBatteryAlert(location, tracker.pet_name);
-  useSafeZoneAlerts(location, zones, tracker.pet_name);
+  const outsideZones = useSafeZoneAlerts(location, zones, tracker.pet_name);
 
   const [historyRange, setHistoryRange] = useState<number>(24);
   const { history } = useTrackingHistory(tracker.id, historyRange);
@@ -101,24 +101,28 @@ const TrackerDashboard = ({ tracker, onBack }: Props) => {
     }
   }, [showHistory, history]);
 
-  // Draw safe zone circles
+  // Draw safe zone circles with green/red coloring
   useEffect(() => {
     if (!mapInstance.current) return;
     zoneCirclesRef.current.forEach((c) => c.remove());
     zoneCirclesRef.current = [];
 
+    const outsideIds = new Set(outsideZones.map((z) => z.id));
+
     for (const z of zones.filter((z) => z.is_active)) {
+      const isOutside = outsideIds.has(z.id);
+      const color = isOutside ? "#ef4444" : "#22c55e";
       const circle = L.circle([z.center_lat, z.center_lng], {
         radius: z.radius,
-        color: "hsl(var(--accent))",
-        fillColor: "hsl(var(--accent))",
+        color,
+        fillColor: color,
         fillOpacity: 0.1,
         weight: 2,
         dashArray: "5 5",
       }).addTo(mapInstance.current);
       zoneCirclesRef.current.push(circle);
     }
-  }, [zones]);
+  }, [zones, outsideZones]);
 
   const centerOnPet = () => {
     if (mapInstance.current && location) {

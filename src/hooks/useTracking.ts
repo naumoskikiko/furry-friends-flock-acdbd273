@@ -293,6 +293,7 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
 export function useSafeZoneAlerts(location: TrackerLocation | null, zones: SafeZone[], petName: string) {
   const [outsideZones, setOutsideZones] = useState<SafeZone[]>([]);
   const [alerted, setAlerted] = useState<Set<string>>(new Set());
+  const [returnAlerted, setReturnAlerted] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!location || zones.length === 0) { setOutsideZones([]); return; }
@@ -306,20 +307,20 @@ export function useSafeZoneAlerts(location: TrackerLocation | null, zones: SafeZ
         if (!alerted.has(z.id)) {
           toast.warning(`⚠️ ${petName} has left the safe zone "${z.name}"`);
           setAlerted((prev) => new Set(prev).add(z.id));
+          setReturnAlerted((prev) => { const n = new Set(prev); n.delete(z.id); return n; });
+        }
+      } else {
+        // Pet is inside - check if they returned
+        if (alerted.has(z.id) && !returnAlerted.has(z.id)) {
+          toast.success(`✅ ${petName} is back in the safe zone "${z.name}"`);
+          setReturnAlerted((prev) => new Set(prev).add(z.id));
+          setAlerted((prev) => { const n = new Set(prev); n.delete(z.id); return n; });
         }
       }
     }
 
-    setAlerted((prev) => {
-      const next = new Set(prev);
-      for (const id of prev) {
-        if (!outside.find((z) => z.id === id)) next.delete(id);
-      }
-      return next;
-    });
-
     setOutsideZones(outside);
-  }, [location, zones, petName, alerted]);
+  }, [location, zones, petName, alerted, returnAlerted]);
 
   return outsideZones;
 }
