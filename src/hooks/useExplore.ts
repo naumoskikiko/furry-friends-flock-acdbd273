@@ -19,7 +19,7 @@ const CATEGORY_TYPE_MAP: Record<string, string> = {
   other: "Place",
 };
 
-const FILTERS = ["All", "Sitters", "Walkers", "Vets", "Stores", "Grooming", "Parks", "Cafes"] as const;
+const FILTERS = ["All", "Vets", "Stores", "Parks", "Cafes"] as const;
 export type FilterType = (typeof FILTERS)[number];
 export { FILTERS };
 
