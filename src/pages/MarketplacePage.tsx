@@ -101,7 +101,7 @@ const MarketplacePage = () => {
   const { count: wishlistCount } = useWishlist();
 
   // Apply ranking algorithm (boost affects order, not visual)
-  const { promoted: promotedStores, followed: followedStores, others: otherStores, all: rankedBusinesses } = useRankedBusinesses(businesses);
+  const { all: rankedBusinesses } = useRankedBusinesses(businesses);
   const rankedProducts = useRankedProducts(products);
 
   const featured = rankedBusinesses.filter((b) => b.avg_rating >= 4.0).slice(0, 6);
