@@ -6,10 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { PawPrint, Mail, Lock, User, ArrowLeft, Store, Briefcase } from "lucide-react";
+import { PawPrint, Mail, Lock, User, ArrowLeft, Store, Briefcase, Loader2, Shield } from "lucide-react";
 import petkeepIcon from "@/assets/petkeep-icon.png";
 
-type AuthView = "login" | "signup" | "forgot";
+type AuthView = "login" | "signup" | "forgot" | "2fa";
 type AccountRole = "user" | "provider" | "business";
 
 const ROLES: { value: AccountRole; label: string; icon: React.ReactNode; emoji: string; desc: string }[] = [
@@ -25,19 +25,104 @@ const AuthPage = () => {
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<AccountRole>("user");
   const [loading, setLoading] = useState(false);
+  const [totpCode, setTotpCode] = useState("");
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const check2FAStatus = async (userId: string): Promise<boolean> => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/totp`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ action: "check-status", user_id: userId }),
+        }
+      );
+      const data = await res.json();
+      return data.enabled === true;
+    } catch {
+      return false;
+    }
+  };
+
+  const verify2FA = async () => {
+    if (!pendingUserId || totpCode.length < 6) {
+      toast({ title: "Enter your 6-digit code", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/totp`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({ action: "verify-login", user_id: pendingUserId, token: totpCode }),
+        }
+      );
+      const data = await res.json();
+      if (data.success) {
+        // Re-sign in now that 2FA is verified
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        setLoading(false);
+        if (error) {
+          toast({ title: "Login failed", description: error.message, variant: "destructive" });
+        } else {
+          if (data.backup_used) {
+            toast({ title: "Logged in with backup code", description: "Consider generating new backup codes in Settings." });
+          }
+          navigate("/");
+        }
+      } else {
+        setLoading(false);
+        toast({ title: "Invalid code", description: data.error || "Try again", variant: "destructive" });
+      }
+    } catch {
+      setLoading(false);
+      toast({ title: "Error verifying code", variant: "destructive" });
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+
+    // First sign in to get user ID
+    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      setLoading(false);
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
-    } else {
-      navigate("/");
+      return;
     }
+
+    const userId = signInData.user?.id;
+    if (!userId) {
+      setLoading(false);
+      toast({ title: "Login failed", variant: "destructive" });
+      return;
+    }
+
+    // Check if 2FA is enabled
+    const has2FA = await check2FAStatus(userId);
+    if (has2FA) {
+      // Sign out and require 2FA
+      await supabase.auth.signOut();
+      setPendingUserId(userId);
+      setView("2fa");
+      setLoading(false);
+      return;
+    }
+
+    setLoading(false);
+    navigate("/");
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -92,7 +177,7 @@ const AuthPage = () => {
         <Card className="petkeep-card-shadow border-0">
           <CardHeader className="pb-4">
             {view !== "login" && (
-              <button onClick={() => setView("login")} className="mb-2 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+              <button onClick={() => { setView("login"); setTotpCode(""); setPendingUserId(null); }} className="mb-2 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-4 w-4" /> Back to login
               </button>
             )}
@@ -100,11 +185,13 @@ const AuthPage = () => {
               {view === "login" && "Welcome back"}
               {view === "signup" && "Create your account"}
               {view === "forgot" && "Reset password"}
+              {view === "2fa" && "Two-Factor Authentication"}
             </CardTitle>
             <CardDescription>
               {view === "login" && "Sign in to your PetKeep account"}
               {view === "signup" && "Join the pet community"}
               {view === "forgot" && "We'll send you a reset link"}
+              {view === "2fa" && "Enter the code from your authenticator app"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -125,7 +212,7 @@ const AuthPage = () => {
                   </div>
                 </div>
                 <Button type="submit" className="w-full petkeep-gradient text-primary-foreground font-bold" disabled={loading}>
-                  {loading ? "Signing in..." : "Sign In"}
+                  {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Signing in...</> : "Sign In"}
                 </Button>
                 <button type="button" onClick={() => setView("forgot")} className="w-full text-center text-sm text-muted-foreground hover:text-primary">
                   Forgot password?
@@ -137,6 +224,32 @@ const AuthPage = () => {
                   </button>
                 </div>
               </form>
+            )}
+
+            {view === "2fa" && (
+              <div className="space-y-4">
+                <div className="flex justify-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                    <Shield className="h-8 w-8 text-primary" />
+                  </div>
+                </div>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={8}
+                  placeholder="Enter code"
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/[^A-Za-z0-9]/g, ""))}
+                  className="text-center text-2xl tracking-[0.3em] font-mono"
+                  autoFocus
+                />
+                <p className="text-xs text-muted-foreground text-center">
+                  You can also use a backup code
+                </p>
+                <Button className="w-full petkeep-gradient text-primary-foreground font-bold" onClick={verify2FA} disabled={loading}>
+                  {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Verifying...</> : "Verify"}
+                </Button>
+              </div>
             )}
 
             {view === "signup" && (
