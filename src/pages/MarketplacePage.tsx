@@ -386,7 +386,7 @@ const MarketplacePage = () => {
                       );
                     })}
                   </div>
-                  <InfiniteScrollSentinel loading={prodLoading} hasMore={hasMoreProducts} onLoadMore={loadMoreProducts} itemCount={products.length} />
+                  <InfiniteScrollSentinel loading={prodLoading} hasMore={hasMoreProducts} onLoadMore={loadMoreProducts} itemCount={products.length} endMessage="No more products" />
                 </>
               )}
             </div>
@@ -462,7 +462,7 @@ const MarketplacePage = () => {
                   )}
                 </div>
               )}
-              <InfiniteScrollSentinel loading={bizLoading} hasMore={hasMoreBusinesses} onLoadMore={loadMoreBusinesses} itemCount={businesses.length} />
+              <InfiniteScrollSentinel loading={bizLoading} hasMore={hasMoreBusinesses} onLoadMore={loadMoreBusinesses} itemCount={businesses.length} endMessage="No more stores" />
             </div>
           </>
         )}
