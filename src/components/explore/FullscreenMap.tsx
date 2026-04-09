@@ -160,6 +160,8 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
   const handleZoomOut = () => mapRef.current?.zoomOut();
 
   const handleCenterOnMe = () => {
+    followingRef.current = true;
+    setIsFollowing(true);
     requestLocation();
     startWatching();
   };
