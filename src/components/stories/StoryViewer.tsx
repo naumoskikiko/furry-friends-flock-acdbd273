@@ -58,6 +58,7 @@ interface StoryViewerProps {
 
 const STORY_DURATION = 5000;
 const TAP_THRESHOLD = 10;
+const NAV_DEBOUNCE_MS = 100;
 const SWIPE_THRESHOLD = 60;
 const LONG_PRESS_MS = 200;
 
