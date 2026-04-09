@@ -60,24 +60,6 @@ const AddTrackerForm = ({ onSubmit, onCancel }: Props) => {
           <Input value={petName} onChange={(e) => setPetName(e.target.value)} placeholder="Buddy" className="rounded-xl" />
         </div>
 
-        <div>
-          <label className="text-xs font-semibold text-muted-foreground mb-1 block">Pet Type</label>
-          <div className="flex gap-2 flex-wrap">
-            {PET_TYPES.map((t) => (
-              <button
-                key={t}
-                onClick={() => setPetType(t)}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
-                  petType === t
-                    ? "petkeep-gradient text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:bg-muted"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div>
           <label className="text-xs font-semibold text-muted-foreground mb-1 block">Breed</label>
