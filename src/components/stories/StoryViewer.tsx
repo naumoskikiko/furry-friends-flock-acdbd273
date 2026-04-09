@@ -365,9 +365,16 @@ const StoryViewer = ({
 
   const handleDeleteStory = async () => {
     if (!story) return;
-    await supabase.from("stories").delete().eq("id", story.id);
+    const { error } = await supabase.from("stories").delete().eq("id", story.id);
+    if (error) {
+      console.error("Delete story error:", error);
+      toast({ title: "Failed to delete story", description: error.message, variant: "destructive" });
+      setConfirmDeleteOpen(false);
+      return;
+    }
     toast({ title: isMine ? "Story deleted" : "Story removed by admin" });
     setConfirmDeleteOpen(false);
+    setShowMenu(false);
 
     // Call parent callback for optimistic removal
     onDelete?.(story.id);
