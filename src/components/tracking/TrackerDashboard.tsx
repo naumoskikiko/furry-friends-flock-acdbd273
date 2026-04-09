@@ -28,7 +28,7 @@ const TrackerDashboard = ({ tracker, onBack }: Props) => {
   const location = useTrackerLocation(tracker.id);
   const { zones, addZone, removeZone, toggleZone } = useSafeZones(tracker.id);
   const batteryLevel = useBatteryAlert(location, tracker.pet_name);
-  useSafeZoneAlerts(location, zones, tracker.pet_name);
+  const outsideZones = useSafeZoneAlerts(location, zones, tracker.pet_name);
 
   const [historyRange, setHistoryRange] = useState<number>(24);
   const { history } = useTrackingHistory(tracker.id, historyRange);
