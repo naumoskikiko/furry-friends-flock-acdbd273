@@ -428,38 +428,8 @@ const MarketplacePage = () => {
                   <p className="text-sm font-semibold">No stores found</p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {/* Promoted Stores */}
-                  {promotedStores.length > 0 && (
-                    <div>
-                      <p className="text-xs font-bold text-muted-foreground mb-2">⚡ Promoted</p>
-                      <div className="space-y-2">
-                        {promotedStores.map((b) => <StoreRow key={b.id} b={b} navigate={navigate} />)}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Followed Stores */}
-                  {followedStores.length > 0 && (
-                    <div>
-                      <p className="text-xs font-bold text-muted-foreground mb-2">💜 Stores You Follow</p>
-                      <div className="space-y-2">
-                        {followedStores.map((b) => <StoreRow key={b.id} b={b} navigate={navigate} />)}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Other Stores */}
-                  {otherStores.length > 0 && (
-                    <div>
-                      {(promotedStores.length > 0 || followedStores.length > 0) && (
-                        <p className="text-xs font-bold text-muted-foreground mb-2">🏪 All Stores</p>
-                      )}
-                      <div className="space-y-2">
-                        {otherStores.map((b) => <StoreRow key={b.id} b={b} navigate={navigate} />)}
-                      </div>
-                    </div>
-                  )}
+                <div className="space-y-2">
+                  {rankedBusinesses.map((b) => <StoreRow key={b.id} b={b} navigate={navigate} />)}
                 </div>
               )}
               <InfiniteScrollSentinel loading={bizLoading} hasMore={hasMoreBusinesses} onLoadMore={loadMoreBusinesses} itemCount={businesses.length} endMessage="No more stores" />
