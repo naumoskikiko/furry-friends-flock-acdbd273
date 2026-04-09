@@ -203,7 +203,6 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
     await fromTable("blog_posts").update({ comments_count: (post.comments_count || 0) + 1 }).eq("id", post.id);
     setNewComment("");
     loadComments();
-    onRefresh();
   };
 
   const deleteComment = async (commentId: string) => {
@@ -211,7 +210,6 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
     await fromTable("blog_comments").delete().eq("id", commentId);
     await fromTable("blog_posts").update({ comments_count: Math.max(0, (post.comments_count || 0) - 1) }).eq("id", post.id);
     setComments((prev) => prev.filter((c) => c.id !== commentId));
-    onRefresh();
     toast({ title: "Comment deleted" });
   };
 
@@ -227,7 +225,6 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
       await fromTable("blog_likes").delete().eq("blog_post_id", post.id).eq("user_id", user.id);
       await fromTable("blog_posts").update({ likes_count: Math.max(0, likesCount - 1) }).eq("id", post.id);
     }
-    onRefresh();
   };
 
   const toggleSave = async () => {
