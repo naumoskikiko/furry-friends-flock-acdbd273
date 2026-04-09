@@ -100,6 +100,7 @@ const StoryViewer = ({
   // Video ref
   const videoRef = useRef<HTMLVideoElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastNavRef = useRef<number>(0);
 
   const group = groups[groupIndex];
   const story = group?.stories[storyIndex];
