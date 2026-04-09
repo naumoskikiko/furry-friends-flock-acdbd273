@@ -128,8 +128,10 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
     setTyping(false);
     // Cancel any pending draft save so it doesn't re-save old text
     if (draftTimeout.current) clearTimeout(draftTimeout.current);
+    justSentRef.current = true;
     saveDraft(conversation.id, "");
     await sendMessage(msg, replyId);
+    justSentRef.current = false;
     inputRef.current?.focus();
   };
 
