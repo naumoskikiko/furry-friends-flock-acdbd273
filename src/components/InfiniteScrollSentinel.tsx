@@ -13,7 +13,7 @@ interface Props {
   endMessage?: string;
 }
 
-const InfiniteScrollSentinel = ({ loading, hasMore, onLoadMore, rootMargin = "200px", itemCount = 1 }: Props) => {
+const InfiniteScrollSentinel = ({ loading, hasMore, onLoadMore, rootMargin = "200px", itemCount = 1, endMessage = "No more content" }: Props) => {
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
