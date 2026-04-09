@@ -22,7 +22,7 @@ const FILTER_PILLS = [
   { key: "system", label: "System", icon: <Shield className="h-3.5 w-3.5" /> },
 ] as const;
 
-type FilterKey = (typeof FILTER_PILLS)[number]["key"];
+type FilterKey = (typeof FILTER_PILLS)[number]["key"] | string;
 
 const TYPE_TO_FILTER: Record<string, FilterKey> = {
   like: "social", comment: "social", follow: "social", mention: "social", save: "social",
@@ -110,11 +110,23 @@ const getNotificationRoute = (n: NotificationData): string => {
   }
 };
 
+const FILTER_KEY_TO_LABEL: Record<string, string> = {
+  Social: "social", Messages: "messages", Orders: "orders",
+  Bookings: "bookings", PetMatch: "petmatch", Tracking: "tracking", System: "system",
+};
+
+interface CustomFilter { name: string; types: string[] }
+
 const NotificationsPage = () => {
   const navigate = useNavigate();
   const { notifications, loading, markAllRead, markRead, refresh } = useNotifications();
-  const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
+  const [activeFilter, setActiveFilter] = useState<string>("all");
   const pillsRef = useRef<HTMLDivElement>(null);
+
+  // Load custom filters from localStorage (shared with settings)
+  const [customFilters] = useState<CustomFilter[]>(() => {
+    try { return JSON.parse(localStorage.getItem("petkeep_custom_notif_filters") || "[]"); } catch { return []; }
+  });
 
   const { refreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd } =
     usePullToRefresh({ onRefresh: useCallback(async () => {
@@ -123,21 +135,64 @@ const NotificationsPage = () => {
     }, [refresh]) });
 
   /* ── Filter logic ── */
-  const filtered = activeFilter === "all"
-    ? notifications
-    : notifications.filter((n) => (TYPE_TO_FILTER[n.type] || "system") === activeFilter);
+  const matchesFilter = useCallback((n: NotificationData, filterKey: string): boolean => {
+    if (filterKey === "all") return true;
+    // Check if it's a built-in filter
+    const builtIn = FILTER_PILLS.find(p => p.key === filterKey);
+    if (builtIn) return (TYPE_TO_FILTER[n.type] || "system") === filterKey;
+    // Check custom filters
+    const custom = customFilters.find(f => f.name === filterKey);
+    if (custom) {
+      const notifCategory = TYPE_TO_FILTER[n.type] || "system";
+      return custom.types.some(t => FILTER_KEY_TO_LABEL[t] === notifCategory);
+    }
+    return false;
+  }, [customFilters]);
+
+  const filtered = notifications.filter(n => matchesFilter(n, activeFilter));
+
+  /* ── Smart grouping ── */
+  const groupSimilar = (items: NotificationData[]): (NotificationData & { groupCount?: number; groupActors?: string[] })[] => {
+    const grouped: (NotificationData & { groupCount?: number; groupActors?: string[] })[] = [];
+    const seen = new Set<string>();
+
+    for (const n of items) {
+      if (seen.has(n.id)) continue;
+      // Group likes on the same entity
+      if ((n.type === "like" || n.type === "blog_like" || n.type === "product_liked") && n.entity_id) {
+        const similar = items.filter(
+          o => o.type === n.type && o.entity_id === n.entity_id && !seen.has(o.id)
+        );
+        if (similar.length > 1) {
+          similar.forEach(s => seen.add(s.id));
+          const actors = [...new Set(similar.map(s => s.actor_name))];
+          grouped.push({
+            ...similar[0],
+            groupCount: similar.length,
+            groupActors: actors,
+            message: actors.length <= 2
+              ? `${actors.join(" and ")} liked your ${n.entity_type || "post"}`
+              : `${actors[0]} and ${similar.length - 1} others liked your ${n.entity_type || "post"}`,
+            is_read: similar.every(s => s.is_read),
+          });
+          continue;
+        }
+      }
+      seen.add(n.id);
+      grouped.push(n);
+    }
+    return grouped;
+  };
 
   /* ── Group by today / earlier ── */
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const today = filtered.filter((n) => new Date(n.created_at) >= todayStart);
-  const earlier = filtered.filter((n) => new Date(n.created_at) < todayStart);
+  const today = groupSimilar(filtered.filter((n) => new Date(n.created_at) >= todayStart));
+  const earlier = groupSimilar(filtered.filter((n) => new Date(n.created_at) < todayStart));
 
   /* ── Pill counts ── */
-  const countByFilter = (key: FilterKey) =>
-    key === "all"
-      ? notifications.filter((n) => !n.is_read).length
-      : notifications.filter((n) => !n.is_read && (TYPE_TO_FILTER[n.type] || "system") === key).length;
+  const countByFilter = (key: string) =>
+    notifications.filter((n) => !n.is_read && matchesFilter(n, key)).length;
 
   const handleTap = (n: NotificationData) => {
     if (!n.is_read) markRead(n.id);
@@ -180,7 +235,32 @@ const NotificationsPage = () => {
             <span className="text-muted-foreground">{n.message}</span>
           </p>
           <p className="mt-0.5 text-[10px] text-muted-foreground">{timeAgo}</p>
-        </div>
+            {/* Custom filter pills */}
+            {customFilters.map((cf) => {
+              const unread = countByFilter(cf.name);
+              const isActive = activeFilter === cf.name;
+              return (
+                <button
+                  key={`custom-${cf.name}`}
+                  onClick={() => setActiveFilter(cf.name)}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all ${
+                    isActive
+                      ? "bg-accent text-accent-foreground shadow-sm"
+                      : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                  }`}
+                >
+                  🎛️ {cf.name}
+                  {unread > 0 && (
+                    <span className={`ml-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold ${
+                      isActive ? "bg-accent-foreground/20 text-accent-foreground" : "bg-primary/10 text-primary"
+                    }`}>
+                      {unread > 99 ? "99+" : unread}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
         {!n.is_read && (
           <div className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />
