@@ -120,8 +120,8 @@ const MarketplacePage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg pb-20" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-        <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
+      <div className="mx-auto max-w-lg pb-20">
+        {/* Header — outside pull-to-refresh */}
         {/* Header */}
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <div>
@@ -162,6 +162,10 @@ const MarketplacePage = () => {
             />
           </div>
         </div>
+
+        {/* Pull-to-refresh content area — below header, search, and tabs */}
+        <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+          <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
 
         {/* Tab toggle */}
         <div className="flex mx-4 mb-3 rounded-xl bg-secondary p-1">
@@ -462,6 +466,7 @@ const MarketplacePage = () => {
             </div>
           </>
         )}
+        </div>
       </div>
 
       {/* Floating cart */}

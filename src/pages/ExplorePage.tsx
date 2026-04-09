@@ -66,9 +66,8 @@ const ExplorePage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-        <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
-        {/* Search */}
+      <div className="mx-auto max-w-lg">
+        {/* Search — stays outside pull-to-refresh */}
         <div className="sticky top-0 z-40 bg-card/95 px-4 py-3 backdrop-blur-md">
           <div className="flex items-center gap-2 rounded-xl bg-secondary px-3 py-2.5">
             <Search className="h-4 w-4 text-muted-foreground" />
@@ -103,6 +102,10 @@ const ExplorePage = () => {
             ))}
           </div>
         </div>
+
+        {/* Pull-to-refresh content area */}
+        <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+          <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
 
         {/* Search results dropdown */}
         {searchQuery.trim() && searchResults.length > 0 && (
@@ -199,6 +202,7 @@ const ExplorePage = () => {
           <NearbySection title="Nearby Parks" items={nearbyByCategory.parks} onItemClick={handleNearbyClick} />
           <NearbySection title="Nearby Grooming Salons" items={nearbyByCategory.grooming} onItemClick={handleNearbyClick} />
           <NearbySection title="Nearby Pet Friendly Cafes" items={nearbyByCategory.cafes} onItemClick={handleNearbyClick} />
+        </div>
         </div>
       </div>
 

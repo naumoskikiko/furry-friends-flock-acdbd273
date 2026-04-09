@@ -158,8 +158,8 @@ const ProfilePage = () => {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-lg" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-        <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
+      <div className="mx-auto max-w-lg">
+        {/* Header — outside pull-to-refresh */}
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4">
           <button onClick={() => setCreatePostOpen(true)} className="rounded-full p-2 hover:bg-secondary">
@@ -277,6 +277,10 @@ const ProfilePage = () => {
           </button>
         </div>
 
+        {/* Pull-to-refresh content area — below profile header */}
+        <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+          <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
+
         {/* My Pets */}
         <div className="px-4 pb-4">
           <div className="flex items-center justify-between">
@@ -339,6 +343,7 @@ const ProfilePage = () => {
             <p className="text-xs text-muted-foreground">Posts you're tagged in will appear here</p>
           </div>
         )}
+        </div>
       </div>
 
       {/* Edit Profile Dialog */}

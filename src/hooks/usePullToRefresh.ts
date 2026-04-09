@@ -6,6 +6,12 @@ interface PullToRefreshOptions {
   threshold?: number;
   /** Cooldown in ms between refreshes (default: 1500) */
   cooldown?: number;
+  /**
+   * Optional ref to a scrollable container.
+   * When provided, checks container.scrollTop instead of window.scrollY
+   * so pull-to-refresh only triggers when the container (not the page) is at top.
+   */
+  containerRef?: React.RefObject<HTMLElement>;
 }
 
 /**
@@ -16,6 +22,7 @@ export const usePullToRefresh = ({
   onRefresh,
   threshold = 100,
   cooldown = 1500,
+  containerRef,
 }: PullToRefreshOptions) => {
   const [refreshing, setRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
@@ -23,23 +30,30 @@ export const usePullToRefresh = ({
   const isPulling = useRef(false);
   const lastRefreshTime = useRef(0);
 
+  const isAtTop = useCallback(() => {
+    if (containerRef?.current) {
+      return containerRef.current.scrollTop <= 0;
+    }
+    return window.scrollY <= 0;
+  }, [containerRef]);
+
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (window.scrollY <= 0 && !refreshing) {
+    if (isAtTop() && !refreshing) {
       pullStartY.current = e.touches[0].clientY;
       isPulling.current = true;
     }
-  }, [refreshing]);
+  }, [refreshing, isAtTop]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!isPulling.current || refreshing) return;
     const dy = e.touches[0].clientY - pullStartY.current;
-    if (dy > 0 && window.scrollY <= 0) {
+    if (dy > 0 && isAtTop()) {
       // Dampen the pull (feels more natural)
       setPullDistance(Math.min(dy * 0.4, threshold * 1.4));
     } else {
       setPullDistance(0);
     }
-  }, [refreshing, threshold]);
+  }, [refreshing, threshold, isAtTop]);
 
   const handleTouchEnd = useCallback(async () => {
     if (!isPulling.current) return;
