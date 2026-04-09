@@ -48,7 +48,6 @@ export interface BlogPostData {
 interface BlogCardProps {
   post: BlogPostData;
   onOpen: (post: BlogPostData) => void;
-  onLikeChange?: () => void;
 }
 
 const BlogCard = ({ post, onOpen }: BlogCardProps) => {
