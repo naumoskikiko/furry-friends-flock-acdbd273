@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Pencil, Trash2, Camera, X, Save, MessageCircle } from "lucide-react";
 import PetVerificationSection from "./PetVerificationSection";
+import PetMedicationsSection from "./PetMedicationsSection";
 import { animalTypes, temperaments } from "@/data/petBreeds";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
