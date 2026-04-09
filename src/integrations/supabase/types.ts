@@ -1119,6 +1119,44 @@ export type Database = {
         }
         Relationships: []
       }
+      medication_logs: {
+        Row: {
+          created_at: string
+          id: string
+          medication_id: string
+          owner_id: string
+          scheduled_at: string
+          status: string
+          taken_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          medication_id: string
+          owner_id: string
+          scheduled_at: string
+          status?: string
+          taken_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          medication_id?: string
+          owner_id?: string
+          scheduled_at?: string
+          status?: string
+          taken_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_logs_medication_id_fkey"
+            columns: ["medication_id"]
+            isOneToOne: false
+            referencedRelation: "pet_medications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_read_status: {
         Row: {
           id: string
@@ -1474,6 +1512,65 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      pet_medications: {
+        Row: {
+          created_at: string
+          dosage: string
+          end_date: string | null
+          id: string
+          is_active: boolean
+          medication_name: string
+          notes: string | null
+          owner_id: string
+          pet_id: string
+          repeat_days: number[] | null
+          repeat_type: string
+          start_date: string
+          times: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dosage?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          medication_name: string
+          notes?: string | null
+          owner_id: string
+          pet_id: string
+          repeat_days?: number[] | null
+          repeat_type?: string
+          start_date?: string
+          times?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dosage?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          medication_name?: string
+          notes?: string | null
+          owner_id?: string
+          pet_id?: string
+          repeat_days?: number[] | null
+          repeat_type?: string
+          start_date?: string
+          times?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pet_medications_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pet_subscriptions: {
         Row: {

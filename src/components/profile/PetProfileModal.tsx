@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Pencil, Trash2, Camera, X, Save, MessageCircle } from "lucide-react";
 import PetVerificationSection from "./PetVerificationSection";
+import PetMedicationsSection from "./PetMedicationsSection";
 import { animalTypes, temperaments } from "@/data/petBreeds";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -282,6 +283,13 @@ const PetProfileModal = ({ pet, open, onOpenChange, isOwner, onEdit, onDelete, o
             <InfoRow label="Emergency Contact" value={editing ? form.emergency_contact : pet.emergency_contact} field="emergency_contact" />
             <InfoRow label="Vet Info" value={editing ? form.vet_info : pet.vet_info} field="vet_info" />
           </div>
+
+          {/* Medications section - owner view */}
+          {isOwner && !editing && pet.id && (
+            <div className="mt-4 rounded-2xl bg-card p-4 petkeep-card-shadow">
+              <PetMedicationsSection petId={pet.id} petName={pet.name} />
+            </div>
+          )}
 
           {/* Verification section - owner view */}
           {isOwner && !editing && (
