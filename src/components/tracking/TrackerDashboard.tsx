@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   PetTracker,
   useTrackerLocation,
@@ -11,11 +11,21 @@ import {
   getBatteryBg,
 } from "@/hooks/useTracking";
 import { Button } from "@/components/ui/button";
-import { MapPin, Bell, Battery, Clock, ArrowLeft, Shield, Route } from "lucide-react";
+import { MapPin, Battery, Clock, ArrowLeft, Shield, Route, Bluetooth, BluetoothOff, Volume2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import SafeZonePanel from "./SafeZonePanel";
+import {
+  initBLE,
+  connectToDevice,
+  disconnectDevice,
+  startLocationNotifications,
+  stopLocationNotifications,
+  triggerFindTracker,
+  isNativePlatform,
+} from "@/lib/bleService";
+import { toast } from "sonner";
 
 interface Props {
   tracker: PetTracker;
@@ -23,6 +33,8 @@ interface Props {
 }
 
 const SKOPJE: [number, number] = [41.9981, 21.4254];
+
+type BLEStatus = "disconnected" | "connecting" | "connected";
 
 const TrackerDashboard = ({ tracker, onBack }: Props) => {
   const location = useTrackerLocation(tracker.id);
@@ -34,6 +46,8 @@ const TrackerDashboard = ({ tracker, onBack }: Props) => {
   const { history } = useTrackingHistory(tracker.id, historyRange);
   const [showHistory, setShowHistory] = useState(false);
   const [showSafeZone, setShowSafeZone] = useState(false);
+  const [bleStatus, setBleStatus] = useState<BLEStatus>("disconnected");
+  const [finding, setFinding] = useState(false);
 
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
@@ -46,6 +60,56 @@ const TrackerDashboard = ({ tracker, onBack }: Props) => {
 
   const lat = location?.latitude ?? SKOPJE[0];
   const lng = location?.longitude ?? SKOPJE[1];
+
+  // BLE auto-connect
+  useEffect(() => {
+    if (!isNativePlatform()) return;
+    let cancelled = false;
+
+    const tryConnect = async () => {
+      setBleStatus("connecting");
+      await initBLE();
+      const ok = await connectToDevice(tracker.tracker_device_id);
+      if (cancelled) return;
+      if (ok) {
+        setBleStatus("connected");
+        // Start location streaming from BLE
+        await startLocationNotifications(tracker.tracker_device_id, (loc) => {
+          // Location updates from BLE would be stored via Supabase in a real implementation
+          console.log("[BLE] Location update:", loc);
+        });
+      } else {
+        setBleStatus("disconnected");
+      }
+    };
+
+    tryConnect();
+
+    return () => {
+      cancelled = true;
+      disconnectDevice(tracker.tracker_device_id);
+      stopLocationNotifications(tracker.tracker_device_id);
+    };
+  }, [tracker.tracker_device_id]);
+
+  // Auto-reconnect
+  useEffect(() => {
+    if (!isNativePlatform() || bleStatus !== "disconnected") return;
+    const timer = setTimeout(async () => {
+      setBleStatus("connecting");
+      const ok = await connectToDevice(tracker.tracker_device_id);
+      setBleStatus(ok ? "connected" : "disconnected");
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [bleStatus, tracker.tracker_device_id]);
+
+  const handleFindTracker = async () => {
+    setFinding(true);
+    const ok = await triggerFindTracker(tracker.tracker_device_id);
+    if (ok) toast.success("Tracker is ringing! 🔔");
+    else toast.error("Could not reach tracker");
+    setTimeout(() => setFinding(false), 2000);
+  };
 
   // Init map
   useEffect(() => {
@@ -101,7 +165,7 @@ const TrackerDashboard = ({ tracker, onBack }: Props) => {
     }
   }, [showHistory, history]);
 
-  // Draw safe zone circles with green/red coloring
+  // Draw safe zone circles
   useEffect(() => {
     if (!mapInstance.current) return;
     zoneCirclesRef.current.forEach((c) => c.remove());
@@ -136,6 +200,15 @@ const TrackerDashboard = ({ tracker, onBack }: Props) => {
     { label: "30d", hours: 720 },
   ];
 
+  const bleStatusConfig = {
+    disconnected: { icon: BluetoothOff, label: "Disconnected", bg: "bg-destructive/10", color: "text-destructive" },
+    connecting: { icon: Bluetooth, label: "Connecting...", bg: "bg-accent/10", color: "text-accent" },
+    connected: { icon: Bluetooth, label: "Connected", bg: "bg-green-500/10", color: "text-green-600" },
+  };
+
+  const bleConf = bleStatusConfig[bleStatus];
+  const BleIcon = bleConf.icon;
+
   return (
     <div className="mx-auto max-w-lg flex flex-col h-[calc(100dvh-4rem)]">
       {/* Header */}
@@ -146,6 +219,11 @@ const TrackerDashboard = ({ tracker, onBack }: Props) => {
         <div className="flex-1 min-w-0">
           <h1 className="font-bold font-display truncate">{tracker.pet_name}</h1>
           <p className="text-[11px] text-muted-foreground font-mono">{tracker.tracker_device_id}</p>
+        </div>
+        {/* BLE Status Badge */}
+        <div className={`flex items-center gap-1 rounded-full px-2 py-1 ${bleConf.bg}`}>
+          <BleIcon className={`h-3 w-3 ${bleConf.color} ${bleStatus === "connecting" ? "animate-pulse" : ""}`} />
+          <span className={`text-[10px] font-semibold ${bleConf.color}`}>{bleConf.label}</span>
         </div>
       </div>
 
@@ -224,6 +302,15 @@ const TrackerDashboard = ({ tracker, onBack }: Props) => {
           >
             <Shield className="h-3.5 w-3.5" />
             Zones
+          </Button>
+          <Button
+            onClick={handleFindTracker}
+            disabled={finding}
+            variant="secondary"
+            size="sm"
+            className="rounded-xl gap-1.5"
+          >
+            <Volume2 className={`h-3.5 w-3.5 ${finding ? "animate-pulse" : ""}`} />
           </Button>
         </div>
       </div>
