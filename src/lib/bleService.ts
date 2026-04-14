@@ -202,7 +202,9 @@ export async function stopLocationNotifications(deviceId: string): Promise<void>
 export async function triggerFindTracker(deviceId: string): Promise<boolean> {
   if (!isNative) return true;
   try {
-    const data = new Uint8Array([0x01]);
+    const buffer = new ArrayBuffer(1);
+    new Uint8Array(buffer)[0] = 0x01;
+    const data = new DataView(buffer);
     await BleClient.write(deviceId, TRACKER_SERVICE_UUID, FIND_CHAR_UUID, data);
     return true;
   } catch {
