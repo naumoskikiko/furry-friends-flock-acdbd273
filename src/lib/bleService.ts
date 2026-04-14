@@ -170,16 +170,15 @@ export async function startLocationNotifications(
 ): Promise<void> {
   if (!isNative) return;
 
-  await BleClient.startNotifications(
+    await BleClient.startNotifications(
     deviceId,
     TRACKER_SERVICE_UUID,
     LOCATION_CHAR_UUID,
-    (value) => {
+    (value: DataView) => {
       try {
-        const view = new DataView(value.buffer);
-        const latitude = view.getFloat32(0, true);
-        const longitude = view.getFloat32(4, true);
-        const accuracy = view.getFloat32(8, true);
+        const latitude = value.getFloat32(0, true);
+        const longitude = value.getFloat32(4, true);
+        const accuracy = value.getFloat32(8, true);
         onUpdate({
           latitude,
           longitude,
