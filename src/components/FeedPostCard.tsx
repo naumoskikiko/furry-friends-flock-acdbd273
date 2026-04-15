@@ -46,6 +46,7 @@ import {
 import type { FeedPostData } from "@/hooks/useFeed";
 import StoryLocationMap from "@/components/stories/StoryLocationMap";
 import ReportModal from "@/components/ReportModal";
+import PostTagsOverlay from "@/components/profile/PostTagsOverlay";
 
 interface FeedPostCardProps {
   post: FeedPostData;
