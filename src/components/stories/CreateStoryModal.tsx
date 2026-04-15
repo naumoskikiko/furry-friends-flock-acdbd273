@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { getStoryDrafts, saveStoryDraft, deleteStoryDraft, type StoryDraft } from "@/hooks/useStories";
 import { formatDistanceToNow } from "date-fns";
-import DraggableOverlay from "./DraggableOverlay";
+import DraggableOverlay, { type OverlayPosition } from "./DraggableOverlay";
 import DrawingCanvas from "./DrawingCanvas";
 import LocationSearch from "./LocationSearch";
 
@@ -71,6 +71,9 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
   // Emoji overlays
   const [emojiItems, setEmojiItems] = useState<EmojiItem[]>([]);
 
+  // Overlay positions: keyed by overlay id (text id, emoji id, or "location")
+  const [overlayPositions, setOverlayPositions] = useState<Record<string, OverlayPosition>>({});
+
   // Drawing
   const [drawColor, setDrawColor] = useState("#ff3b30");
   const [brushSize, setBrushSize] = useState(4);
@@ -99,6 +102,7 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
     setUploadProgress(0);
     setTextItems([]);
     setEmojiItems([]);
+    setOverlayPositions({});
     setEditingText("");
     setCropActive(false);
     setCropScale(1);
@@ -223,9 +227,24 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
     if (!user || files.length === 0) return;
     setUploading(true);
 
-    // Serialize overlays as simple text for storage
+    // Serialize overlays as simple text for backward compat
     const textOverlay = textItems.map(t => t.text).join(" | ");
     const stickerStr = emojiItems.map(e => e.emoji).join("");
+
+    // Build structured overlay_data with positions
+    const overlayDataItems: any[] = [];
+    for (const t of textItems) {
+      const p = overlayPositions[t.id] || { x: 50, y: 40, scale: 1 };
+      overlayDataItems.push({ type: "text", id: t.id, text: t.text, color: t.color, font: t.font, x: p.x, y: p.y, scale: p.scale });
+    }
+    for (const e of emojiItems) {
+      const p = overlayPositions[e.id] || { x: 50, y: 30, scale: 1 };
+      overlayDataItems.push({ type: "emoji", id: e.id, emoji: e.emoji, x: p.x, y: p.y, scale: p.scale });
+    }
+    if (location) {
+      const p = overlayPositions["location"] || { x: 20, y: 10, scale: 1 };
+      overlayDataItems.push({ type: "location", id: "location", text: location, x: p.x, y: p.y, scale: p.scale });
+    }
 
     for (let i = 0; i < files.length; i++) {
       setUploadProgress(Math.round(((i) / files.length) * 100));
@@ -250,6 +269,7 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
         text_overlay: i === 0 ? textOverlay : "",
         sticker: i === 0 ? stickerStr : "",
         pet_id: petId || null,
+        overlay_data: i === 0 ? overlayDataItems : [],
       };
       if (i === 0 && locationCoords) {
         storyData.location_lat = locationCoords.lat;
@@ -394,7 +414,14 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
 
                 {/* Draggable text overlays */}
                 {textItems.map((item) => (
-                  <DraggableOverlay key={item.id} onRemove={() => removeTextItem(item.id)} initialX={50} initialY={40}>
+                  <DraggableOverlay
+                    key={item.id}
+                    onRemove={() => removeTextItem(item.id)}
+                    initialX={overlayPositions[item.id]?.x ?? 50}
+                    initialY={overlayPositions[item.id]?.y ?? 40}
+                    initialScale={overlayPositions[item.id]?.scale ?? 1}
+                    onPositionChange={(p) => setOverlayPositions(prev => ({ ...prev, [item.id]: p }))}
+                  >
                     <span className={`rounded-lg bg-black/60 px-4 py-2 text-lg font-bold ${item.font}`} style={{ color: item.color }}>
                       {item.text}
                     </span>
@@ -403,14 +430,26 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
 
                 {/* Draggable emoji overlays */}
                 {emojiItems.map((item) => (
-                  <DraggableOverlay key={item.id} onRemove={() => removeEmojiItem(item.id)} initialX={50} initialY={30}>
+                  <DraggableOverlay
+                    key={item.id}
+                    onRemove={() => removeEmojiItem(item.id)}
+                    initialX={overlayPositions[item.id]?.x ?? 50}
+                    initialY={overlayPositions[item.id]?.y ?? 30}
+                    initialScale={overlayPositions[item.id]?.scale ?? 1}
+                    onPositionChange={(p) => setOverlayPositions(prev => ({ ...prev, [item.id]: p }))}
+                  >
                     <span className="text-5xl select-none">{item.emoji}</span>
                   </DraggableOverlay>
                 ))}
 
                 {/* Location badge */}
                 {location && (
-                  <DraggableOverlay initialX={20} initialY={10}>
+                  <DraggableOverlay
+                    initialX={overlayPositions["location"]?.x ?? 20}
+                    initialY={overlayPositions["location"]?.y ?? 10}
+                    initialScale={overlayPositions["location"]?.scale ?? 1}
+                    onPositionChange={(p) => setOverlayPositions(prev => ({ ...prev, location: p }))}
+                  >
                     <div className="flex items-center gap-1 rounded-full bg-black/50 px-3 py-1 text-xs text-white">
                       <MapPin className="h-3 w-3" /> {location}
                     </div>
