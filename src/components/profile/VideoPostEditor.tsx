@@ -182,11 +182,15 @@ const VideoPostEditor = ({ videoFile, onClose, onDone }: VideoPostEditorProps) =
     const time = pct * duration;
 
     if (type === "start") {
-      const newStart = Math.min(time, trimEnd - 1);
-      setTrimStart(Math.max(0, newStart));
+      const newStart = Math.max(0, Math.min(time, trimEnd - 1));
+      // Ensure trimmed clip doesn't exceed max duration
+      if (trimEnd - newStart > MAX_DURATION) return;
+      setTrimStart(newStart);
     } else {
-      const newEnd = Math.max(time, trimStart + 1);
-      setTrimEnd(Math.min(duration, newEnd));
+      const newEnd = Math.min(duration, Math.max(time, trimStart + 1));
+      // Ensure trimmed clip doesn't exceed max duration
+      if (newEnd - trimStart > MAX_DURATION) return;
+      setTrimEnd(newEnd);
     }
   };
 
