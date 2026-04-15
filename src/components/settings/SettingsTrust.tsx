@@ -9,25 +9,6 @@ const SettingsTrust = () => {
 
   return (
     <div className="px-4 py-4 space-y-4">
-      {/* ID Verification */}
-      <div className="rounded-2xl bg-card p-4 petkeep-card-shadow">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-petkeep-cream">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-sm font-bold">ID Verification</p>
-            <p className="text-xs text-muted-foreground">Verify your identity for trust</p>
-          </div>
-        </div>
-        <div className="rounded-xl bg-secondary px-3 py-2 text-sm flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-muted-foreground" />
-          Not verified
-        </div>
-        <Button variant="outline" size="sm" className="w-full mt-3">
-          <Upload className="h-4 w-4 mr-1" /> Upload ID
-        </Button>
-      </div>
 
       {/* Student Verification */}
       {profile?.role === "sitter" && (
