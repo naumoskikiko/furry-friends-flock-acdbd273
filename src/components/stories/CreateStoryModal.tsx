@@ -471,7 +471,7 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
                 {!showPreview && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-40">
                   <ToolBtn icon={<Type className="h-5 w-5" />} active={activeTool === "text"} onClick={() => toggleTool("text")} />
-                  <ToolBtn icon={<Pencil className="h-5 w-5" />} active={activeTool === "draw"} onClick={() => toggleTool("draw")} />
+                  
                   <ToolBtn icon={<Smile className="h-5 w-5" />} active={activeTool === "sticker"} onClick={() => toggleTool("sticker")} />
                   <ToolBtn icon={<MapPin className="h-5 w-5" />} active={activeTool === "location"} onClick={() => toggleTool("location")} />
                   <ToolBtn icon={<Crop className="h-5 w-5" />} active={cropActive} onClick={() => toggleTool("crop")} />
