@@ -245,37 +245,37 @@ const ProfilePage = () => {
           <button onClick={() => navigate("/credits")} className="rounded-2xl bg-accent/10 dark:bg-accent/15 p-3 text-left">
             <div className="flex items-center gap-2">
               <CreditCard className="h-4 w-4 text-accent" />
-              <span className="text-xs font-bold text-accent">Credits</span>
+              <span className="text-xs font-bold text-accent">{t("profile.credits")}</span>
             </div>
             <p className="mt-1 font-display text-xl font-extrabold">{creditBalance.toLocaleString()}</p>
-            <p className="text-[10px] text-muted-foreground">💎 PetKeep Points</p>
+            <p className="text-[10px] text-muted-foreground">💎 {t("profile.petkeepPoints")}</p>
           </button>
           {(profile?.role === "business" || profile?.role === "provider") ? (
             <div className="rounded-2xl bg-primary/10 dark:bg-primary/15 p-3">
               <div className="flex items-center gap-2">
                 <Star className="h-4 w-4 text-primary" />
-                <span className="text-xs font-bold text-primary">Rating</span>
+                <span className="text-xs font-bold text-primary">{t("profile.rating")}</span>
               </div>
               <p className="mt-1 font-display text-xl font-extrabold">—</p>
-              <p className="text-[10px] text-muted-foreground">⭐ No reviews yet</p>
+              <p className="text-[10px] text-muted-foreground">⭐ {t("profile.noReviews")}</p>
             </div>
           ) : (
             <div className="rounded-2xl bg-primary/10 dark:bg-primary/15 p-3">
               <div className="flex items-center gap-2">
                 <Heart className="h-4 w-4 text-primary" />
-                <span className="text-xs font-bold text-primary">Pets</span>
+                <span className="text-xs font-bold text-primary">{t("profile.pets")}</span>
               </div>
               <p className="mt-1 font-display text-xl font-extrabold">{pets.length}</p>
-              <p className="text-[10px] text-muted-foreground">🐾 My Pets</p>
+              <p className="text-[10px] text-muted-foreground">🐾 {t("profile.myPets")}</p>
             </div>
           )}
           <button onClick={() => navigate("/orders")} className="rounded-2xl bg-secondary p-3 text-left">
             <div className="flex items-center gap-2">
               <ShoppingBag className="h-4 w-4 text-primary" />
-              <span className="text-xs font-bold text-primary">Orders</span>
+              <span className="text-xs font-bold text-primary">{t("profile.orders")}</span>
             </div>
             <p className="mt-1 font-display text-xl font-extrabold">→</p>
-            <p className="text-[10px] text-muted-foreground">📦 My Orders</p>
+            <p className="text-[10px] text-muted-foreground">📦 {t("profile.myOrders")}</p>
           </button>
         </div>
 
