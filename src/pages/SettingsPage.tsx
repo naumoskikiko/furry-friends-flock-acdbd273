@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { ArrowLeft, User, Shield, Bell, CreditCard, Lock, Palette, PawPrint, ShieldCheck, HelpCircle, FileText, AlertTriangle, Sparkles, ChevronRight, LogOut } from "lucide-react";
 import SettingsAccount from "@/components/settings/SettingsAccount";
 import SettingsSecurity from "@/components/settings/SettingsSecurity";
@@ -19,24 +20,25 @@ import ProfessionalMode from "@/components/settings/ProfessionalMode";
 
 type SettingsSection = "main" | "account" | "security" | "notifications" | "payments" | "privacy" | "appearance" | "pet" | "trust" | "support" | "legal" | "danger" | "professional";
 
-const sections = [
-  { id: "account" as const, label: "Account", icon: User, description: "Edit profile, password, email" },
-  { id: "security" as const, label: "Security", icon: Shield, description: "2FA, login activity, connected accounts" },
-  { id: "notifications" as const, label: "Notifications", icon: Bell, description: "Push, email & SMS alerts" },
-  { id: "payments" as const, label: "Payment History", icon: CreditCard, description: "Billing history" },
-  { id: "privacy" as const, label: "Privacy", icon: Lock, description: "Account visibility, messaging, data" },
-  { id: "appearance" as const, label: "Appearance", icon: Palette, description: "Theme, font size, language" },
-  { id: "pet" as const, label: "Pet Settings", icon: PawPrint, description: "Emergency contacts, vet info" },
-  { id: "trust" as const, label: "Trust & Verification", icon: ShieldCheck, description: "ID, certifications, badges" },
-  { id: "support" as const, label: "Support", icon: HelpCircle, description: "Help center, contact, report" },
-  { id: "legal" as const, label: "Legal", icon: FileText, description: "Terms, privacy policy, guidelines" },
-  { id: "danger" as const, label: "Danger Zone", icon: AlertTriangle, description: "Deactivate or delete account", danger: true },
+const sectionDefs = [
+  { id: "account" as const, labelKey: "settings.account", descKey: "settings.accountDesc", icon: User },
+  { id: "security" as const, labelKey: "settings.security", descKey: "settings.securityDesc", icon: Shield },
+  { id: "notifications" as const, labelKey: "settings.notifications", descKey: "settings.notificationsDesc", icon: Bell },
+  { id: "payments" as const, labelKey: "settings.payments", descKey: "settings.paymentsDesc", icon: CreditCard },
+  { id: "privacy" as const, labelKey: "settings.privacy", descKey: "settings.privacyDesc", icon: Lock },
+  { id: "appearance" as const, labelKey: "settings.appearance", descKey: "settings.appearanceDesc", icon: Palette },
+  { id: "pet" as const, labelKey: "settings.petSettings", descKey: "settings.petSettingsDesc", icon: PawPrint },
+  { id: "trust" as const, labelKey: "settings.trust", descKey: "settings.trustDesc", icon: ShieldCheck },
+  { id: "support" as const, labelKey: "settings.support", descKey: "settings.supportDesc", icon: HelpCircle },
+  { id: "legal" as const, labelKey: "settings.legal", descKey: "settings.legalDesc", icon: FileText },
+  { id: "danger" as const, labelKey: "settings.dangerZone", descKey: "settings.dangerZoneDesc", icon: AlertTriangle, danger: true },
 ];
 
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
+  const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState<SettingsSection>("main");
 
   const handleBack = () => {
@@ -48,9 +50,10 @@ const SettingsPage = () => {
   };
 
   const getSectionTitle = () => {
-    if (activeSection === "main") return "Settings";
-    if (activeSection === "professional") return "Professional Mode";
-    return sections.find(s => s.id === activeSection)?.label || "Settings";
+    if (activeSection === "main") return t("settings.title");
+    if (activeSection === "professional") return t("settings.professionalMode");
+    const sec = sectionDefs.find(s => s.id === activeSection);
+    return sec ? t(sec.labelKey) : t("settings.title");
   };
 
   return (
@@ -65,7 +68,6 @@ const SettingsPage = () => {
 
         {activeSection === "main" && (
           <div className="px-4 py-2">
-            {/* Professional Mode Banner - Admin Only */}
             {isAdmin && (
               <button
                 onClick={() => setActiveSection("professional")}
@@ -73,14 +75,14 @@ const SettingsPage = () => {
               >
                 <Sparkles className="h-5 w-5 text-primary" />
                 <div className="text-left flex-1">
-                  <p className="text-sm font-bold">Professional Mode</p>
-                  <p className="text-xs text-muted-foreground">Admin tools & platform management</p>
+                  <p className="text-sm font-bold">{t("settings.professionalMode")}</p>
+                  <p className="text-xs text-muted-foreground">{t("settings.professionalModeDesc")}</p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
             )}
 
-            {sections.map((section) => (
+            {sectionDefs.map((section) => (
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
@@ -94,8 +96,8 @@ const SettingsPage = () => {
                   <section.icon className={`h-4.5 w-4.5 ${section.danger ? "text-destructive" : "text-foreground"}`} />
                 </div>
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-semibold">{section.label}</p>
-                  <p className="text-xs text-muted-foreground">{section.description}</p>
+                  <p className="text-sm font-semibold">{t(section.labelKey)}</p>
+                  <p className="text-xs text-muted-foreground">{t(section.descKey)}</p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -109,7 +111,7 @@ const SettingsPage = () => {
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10">
                   <LogOut className="h-4.5 w-4.5 text-destructive" />
                 </div>
-                <p className="text-sm font-semibold">Log Out</p>
+                <p className="text-sm font-semibold">{t("auth.logout")}</p>
               </button>
             </div>
           </div>

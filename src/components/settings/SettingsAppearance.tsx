@@ -1,24 +1,26 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage, LANGUAGE_OPTIONS, Language } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Sun, Moon } from "lucide-react";
-
-const themes = [
-  { id: "light", label: "Light", icon: Sun },
-  { id: "dark", label: "Dark", icon: Moon },
-];
-
-const fontSizes = [
-  { id: "small", label: "Small", preview: "text-xs" },
-  { id: "normal", label: "Medium", preview: "text-sm" },
-  { id: "large", label: "Large", preview: "text-base" },
-];
+import { Sun, Moon, Globe } from "lucide-react";
 
 const SettingsAppearance = () => {
   const { user, fontSize: currentFontSize, setAppFontSize } = useAuth();
+  const { t, language, setLanguage } = useLanguage();
   const { toast } = useToast();
   const [theme, setTheme] = useState("light");
+
+  const themes = [
+    { id: "light", label: t("appearance.light"), icon: Sun },
+    { id: "dark", label: t("appearance.dark"), icon: Moon },
+  ];
+
+  const fontSizes = [
+    { id: "small", label: t("appearance.fontSmall"), preview: "text-xs" },
+    { id: "normal", label: t("appearance.fontMedium"), preview: "text-sm" },
+    { id: "large", label: t("appearance.fontLarge"), preview: "text-base" },
+  ];
 
   useEffect(() => {
     if (!user) return;
@@ -34,39 +36,47 @@ const SettingsAppearance = () => {
     else document.documentElement.classList.remove("dark");
   };
 
-  const updateTheme = async (t: string) => {
+  const updateTheme = async (themeId: string) => {
     if (!user) return;
-    setTheme(t);
-    applyTheme(t);
-    await supabase.from("user_settings").update({ theme: t }).eq("user_id", user.id);
-    toast({ title: `Theme set to ${t}` });
+    setTheme(themeId);
+    applyTheme(themeId);
+    await supabase.from("user_settings").update({ theme: themeId }).eq("user_id", user.id);
+    toast({ title: `${t("appearance.themeSet")} ${themeId}` });
   };
 
   const updateFontSize = async (fs: string) => {
     if (!user) return;
     setAppFontSize(fs);
     await supabase.from("user_settings").update({ font_size: fs }).eq("user_id", user.id);
-    toast({ title: `Font size set to ${fs === "normal" ? "medium" : fs}` });
+    toast({ title: `${t("appearance.fontSizeSet")} ${fs === "normal" ? t("appearance.fontMedium").toLowerCase() : fs}` });
+  };
+
+  const updateLanguage = async (lang: Language) => {
+    if (!user) return;
+    setLanguage(lang);
+    await supabase.from("user_settings").update({ language: lang }).eq("user_id", user.id);
+    const langLabel = LANGUAGE_OPTIONS.find(l => l.id === lang)?.label || lang;
+    toast({ title: `${t("appearance.languageSet")} ${langLabel}` });
   };
 
   return (
     <div className="px-4 py-4 space-y-5">
       {/* Theme */}
       <div className="rounded-2xl bg-card p-4 petkeep-card-shadow">
-        <p className="text-sm font-bold mb-3">Theme</p>
+        <p className="text-sm font-bold mb-3">{t("appearance.theme")}</p>
         <div className="grid grid-cols-2 gap-2">
-          {themes.map(t => (
+          {themes.map(th => (
             <button
-              key={t.id}
-              onClick={() => updateTheme(t.id)}
+              key={th.id}
+              onClick={() => updateTheme(th.id)}
               className={`flex flex-col items-center gap-2 rounded-xl p-3 transition-all ${
-                theme === t.id
+                theme === th.id
                   ? "bg-primary/10 ring-2 ring-primary"
                   : "bg-secondary hover:bg-secondary/80"
               }`}
             >
-              <t.icon className={`h-5 w-5 ${theme === t.id ? "text-primary" : "text-muted-foreground"}`} />
-              <span className={`text-xs font-semibold ${theme === t.id ? "text-primary" : ""}`}>{t.label}</span>
+              <th.icon className={`h-5 w-5 ${theme === th.id ? "text-primary" : "text-muted-foreground"}`} />
+              <span className={`text-xs font-semibold ${theme === th.id ? "text-primary" : ""}`}>{th.label}</span>
             </button>
           ))}
         </div>
@@ -74,7 +84,7 @@ const SettingsAppearance = () => {
 
       {/* Font Size */}
       <div className="rounded-2xl bg-card p-4 petkeep-card-shadow">
-        <p className="text-sm font-bold mb-3">Font Size</p>
+        <p className="text-sm font-bold mb-3">{t("appearance.fontSize")}</p>
         <div className="grid grid-cols-3 gap-2">
           {fontSizes.map(fs => (
             <button
@@ -91,16 +101,31 @@ const SettingsAppearance = () => {
             </button>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground mt-2">Changes apply across the entire app</p>
+        <p className="text-xs text-muted-foreground mt-2">{t("appearance.fontSizeNote")}</p>
       </div>
 
       {/* Language */}
       <div className="rounded-2xl bg-card p-4 petkeep-card-shadow">
-        <p className="text-sm font-bold mb-2">Language</p>
-        <div className="rounded-xl bg-secondary px-3 py-2.5 text-sm">
-          🇬🇧 English (Default)
+        <p className="text-sm font-bold mb-3 flex items-center gap-2">
+          <Globe className="h-4 w-4" />
+          {t("appearance.language")}
+        </p>
+        <div className="space-y-2">
+          {LANGUAGE_OPTIONS.map(lang => (
+            <button
+              key={lang.id}
+              onClick={() => updateLanguage(lang.id)}
+              className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
+                language === lang.id
+                  ? "bg-primary/10 ring-2 ring-primary"
+                  : "bg-secondary hover:bg-secondary/80"
+              }`}
+            >
+              <span className="text-lg">{lang.flag}</span>
+              <span className={`font-semibold ${language === lang.id ? "text-primary" : ""}`}>{lang.label}</span>
+            </button>
+          ))}
         </div>
-        <p className="text-xs text-muted-foreground mt-1">More languages coming soon</p>
       </div>
     </div>
   );

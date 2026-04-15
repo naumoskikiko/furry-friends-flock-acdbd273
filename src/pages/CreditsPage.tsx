@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import CreditsPanel from "@/components/credits/CreditsPanel";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const CreditsPage = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen bg-background">
@@ -11,7 +13,7 @@ const CreditsPage = () => {
         <button onClick={() => navigate(-1)} className="rounded-full p-1 hover:bg-secondary">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="font-display text-lg font-bold">PetKeep Credits</h1>
+        <h1 className="font-display text-lg font-bold">{t("credits.title")}</h1>
       </header>
       <div className="mx-auto max-w-lg pb-8">
         <CreditsPanel />

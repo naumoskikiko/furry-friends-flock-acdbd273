@@ -5,6 +5,7 @@ import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Settings, Grid3X3, Bookmark, Heart, Tag, MapPin, CreditCard, Camera, Plus, Star, Link as LinkIcon, ShoppingBag, Coins } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ import CreditsPanel from "@/components/credits/CreditsPanel";
 
 const ProfilePage = () => {
   const { user, profile, refreshProfile } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -206,9 +208,9 @@ const ProfilePage = () => {
               <MapPin className="h-3 w-3" /> {profile.location}
             </p>
           )}
-          <p className="mt-1 text-sm text-center max-w-xs">{profile?.bio || "No bio yet"}</p>
+          <p className="mt-1 text-sm text-center max-w-xs">{profile?.bio || t("profile.noBio")}</p>
           <span className="mt-1 text-[10px] rounded-full bg-primary/10 dark:bg-primary/15 px-2 py-0.5 font-bold capitalize text-foreground">
-            {profile?.role === "provider" ? "🩺 Provider" : profile?.role === "business" ? "🏪 Business" : "🐾 User"}
+            {profile?.role === "provider" ? `🩺 ${t("profile.provider")}` : profile?.role === "business" ? `🏪 ${t("profile.business")}` : `🐾 ${t("profile.user")}`}
           </span>
         </div>
 
@@ -216,25 +218,25 @@ const ProfilePage = () => {
         <div className="mt-4 flex justify-center gap-8">
           <div className="text-center">
             <p className="font-display text-lg font-extrabold">{posts.length}</p>
-            <p className="text-[10px] text-muted-foreground">Posts</p>
+            <p className="text-[10px] text-muted-foreground">{t("profile.postsCount")}</p>
           </div>
           <button className="text-center" onClick={() => openFollowList("followers")}>
             <p className="font-display text-lg font-extrabold">{followerCount}</p>
-            <p className="text-[10px] text-muted-foreground">Followers</p>
+            <p className="text-[10px] text-muted-foreground">{t("profile.followersCount")}</p>
           </button>
           <button className="text-center" onClick={() => openFollowList("following")}>
             <p className="font-display text-lg font-extrabold">{followingCount}</p>
-            <p className="text-[10px] text-muted-foreground">Following</p>
+            <p className="text-[10px] text-muted-foreground">{t("profile.followingCount")}</p>
           </button>
         </div>
 
         {/* Action buttons */}
         <div className="mt-3 flex gap-2 px-4">
           <button onClick={() => setEditOpen(true)} className="petkeep-gradient flex-1 rounded-xl py-2 text-sm font-bold text-primary-foreground">
-            Edit Profile
+            {t("profile.editProfile")}
           </button>
           <button onClick={handleShareProfile} className="flex-1 rounded-xl bg-secondary py-2 text-sm font-bold text-secondary-foreground">
-            Share Profile
+            {t("profile.shareProfile")}
           </button>
         </div>
 
@@ -243,37 +245,37 @@ const ProfilePage = () => {
           <button onClick={() => navigate("/credits")} className="rounded-2xl bg-accent/10 dark:bg-accent/15 p-3 text-left">
             <div className="flex items-center gap-2">
               <CreditCard className="h-4 w-4 text-accent" />
-              <span className="text-xs font-bold text-accent">Credits</span>
+              <span className="text-xs font-bold text-accent">{t("profile.credits")}</span>
             </div>
             <p className="mt-1 font-display text-xl font-extrabold">{creditBalance.toLocaleString()}</p>
-            <p className="text-[10px] text-muted-foreground">💎 PetKeep Points</p>
+            <p className="text-[10px] text-muted-foreground">💎 {t("profile.petkeepPoints")}</p>
           </button>
           {(profile?.role === "business" || profile?.role === "provider") ? (
             <div className="rounded-2xl bg-primary/10 dark:bg-primary/15 p-3">
               <div className="flex items-center gap-2">
                 <Star className="h-4 w-4 text-primary" />
-                <span className="text-xs font-bold text-primary">Rating</span>
+                <span className="text-xs font-bold text-primary">{t("profile.rating")}</span>
               </div>
               <p className="mt-1 font-display text-xl font-extrabold">—</p>
-              <p className="text-[10px] text-muted-foreground">⭐ No reviews yet</p>
+              <p className="text-[10px] text-muted-foreground">⭐ {t("profile.noReviews")}</p>
             </div>
           ) : (
             <div className="rounded-2xl bg-primary/10 dark:bg-primary/15 p-3">
               <div className="flex items-center gap-2">
                 <Heart className="h-4 w-4 text-primary" />
-                <span className="text-xs font-bold text-primary">Pets</span>
+                <span className="text-xs font-bold text-primary">{t("profile.pets")}</span>
               </div>
               <p className="mt-1 font-display text-xl font-extrabold">{pets.length}</p>
-              <p className="text-[10px] text-muted-foreground">🐾 My Pets</p>
+              <p className="text-[10px] text-muted-foreground">🐾 {t("profile.myPets")}</p>
             </div>
           )}
           <button onClick={() => navigate("/orders")} className="rounded-2xl bg-secondary p-3 text-left">
             <div className="flex items-center gap-2">
               <ShoppingBag className="h-4 w-4 text-primary" />
-              <span className="text-xs font-bold text-primary">Orders</span>
+              <span className="text-xs font-bold text-primary">{t("profile.orders")}</span>
             </div>
             <p className="mt-1 font-display text-xl font-extrabold">→</p>
-            <p className="text-[10px] text-muted-foreground">📦 My Orders</p>
+            <p className="text-[10px] text-muted-foreground">📦 {t("profile.myOrders")}</p>
           </button>
         </div>
 

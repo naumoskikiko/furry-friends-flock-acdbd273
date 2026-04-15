@@ -3,14 +3,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 
-const tabs = [
-  { path: "/", icon: Home, label: "Home" },
-  { path: "/explore", icon: Map, label: "Explore" },
-  { path: "/marketplace", icon: ShoppingBag, label: "Market" },
-  { path: "/care", icon: Heart, label: "Care" },
-  { path: "/messages", icon: MessageCircle, label: "Chat" },
-  { path: "/profile", icon: User, label: "Profile" },
+const tabKeys = [
+  { path: "/", icon: Home, labelKey: "nav.home" },
+  { path: "/explore", icon: Map, labelKey: "nav.explore" },
+  { path: "/marketplace", icon: ShoppingBag, labelKey: "nav.market" },
+  { path: "/care", icon: Heart, labelKey: "nav.care" },
+  { path: "/messages", icon: MessageCircle, labelKey: "nav.chat" },
+  { path: "/profile", icon: User, labelKey: "nav.profile" },
 ];
 
 interface BottomNavProps {
@@ -23,6 +24,7 @@ const BottomNav = ({ onBeforeNavigate }: BottomNavProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [unreadCount, setUnreadCount] = useState(0);
   const [refreshingTab, setRefreshingTab] = useState<string | null>(null);
   const lastTapRef = useRef<{ path: string; time: number }>({ path: "", time: 0 });
@@ -71,10 +73,8 @@ const BottomNav = ({ onBeforeNavigate }: BottomNavProps) => {
     lastTapRef.current = { path, time: now };
 
     if (isDoubleTap) {
-      // Double tap on active tab → refresh
       setRefreshingTab(path);
       window.scrollTo({ top: 0, behavior: "smooth" });
-      // Dispatch custom event for pages to listen to
       window.dispatchEvent(new CustomEvent("tab-refresh", { detail: { path } }));
       setTimeout(() => setRefreshingTab(null), 600);
     } else {
@@ -86,7 +86,7 @@ const BottomNav = ({ onBeforeNavigate }: BottomNavProps) => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md">
       <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-1">
-        {tabs.map(({ path, icon: Icon, label }) => {
+        {tabKeys.map(({ path, icon: Icon, labelKey }) => {
           const isActive = location.pathname === path;
           const showBadge = path === "/messages" && unreadCount > 0;
           const isRefreshing = refreshingTab === path;
@@ -106,7 +106,7 @@ const BottomNav = ({ onBeforeNavigate }: BottomNavProps) => {
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
-              <span className="text-[10px] font-semibold">{label}</span>
+              <span className="text-[10px] font-semibold">{t(labelKey)}</span>
             </button>
           );
         })}
