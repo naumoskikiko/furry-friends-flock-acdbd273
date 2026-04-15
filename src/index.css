@@ -15,6 +15,10 @@
 }
 
 @layer base {
+  html {
+    transition: font-size 0.2s ease;
+  }
+
   :root {
     --background: 30 50% 98%;
     --foreground: 25 30% 15%;

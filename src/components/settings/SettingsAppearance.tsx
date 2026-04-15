@@ -10,37 +10,28 @@ const themes = [
 ];
 
 const fontSizes = [
-  { id: "small", label: "Small", size: "text-xs" },
-  { id: "normal", label: "Normal", size: "text-sm" },
-  { id: "large", label: "Large", size: "text-base" },
+  { id: "small", label: "Small", preview: "text-xs" },
+  { id: "normal", label: "Medium", preview: "text-sm" },
+  { id: "large", label: "Large", preview: "text-base" },
 ];
 
 const SettingsAppearance = () => {
-  const { user } = useAuth();
+  const { user, fontSize: currentFontSize, setAppFontSize } = useAuth();
   const { toast } = useToast();
-  const [theme, setTheme] = useState("system");
-  const [fontSize, setFontSize] = useState("normal");
+  const [theme, setTheme] = useState("light");
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("user_settings").select("theme, font_size").eq("user_id", user.id).single()
+    supabase.from("user_settings").select("theme").eq("user_id", user.id).single()
       .then(({ data }) => {
-        if (data) {
-          setTheme(data.theme);
-          setFontSize(data.font_size);
-        }
+        if (data) setTheme(data.theme);
       });
   }, [user]);
 
   const applyTheme = (t: string) => {
     document.documentElement.classList.remove("light", "dark");
     if (t === "dark") document.documentElement.classList.add("dark");
-    else if (t === "light") document.documentElement.classList.remove("dark");
-    else {
-      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        document.documentElement.classList.add("dark");
-      }
-    }
+    else document.documentElement.classList.remove("dark");
   };
 
   const updateTheme = async (t: string) => {
@@ -53,9 +44,9 @@ const SettingsAppearance = () => {
 
   const updateFontSize = async (fs: string) => {
     if (!user) return;
-    setFontSize(fs);
+    setAppFontSize(fs);
     await supabase.from("user_settings").update({ font_size: fs }).eq("user_id", user.id);
-    toast({ title: `Font size set to ${fs}` });
+    toast({ title: `Font size set to ${fs === "normal" ? "medium" : fs}` });
   };
 
   return (
@@ -90,16 +81,17 @@ const SettingsAppearance = () => {
               key={fs.id}
               onClick={() => updateFontSize(fs.id)}
               className={`flex flex-col items-center gap-2 rounded-xl p-3 transition-all ${
-                fontSize === fs.id
+                currentFontSize === fs.id
                   ? "bg-primary/10 ring-2 ring-primary"
                   : "bg-secondary hover:bg-secondary/80"
               }`}
             >
-              <span className={`font-semibold ${fs.size} ${fontSize === fs.id ? "text-primary" : ""}`}>Aa</span>
-              <span className={`text-xs ${fontSize === fs.id ? "text-primary font-semibold" : "text-muted-foreground"}`}>{fs.label}</span>
+              <span className={`font-semibold ${fs.preview} ${currentFontSize === fs.id ? "text-primary" : ""}`}>Aa</span>
+              <span className={`text-xs ${currentFontSize === fs.id ? "text-primary font-semibold" : "text-muted-foreground"}`}>{fs.label}</span>
             </button>
           ))}
         </div>
+        <p className="text-xs text-muted-foreground mt-2">Changes apply across the entire app</p>
       </div>
 
       {/* Language */}
