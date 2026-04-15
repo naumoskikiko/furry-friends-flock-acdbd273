@@ -29,7 +29,21 @@ const SearchResultsPage = () => {
         supabase.from("posts").select("*").ilike("caption", `%${q}%`).limit(50),
       ]);
 
-      setUsers(usersRes.data || []);
+      // Filter out users who have show_in_search disabled
+      let filteredUsers = usersRes.data || [];
+      if (filteredUsers.length > 0) {
+        const userIds = filteredUsers.map(u => u.user_id);
+        const { data: settingsData } = await supabase
+          .from("user_settings")
+          .select("user_id, show_in_search")
+          .in("user_id", userIds)
+          .eq("show_in_search", false);
+        
+        const hiddenIds = new Set((settingsData || []).map(s => s.user_id));
+        filteredUsers = filteredUsers.filter(u => !hiddenIds.has(u.user_id));
+      }
+
+      setUsers(filteredUsers);
       setPlaces(placesRes.data || []);
       setPosts(postsRes.data || []);
       setLoading(false);
