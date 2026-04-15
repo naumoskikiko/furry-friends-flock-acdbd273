@@ -22,7 +22,7 @@ const ProductDetailPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { addToCart } = useCart();
+  const { addToCart, businessConflict, resolveConflict } = useCart();
   const { toggle: toggleWishlist, isWishlisted } = useWishlist();
   const { reviews, avgRating, addReview, myReview } = useProductReviews(id || null);
   const { variants } = useProductVariants(id || null);
@@ -358,6 +358,7 @@ const ProductDetailPage = () => {
           productPrice={product.price}
         />
       )}
+      <BusinessConflictModal conflict={businessConflict} onResolve={resolveConflict} />
     </AppLayout>
   );
 };

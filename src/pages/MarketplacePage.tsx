@@ -94,7 +94,7 @@ const MarketplacePage = () => {
 
   const isBusiness = profile?.role === "business";
   const { isAdmin } = useIsAdmin();
-  const { itemCount, totalPrice, addToCart } = useCart();
+  const { itemCount, totalPrice, addToCart, businessConflict, resolveConflict } = useCart();
   const { business: myBusiness, loading: myBizLoading } = useMyBusiness();
   const hasStore = !!myBusiness;
   const canManageStore = isBusiness || isAdmin;
@@ -458,6 +458,7 @@ const MarketplacePage = () => {
       )}
 
       {showDashboard && <BusinessDashboard onClose={() => setShowDashboard(false)} />}
+      <BusinessConflictModal conflict={businessConflict} onResolve={resolveConflict} />
     </AppLayout>
   );
 };
