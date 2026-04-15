@@ -1,8 +1,8 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useTabRefresh } from "@/hooks/useTabRefresh";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import FeedHeader from "@/components/FeedHeader";
 import StoriesBar from "@/components/StoriesBar";
@@ -21,8 +21,17 @@ const Index = () => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<"feed" | "blog">(() => searchParams.get("blog") ? "blog" : "feed");
   const openBlogId = searchParams.get("blog") || undefined;
-  const { posts, loading, hasMore, loadMore, refreshFeed } = useFeed();
-  
+  const location = useLocation();
+  const { posts, loading, hasMore, loadMore, refreshFeed, updatePostLike } = useFeed();
+
+  // Refetch feed every time the user navigates back to "/"
+  const lastPathRef = useState({ prev: location.pathname })[0];
+  useEffect(() => {
+    if (location.pathname === "/" && lastPathRef.prev !== "/") {
+      refreshFeed();
+    }
+    lastPathRef.prev = location.pathname;
+  }, [location.pathname, refreshFeed]);
 
   const refreshAll = useCallback(async () => {
     await refreshFeed();

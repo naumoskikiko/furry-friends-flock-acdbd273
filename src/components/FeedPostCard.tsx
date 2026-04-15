@@ -144,32 +144,30 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
 
     try {
       if (newLiked) {
-        // Insert like — unique constraint prevents duplicates; ignore conflict
         const { error } = await supabase.from("post_likes").insert({ post_id: post.id, user_id: user.id });
         if (error) {
-          // Duplicate or other error — revert
           if (error.code !== "23505") {
             setLiked(wasLiked);
             setLikesCount((c) => Math.max(0, c - 1));
             console.error("Like insert error:", error.message);
           }
-          // 23505 = unique violation = already liked, keep UI as liked
         } else {
-          // Success — send notification & credit
           createNotification(user.id, post.user_id, "like", "post", post.id, "liked your post");
           earnCredits("like_given", post.id);
         }
       } else {
-        // Remove like
         const { error } = await supabase.from("post_likes").delete().eq("post_id", post.id).eq("user_id", user.id);
         if (error) {
-          // Revert on failure
           setLiked(wasLiked);
           setLikesCount((c) => c + 1);
           console.error("Like delete error:", error.message);
         }
       }
-      // DB trigger updates posts.likes_count automatically — no manual update needed
+      // Fetch authoritative count from DB to stay perfectly in sync
+      const { data: freshPost } = await supabase.from("posts").select("likes_count").eq("id", post.id).single();
+      if (freshPost) {
+        setLikesCount(freshPost.likes_count);
+      }
       onLikeToggle(post.id, newLiked);
     } finally {
       likeInProgressRef.current = false;
