@@ -196,7 +196,7 @@ const CreditManagementPanel = () => {
                 <li>Daily earning cap: {CREDIT_LIMITS.daily_max} credits</li>
                 <li>Monthly earning cap: {CREDIT_LIMITS.monthly_max} credits</li>
                 <li>Duplicate interaction filtering (source_id dedup)</li>
-                <li>Per-post like reward cap: {CREDIT_LIMITS.max_likes_per_post}</li>
+                <li>Anti-spam cooldown enforcement</li>
                 <li>Credits are non-withdrawable platform currency</li>
               </ul>
             </div>

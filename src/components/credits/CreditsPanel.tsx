@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useCredits } from "@/hooks/useCredits";
 import { useToast } from "@/hooks/use-toast";
-import { CREDIT_REWARDS, CREDIT_SPENDING, CREDIT_LIMITS, type CreditSpendAction } from "@/lib/creditsConfig";
+import { CREDIT_REWARDS, CREDIT_SPENDING, type CreditSpendAction } from "@/lib/creditsConfig";
 import { formatDistanceToNow } from "date-fns";
 
 const SPEND_OPTIONS: { key: CreditSpendAction; label: string; icon: React.ReactNode; cost: number }[] = [
@@ -21,25 +21,18 @@ const SPEND_OPTIONS: { key: CreditSpendAction; label: string; icon: React.ReactN
 
 const EARN_INFO = [
   { action: "Create Post", credits: CREDIT_REWARDS.create_post },
-  { action: "Like Received", credits: CREDIT_REWARDS.post_like_received },
+  { action: "Like Given", credits: CREDIT_REWARDS.like_given },
   { action: "Comment", credits: CREDIT_REWARDS.post_comment },
-  { action: "Comment Received", credits: CREDIT_REWARDS.comment_received },
   { action: "Create Story", credits: CREDIT_REWARDS.create_story },
-  { action: "Story Reply", credits: CREDIT_REWARDS.story_reply },
   { action: "Blog Reply", credits: CREDIT_REWARDS.blog_reply },
   { action: "Helpful Answer", credits: CREDIT_REWARDS.helpful_blog_answer },
-  { action: "Watch Ad", credits: CREDIT_REWARDS.watch_ad },
 ];
 
-
-
 const CreditsPanel = () => {
-  const { balance, dailyEarned, monthlyEarned, dailyAdWatches, adLimit, dailyLimit, monthlyLimit, transactions, spendCredits, earnCredits, loading } = useCredits();
+  const { balance, dailyEarned, monthlyEarned, dailyLimit, monthlyLimit, transactions, spendCredits, loading } = useCredits();
   const { toast } = useToast();
   const [spending, setSpending] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-
-
 
   const handleSpend = async (action: CreditSpendAction, label: string) => {
     setSpending(true);
@@ -78,8 +71,6 @@ const CreditsPanel = () => {
         </CardContent>
       </Card>
 
-
-
       {/* Limits */}
       <Card>
         <CardHeader className="pb-2">
@@ -94,6 +85,9 @@ const CreditsPanel = () => {
               <span className="text-muted-foreground">{dailyPct.toFixed(0)}%</span>
             </div>
             <Progress value={dailyPct} className="h-2" />
+            {dailyEarned >= dailyLimit && (
+              <p className="text-[10px] text-destructive mt-1">Daily limit reached — resets at midnight</p>
+            )}
           </div>
           <div>
             <div className="flex justify-between text-xs mb-1">
@@ -101,6 +95,9 @@ const CreditsPanel = () => {
               <span className="text-muted-foreground">{monthlyPct.toFixed(0)}%</span>
             </div>
             <Progress value={monthlyPct} className="h-2" />
+            {monthlyEarned >= monthlyLimit && (
+              <p className="text-[10px] text-destructive mt-1">Monthly limit reached — resets on the 1st</p>
+            )}
           </div>
         </CardContent>
       </Card>

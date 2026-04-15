@@ -155,9 +155,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
         } else {
           // Success — send notification & credit
           createNotification(user.id, post.user_id, "like", "post", post.id, "liked your post");
-          if (user.id !== post.user_id) {
-            earnCredits("post_like_received", post.id);
-          }
+          earnCredits("like_given", post.id);
         }
       } else {
         // Remove like

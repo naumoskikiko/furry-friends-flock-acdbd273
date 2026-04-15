@@ -215,7 +215,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
           setLikeCounts((prev) => ({ ...prev, [post.id]: Math.max(0, (prev[post.id] || 0) - 1) }));
         } else if (!error) {
           createNotification(user.id, post.user_id, "like", "post", post.id, "liked your post");
-          if (user.id !== post.user_id) earnCredits("post_like_received", post.id);
+          earnCredits("like_given", post.id);
         }
       } else {
         const { error } = await supabase.from("post_likes").delete().eq("post_id", post.id).eq("user_id", user.id);
