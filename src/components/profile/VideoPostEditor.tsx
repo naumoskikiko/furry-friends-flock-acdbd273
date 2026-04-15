@@ -72,11 +72,13 @@ const VideoPostEditor = ({ videoFile, onClose, onDone }: VideoPostEditorProps) =
     return () => URL.revokeObjectURL(url);
   }, [videoFile]);
 
+  const MAX_DURATION = 60;
+
   const onLoadedMetadata = () => {
     const v = videoRef.current;
     if (!v) return;
     setDuration(v.duration);
-    setTrimEnd(v.duration);
+    setTrimEnd(Math.min(v.duration, MAX_DURATION));
     setCoverTime(0);
     setVideoDimensions({ w: v.videoWidth, h: v.videoHeight });
     generateThumbnails(v);
