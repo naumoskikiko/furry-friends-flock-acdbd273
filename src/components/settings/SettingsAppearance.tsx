@@ -7,7 +7,6 @@ import { Sun, Moon, Monitor } from "lucide-react";
 const themes = [
   { id: "light", label: "Light", icon: Sun },
   { id: "dark", label: "Dark", icon: Moon },
-  { id: "system", label: "System", icon: Monitor },
 ];
 
 const fontSizes = [
