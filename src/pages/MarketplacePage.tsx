@@ -78,6 +78,12 @@ const MarketplacePage = () => {
     activeTab === "stores" ? businessCategory : undefined,
     searchQuery || undefined
   );
+
+  // User location for delivery filtering
+  const { location: userLocation, requestLocation } = useUserLocation();
+
+  // Request location on mount
+  useEffect(() => { requestLocation(); }, [requestLocation]);
   const { products, loading: prodLoading, hasMore: hasMoreProducts, loadMore: loadMoreProducts } = useAllProducts(
     activeTab === "products" ? productCategory : undefined,
     searchQuery || undefined
