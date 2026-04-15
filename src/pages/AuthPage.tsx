@@ -4,12 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { PawPrint, Mail, Lock, User, ArrowLeft, Store, Briefcase, Loader2, Shield } from "lucide-react";
+import { CURRENT_TERMS_VERSION } from "@/data/legalContent";
+import TermsPreviewModal from "@/components/auth/TermsPreviewModal";
 import petkeepIcon from "@/assets/petkeep-icon.png";
 
-type AuthView = "login" | "signup" | "forgot" | "2fa";
+type AuthView = "login" | "signup" | "forgot" | "2fa" | "reaccept";
 type AccountRole = "user" | "provider" | "business";
 
 const ROLES: { value: AccountRole; label: string; icon: React.ReactNode; emoji: string; desc: string }[] = [
@@ -27,6 +30,10 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [totpCode, setTotpCode] = useState("");
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [termsError, setTermsError] = useState("");
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [termsModalTab, setTermsModalTab] = useState<"terms" | "privacy">("terms");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -48,6 +55,23 @@ const AuthPage = () => {
     } catch {
       return false;
     }
+  };
+
+  const checkTermsAcceptance = async (userId: string): Promise<boolean> => {
+    const { data } = await supabase
+      .from("terms_acceptance")
+      .select("terms_version")
+      .eq("user_id", userId)
+      .eq("terms_version", CURRENT_TERMS_VERSION)
+      .limit(1);
+    return (data?.length ?? 0) > 0;
+  };
+
+  const saveTermsAcceptance = async (userId: string) => {
+    await supabase.from("terms_acceptance").insert({
+      user_id: userId,
+      terms_version: CURRENT_TERMS_VERSION,
+    });
   };
 
   const verify2FA = async () => {
@@ -85,11 +109,18 @@ const AuthPage = () => {
     }
   };
 
+  const handleReaccept = async () => {
+    if (!pendingUserId) return;
+    setLoading(true);
+    await saveTermsAcceptance(pendingUserId);
+    setLoading(false);
+    navigate("/");
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // First sign in to get user ID
     const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setLoading(false);
@@ -104,10 +135,19 @@ const AuthPage = () => {
       return;
     }
 
+    // Check terms acceptance
+    const hasAccepted = await checkTermsAcceptance(userId);
+    if (!hasAccepted) {
+      setPendingUserId(userId);
+      setAgreedToTerms(false);
+      setView("reaccept");
+      setLoading(false);
+      return;
+    }
+
     // Check if 2FA is enabled
     const has2FA = await check2FAStatus(userId);
     if (has2FA) {
-      // Keep session alive, show 2FA input
       setPendingUserId(userId);
       setView("2fa");
       setLoading(false);
@@ -120,8 +160,15 @@ const AuthPage = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!agreedToTerms) {
+      setTermsError("You must agree to the Terms and Privacy Policy to continue");
+      return;
+    }
+    setTermsError("");
+
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -129,13 +176,21 @@ const AuthPage = () => {
         emailRedirectTo: window.location.origin,
       },
     });
-    setLoading(false);
+
     if (error) {
+      setLoading(false);
       toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Account created!", description: "Check your email for a confirmation link." });
-      setView("login");
+      return;
     }
+
+    // Save terms acceptance if we got a user
+    if (signUpData.user) {
+      await saveTermsAcceptance(signUpData.user.id);
+    }
+
+    setLoading(false);
+    toast({ title: "Account created!", description: "Check your email for a confirmation link." });
+    setView("login");
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -150,6 +205,11 @@ const AuthPage = () => {
     } else {
       toast({ title: "Email sent", description: "Check your inbox for a password reset link." });
     }
+  };
+
+  const openTermsModal = (tab: "terms" | "privacy") => {
+    setTermsModalTab(tab);
+    setTermsModalOpen(true);
   };
 
   return (
@@ -170,7 +230,7 @@ const AuthPage = () => {
         <Card className="petkeep-card-shadow border-0">
           <CardHeader className="pb-4">
             {view !== "login" && (
-              <button onClick={() => { if (view === "2fa") { supabase.auth.signOut(); } setView("login"); setTotpCode(""); setPendingUserId(null); }} className="mb-2 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+              <button onClick={() => { if (view === "2fa" || view === "reaccept") { supabase.auth.signOut(); } setView("login"); setTotpCode(""); setPendingUserId(null); setTermsError(""); setAgreedToTerms(false); }} className="mb-2 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-4 w-4" /> Back to login
               </button>
             )}
@@ -179,12 +239,14 @@ const AuthPage = () => {
               {view === "signup" && "Create your account"}
               {view === "forgot" && "Reset password"}
               {view === "2fa" && "Two-Factor Authentication"}
+              {view === "reaccept" && "Updated Terms"}
             </CardTitle>
             <CardDescription>
               {view === "login" && "Sign in to your PetKeep account"}
               {view === "signup" && "Join the pet community"}
               {view === "forgot" && "We'll send you a reset link"}
               {view === "2fa" && "Enter the code from your authenticator app"}
+              {view === "reaccept" && "We've updated our Terms. Please review and accept to continue."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -245,6 +307,56 @@ const AuthPage = () => {
               </div>
             )}
 
+            {view === "reaccept" && (
+              <div className="space-y-4">
+                <div className="rounded-xl bg-secondary/50 p-4">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Our Terms of Service and Privacy Policy have been updated. Please review and accept the latest version to continue using PetKeep.
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openTermsModal("terms")}
+                    className="flex-1 text-xs font-bold text-primary hover:underline text-center py-2 rounded-lg bg-primary/5"
+                  >
+                    📄 Read Terms
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openTermsModal("privacy")}
+                    className="flex-1 text-xs font-bold text-primary hover:underline text-center py-2 rounded-lg bg-primary/5"
+                  >
+                    🔒 Read Privacy Policy
+                  </button>
+                </div>
+
+                <div className="flex items-start gap-3 pt-1">
+                  <Checkbox
+                    id="reaccept-terms"
+                    checked={agreedToTerms}
+                    onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
+                    className="mt-0.5"
+                  />
+                  <label htmlFor="reaccept-terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                    I agree to the updated{" "}
+                    <button type="button" onClick={() => openTermsModal("terms")} className="font-bold text-primary hover:underline">Terms of Service</button>
+                    {" "}and{" "}
+                    <button type="button" onClick={() => openTermsModal("privacy")} className="font-bold text-primary hover:underline">Privacy Policy</button>
+                  </label>
+                </div>
+
+                <Button
+                  className="w-full petkeep-gradient text-primary-foreground font-bold"
+                  disabled={!agreedToTerms || loading}
+                  onClick={handleReaccept}
+                >
+                  {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving...</> : "Accept & Continue"}
+                </Button>
+              </div>
+            )}
+
             {view === "signup" && (
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
@@ -289,7 +401,36 @@ const AuthPage = () => {
                     <Input id="signupPassword" type="password" placeholder="Min 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" required minLength={6} />
                   </div>
                 </div>
-                <Button type="submit" className="w-full petkeep-gradient text-primary-foreground font-bold" disabled={loading}>
+
+                {/* Terms & Conditions */}
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="agree-terms"
+                      checked={agreedToTerms}
+                      onCheckedChange={(checked) => {
+                        setAgreedToTerms(checked === true);
+                        if (checked) setTermsError("");
+                      }}
+                      className="mt-0.5"
+                    />
+                    <label htmlFor="agree-terms" className="text-[11px] text-muted-foreground leading-relaxed cursor-pointer">
+                      I agree to the{" "}
+                      <button type="button" onClick={() => openTermsModal("terms")} className="font-bold text-primary hover:underline">Terms of Service</button>
+                      {" "}and{" "}
+                      <button type="button" onClick={() => openTermsModal("privacy")} className="font-bold text-primary hover:underline">Privacy Policy</button>
+                    </label>
+                  </div>
+                  {termsError && (
+                    <p className="text-[11px] text-destructive font-medium pl-7">{termsError}</p>
+                  )}
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full petkeep-gradient text-primary-foreground font-bold"
+                  disabled={loading || !agreedToTerms}
+                >
                   {loading ? "Creating account..." : "Create Account"}
                 </Button>
                 <div className="text-center text-sm text-muted-foreground">
@@ -318,6 +459,13 @@ const AuthPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Terms Preview Modal */}
+      <TermsPreviewModal
+        open={termsModalOpen}
+        onClose={() => setTermsModalOpen(false)}
+        initialTab={termsModalTab}
+      />
     </div>
   );
 };
