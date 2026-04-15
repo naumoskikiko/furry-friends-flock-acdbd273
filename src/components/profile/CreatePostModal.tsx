@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Camera, Video, Loader2 } from "lucide-react";
+import { Camera, Video, Loader2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -11,6 +11,8 @@ import { useCredits } from "@/hooks/useCredits";
 import VideoPostEditor, { type VideoEditResult } from "./VideoPostEditor";
 import PhotoPostEditor from "./PhotoPostEditor";
 import PostLocationSearch from "./PostLocationSearch";
+import TagPeopleModal from "./TagPeopleModal";
+import { createNotification } from "@/hooks/useNotifications";
 
 interface CreatePostModalProps {
   open: boolean;
@@ -39,6 +41,8 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
   const [showVideoEditor, setShowVideoEditor] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [showPhotoEditor, setShowPhotoEditor] = useState(false);
+  const [taggedUsers, setTaggedUsers] = useState<{ id: string; name: string; avatar_url: string | null; username: string }[]>([]);
+  const [tagModalOpen, setTagModalOpen] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -139,7 +143,7 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
       return;
     }
     setPosting(true);
-    const { error } = await supabase.from("posts").insert({
+    const { data: newPost, error } = await supabase.from("posts").insert({
       user_id: user.id,
       caption,
       image_url: mediaUrl || null,
@@ -148,11 +152,25 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
       longitude: locationLng,
       pet_id: petId,
       post_type: mediaType,
-    } as any);
+    } as any).select("id").single();
     setPosting(false);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
+      // Save tags
+      if (newPost && taggedUsers.length > 0) {
+        const tagRows = taggedUsers.map(u => ({
+          post_id: newPost.id,
+          tagged_user_id: u.id,
+          tagged_by: user.id,
+          status: "approved",
+        }));
+        await (supabase as any).from("post_tags").insert(tagRows);
+        // Send notifications
+        for (const u of taggedUsers) {
+          createNotification(user.id, u.id, "tag", "post", newPost.id, "tagged you in a post");
+        }
+      }
       toast({ title: "Posted!" });
       earnCredits("create_post");
       resetForm();
@@ -172,6 +190,7 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
     setMediaType("image");
     setVideoFile(null);
     setPhotoFile(null);
+    setTaggedUsers([]);
   };
 
   const removeMedia = () => {
@@ -204,6 +223,7 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -263,6 +283,26 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
             onClear={() => { setLocation(""); setLocationLat(null); setLocationLng(null); }}
           />
 
+          {/* Tag People */}
+          <div className="space-y-2">
+            <button
+              onClick={() => setTagModalOpen(true)}
+              className="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+            >
+              <Users className="h-4 w-4" />
+              Tag People {taggedUsers.length > 0 && `(${taggedUsers.length})`}
+            </button>
+            {taggedUsers.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {taggedUsers.map(u => (
+                  <span key={u.id} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                    @{u.username}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
           {pets.length > 0 && (
             <div className="space-y-2">
               <Label>Tag a pet</Label>
@@ -288,6 +328,14 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
         </div>
       </DialogContent>
     </Dialog>
+
+    <TagPeopleModal
+      open={tagModalOpen}
+      onOpenChange={setTagModalOpen}
+      selectedUsers={taggedUsers}
+      onDone={setTaggedUsers}
+    />
+    </>
   );
 };
 

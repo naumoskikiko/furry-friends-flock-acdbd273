@@ -46,6 +46,7 @@ import {
 import type { FeedPostData } from "@/hooks/useFeed";
 import StoryLocationMap from "@/components/stories/StoryLocationMap";
 import ReportModal from "@/components/ReportModal";
+import PostTagsOverlay from "@/components/profile/PostTagsOverlay";
 
 interface FeedPostCardProps {
   post: FeedPostData;
@@ -92,6 +93,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [locationMapOpen, setLocationMapOpen] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [showTags, setShowTags] = useState(false);
 
   const lastTapRef = useRef(0);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -368,7 +370,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
         <div
           ref={mediaContainerRef}
           className="relative w-full max-h-[600px] overflow-hidden select-none bg-secondary"
-          onClick={handleDoubleTap}
+          onClick={() => { handleDoubleTap(); setShowTags(prev => !prev); }}
         >
           {isVideo ? (
             <>
@@ -392,6 +394,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
             <img src={post.image_url} alt="" className="w-full max-h-[600px] object-contain" loading="lazy" />
           )}
           <HeartAnimation show={showHeartAnim} onComplete={() => setShowHeartAnim(false)} />
+          <PostTagsOverlay postId={post.id} visible={showTags} />
         </div>
       )}
 

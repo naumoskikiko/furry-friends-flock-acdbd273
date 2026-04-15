@@ -22,6 +22,7 @@ import PetCard from "@/components/profile/PetCard";
 import PetProfileModal from "@/components/profile/PetProfileModal";
 import LikedPostsGrid from "@/components/profile/LikedPostsGrid";
 import SavedPostsGrid from "@/components/profile/SavedPostsGrid";
+import TaggedPostsGrid from "@/components/profile/TaggedPostsGrid";
 import FollowListModal from "@/components/profile/FollowListModal";
 import CreateStoryModal from "@/components/stories/CreateStoryModal";
 import StoryViewer from "@/components/stories/StoryViewer";
@@ -338,12 +339,8 @@ const ProfilePage = () => {
         {activeTab === "saved" && <SavedPostsGrid />}
         {activeTab === "liked" && <LikedPostsGrid />}
         
-        {activeTab === "tagged" && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <span className="text-4xl">🏷️</span>
-            <p className="mt-2 text-sm font-semibold text-muted-foreground">No tagged posts</p>
-            <p className="text-xs text-muted-foreground">Posts you're tagged in will appear here</p>
-          </div>
+        {activeTab === "tagged" && user && (
+          <TaggedPostsGrid userId={user.id} />
         )}
         </div>
       </div>
