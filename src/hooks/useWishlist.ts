@@ -67,5 +67,5 @@ export function useWishlist() {
 
   const isWishlisted = useCallback((productId: string) => wishlistIds.has(productId), [wishlistIds]);
 
-  return { items, loading, toggle, isWishlisted, refresh, count: items.length };
+  return { items, loading, toggle, isWishlisted, refresh, count: items.length, wishlistProductIds: wishlistIds };
 }
