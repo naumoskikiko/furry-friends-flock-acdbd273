@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Camera, Video, Loader2 } from "lucide-react";
+import { Camera, Video, Loader2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -11,6 +11,8 @@ import { useCredits } from "@/hooks/useCredits";
 import VideoPostEditor, { type VideoEditResult } from "./VideoPostEditor";
 import PhotoPostEditor from "./PhotoPostEditor";
 import PostLocationSearch from "./PostLocationSearch";
+import TagPeopleModal from "./TagPeopleModal";
+import { createNotification } from "@/hooks/useNotifications";
 
 interface CreatePostModalProps {
   open: boolean;
