@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useMedications, MedicationInput, Medication } from "@/hooks/useMedications";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Pill, Plus, Clock, Check, X, Trash2, AlertTriangle, ChevronDown, ChevronUp, History, Bell, BellOff,
+  Pill, Plus, Clock, Check, X, Trash2, AlertTriangle, ChevronDown, ChevronUp, History,
 } from "lucide-react";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -17,7 +17,7 @@ interface Props {
 
 const PetMedicationsSection = ({ petId, petName }: Props) => {
   const { medications, loading, addMedication, updateMedication, deleteMedication, markAsTaken, getTodaySchedule } = useMedications(petId);
-  const { permissionStatus, enablePush, loading: pushLoading } = usePushNotifications();
+  
   const [showAdd, setShowAdd] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState<string | null>(null);
@@ -59,15 +59,6 @@ const PetMedicationsSection = ({ petId, petName }: Props) => {
           <p className="text-sm font-bold">Medications</p>
         </div>
         <div className="flex items-center gap-1">
-          {permissionStatus !== "granted" ? (
-            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={enablePush} disabled={pushLoading}>
-              <BellOff className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Enable Push
-            </Button>
-          ) : (
-            <span className="flex items-center gap-1 text-[10px] text-petkeep-green font-bold">
-              <Bell className="h-3 w-3" /> Push On
-            </span>
-          )}
           <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setShowAdd(!showAdd)}>
             <Plus className="h-3.5 w-3.5 mr-1" /> Add
           </Button>
