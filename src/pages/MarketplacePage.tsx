@@ -403,7 +403,7 @@ const MarketplacePage = () => {
               ) : (
                 <>
                   <div className="grid grid-cols-2 gap-3">
-                    {rankedProducts.map((p) => {
+                    {filteredProducts.map((p) => {
                       const outOfStock = p.stock !== null && p.stock !== undefined && p.stock <= 0;
                       return (
                         <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
@@ -477,7 +477,7 @@ const MarketplacePage = () => {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {rankedBusinesses.map((b) => <StoreRow key={b.id} b={b} navigate={navigate} />)}
+                  {filteredBusinesses.map((b) => <StoreRow key={b.id} b={b} navigate={navigate} distance={getBizDistance(b)} />)}
                 </div>
               )}
               <InfiniteScrollSentinel loading={bizLoading} hasMore={hasMoreBusinesses} onLoadMore={loadMoreBusinesses} itemCount={businesses.length} endMessage="No more stores" />
