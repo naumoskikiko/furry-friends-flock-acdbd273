@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap, DollarSign, Sliders, TrendingUp, UserCog, Heart, Coins, CalendarDays, Settings, Package, Home, PawPrint, AlertTriangle } from "lucide-react";
+import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap, DollarSign, Sliders, TrendingUp, UserCog, Heart, Coins, CalendarDays, Settings, Package, Home, PawPrint, AlertTriangle, Banknote } from "lucide-react";
 import SettingsMapManagement from "./SettingsMapManagement";
 import CareVerificationPanel from "./CareVerificationPanel";
 import CareManagementPanel from "./CareManagementPanel";
@@ -19,6 +19,7 @@ import OrderManagementPanel from "./OrderManagementPanel";
 import ShelterManagementPanel from "./ShelterManagementPanel";
 import PetVerificationReviewPanel from "./PetVerificationReviewPanel";
 import ReportsManagementPanel from "./ReportsManagementPanel";
+import PayoutManagementPanel from "./PayoutManagementPanel";
 import { useIsOwner } from "@/hooks/useIsOwner";
 
 type SubSection =
@@ -40,7 +41,8 @@ type SubSection =
   | "orders"
   | "shelter"
   | "pet-verification"
-  | "reports";
+  | "reports"
+  | "payouts";
 
 const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
@@ -73,6 +75,7 @@ const ProfessionalMode = () => {
         {sub === "shelter" && <ShelterManagementPanel />}
         {sub === "pet-verification" && <PetVerificationReviewPanel />}
         {sub === "reports" && <ReportsManagementPanel />}
+        {sub === "payouts" && <PayoutManagementPanel />}
       </div>
     );
   }
@@ -94,6 +97,7 @@ const ProfessionalMode = () => {
     { id: "user-management" as const, label: "User Management", desc: "View users, manage accounts & content", icon: UserCog, color: "bg-blue-500/10 text-blue-500" },
     { id: "promotions" as const, label: "Promotion Management", desc: "Boosts, pricing & revenue tracking", icon: Zap, color: "bg-amber-500/10 text-amber-500" },
     { id: "financial" as const, label: "Financial Control", desc: "Revenue, commissions & transactions", icon: DollarSign, color: "bg-emerald-500/10 text-emerald-600" },
+    { id: "payouts" as const, label: "Payout Management", desc: "Process provider & business payouts", icon: Banknote, color: "bg-emerald-500/10 text-emerald-600" },
     { id: "analytics" as const, label: "Platform Analytics", desc: "Top stores, providers & growth metrics", icon: TrendingUp, color: "bg-indigo-500/10 text-indigo-500" },
     { id: "credits" as const, label: "PetKeep Credits", desc: "Manage credit economy & user balances", icon: Coins, color: "bg-amber-500/10 text-amber-500" },
     { id: "reports" as const, label: "Reports Management", desc: "Review & resolve user reports", icon: AlertTriangle, color: "bg-destructive/10 text-destructive" },
