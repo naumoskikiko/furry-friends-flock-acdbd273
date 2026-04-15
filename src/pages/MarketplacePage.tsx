@@ -174,7 +174,13 @@ const MarketplacePage = () => {
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-extrabold">Pet Vault</h1>
-            <p className="text-sm text-muted-foreground">Your local pet marketplace</p>
+            <p className="text-sm text-muted-foreground flex items-center gap-1">
+              {userLocation ? (
+                <><Navigation className="h-3 w-3 text-primary" /> Available near you</>
+              ) : (
+                <>Your local pet marketplace</>
+              )}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <button
