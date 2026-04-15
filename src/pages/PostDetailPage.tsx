@@ -81,7 +81,7 @@ const PostDetailPage = () => {
       ) : (
         <FeedPostCard
           post={post}
-          onLikeToggle={() => {}}
+          onLikeToggle={(_id, _liked, _count) => {}}
           onSaveToggle={() => {}}
           onDelete={() => navigate(-1)}
         />
