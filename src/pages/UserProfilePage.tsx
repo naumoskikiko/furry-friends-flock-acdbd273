@@ -345,19 +345,19 @@ const UserProfilePage = () => {
             <div className="flex-1 flex justify-around pt-2">
               <div className="text-center">
                 <p className="font-display text-lg font-extrabold">{canViewContent ? posts.length : "—"}</p>
-                <p className="text-[10px] text-muted-foreground">Posts</p>
+                <p className="text-[10px] text-muted-foreground">{t("profile.postsCount")}</p>
               </div>
               <div className="text-center">
                 <p className="font-display text-lg font-extrabold">{petCount}</p>
-                <p className="text-[10px] text-muted-foreground">Pets</p>
+                <p className="text-[10px] text-muted-foreground">{t("profile.pets")}</p>
               </div>
               <button onClick={() => openFollowList("followers")} className="text-center">
                 <p className="font-display text-lg font-extrabold">{followerCount}</p>
-                <p className="text-[10px] text-muted-foreground">Followers</p>
+                <p className="text-[10px] text-muted-foreground">{t("profile.followersCount")}</p>
               </button>
               <button onClick={() => openFollowList("following")} className="text-center">
                 <p className="font-display text-lg font-extrabold">{followingCount}</p>
-                <p className="text-[10px] text-muted-foreground">Following</p>
+                <p className="text-[10px] text-muted-foreground">{t("profile.followingCount")}</p>
               </button>
             </div>
           </div>
