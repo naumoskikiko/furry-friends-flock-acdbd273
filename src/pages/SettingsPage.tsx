@@ -28,7 +28,7 @@ const sectionDefs = [
   { id: "privacy" as const, labelKey: "settings.privacy", descKey: "settings.privacyDesc", icon: Lock },
   { id: "appearance" as const, labelKey: "settings.appearance", descKey: "settings.appearanceDesc", icon: Palette },
   
-  { id: "trust" as const, labelKey: "settings.trust", descKey: "settings.trustDesc", icon: ShieldCheck },
+  
   { id: "support" as const, labelKey: "settings.support", descKey: "settings.supportDesc", icon: HelpCircle },
   { id: "legal" as const, labelKey: "settings.legal", descKey: "settings.legalDesc", icon: FileText },
   { id: "danger" as const, labelKey: "settings.dangerZone", descKey: "settings.dangerZoneDesc", icon: AlertTriangle, danger: true },
