@@ -141,15 +141,43 @@ const SettingsPayments = () => {
         </div>
       )}
 
-      {/* Transaction History */}
+      {/* Order Payment History */}
       <div className="rounded-2xl bg-card p-4 petkeep-card-shadow space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-bold">Transaction History</p>
-          <Button variant="ghost" size="sm" className="h-7 text-xs">
-            <Download className="h-3.5 w-3.5 mr-1" /> Export
-          </Button>
+          <div className="flex items-center gap-2">
+            <ShoppingBag className="h-4 w-4 text-primary" />
+            <p className="text-sm font-bold">Payment History</p>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground py-4 text-center">No transactions yet</p>
+        {ordersLoading ? (
+          <p className="text-xs text-muted-foreground text-center py-4">Loading…</p>
+        ) : orders.length === 0 ? (
+          <p className="text-xs text-muted-foreground py-4 text-center">No payments yet</p>
+        ) : (
+          <div className="space-y-2">
+            {orders.map(order => {
+              const statusColor = order.status === "delivered"
+                ? "bg-emerald-500/10 text-emerald-600"
+                : order.status === "cancelled"
+                ? "bg-destructive/10 text-destructive"
+                : "bg-amber-500/10 text-amber-600";
+              const statusLabel = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+              return (
+                <div key={order.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                  <div>
+                    <p className="text-xs font-medium">${order.total_price.toFixed(2)}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {new Date(order.created_at).toLocaleDateString()} · {order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className={`${statusColor} border-0`}>
+                    {statusLabel}
+                  </Badge>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
