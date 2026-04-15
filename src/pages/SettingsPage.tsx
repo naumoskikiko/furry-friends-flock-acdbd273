@@ -23,7 +23,7 @@ const sections = [
   { id: "account" as const, label: "Account", icon: User, description: "Edit profile, password, email" },
   { id: "security" as const, label: "Security", icon: Shield, description: "2FA, login activity, connected accounts" },
   { id: "notifications" as const, label: "Notifications", icon: Bell, description: "Push, email & SMS alerts" },
-  { id: "payments" as const, label: "Payment History", icon: CreditCard, description: "Payment methods, billing history" },
+  { id: "payments" as const, label: "Payment History", icon: CreditCard, description: "Billing history" },
   { id: "privacy" as const, label: "Privacy", icon: Lock, description: "Account visibility, messaging, data" },
   { id: "appearance" as const, label: "Appearance", icon: Palette, description: "Theme, font size, language" },
   { id: "pet" as const, label: "Pet Settings", icon: PawPrint, description: "Emergency contacts, vet info" },
