@@ -207,7 +207,7 @@ const ProfilePage = () => {
             </p>
           )}
           <p className="mt-1 text-sm text-center max-w-xs">{profile?.bio || "No bio yet"}</p>
-          <span className="mt-1 text-[10px] rounded-full bg-petkeep-cream px-2 py-0.5 font-bold capitalize text-foreground">
+          <span className="mt-1 text-[10px] rounded-full bg-primary/10 dark:bg-primary/15 px-2 py-0.5 font-bold capitalize text-foreground">
             {profile?.role === "provider" ? "🩺 Provider" : profile?.role === "business" ? "🏪 Business" : "🐾 User"}
           </span>
         </div>
