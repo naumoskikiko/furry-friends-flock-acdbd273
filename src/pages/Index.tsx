@@ -12,11 +12,13 @@ import FeedSkeleton from "@/components/feed/FeedSkeleton";
 import PeopleYouMayKnow from "@/components/feed/PeopleYouMayKnow";
 import { useFeed } from "@/hooks/useFeed";
 import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { Newspaper, Image } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<"feed" | "blog">(() => searchParams.get("blog") ? "blog" : "feed");
   const openBlogId = searchParams.get("blog") || undefined;
   const { posts, loading, hasMore, loadMore, refreshFeed } = useFeed();
@@ -51,7 +53,7 @@ const Index = () => {
             }`}
           >
             <Image className="h-4 w-4" />
-            Feed
+            {t("feed.title")}
           </button>
           <button
             onClick={() => setActiveTab("blog")}
@@ -62,7 +64,7 @@ const Index = () => {
             }`}
           >
             <Newspaper className="h-4 w-4" />
-            Blog
+            {t("feed.blog")}
           </button>
         </div>
       </div>
