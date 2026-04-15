@@ -35,6 +35,7 @@ export const useFeed = () => {
   const [loading, setLoading] = useState(!cacheGet<FeedPostData[]>(CACHE_KEY));
   const [hasMore, setHasMore] = useState(true);
   const offsetRef = useRef(0);
+  const lastFetchTimeRef = useRef(0);
 
   const enrichPosts = useCallback(async (rawPosts: any[]): Promise<FeedPostData[]> => {
     if (rawPosts.length === 0) return [];
@@ -134,12 +135,24 @@ export const useFeed = () => {
       setHasMore(false);
     }
     offsetRef.current += rawPosts?.length || 0;
+    lastFetchTimeRef.current = Date.now();
     setLoading(false);
   }, [user, enrichPosts]);
 
   // Initial load
   useEffect(() => {
     fetchFeed(true);
+  }, [fetchFeed]);
+
+  // Refetch when page becomes visible (e.g. navigating back to home tab)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && Date.now() - lastFetchTimeRef.current > 15_000) {
+        fetchFeed(true);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [fetchFeed]);
 
   // Realtime subscription — listen to posts table for authoritative count updates
@@ -193,5 +206,16 @@ export const useFeed = () => {
     if (hasMore && !loading) fetchFeed(false);
   };
 
-  return { posts, loading, hasMore, loadMore, refreshFeed: () => fetchFeed(true) };
+  // Expose a way for external callers to update a single post's like state
+  const updatePostLike = useCallback((postId: string, isLiked: boolean, newCount: number) => {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? { ...p, is_liked: isLiked, likes_count: newCount }
+          : p
+      )
+    );
+  }, []);
+
+  return { posts, loading, hasMore, loadMore, refreshFeed: () => fetchFeed(true), updatePostLike };
 };
