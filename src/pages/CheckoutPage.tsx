@@ -222,6 +222,15 @@ const CheckoutPage = () => {
 
         {step === "checkout" && (
           <div className="px-4 py-4 space-y-4">
+            {deliveryBlocked && (
+              <div className="rounded-2xl bg-destructive/10 border border-destructive/20 p-4 flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-bold text-destructive">Delivery unavailable</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">This business does not deliver to your location. You are {deliveryDistance != null ? formatDistance(deliveryDistance) : "too far"} away.</p>
+                </div>
+              </div>
+            )}
             <div className="space-y-3">
               {Object.entries(storeGroups).map(([storeId, storeItems]) => {
                 const storeName = storeItems[0]?.product?.business?.business_name || "Store";
