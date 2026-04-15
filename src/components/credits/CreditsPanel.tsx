@@ -118,64 +118,7 @@ const CreditsPanel = () => {
         </CardContent>
       </Card>
 
-      {/* Watch Ads — Earn Credits */}
-      <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-emerald-600/10">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Tv className="h-4 w-4 text-emerald-500" /> Earn Credits
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium">Watch an Ad 🎥</p>
-              <p className="text-[10px] text-muted-foreground">
-                Earn {CREDIT_REWARDS.watch_ad} credit per ad · {dailyAdWatches}/{adLimit} today
-              </p>
-            </div>
-            <Badge variant={canWatchAd ? "default" : "secondary"} className="text-[10px]">
-              +{CREDIT_REWARDS.watch_ad}
-            </Badge>
-          </div>
 
-          {adPlaying ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-xs text-emerald-600 font-medium">
-                <Play className="h-3.5 w-3.5 animate-pulse" />
-                Watching ad… don't close this
-              </div>
-              <Progress value={adProgress} className="h-2.5 [&>div]:bg-emerald-500" />
-              <p className="text-[10px] text-muted-foreground text-center">
-                {Math.ceil(AD_DURATION_SECONDS * (1 - adProgress / 100))}s remaining
-              </p>
-            </div>
-          ) : (
-            <Button
-              size="sm"
-              className="w-full gap-2"
-              variant={canWatchAd ? "default" : "secondary"}
-              disabled={!canWatchAd}
-              onClick={handleWatchAd}
-            >
-              {canWatchAd ? (
-                <>
-                  <Play className="h-4 w-4" />
-                  Watch Ad & Earn {CREDIT_REWARDS.watch_ad} Credit
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-4 w-4" />
-                  Daily Limit Reached
-                </>
-              )}
-            </Button>
-          )}
-
-          <p className="text-[10px] text-muted-foreground text-center">
-            Use credits to save up to 4% on purchases
-          </p>
-        </CardContent>
-      </Card>
 
       {/* Limits */}
       <Card>
