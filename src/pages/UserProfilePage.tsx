@@ -18,6 +18,7 @@ import { getOrCreateConversation } from "@/hooks/useMessages";
 import { createNotification } from "@/hooks/useNotifications";
 import { animalTypes } from "@/data/petBreeds";
 import ReportModal from "@/components/ReportModal";
+import TaggedPostsGrid from "@/components/profile/TaggedPostsGrid";
 
 type TabType = "posts" | "pets" | "tagged";
 
@@ -577,11 +578,8 @@ const UserProfilePage = () => {
                 </div>
               )}
 
-              {activeTab === "tagged" && (
-                <div className="animate-fade-in flex flex-col items-center justify-center py-16 text-center">
-                  <Tag className="h-12 w-12 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm font-semibold text-muted-foreground">No tagged posts</p>
-                </div>
+              {activeTab === "tagged" && profile && (
+                <TaggedPostsGrid userId={profile.user_id} />
               )}
             </div>
           </>
