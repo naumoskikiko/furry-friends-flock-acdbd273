@@ -319,7 +319,7 @@ const StoryViewer = ({
 
   // Mouse fallback
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (showReply || insightsOpen) return;
+    if (showReply || insightsOpen || showMenu || confirmDeleteOpen) return;
     touchStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
     gestureActiveRef.current = "none";
     isHoldingRef.current = false;
