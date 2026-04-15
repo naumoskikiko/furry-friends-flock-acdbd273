@@ -1,10 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useTabRefresh } from "@/hooks/useTabRefresh";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
-import { Search, ChevronRight, Star, MapPin, Store, Package, Plus, BadgeCheck, ShoppingCart, Heart } from "lucide-react";
+import { Search, ChevronRight, Star, MapPin, Store, Package, Plus, BadgeCheck, ShoppingCart, Heart, Navigation } from "lucide-react";
 import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAllBusinesses, useAllProducts, useMyBusiness, BUSINESS_CATEGORIES, PRODUCT_CATEGORIES } from "@/hooks/useBusiness";
@@ -16,8 +16,10 @@ import BusinessDashboard from "@/components/business/BusinessDashboard";
 import { useWishlist } from "@/hooks/useWishlist";
 import ProductImage from "@/components/marketplace/ProductImage";
 import { useRankedBusinesses, useRankedProducts } from "@/hooks/useRankedBusinesses";
+import { useUserLocation } from "@/hooks/useUserLocation";
+import { canDeliver, getDeliveryDistance, formatDistance } from "@/lib/deliveryRadius";
 
-const StoreRow = ({ b, navigate }: { b: any; navigate: (path: string) => void }) => {
+const StoreRow = ({ b, navigate, distance }: { b: any; navigate: (path: string) => void; distance?: number | null }) => {
   const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
   return (
     <div
@@ -44,7 +46,12 @@ const StoreRow = ({ b, navigate }: { b: any; navigate: (path: string) => void })
               {Number(b.avg_rating).toFixed(1)} ({b.total_reviews})
             </span>
           )}
-          {b.location && (
+          {distance != null && (
+            <span className="flex items-center gap-0.5 text-primary font-semibold">
+              <MapPin className="h-2.5 w-2.5" /> {formatDistance(distance)}
+            </span>
+          )}
+          {distance == null && b.location && (
             <span className="flex items-center gap-0.5">
               <MapPin className="h-2.5 w-2.5" /> {b.location}
             </span>
@@ -71,6 +78,12 @@ const MarketplacePage = () => {
     activeTab === "stores" ? businessCategory : undefined,
     searchQuery || undefined
   );
+
+  // User location for delivery filtering
+  const { location: userLocation, requestLocation } = useUserLocation();
+
+  // Request location on mount
+  useEffect(() => { requestLocation(); }, [requestLocation]);
   const { products, loading: prodLoading, hasMore: hasMoreProducts, loadMore: loadMoreProducts } = useAllProducts(
     activeTab === "products" ? productCategory : undefined,
     searchQuery || undefined
@@ -105,8 +118,42 @@ const MarketplacePage = () => {
   const { all: rankedBusinesses } = useRankedBusinesses(businesses);
   const rankedProducts = useRankedProducts(products, wishlistProductIds);
 
-  const featured = rankedBusinesses.filter((b) => b.avg_rating >= 4.0).slice(0, 6);
-  const popularProducts = rankedProducts.slice(0, 6);
+  // Build business location map for filtering products by delivery radius
+  const bizLocationMap = useMemo(() => {
+    const map = new Map<string, { lat: number | null; lng: number | null; radius: number | null }>();
+    for (const b of businesses) {
+      map.set(b.id, {
+        lat: (b as any).latitude ?? null,
+        lng: (b as any).longitude ?? null,
+        radius: (b as any).delivery_radius_km ?? null,
+      });
+    }
+    return map;
+  }, [businesses]);
+
+  // Filter businesses by delivery radius
+  const filteredBusinesses = useMemo(() => {
+    return rankedBusinesses.filter((b) =>
+      canDeliver(userLocation?.lat, userLocation?.lng, (b as any).latitude, (b as any).longitude, (b as any).delivery_radius_km)
+    );
+  }, [rankedBusinesses, userLocation]);
+
+  // Filter products by their business delivery radius
+  const filteredProducts = useMemo(() => {
+    return rankedProducts.filter((p) => {
+      const biz = bizLocationMap.get(p.business_id);
+      if (!biz) return true;
+      return canDeliver(userLocation?.lat, userLocation?.lng, biz.lat, biz.lng, biz.radius);
+    });
+  }, [rankedProducts, bizLocationMap, userLocation]);
+
+  // Distance helper for display
+  const getBizDistance = useCallback((b: any): number | null => {
+    return getDeliveryDistance(userLocation?.lat, userLocation?.lng, b.latitude, b.longitude);
+  }, [userLocation]);
+
+  const featured = filteredBusinesses.filter((b) => b.avg_rating >= 4.0).slice(0, 6);
+  const popularProducts = filteredProducts.slice(0, 6);
 
   const handleQuickAdd = async (productId: string, productName: string) => {
     try {
@@ -127,7 +174,13 @@ const MarketplacePage = () => {
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-extrabold">Pet Vault</h1>
-            <p className="text-sm text-muted-foreground">Your local pet marketplace</p>
+            <p className="text-sm text-muted-foreground flex items-center gap-1">
+              {userLocation ? (
+                <><Navigation className="h-3 w-3 text-primary" /> Available near you</>
+              ) : (
+                <>Your local pet marketplace</>
+              )}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -356,7 +409,7 @@ const MarketplacePage = () => {
               ) : (
                 <>
                   <div className="grid grid-cols-2 gap-3">
-                    {rankedProducts.map((p) => {
+                    {filteredProducts.map((p) => {
                       const outOfStock = p.stock !== null && p.stock !== undefined && p.stock <= 0;
                       return (
                         <div key={p.id} className="rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover">
@@ -430,7 +483,7 @@ const MarketplacePage = () => {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {rankedBusinesses.map((b) => <StoreRow key={b.id} b={b} navigate={navigate} />)}
+                  {filteredBusinesses.map((b) => <StoreRow key={b.id} b={b} navigate={navigate} distance={getBizDistance(b)} />)}
                 </div>
               )}
               <InfiniteScrollSentinel loading={bizLoading} hasMore={hasMoreBusinesses} onLoadMore={loadMoreBusinesses} itemCount={businesses.length} endMessage="No more stores" />

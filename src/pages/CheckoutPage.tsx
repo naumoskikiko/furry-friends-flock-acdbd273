@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import AppLayout from "@/components/AppLayout";
-import { ArrowLeft, CheckCircle2, Truck, Store, CreditCard, Tag, X, Coins } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Truck, Store, CreditCard, Tag, X, Coins, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,8 @@ import { useCredits } from "@/hooks/useCredits";
 import SlideToPayButton from "@/components/marketplace/SlideToPayButton";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import ProductImage from "@/components/marketplace/ProductImage";
-
-const DELIVERY_FEE = 120;
+import { useUserLocation } from "@/hooks/useUserLocation";
+import { canDeliver, getDeliveryDistance, formatDistance } from "@/lib/deliveryRadius";
 
 const shippingSchema = z.object({
   name: z.string().trim().min(2, "Full name is required").max(100),
@@ -42,6 +42,9 @@ const CheckoutPage = () => {
   const { applyCoupon, incrementUsage, applying } = useApplyCoupon();
   const { defaultMethod, saveCard, loading: paymentLoading } = usePaymentMethods();
   const { balance: creditBalance, applyCreditsToPayment } = useCredits();
+  const { location: userLocation, requestLocation } = useUserLocation();
+
+  useEffect(() => { requestLocation(); }, [requestLocation]);
 
   const [step, setStep] = useState<"checkout" | "confirmed">("checkout");
   const [shipping, setShipping] = useState<ShippingInfo>({
@@ -59,9 +62,30 @@ const CheckoutPage = () => {
   const [couponError, setCouponError] = useState("");
   const [useCreditsToggle, setUseCreditsToggle] = useState(true);
 
+  // Calculate delivery fee from business profile (use first item's business)
+  const cartBusiness = items[0]?.product?.business;
+  const bizDeliveryFee = (cartBusiness as any)?.delivery_fee ?? 120;
+  const bizFreeAbove = (cartBusiness as any)?.free_delivery_above;
+  const deliveryFee = bizFreeAbove && totalPrice >= bizFreeAbove ? 0 : bizDeliveryFee;
+
+  // Delivery radius validation
+  const deliveryBlocked = useMemo(() => {
+    if (!cartBusiness) return false;
+    const biz = cartBusiness as any;
+    if (!biz.latitude || !biz.longitude || !biz.delivery_radius_km) return false;
+    if (!userLocation) return false;
+    return !canDeliver(userLocation.lat, userLocation.lng, biz.latitude, biz.longitude, biz.delivery_radius_km);
+  }, [cartBusiness, userLocation]);
+
+  const deliveryDistance = useMemo(() => {
+    if (!cartBusiness) return null;
+    const biz = cartBusiness as any;
+    return getDeliveryDistance(userLocation?.lat, userLocation?.lng, biz.latitude, biz.longitude);
+  }, [cartBusiness, userLocation]);
+
   // Platform fee is deducted server-side, not shown to users
   const discount = appliedCoupon?.discount || 0;
-  const subtotalAfterDiscount = Math.max(0, totalPrice + DELIVERY_FEE - discount);
+  const subtotalAfterDiscount = Math.max(0, totalPrice + deliveryFee - discount);
   const maxCreditsAllowed = Math.floor(totalPrice * 0.04 * 100) / 100; // 4% of product subtotal
   const creditsApplied = useCreditsToggle ? Math.min(creditBalance, maxCreditsAllowed, subtotalAfterDiscount) : 0;
   const grandTotal = Math.max(0, subtotalAfterDiscount - creditsApplied);
@@ -114,6 +138,11 @@ const CheckoutPage = () => {
   };
 
   const handlePlaceOrder = async () => {
+    if (deliveryBlocked) {
+      toast({ title: "Delivery unavailable", description: "This business does not deliver to your location", variant: "destructive" });
+      throw new Error("Outside delivery radius");
+    }
+
     if (!shippingValid) {
       const message = shippingSchema.safeParse(shipping);
       const firstIssue = message.success ? "Enter valid shipping details" : message.error.issues[0]?.message;
@@ -193,6 +222,15 @@ const CheckoutPage = () => {
 
         {step === "checkout" && (
           <div className="px-4 py-4 space-y-4">
+            {deliveryBlocked && (
+              <div className="rounded-2xl bg-destructive/10 border border-destructive/20 p-4 flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-bold text-destructive">Delivery unavailable</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">This business does not deliver to your location. You are {deliveryDistance != null ? formatDistance(deliveryDistance) : "too far"} away.</p>
+                </div>
+              </div>
+            )}
             <div className="space-y-3">
               {Object.entries(storeGroups).map(([storeId, storeItems]) => {
                 const storeName = storeItems[0]?.product?.business?.business_name || "Store";
@@ -346,8 +384,11 @@ const CheckoutPage = () => {
                   <span className="font-semibold">{totalPrice.toLocaleString()} MKD</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Delivery fee</span>
-                  <span className="font-semibold">{DELIVERY_FEE.toLocaleString()} MKD</span>
+                  <span className="text-muted-foreground">
+                    Delivery fee
+                    {deliveryDistance != null && <span className="ml-1">({formatDistance(deliveryDistance)})</span>}
+                  </span>
+                  <span className="font-semibold">{deliveryFee === 0 ? "Free" : `${deliveryFee.toLocaleString()} MKD`}</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-xs">
