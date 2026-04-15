@@ -6,6 +6,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Bell, Check, Heart, MessageCircle, UserPlus, Bookmark,
@@ -349,7 +350,7 @@ const NotificationsPage = () => {
             <button onClick={() => navigate(-1)} className="rounded-full p-2 hover:bg-secondary">
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <h1 className="font-display text-lg font-extrabold">Notifications</h1>
+            <h1 className="font-display text-lg font-extrabold">{t("notifications.title")}</h1>
             <button
               onClick={markAllRead}
               className="rounded-full p-2 text-primary hover:bg-secondary"
