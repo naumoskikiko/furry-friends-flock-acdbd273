@@ -15,8 +15,13 @@
 }
 
 @layer base {
-  html {
+  html, body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
     transition: font-size 0.2s ease;
+  }
+  html::-webkit-scrollbar, body::-webkit-scrollbar {
+    display: none;
   }
 
   :root {
