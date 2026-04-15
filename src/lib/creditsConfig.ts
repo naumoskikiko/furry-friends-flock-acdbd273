@@ -2,23 +2,28 @@
 // 1 PetKeep Credit = 1 MKD discount (platform currency only, non-withdrawable)
 
 export const CREDIT_REWARDS = {
-  create_post: 0.2,
-  post_like_received: 0.05,
+  create_post: 2,
+  like_given: 0.05,
   post_comment: 0.1,
-  comment_received: 0.1,
-  create_story: 0.1,
-  story_reply: 0.05,
-  blog_reply: 0.2,
+  create_story: 1,
+  blog_reply: 0.1,
   helpful_blog_answer: 0.5,
-  watch_ad: 1,
 } as const;
 
 export const CREDIT_LIMITS = {
   daily_max: 20,
   monthly_max: 500,
-  max_likes_per_post: 100,
-  daily_ad_watches: 10,
 } as const;
+
+// Minimum seconds between earning the same action type (anti-spam)
+export const CREDIT_COOLDOWNS: Record<CreditAction, number> = {
+  create_post: 30,
+  like_given: 5,
+  post_comment: 10,
+  create_story: 30,
+  blog_reply: 10,
+  helpful_blog_answer: 0,
+};
 
 export const CREDIT_SPENDING = {
   boost_post: 10,
