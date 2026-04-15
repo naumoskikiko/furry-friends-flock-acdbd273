@@ -64,6 +64,15 @@ const StorePage = () => {
     load();
   }, [id]);
 
+  // Track unique daily visit
+  useEffect(() => {
+    if (!id || !user) return;
+    const today = new Date().toISOString().slice(0, 10);
+    fromTable("business_visits")
+      .upsert({ business_id: id, user_id: user.id, visit_date: today } as any, { onConflict: "business_id,user_id,visit_date" })
+      .then(() => {});
+  }, [id, user]);
+
   const handleMessage = async () => {
     if (!business || !user) return;
     try {
