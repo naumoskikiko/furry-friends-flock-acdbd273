@@ -1516,6 +1516,72 @@ export type Database = {
         }
         Relationships: []
       }
+      payout_details: {
+        Row: {
+          account_number: string
+          bank_name: string
+          created_at: string
+          full_name: string
+          id: string
+          transaction_reference: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_number?: string
+          bank_name?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          transaction_reference?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_number?: string
+          bank_name?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          transaction_reference?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      payout_requests: {
+        Row: {
+          admin_notes: string | null
+          amount: number
+          created_at: string
+          id: string
+          paid_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pet_medications: {
         Row: {
           created_at: string
