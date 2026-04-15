@@ -499,14 +499,14 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
               {!isMeetupEnded && (
                 <DropdownMenuItem
                   className="gap-2"
-                  onClick={() => setShowEditModal(true)}
+                  onSelect={() => setShowEditModal(true)}
                 >
                   <Pencil className="h-4 w-4" /> Edit {isMeetup ? "Meetup" : isQuestion ? "Question" : "Article"}
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem
                 className="text-destructive gap-2"
-                onClick={() => setShowDeleteConfirm(true)}
+                onSelect={() => setShowDeleteConfirm(true)}
               >
                 <Trash2 className="h-4 w-4" /> Delete {isMeetup ? "Meetup" : isQuestion ? "Question" : "Article"}
               </DropdownMenuItem>
@@ -520,7 +520,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="z-[120]">
-              <DropdownMenuItem className="text-destructive gap-2" onClick={() => setShowReport(true)}>
+              <DropdownMenuItem className="text-destructive gap-2" onSelect={() => setShowReport(true)}>
                 <AlertTriangle className="h-4 w-4" /> Report
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -805,7 +805,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="z-[120]">
-                        <DropdownMenuItem className="text-destructive" onClick={() => deleteComment(c.id)}>
+                        <DropdownMenuItem className="text-destructive" onSelect={() => deleteComment(c.id)}>
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
