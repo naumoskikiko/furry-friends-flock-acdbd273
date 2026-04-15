@@ -437,7 +437,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
 
   const canDeleteComment = (c: Comment) => {
     if (!user || !post) return false;
-    return user.id === c.user_id || user.id === post.user_id;
+    return user.id === c.user_id || user.id === post.user_id || isAdmin;
   };
 
   if (!post || !open) return null;
