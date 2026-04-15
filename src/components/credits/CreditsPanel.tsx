@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Coins, TrendingUp, ShieldCheck, Gift, Zap, Star, ShoppingBag, Sparkles, History, ArrowDown, ArrowUp, Play, Tv, CheckCircle2 } from "lucide-react";
+import { Coins, TrendingUp, ShieldCheck, Gift, Zap, Star, ShoppingBag, Sparkles, History, ArrowDown, ArrowUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -31,7 +31,7 @@ const EARN_INFO = [
   { action: "Watch Ad", credits: CREDIT_REWARDS.watch_ad },
 ];
 
-const AD_DURATION_SECONDS = 15;
+
 
 const CreditsPanel = () => {
   const { balance, dailyEarned, monthlyEarned, dailyAdWatches, adLimit, dailyLimit, monthlyLimit, transactions, spendCredits, earnCredits, loading } = useCredits();
@@ -39,47 +39,7 @@ const CreditsPanel = () => {
   const [spending, setSpending] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
-  // Ad watching state
-  const [adPlaying, setAdPlaying] = useState(false);
-  const [adProgress, setAdProgress] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const canWatchAd = dailyAdWatches < adLimit;
-
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, []);
-
-  const handleWatchAd = useCallback(() => {
-    if (!canWatchAd || adPlaying) return;
-    setAdPlaying(true);
-    setAdProgress(0);
-    const step = 100 / (AD_DURATION_SECONDS * 10); // update every 100ms
-    intervalRef.current = setInterval(() => {
-      setAdProgress((prev) => {
-        const next = prev + step;
-        if (next >= 100) {
-          clearInterval(intervalRef.current!);
-          intervalRef.current = null;
-          // Award credits
-          const adId = `ad_${Date.now()}`;
-          earnCredits("watch_ad", adId).then((ok) => {
-            if (ok) {
-              toast({ title: "+1 Credit earned! 🎉", description: "Thanks for watching the ad." });
-            } else {
-              toast({ title: "Limit reached", description: "You've hit your earning limit.", variant: "destructive" });
-            }
-            setAdPlaying(false);
-            setAdProgress(0);
-          });
-          return 100;
-        }
-        return next;
-      });
-    }, 100);
-  }, [canWatchAd, adPlaying, earnCredits, toast]);
 
   const handleSpend = async (action: CreditSpendAction, label: string) => {
     setSpending(true);
