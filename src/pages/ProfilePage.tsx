@@ -30,6 +30,7 @@ import CreditsPanel from "@/components/credits/CreditsPanel";
 
 const ProfilePage = () => {
   const { user, profile, refreshProfile } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -207,9 +208,9 @@ const ProfilePage = () => {
               <MapPin className="h-3 w-3" /> {profile.location}
             </p>
           )}
-          <p className="mt-1 text-sm text-center max-w-xs">{profile?.bio || "No bio yet"}</p>
+          <p className="mt-1 text-sm text-center max-w-xs">{profile?.bio || t("profile.noBio")}</p>
           <span className="mt-1 text-[10px] rounded-full bg-primary/10 dark:bg-primary/15 px-2 py-0.5 font-bold capitalize text-foreground">
-            {profile?.role === "provider" ? "🩺 Provider" : profile?.role === "business" ? "🏪 Business" : "🐾 User"}
+            {profile?.role === "provider" ? `🩺 ${t("profile.provider")}` : profile?.role === "business" ? `🏪 ${t("profile.business")}` : `🐾 ${t("profile.user")}`}
           </span>
         </div>
 
@@ -217,25 +218,25 @@ const ProfilePage = () => {
         <div className="mt-4 flex justify-center gap-8">
           <div className="text-center">
             <p className="font-display text-lg font-extrabold">{posts.length}</p>
-            <p className="text-[10px] text-muted-foreground">Posts</p>
+            <p className="text-[10px] text-muted-foreground">{t("profile.postsCount")}</p>
           </div>
           <button className="text-center" onClick={() => openFollowList("followers")}>
             <p className="font-display text-lg font-extrabold">{followerCount}</p>
-            <p className="text-[10px] text-muted-foreground">Followers</p>
+            <p className="text-[10px] text-muted-foreground">{t("profile.followersCount")}</p>
           </button>
           <button className="text-center" onClick={() => openFollowList("following")}>
             <p className="font-display text-lg font-extrabold">{followingCount}</p>
-            <p className="text-[10px] text-muted-foreground">Following</p>
+            <p className="text-[10px] text-muted-foreground">{t("profile.followingCount")}</p>
           </button>
         </div>
 
         {/* Action buttons */}
         <div className="mt-3 flex gap-2 px-4">
           <button onClick={() => setEditOpen(true)} className="petkeep-gradient flex-1 rounded-xl py-2 text-sm font-bold text-primary-foreground">
-            Edit Profile
+            {t("profile.editProfile")}
           </button>
           <button onClick={handleShareProfile} className="flex-1 rounded-xl bg-secondary py-2 text-sm font-bold text-secondary-foreground">
-            Share Profile
+            {t("profile.shareProfile")}
           </button>
         </div>
 
