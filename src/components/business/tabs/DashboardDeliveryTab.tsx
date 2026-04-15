@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Truck, MapPin, Save, Navigation } from "lucide-react";
+import { Truck, MapPin, Save } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import type { BusinessProfile } from "@/hooks/useBusiness";
+import AddressSearchMap from "@/components/business/AddressSearchMap";
 
 interface Props {
   business: BusinessProfile & {
@@ -23,39 +24,18 @@ interface Props {
 const DashboardDeliveryTab = ({ business, onUpdate }: Props) => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
-  const [detectingLocation, setDetectingLocation] = useState(false);
   const [form, setForm] = useState({
     delivery_available: business.delivery_available ?? false,
     pickup_available: business.pickup_available ?? true,
     delivery_radius_km: business.delivery_radius_km ?? "",
     delivery_fee: business.delivery_fee ?? 0,
     free_delivery_above: business.free_delivery_above ?? "",
-    latitude: business.latitude ?? "",
-    longitude: business.longitude ?? "",
+    latitude: business.latitude ?? null as number | null,
+    longitude: business.longitude ?? null as number | null,
   });
 
-  const detectLocation = () => {
-    if (!("geolocation" in navigator)) {
-      toast({ title: "Geolocation not supported", variant: "destructive" });
-      return;
-    }
-    setDetectingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setForm((f) => ({
-          ...f,
-          latitude: pos.coords.latitude.toFixed(6),
-          longitude: pos.coords.longitude.toFixed(6),
-        }));
-        setDetectingLocation(false);
-        toast({ title: "Location detected!" });
-      },
-      () => {
-        setDetectingLocation(false);
-        toast({ title: "Could not get location", variant: "destructive" });
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+  const handleLocationChange = (lat: number, lng: number, address?: string) => {
+    setForm((f) => ({ ...f, latitude: lat, longitude: lng }));
   };
 
   const handleSave = async () => {
@@ -67,8 +47,8 @@ const DashboardDeliveryTab = ({ business, onUpdate }: Props) => {
         delivery_radius_km: form.delivery_radius_km ? Number(form.delivery_radius_km) : null,
         delivery_fee: Number(form.delivery_fee) || 0,
         free_delivery_above: form.free_delivery_above ? Number(form.free_delivery_above) : null,
-        latitude: form.latitude ? Number(form.latitude) : null,
-        longitude: form.longitude ? Number(form.longitude) : null,
+        latitude: form.latitude,
+        longitude: form.longitude,
       });
       toast({ title: "Delivery settings saved!" });
     } catch (e: any) {
@@ -98,23 +78,15 @@ const DashboardDeliveryTab = ({ business, onUpdate }: Props) => {
           <Switch checked={form.pickup_available} onCheckedChange={(v) => setForm({ ...form, pickup_available: v })} />
         </div>
 
-        {/* Store Location */}
+        {/* Store Location with Address Search & Map */}
         <div className="pt-2 border-t border-border">
           <h4 className="text-xs font-bold flex items-center gap-2 mb-2"><MapPin className="h-3.5 w-3.5 text-primary" /> Store Location</h4>
-          <p className="text-[10px] text-muted-foreground mb-2">Set your store coordinates for delivery radius filtering</p>
-          <Button variant="outline" size="sm" className="w-full mb-2 text-xs" onClick={detectLocation} disabled={detectingLocation}>
-            <Navigation className="h-3 w-3 mr-1.5" /> {detectingLocation ? "Detecting..." : "Use Current Location"}
-          </Button>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label className="text-[10px]">Latitude</Label>
-              <Input type="number" step="any" value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} placeholder="41.9981" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px]">Longitude</Label>
-              <Input type="number" step="any" value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} placeholder="21.4254" />
-            </div>
-          </div>
+          <p className="text-[10px] text-muted-foreground mb-2">Search your address or tap the map to set your store location</p>
+          <AddressSearchMap
+            latitude={form.latitude}
+            longitude={form.longitude}
+            onLocationChange={handleLocationChange}
+          />
         </div>
 
         {form.delivery_available && (
