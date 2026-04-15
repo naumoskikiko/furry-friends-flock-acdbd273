@@ -1,29 +1,52 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
+
+export interface OverlayPosition {
+  x: number; // 0-100 percentage
+  y: number; // 0-100 percentage
+  scale: number;
+}
 
 interface DraggableOverlayProps {
   children: React.ReactNode;
   initialX?: number;
   initialY?: number;
+  initialScale?: number;
   onRemove?: () => void;
+  onPositionChange?: (pos: OverlayPosition) => void;
+  /** When true, overlay is non-interactive (viewer mode) */
+  readOnly?: boolean;
 }
 
-const DraggableOverlay = ({ children, initialX = 50, initialY = 50, onRemove }: DraggableOverlayProps) => {
+const DraggableOverlay = ({
+  children,
+  initialX = 50,
+  initialY = 50,
+  initialScale = 1,
+  onRemove,
+  onPositionChange,
+  readOnly = false,
+}: DraggableOverlayProps) => {
   const [pos, setPos] = useState({ x: initialX, y: initialY });
-  const [scale, setScale] = useState(1);
+  const [scale, setScale] = useState(initialScale);
   const dragging = useRef(false);
   const offset = useRef({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const initialDistance = useRef(0);
-  const initialScale = useRef(1);
+  const initialScaleRef = useRef(1);
+
+  // Report position changes to parent
+  useEffect(() => {
+    onPositionChange?.({ x: pos.x, y: pos.y, scale });
+  }, [pos.x, pos.y, scale]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (readOnly) return;
     e.stopPropagation();
     if (e.touches.length === 2) {
-      // Pinch start
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       initialDistance.current = Math.sqrt(dx * dx + dy * dy);
-      initialScale.current = scale;
+      initialScaleRef.current = scale;
     } else if (e.touches.length === 1) {
       dragging.current = true;
       const rect = containerRef.current?.parentElement?.getBoundingClientRect();
@@ -33,15 +56,16 @@ const DraggableOverlay = ({ children, initialX = 50, initialY = 50, onRemove }: 
         y: e.touches[0].clientY - (rect.top + (pos.y / 100) * rect.height),
       };
     }
-  }, [pos, scale]);
+  }, [pos, scale, readOnly]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (readOnly) return;
     e.stopPropagation();
     if (e.touches.length === 2) {
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      const newScale = Math.max(0.3, Math.min(4, initialScale.current * (dist / initialDistance.current)));
+      const newScale = Math.max(0.3, Math.min(4, initialScaleRef.current * (dist / initialDistance.current)));
       setScale(newScale);
     } else if (dragging.current && e.touches.length === 1) {
       const rect = containerRef.current?.parentElement?.getBoundingClientRect();
@@ -50,15 +74,16 @@ const DraggableOverlay = ({ children, initialX = 50, initialY = 50, onRemove }: 
       const newY = ((e.touches[0].clientY - offset.current.y - rect.top) / rect.height) * 100;
       setPos({ x: Math.max(0, Math.min(100, newX)), y: Math.max(0, Math.min(100, newY)) });
     }
-  }, []);
+  }, [readOnly]);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (readOnly) return;
     e.stopPropagation();
     dragging.current = false;
-  }, []);
+  }, [readOnly]);
 
-  // Mouse fallback
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (readOnly) return;
     e.stopPropagation();
     e.preventDefault();
     dragging.current = true;
@@ -84,12 +109,12 @@ const DraggableOverlay = ({ children, initialX = 50, initialY = 50, onRemove }: 
     };
     window.addEventListener("mousemove", handleMove);
     window.addEventListener("mouseup", handleUp);
-  }, [pos]);
+  }, [pos, readOnly]);
 
   return (
     <div
       ref={containerRef}
-      className="absolute z-40 cursor-grab active:cursor-grabbing touch-none"
+      className={`absolute z-40 ${readOnly ? "pointer-events-none" : "cursor-grab active:cursor-grabbing"} touch-none`}
       style={{
         left: `${pos.x}%`,
         top: `${pos.y}%`,
@@ -100,7 +125,7 @@ const DraggableOverlay = ({ children, initialX = 50, initialY = 50, onRemove }: 
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
-      onDoubleClick={(e) => { e.stopPropagation(); onRemove?.(); }}
+      onDoubleClick={(e) => { if (readOnly) return; e.stopPropagation(); onRemove?.(); }}
     >
       {children}
     </div>

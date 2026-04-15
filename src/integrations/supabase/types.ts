@@ -2867,6 +2867,7 @@ export type Database = {
           location_lng: number | null
           media_type: string
           media_url: string
+          overlay_data: Json | null
           pet_id: string | null
           sticker: string | null
           text_overlay: string | null
@@ -2882,6 +2883,7 @@ export type Database = {
           location_lng?: number | null
           media_type?: string
           media_url: string
+          overlay_data?: Json | null
           pet_id?: string | null
           sticker?: string | null
           text_overlay?: string | null
@@ -2897,6 +2899,7 @@ export type Database = {
           location_lng?: number | null
           media_type?: string
           media_url?: string
+          overlay_data?: Json | null
           pet_id?: string | null
           sticker?: string | null
           text_overlay?: string | null

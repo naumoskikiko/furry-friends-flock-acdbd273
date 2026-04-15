@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { X, MapPin, Heart, MessageCircle, Send, Eye, BarChart3, ChevronDown, Trash2, MoreVertical } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import DraggableOverlay from "./DraggableOverlay";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +20,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+export interface StoryOverlayItem {
+  type: "text" | "emoji" | "location";
+  id: string;
+  text?: string;
+  emoji?: string;
+  color?: string;
+  font?: string;
+  x: number;
+  y: number;
+  scale: number;
+}
+
 export interface StoryItem {
   id: string;
   user_id: string;
@@ -33,6 +46,7 @@ export interface StoryItem {
   created_at: string;
   likes_count: number;
   is_liked: boolean;
+  overlay_data?: StoryOverlayItem[];
 }
 
 export interface StoryGroup {
@@ -558,40 +572,90 @@ const StoryViewer = ({
             <img key={story.id} src={story.media_url} alt="" className="h-full w-full object-contain" loading="eager" />
           )}
 
-          {/* Overlays */}
-          {story.text_overlay && (
-            <div className="absolute inset-x-0 bottom-40 z-30 text-center pointer-events-none">
-              <span className="rounded-lg bg-black/60 px-4 py-2 text-lg font-bold text-white">
-                {story.text_overlay}
-              </span>
-            </div>
-          )}
-          {story.sticker && (
-            <div className="absolute right-6 top-24 z-30 text-5xl pointer-events-none">{story.sticker}</div>
-          )}
-          {story.location && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (story.location_lat && story.location_lng) {
-                  pauseTimer();
-                  setPaused(true);
-                  setLocationMap({ name: story.location, lat: story.location_lat, lng: story.location_lng });
+          {/* Positioned overlays from overlay_data */}
+          {story.overlay_data && story.overlay_data.length > 0 ? (
+            <>
+              {story.overlay_data.map((item) => {
+                if (item.type === "text") {
+                  return (
+                    <DraggableOverlay key={item.id} initialX={item.x} initialY={item.y} initialScale={item.scale} readOnly>
+                      <span className={`rounded-lg bg-black/60 px-4 py-2 text-lg font-bold ${item.font || "font-sans"}`} style={{ color: item.color || "#ffffff" }}>
+                        {item.text}
+                      </span>
+                    </DraggableOverlay>
+                  );
                 }
-              }}
-              onTouchStart={(e) => e.stopPropagation()}
-              onTouchMove={(e) => e.stopPropagation()}
-              onTouchEnd={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              onMouseUp={(e) => e.stopPropagation()}
-              className={`absolute left-4 top-20 z-40 flex items-center gap-1.5 rounded-full bg-black/50 px-4 py-2.5 text-xs text-white backdrop-blur-sm transition-all ${story.location_lat ? "cursor-pointer active:scale-90 hover:bg-black/70" : "pointer-events-none"}`}
-            >
-              <MapPin className="h-3.5 w-3.5" />
-              <span>{story.location}</span>
-              {story.location_lat && (
-                <span className="text-[10px] text-white/60 ml-0.5">› View</span>
+                if (item.type === "emoji") {
+                  return (
+                    <DraggableOverlay key={item.id} initialX={item.x} initialY={item.y} initialScale={item.scale} readOnly>
+                      <span className="text-5xl select-none pointer-events-none">{item.emoji}</span>
+                    </DraggableOverlay>
+                  );
+                }
+                if (item.type === "location" && story.location) {
+                  return (
+                    <DraggableOverlay key={item.id} initialX={item.x} initialY={item.y} initialScale={item.scale} readOnly>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (story.location_lat && story.location_lng) {
+                            pauseTimer();
+                            setPaused(true);
+                            setLocationMap({ name: story.location, lat: story.location_lat, lng: story.location_lng });
+                          }
+                        }}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onTouchEnd={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onMouseUp={(e) => e.stopPropagation()}
+                        className={`flex items-center gap-1.5 rounded-full bg-black/50 px-4 py-2.5 text-xs text-white backdrop-blur-sm pointer-events-auto ${story.location_lat ? "cursor-pointer active:scale-90 hover:bg-black/70" : ""}`}
+                      >
+                        <MapPin className="h-3.5 w-3.5" />
+                        <span>{story.location}</span>
+                        {story.location_lat && <span className="text-[10px] text-white/60 ml-0.5">› View</span>}
+                      </button>
+                    </DraggableOverlay>
+                  );
+                }
+                return null;
+              })}
+            </>
+          ) : (
+            <>
+              {/* Fallback: legacy stories without overlay_data */}
+              {story.text_overlay && (
+                <div className="absolute inset-x-0 bottom-40 z-30 text-center pointer-events-none">
+                  <span className="rounded-lg bg-black/60 px-4 py-2 text-lg font-bold text-white">
+                    {story.text_overlay}
+                  </span>
+                </div>
               )}
-            </button>
+              {story.sticker && (
+                <div className="absolute right-6 top-24 z-30 text-5xl pointer-events-none">{story.sticker}</div>
+              )}
+              {story.location && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (story.location_lat && story.location_lng) {
+                      pauseTimer();
+                      setPaused(true);
+                      setLocationMap({ name: story.location, lat: story.location_lat, lng: story.location_lng });
+                    }
+                  }}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onTouchMove={(e) => e.stopPropagation()}
+                  onTouchEnd={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onMouseUp={(e) => e.stopPropagation()}
+                  className={`absolute left-4 top-20 z-40 flex items-center gap-1.5 rounded-full bg-black/50 px-4 py-2.5 text-xs text-white backdrop-blur-sm transition-all ${story.location_lat ? "cursor-pointer active:scale-90 hover:bg-black/70" : "pointer-events-none"}`}
+                >
+                  <MapPin className="h-3.5 w-3.5" />
+                  <span>{story.location}</span>
+                  {story.location_lat && <span className="text-[10px] text-white/60 ml-0.5">› View</span>}
+                </button>
+              )}
+            </>
           )}
           {story.caption && !showReply && (
             <div className="absolute inset-x-0 bottom-28 z-30 px-6 text-center pointer-events-none">
