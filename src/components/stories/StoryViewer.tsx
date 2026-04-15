@@ -20,6 +20,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+export interface StoryOverlayItem {
+  type: "text" | "emoji" | "location";
+  id: string;
+  text?: string;
+  emoji?: string;
+  color?: string;
+  font?: string;
+  x: number;
+  y: number;
+  scale: number;
+}
+
 export interface StoryItem {
   id: string;
   user_id: string;
@@ -34,6 +46,7 @@ export interface StoryItem {
   created_at: string;
   likes_count: number;
   is_liked: boolean;
+  overlay_data?: StoryOverlayItem[];
 }
 
 export interface StoryGroup {
