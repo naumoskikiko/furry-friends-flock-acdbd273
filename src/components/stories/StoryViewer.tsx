@@ -332,7 +332,7 @@ const StoryViewer = ({
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
-    if (showReply || insightsOpen) return;
+    if (showReply || insightsOpen || showMenu || confirmDeleteOpen) return;
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
