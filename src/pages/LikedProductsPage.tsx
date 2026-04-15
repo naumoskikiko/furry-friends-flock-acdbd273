@@ -2,11 +2,13 @@ import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { ArrowLeft, Heart, ShoppingBag } from "lucide-react";
 import { useWishlist } from "@/hooks/useWishlist";
+import { useLanguage } from "@/i18n/LanguageContext";
 import ProductImage from "@/components/marketplace/ProductImage";
 
 const LikedProductsPage = () => {
   const navigate = useNavigate();
   const { items, loading, toggle } = useWishlist();
+  const { t } = useLanguage();
 
   return (
     <AppLayout>
@@ -17,7 +19,7 @@ const LikedProductsPage = () => {
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
-            <h1 className="font-display text-lg font-extrabold">Liked Products</h1>
+            <h1 className="font-display text-lg font-extrabold">{t("marketplace.likedProducts")}</h1>
             <p className="text-xs text-muted-foreground">{items.length} product{items.length !== 1 ? "s" : ""} saved</p>
           </div>
         </div>

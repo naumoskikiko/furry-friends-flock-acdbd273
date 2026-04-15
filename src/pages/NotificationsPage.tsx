@@ -138,6 +138,7 @@ interface FollowRequestItem {
 const NotificationsPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const { notifications, loading, markAllRead, markRead, refresh } = useNotifications();
   const [activeFilter, setActiveFilter] = useState<string>("all");

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { ArrowLeft, Package } from "lucide-react";
 import { useMyOrders } from "@/hooks/useOrders";
+import { useLanguage } from "@/i18n/LanguageContext";
 import ProductImage from "@/components/marketplace/ProductImage";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -16,6 +17,7 @@ const STATUS_COLORS: Record<string, string> = {
 const OrdersPage = () => {
   const navigate = useNavigate();
   const { orders, loading } = useMyOrders();
+  const { t } = useLanguage();
 
   return (
     <AppLayout>
@@ -24,7 +26,7 @@ const OrdersPage = () => {
           <button onClick={() => navigate(-1)} className="rounded-full p-1.5 hover:bg-secondary">
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="font-display text-lg font-bold flex-1">My Orders</h1>
+          <h1 className="font-display text-lg font-bold flex-1">{t("orders.title")}</h1>
         </div>
 
         {loading ? (
