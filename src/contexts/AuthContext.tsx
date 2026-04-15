@@ -5,6 +5,18 @@ import { Tables } from "@/integrations/supabase/types";
 
 type Profile = Tables<"profiles">;
 
+const FONT_SIZE_SCALE: Record<string, string> = {
+  small: "14px",
+  normal: "16px",
+  large: "18px",
+};
+
+const applyFontSize = (fs: string) => {
+  const size = FONT_SIZE_SCALE[fs] || FONT_SIZE_SCALE.normal;
+  document.documentElement.style.fontSize = size;
+  document.documentElement.dataset.fontSize = fs;
+};
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
@@ -12,6 +24,8 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  fontSize: string;
+  setAppFontSize: (fs: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -21,6 +35,8 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signOut: async () => {},
   refreshProfile: async () => {},
+  fontSize: "normal",
+  setAppFontSize: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -30,6 +46,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fontSize, setFontSize] = useState<string>(() => {
+    // Load cached value immediately to avoid flash
+    const cached = localStorage.getItem("petkeep_font_size");
+    if (cached && FONT_SIZE_SCALE[cached]) {
+      applyFontSize(cached);
+      return cached;
+    }
+    return "normal";
+  });
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -44,6 +69,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (user) await fetchProfile(user.id);
   };
 
+  // Load font size from DB on auth
+  const loadFontSize = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_settings")
+      .select("font_size")
+      .eq("user_id", userId)
+      .single();
+    if (data?.font_size) {
+      setFontSize(data.font_size);
+      applyFontSize(data.font_size);
+      localStorage.setItem("petkeep_font_size", data.font_size);
+    }
+  };
+
+  const setAppFontSize = (fs: string) => {
+    setFontSize(fs);
+    applyFontSize(fs);
+    localStorage.setItem("petkeep_font_size", fs);
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
@@ -51,6 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         if (session?.user) {
           setTimeout(() => fetchProfile(session.user.id), 0);
+          setTimeout(() => loadFontSize(session.user.id), 0);
         } else {
           setProfile(null);
         }
@@ -63,6 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
+        loadFontSize(session.user.id);
       }
       setLoading(false);
     });
@@ -73,10 +120,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
+    // Reset font size
+    applyFontSize("normal");
+    localStorage.removeItem("petkeep_font_size");
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, signOut, refreshProfile, fontSize, setAppFontSize }}>
       {children}
     </AuthContext.Provider>
   );
