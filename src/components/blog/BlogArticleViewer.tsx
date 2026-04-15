@@ -798,13 +798,13 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
                     )}
                   </div>
                   {canDeleteComment(c) && (
-                    <DropdownMenu>
+                    <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild>
                         <button className="shrink-0 p-1 text-muted-foreground hover:text-foreground mt-2">
                           <MoreVertical className="h-3.5 w-3.5" />
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="z-[120]">
                         <DropdownMenuItem className="text-destructive" onClick={() => deleteComment(c.id)}>
                           Delete
                         </DropdownMenuItem>
