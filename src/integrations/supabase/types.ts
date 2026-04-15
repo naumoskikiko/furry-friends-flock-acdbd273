@@ -445,8 +445,10 @@ export type Database = {
           id: string
           is_suspended: boolean
           is_verified: boolean
+          latitude: number | null
           location: string
           logo_url: string | null
+          longitude: number | null
           phone: string
           pickup_available: boolean
           total_reviews: number
@@ -468,8 +470,10 @@ export type Database = {
           id?: string
           is_suspended?: boolean
           is_verified?: boolean
+          latitude?: number | null
           location?: string
           logo_url?: string | null
+          longitude?: number | null
           phone?: string
           pickup_available?: boolean
           total_reviews?: number
@@ -491,8 +495,10 @@ export type Database = {
           id?: string
           is_suspended?: boolean
           is_verified?: boolean
+          latitude?: number | null
           location?: string
           logo_url?: string | null
+          longitude?: number | null
           phone?: string
           pickup_available?: boolean
           total_reviews?: number
