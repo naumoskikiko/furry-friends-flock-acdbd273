@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import {
-  X, ChevronLeft, ChevronRight, Check, Clock, Coins, CreditCard,
+  X, ChevronLeft, ChevronRight, Check, Clock, CreditCard,
   Calendar as CalendarIcon, FileText, Star, DollarSign, Loader2,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCredits } from "@/hooks/useCredits";
+
 import { useBooking, useProviderAvailability, useProviderBookedSlots, useProviderBlockedSlots, useTrainingPackages, useUserTrainingPackages, generateTimeSlots, calculateNights, CATEGORIES, getBookingTypeForCategory, type CareProvider, type CareService, type BookingType, type TrainingPackage, type UserTrainingPackage } from "@/hooks/useCare";
 import { useProcessPayment, calculateFees } from "@/hooks/usePayments";
 import { useToast } from "@/hooks/use-toast";
