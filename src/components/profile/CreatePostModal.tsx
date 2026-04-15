@@ -282,6 +282,26 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
             onClear={() => { setLocation(""); setLocationLat(null); setLocationLng(null); }}
           />
 
+          {/* Tag People */}
+          <div className="space-y-2">
+            <button
+              onClick={() => setTagModalOpen(true)}
+              className="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+            >
+              <Users className="h-4 w-4" />
+              Tag People {taggedUsers.length > 0 && `(${taggedUsers.length})`}
+            </button>
+            {taggedUsers.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {taggedUsers.map(u => (
+                  <span key={u.id} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                    @{u.username}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
           {pets.length > 0 && (
             <div className="space-y-2">
               <Label>Tag a pet</Label>
