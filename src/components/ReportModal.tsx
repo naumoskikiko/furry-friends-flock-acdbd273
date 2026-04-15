@@ -72,7 +72,7 @@ const ReportModal = ({ open, onOpenChange, reportedUserId, contentId, contentTyp
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-sm">
+      <AlertDialogContent className="max-w-sm z-[150]">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />
