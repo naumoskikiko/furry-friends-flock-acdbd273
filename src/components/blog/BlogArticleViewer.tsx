@@ -20,6 +20,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useCredits } from "@/hooks/useCredits";
 import { createNotification } from "@/hooks/useNotifications";
 import type { BlogPostData } from "./BlogCard";
@@ -62,6 +63,7 @@ interface BlogArticleViewerProps {
 const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleViewerProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isAdmin } = useIsAdmin();
   const { earnCredits } = useCredits();
   const navigate = useNavigate();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -337,7 +339,9 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
       fromTable("blog_saves").delete().eq("blog_post_id", post.id),
       fromTable("blog_event_participants").delete().eq("blog_post_id", post.id),
     ]);
-    await fromTable("blog_posts").delete().eq("id", post.id).eq("user_id", user.id);
+    const deleteQuery = fromTable("blog_posts").delete().eq("id", post.id);
+    if (!isAdmin) deleteQuery.eq("user_id", user.id);
+    await deleteQuery;
     setDeleting(false);
     setShowDeleteConfirm(false);
     onOpenChange(false);
@@ -346,6 +350,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   };
 
   const isOwner = user?.id === post?.user_id;
+  const canDelete = isOwner || isAdmin;
   const isQuestion = post?.post_type === "question";
 
   const hasHelpfulAnswer = comments.some((c) => c.is_helpful);
@@ -432,7 +437,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
 
   const canDeleteComment = (c: Comment) => {
     if (!user || !post) return false;
-    return user.id === c.user_id || user.id === post.user_id;
+    return user.id === c.user_id || user.id === post.user_id || isAdmin;
   };
 
   if (!post || !open) return null;
@@ -488,7 +493,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
             {cat.icon} {cat.label}
           </span>
         </div>
-        {isOwner ? (
+        {(isOwner || isAdmin) ? (
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <button className="rounded-full p-1.5 hover:bg-secondary transition-colors">
@@ -496,7 +501,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="z-[120]">
-              {!isMeetupEnded && (
+              {isOwner && !isMeetupEnded && (
                 <DropdownMenuItem
                   className="gap-2"
                   onSelect={() => setShowEditModal(true)}
