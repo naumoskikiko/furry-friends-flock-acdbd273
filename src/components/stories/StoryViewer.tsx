@@ -274,7 +274,7 @@ const StoryViewer = ({
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (showReply || insightsOpen) return;
+    if (showReply || insightsOpen || showMenu || confirmDeleteOpen) return;
 
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
