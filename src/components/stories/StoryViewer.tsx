@@ -230,7 +230,7 @@ const StoryViewer = ({
 
   // --- Gesture handlers ---
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (showReply || insightsOpen) return;
+    if (showReply || insightsOpen || showMenu || confirmDeleteOpen) return;
     const { clientX, clientY } = e.touches[0];
     touchStartRef.current = { x: clientX, y: clientY, time: Date.now() };
     gestureActiveRef.current = "none";
@@ -244,7 +244,7 @@ const StoryViewer = ({
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (showReply || insightsOpen) return;
+    if (showReply || insightsOpen || showMenu || confirmDeleteOpen) return;
     const { clientX, clientY } = e.touches[0];
     const dx = clientX - touchStartRef.current.x;
     const dy = clientY - touchStartRef.current.y;
@@ -274,7 +274,7 @@ const StoryViewer = ({
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (showReply || insightsOpen) return;
+    if (showReply || insightsOpen || showMenu || confirmDeleteOpen) return;
 
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
@@ -319,7 +319,7 @@ const StoryViewer = ({
 
   // Mouse fallback
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (showReply || insightsOpen) return;
+    if (showReply || insightsOpen || showMenu || confirmDeleteOpen) return;
     touchStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
     gestureActiveRef.current = "none";
     isHoldingRef.current = false;
@@ -332,7 +332,7 @@ const StoryViewer = ({
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
-    if (showReply || insightsOpen) return;
+    if (showReply || insightsOpen || showMenu || confirmDeleteOpen) return;
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
