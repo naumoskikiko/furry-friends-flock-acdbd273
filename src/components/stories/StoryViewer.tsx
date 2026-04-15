@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { X, MapPin, Heart, MessageCircle, Send, Eye, BarChart3, ChevronDown, Trash2, MoreVertical } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import DraggableOverlay from "./DraggableOverlay";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
