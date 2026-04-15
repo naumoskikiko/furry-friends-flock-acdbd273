@@ -493,7 +493,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
             {cat.icon} {cat.label}
           </span>
         </div>
-        {isOwner ? (
+        {(isOwner || isAdmin) ? (
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <button className="rounded-full p-1.5 hover:bg-secondary transition-colors">
@@ -501,7 +501,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="z-[120]">
-              {!isMeetupEnded && (
+              {isOwner && !isMeetupEnded && (
                 <DropdownMenuItem
                   className="gap-2"
                   onSelect={() => setShowEditModal(true)}
