@@ -58,8 +58,8 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
       const url = URL.createObjectURL(file);
       video.src = url;
       await new Promise(resolve => { video.onloadedmetadata = resolve; });
-      if (video.duration > 120) {
-        toast({ title: "Video too long", description: "Maximum 2 minutes allowed.", variant: "destructive" });
+      if (video.duration > 60) {
+        toast({ title: "Video too long", description: "Maximum 60 seconds allowed for posts.", variant: "destructive" });
         URL.revokeObjectURL(url);
         return;
       }
