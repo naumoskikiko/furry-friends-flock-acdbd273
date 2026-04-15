@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import AppLayout from "@/components/AppLayout";
-import { ArrowLeft, CheckCircle2, Truck, Store, CreditCard, Tag, X, Coins } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Truck, Store, CreditCard, Tag, X, Coins, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,8 @@ import { useCredits } from "@/hooks/useCredits";
 import SlideToPayButton from "@/components/marketplace/SlideToPayButton";
 import { usePaymentMethods } from "@/hooks/usePaymentMethods";
 import ProductImage from "@/components/marketplace/ProductImage";
-
-const DELIVERY_FEE = 120;
+import { useUserLocation } from "@/hooks/useUserLocation";
+import { canDeliver, getDeliveryDistance, formatDistance } from "@/lib/deliveryRadius";
 
 const shippingSchema = z.object({
   name: z.string().trim().min(2, "Full name is required").max(100),
