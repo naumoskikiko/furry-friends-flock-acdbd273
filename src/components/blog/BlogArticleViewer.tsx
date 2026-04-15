@@ -348,6 +348,7 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
   };
 
   const isOwner = user?.id === post?.user_id;
+  const canDelete = isOwner || isAdmin;
   const isQuestion = post?.post_type === "question";
 
   const hasHelpfulAnswer = comments.some((c) => c.is_helpful);
