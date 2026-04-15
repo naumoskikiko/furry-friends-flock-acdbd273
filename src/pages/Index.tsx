@@ -14,6 +14,7 @@ import { useFeed } from "@/hooks/useFeed";
 import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Newspaper, Image } from "lucide-react";
+import { useRef } from "react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -23,14 +24,14 @@ const Index = () => {
   const openBlogId = searchParams.get("blog") || undefined;
   const location = useLocation();
   const { posts, loading, hasMore, loadMore, refreshFeed, updatePostLike } = useFeed();
+  const prevPathRef = useRef(location.pathname);
 
-  // Refetch feed every time the user navigates back to "/"
-  const lastPathRef = useState({ prev: location.pathname })[0];
+  // Refetch feed when navigating back to "/"
   useEffect(() => {
-    if (location.pathname === "/" && lastPathRef.prev !== "/") {
+    if (location.pathname === "/" && prevPathRef.current !== "/") {
       refreshFeed();
     }
-    lastPathRef.prev = location.pathname;
+    prevPathRef.current = location.pathname;
   }, [location.pathname, refreshFeed]);
 
   const refreshAll = useCallback(async () => {
@@ -44,6 +45,10 @@ const Index = () => {
     usePullToRefresh({ onRefresh: refreshAll });
 
   const showSkeleton = loading && posts.length === 0;
+
+  const handleLikeToggle = useCallback((postId: string, isLiked: boolean, newCount: number) => {
+    updatePostLike(postId, isLiked, newCount);
+  }, [updatePostLike]);
 
   return (
     <AppLayout>
@@ -78,7 +83,7 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Content — pull-to-refresh only applies here, below header + stories + tabs */}
+      {/* Content */}
       <div
         className="mx-auto max-w-lg"
         onTouchStart={handleTouchStart}
@@ -110,7 +115,7 @@ const Index = () => {
               <div key={post.id}>
                 <FeedPostCard
                   post={post}
-                  onLikeToggle={() => {}}
+                  onLikeToggle={handleLikeToggle}
                   onSaveToggle={() => {}}
                   onDelete={() => refreshFeed()}
                 />
