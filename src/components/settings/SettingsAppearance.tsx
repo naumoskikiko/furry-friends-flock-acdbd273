@@ -2,12 +2,11 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Sun, Moon, Monitor } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 
 const themes = [
   { id: "light", label: "Light", icon: Sun },
   { id: "dark", label: "Dark", icon: Moon },
-  { id: "system", label: "System", icon: Monitor },
 ];
 
 const fontSizes = [
@@ -64,7 +63,7 @@ const SettingsAppearance = () => {
       {/* Theme */}
       <div className="rounded-2xl bg-card p-4 petkeep-card-shadow">
         <p className="text-sm font-bold mb-3">Theme</p>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {themes.map(t => (
             <button
               key={t.id}
