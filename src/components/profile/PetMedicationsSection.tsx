@@ -17,7 +17,7 @@ interface Props {
 
 const PetMedicationsSection = ({ petId, petName }: Props) => {
   const { medications, loading, addMedication, updateMedication, deleteMedication, markAsTaken, getTodaySchedule } = useMedications(petId);
-  const { permissionStatus, enablePush, loading: pushLoading } = usePushNotifications();
+  
   const [showAdd, setShowAdd] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState<string | null>(null);
