@@ -319,9 +319,10 @@ const VideoPostEditor = ({ videoFile, onClose, onDone }: VideoPostEditorProps) =
             {/* Current time */}
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{formatTime(trimStart)}</span>
-              <span className="font-semibold text-foreground">
+              <span className={`font-semibold ${trimDuration > MAX_DURATION ? "text-destructive" : "text-foreground"}`}>
                 <Scissors className="h-3 w-3 inline mr-1" />
                 {formatTime(trimDuration)}
+                {trimDuration > MAX_DURATION && <span className="ml-1 text-[10px]">(max {MAX_DURATION}s)</span>}
               </span>
               <span>{formatTime(trimEnd)}</span>
             </div>
