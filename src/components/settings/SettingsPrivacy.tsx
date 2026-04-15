@@ -102,7 +102,6 @@ const SettingsPrivacy = () => {
         {[
           { key: "private_account", label: "Private Account", desc: "Only approved followers can see your content" },
           { key: "show_in_search", label: "Show in Search", desc: "Allow your profile to appear in search results" },
-          { key: "show_rating_publicly", label: "Show Rating Publicly", desc: "Display your rating on your profile" },
           { key: "show_activity_status", label: "Activity Status", desc: "Show when you're online or last seen" },
         ].map(item => (
           <div key={item.key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
