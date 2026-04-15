@@ -6,6 +6,7 @@ import SharePostModal from "@/components/messages/SharePostModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/hooks/useCart";
+import BusinessConflictModal from "@/components/marketplace/BusinessConflictModal";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useProductReviews } from "@/hooks/useProductReviews";
 import { useProductVariants } from "@/hooks/useProductVariants";
@@ -22,7 +23,7 @@ const ProductDetailPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { addToCart } = useCart();
+  const { addToCart, businessConflict, resolveConflict } = useCart();
   const { toggle: toggleWishlist, isWishlisted } = useWishlist();
   const { reviews, avgRating, addReview, myReview } = useProductReviews(id || null);
   const { variants } = useProductVariants(id || null);
@@ -358,6 +359,7 @@ const ProductDetailPage = () => {
           productPrice={product.price}
         />
       )}
+      <BusinessConflictModal conflict={businessConflict} onResolve={resolveConflict} />
     </AppLayout>
   );
 };

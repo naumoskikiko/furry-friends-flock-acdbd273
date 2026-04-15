@@ -5,6 +5,7 @@ import { ArrowLeft, Star, MapPin, Globe, Phone, MessageCircle, BadgeCheck, Plus,
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/hooks/useCart";
+import BusinessConflictModal from "@/components/marketplace/BusinessConflictModal";
 import { useToast } from "@/hooks/use-toast";
 import { BUSINESS_CATEGORIES, PRODUCT_CATEGORIES, type BusinessProfile, type Product } from "@/hooks/useBusiness";
 import ProductImage from "@/components/marketplace/ProductImage";
@@ -18,7 +19,7 @@ const StorePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { addToCart, itemCount, totalPrice } = useCart();
+  const { addToCart, itemCount, totalPrice, businessConflict, resolveConflict } = useCart();
   const [business, setBusiness] = useState<(BusinessProfile & { banner_url?: string; delivery_available?: boolean; pickup_available?: boolean; delivery_fee?: number; free_delivery_above?: number | null }) | null>(null);
   const [products, setProducts] = useState<(Product & { is_featured?: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -327,6 +328,7 @@ const StorePage = () => {
           </button>
         </div>
       )}
+      <BusinessConflictModal conflict={businessConflict} onResolve={resolveConflict} />
     </AppLayout>
   );
 };
