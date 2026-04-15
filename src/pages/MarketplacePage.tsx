@@ -19,7 +19,7 @@ import { useRankedBusinesses, useRankedProducts } from "@/hooks/useRankedBusines
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { canDeliver, getDeliveryDistance, formatDistance } from "@/lib/deliveryRadius";
 
-const StoreRow = ({ b, navigate }: { b: any; navigate: (path: string) => void }) => {
+const StoreRow = ({ b, navigate, distance }: { b: any; navigate: (path: string) => void; distance?: number | null }) => {
   const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
   return (
     <div
@@ -46,7 +46,12 @@ const StoreRow = ({ b, navigate }: { b: any; navigate: (path: string) => void })
               {Number(b.avg_rating).toFixed(1)} ({b.total_reviews})
             </span>
           )}
-          {b.location && (
+          {distance != null && (
+            <span className="flex items-center gap-0.5 text-primary font-semibold">
+              <MapPin className="h-2.5 w-2.5" /> {formatDistance(distance)}
+            </span>
+          )}
+          {distance == null && b.location && (
             <span className="flex items-center gap-0.5">
               <MapPin className="h-2.5 w-2.5" /> {b.location}
             </span>
