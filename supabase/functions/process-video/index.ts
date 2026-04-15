@@ -50,6 +50,15 @@ serve(async (req) => {
       });
     }
 
+    // Backend validation: reject if trimmed duration exceeds 60s for posts
+    const trimmedDuration = trimEnd - trimStart;
+    if (trimmedDuration > 60) {
+      return new Response(JSON.stringify({ error: 'Upload failed: video exceeds 60 seconds limit' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const timestamp = Date.now();
     const videoPath = `${user.id}/${timestamp}-video.mp4`;
     const coverPath = `${user.id}/${timestamp}-cover.jpg`;
