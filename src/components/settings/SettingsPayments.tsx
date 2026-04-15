@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Plus, Download, Landmark, Save, Loader2 } from "lucide-react";
+import { Plus, Download, Landmark, Save, Loader2, ShoppingBag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMyPayoutDetails, useMyPayoutRequests } from "@/hooks/usePayoutDetails";
+import { useMyOrders } from "@/hooks/useOrders";
 import { Badge } from "@/components/ui/badge";
 
 const SettingsPayments = () => {
