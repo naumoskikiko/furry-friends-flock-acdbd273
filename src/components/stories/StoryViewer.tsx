@@ -244,7 +244,7 @@ const StoryViewer = ({
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (showReply || insightsOpen) return;
+    if (showReply || insightsOpen || showMenu || confirmDeleteOpen) return;
     const { clientX, clientY } = e.touches[0];
     const dx = clientX - touchStartRef.current.x;
     const dy = clientY - touchStartRef.current.y;
