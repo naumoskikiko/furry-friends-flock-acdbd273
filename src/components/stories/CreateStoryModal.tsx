@@ -123,8 +123,8 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated, pets }: CreateSt
         video.preload = "metadata";
         video.onloadedmetadata = () => {
           URL.revokeObjectURL(video.src);
-          if (video.duration > 60) {
-            toast({ title: "Video too long", description: `${file.name} exceeds 60s`, variant: "destructive" });
+          if (video.duration > 15) {
+            toast({ title: "Video too long", description: `${file.name} exceeds 15s limit for stories`, variant: "destructive" });
           } else {
             newItems.push({ file, preview: URL.createObjectURL(file), mediaType: "video" });
           }

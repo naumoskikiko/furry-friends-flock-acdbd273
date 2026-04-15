@@ -72,11 +72,13 @@ const VideoPostEditor = ({ videoFile, onClose, onDone }: VideoPostEditorProps) =
     return () => URL.revokeObjectURL(url);
   }, [videoFile]);
 
+  const MAX_DURATION = 60;
+
   const onLoadedMetadata = () => {
     const v = videoRef.current;
     if (!v) return;
     setDuration(v.duration);
-    setTrimEnd(v.duration);
+    setTrimEnd(Math.min(v.duration, MAX_DURATION));
     setCoverTime(0);
     setVideoDimensions({ w: v.videoWidth, h: v.videoHeight });
     generateThumbnails(v);
@@ -180,11 +182,15 @@ const VideoPostEditor = ({ videoFile, onClose, onDone }: VideoPostEditorProps) =
     const time = pct * duration;
 
     if (type === "start") {
-      const newStart = Math.min(time, trimEnd - 1);
-      setTrimStart(Math.max(0, newStart));
+      const newStart = Math.max(0, Math.min(time, trimEnd - 1));
+      // Ensure trimmed clip doesn't exceed max duration
+      if (trimEnd - newStart > MAX_DURATION) return;
+      setTrimStart(newStart);
     } else {
-      const newEnd = Math.max(time, trimStart + 1);
-      setTrimEnd(Math.min(duration, newEnd));
+      const newEnd = Math.min(duration, Math.max(time, trimStart + 1));
+      // Ensure trimmed clip doesn't exceed max duration
+      if (newEnd - trimStart > MAX_DURATION) return;
+      setTrimEnd(newEnd);
     }
   };
 
@@ -313,9 +319,10 @@ const VideoPostEditor = ({ videoFile, onClose, onDone }: VideoPostEditorProps) =
             {/* Current time */}
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{formatTime(trimStart)}</span>
-              <span className="font-semibold text-foreground">
+              <span className={`font-semibold ${trimDuration > MAX_DURATION ? "text-destructive" : "text-foreground"}`}>
                 <Scissors className="h-3 w-3 inline mr-1" />
                 {formatTime(trimDuration)}
+                {trimDuration > MAX_DURATION && <span className="ml-1 text-[10px]">(max {MAX_DURATION}s)</span>}
               </span>
               <span>{formatTime(trimEnd)}</span>
             </div>
