@@ -1,13 +1,17 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
-import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, Store } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import ProductImage from "@/components/marketplace/ProductImage";
+import BusinessConflictModal from "@/components/marketplace/BusinessConflictModal";
 
 const CartPage = () => {
   const navigate = useNavigate();
-  const { items, loading, updateQuantity, removeItem, totalPrice, itemCount } = useCart();
+  const {
+    items, loading, updateQuantity, removeItem, clearCart,
+    totalPrice, itemCount, cartBusinessName,
+    businessConflict, resolveConflict,
+  } = useCart();
 
   if (loading) {
     return (
@@ -28,7 +32,21 @@ const CartPage = () => {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="font-display text-lg font-bold flex-1">Cart ({itemCount})</h1>
+          {items.length > 0 && (
+            <button onClick={clearCart} className="text-xs text-destructive font-semibold hover:underline">
+              Clear All
+            </button>
+          )}
         </div>
+
+        {/* Business indicator */}
+        {cartBusinessName && items.length > 0 && (
+          <div className="mx-4 mt-3 flex items-center gap-2 rounded-xl bg-secondary/60 px-3 py-2">
+            <Store className="h-4 w-4 text-primary shrink-0" />
+            <span className="text-xs text-muted-foreground">Ordering from</span>
+            <span className="text-xs font-bold truncate">{cartBusinessName}</span>
+          </div>
+        )}
 
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-4">
@@ -112,14 +130,16 @@ const CartPage = () => {
               </div>
               {(() => {
                 const hasOutOfStock = items.some((i) => i.product?.stock !== null && i.product?.stock !== undefined && (i.product?.stock ?? 0) <= 0);
+                const hasMultipleBusinesses = new Set(items.map((i) => i.product?.business_id).filter(Boolean)).size > 1;
+                const blocked = hasOutOfStock || hasMultipleBusinesses;
                 return (
                   <button
                     onClick={() => navigate("/checkout")}
-                    disabled={hasOutOfStock}
+                    disabled={blocked}
                     className="w-full flex items-center justify-center gap-2 rounded-2xl petkeep-gradient text-primary-foreground py-4 text-sm font-bold disabled:opacity-50"
                   >
                     <ShoppingBag className="h-4 w-4" />
-                    {hasOutOfStock ? "Remove out-of-stock items first" : "Proceed to Checkout"}
+                    {hasOutOfStock ? "Remove out-of-stock items first" : hasMultipleBusinesses ? "Cart has items from multiple stores" : "Proceed to Checkout"}
                   </button>
                 );
               })()}
@@ -127,6 +147,8 @@ const CartPage = () => {
           </div>
         )}
       </div>
+
+      <BusinessConflictModal conflict={businessConflict} onResolve={resolveConflict} />
     </AppLayout>
   );
 };

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -21,10 +21,28 @@ export interface CartItem {
   };
 }
 
+export interface CartBusinessConflict {
+  currentBusinessName: string;
+  newBusinessName: string;
+  pendingProductId: string;
+  pendingQuantity: number;
+}
+
 export function useCart() {
   const { user } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [businessConflict, setBusinessConflict] = useState<CartBusinessConflict | null>(null);
+
+  const cartBusinessId = useMemo(() => {
+    const firstWithBiz = items.find((i) => i.product?.business_id);
+    return firstWithBiz?.product?.business_id || null;
+  }, [items]);
+
+  const cartBusinessName = useMemo(() => {
+    const firstWithBiz = items.find((i) => i.product?.business?.business_name);
+    return firstWithBiz?.product?.business?.business_name || null;
+  }, [items]);
 
   const refresh = useCallback(async () => {
     if (!user) { setItems([]); setLoading(false); return; }
@@ -35,7 +53,6 @@ export function useCart() {
 
     const cartItems = (data || []) as CartItem[];
 
-    // Fetch product details
     if (cartItems.length > 0) {
       const productIds = cartItems.map((i) => i.product_id);
       const { data: products } = await fromTable("products")
@@ -68,16 +85,40 @@ export function useCart() {
   const addToCart = useCallback(async (productId: string, quantity = 1) => {
     if (!user) return;
 
-    // Check stock before adding
-    const { data: prod } = await fromTable("products").select("stock").eq("id", productId).single();
-    if (prod) {
-      const stock = (prod as any).stock;
-      if (stock !== null && stock !== undefined) {
-        const existing = items.find((i) => i.product_id === productId);
-        const currentInCart = existing ? existing.quantity : 0;
-        if (currentInCart + quantity > stock) {
-          throw new Error(stock <= 0 ? "This product is out of stock" : `Only ${stock} available (${currentInCart} already in cart)`);
-        }
+    // Fetch product info including business
+    const { data: prod } = await fromTable("products")
+      .select("stock, business_id")
+      .eq("id", productId)
+      .single();
+
+    if (!prod) throw new Error("Product not found");
+
+    const productBizId = (prod as any).business_id;
+
+    // Single-business check
+    if (cartBusinessId && productBizId !== cartBusinessId) {
+      // Fetch business names for modal
+      const { data: newBiz } = await fromTable("business_profiles")
+        .select("business_name")
+        .eq("id", productBizId)
+        .single();
+
+      setBusinessConflict({
+        currentBusinessName: cartBusinessName || "another store",
+        newBusinessName: (newBiz as any)?.business_name || "this store",
+        pendingProductId: productId,
+        pendingQuantity: quantity,
+      });
+      return;
+    }
+
+    // Stock check
+    const stock = (prod as any).stock;
+    if (stock !== null && stock !== undefined) {
+      const existing = items.find((i) => i.product_id === productId);
+      const currentInCart = existing ? existing.quantity : 0;
+      if (currentInCart + quantity > stock) {
+        throw new Error(stock <= 0 ? "This product is out of stock" : `Only ${stock} available (${currentInCart} already in cart)`);
       }
     }
 
@@ -91,7 +132,28 @@ export function useCart() {
         .insert({ user_id: user.id, product_id: productId, quantity });
     }
     await refresh();
-  }, [user, items, refresh]);
+  }, [user, items, refresh, cartBusinessId, cartBusinessName]);
+
+  const resolveConflict = useCallback(async (action: "clear" | "cancel") => {
+    if (!businessConflict) return;
+    if (action === "cancel") {
+      setBusinessConflict(null);
+      return;
+    }
+    // Clear cart and add the new item
+    if (user) {
+      await fromTable("cart_items").delete().eq("user_id", user.id);
+      setItems([]);
+    }
+    setBusinessConflict(null);
+    // Re-add after clearing
+    const { pendingProductId, pendingQuantity } = businessConflict;
+    if (user) {
+      await fromTable("cart_items")
+        .insert({ user_id: user.id, product_id: pendingProductId, quantity: pendingQuantity });
+      await refresh();
+    }
+  }, [businessConflict, user, refresh]);
 
   const updateQuantity = useCallback(async (itemId: string, quantity: number) => {
     if (quantity <= 0) {
@@ -118,5 +180,10 @@ export function useCart() {
   const totalPrice = items.reduce((sum, i) => sum + (i.product?.price || 0) * i.quantity, 0);
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
-  return { items, loading, addToCart, updateQuantity, removeItem, clearCart, totalPrice, itemCount, refresh };
+  return {
+    items, loading, addToCart, updateQuantity, removeItem, clearCart,
+    totalPrice, itemCount, refresh,
+    cartBusinessId, cartBusinessName,
+    businessConflict, resolveConflict,
+  };
 }
