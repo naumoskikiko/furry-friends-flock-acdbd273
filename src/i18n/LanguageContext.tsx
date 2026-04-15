@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import en from "./en";
 import mk from "./mk";
 
@@ -26,10 +27,20 @@ const LanguageContext = createContext<LanguageContextType>({
 export const useLanguage = () => useContext(LanguageContext);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
+  const { loadedLanguage } = useAuth();
+
   const [language, setLanguageState] = useState<Language>(() => {
     const cached = localStorage.getItem("petkeep_language");
     return (cached === "mk" ? "mk" : "en") as Language;
   });
+
+  // Sync when DB value loads
+  useEffect(() => {
+    if (loadedLanguage && (loadedLanguage === "en" || loadedLanguage === "mk")) {
+      setLanguageState(loadedLanguage as Language);
+      document.documentElement.lang = loadedLanguage;
+    }
+  }, [loadedLanguage]);
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
