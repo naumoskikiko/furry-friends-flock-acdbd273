@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Truck, MapPin, Save } from "lucide-react";
+import { Truck, MapPin, Save, Navigation } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ interface Props {
     delivery_radius_km?: number | null;
     delivery_fee?: number;
     free_delivery_above?: number | null;
+    latitude?: number | null;
+    longitude?: number | null;
   };
   onUpdate: (updates: any) => Promise<void>;
 }
@@ -21,13 +23,40 @@ interface Props {
 const DashboardDeliveryTab = ({ business, onUpdate }: Props) => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
+  const [detectingLocation, setDetectingLocation] = useState(false);
   const [form, setForm] = useState({
     delivery_available: business.delivery_available ?? false,
     pickup_available: business.pickup_available ?? true,
     delivery_radius_km: business.delivery_radius_km ?? "",
     delivery_fee: business.delivery_fee ?? 0,
     free_delivery_above: business.free_delivery_above ?? "",
+    latitude: business.latitude ?? "",
+    longitude: business.longitude ?? "",
   });
+
+  const detectLocation = () => {
+    if (!("geolocation" in navigator)) {
+      toast({ title: "Geolocation not supported", variant: "destructive" });
+      return;
+    }
+    setDetectingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setForm((f) => ({
+          ...f,
+          latitude: pos.coords.latitude.toFixed(6),
+          longitude: pos.coords.longitude.toFixed(6),
+        }));
+        setDetectingLocation(false);
+        toast({ title: "Location detected!" });
+      },
+      () => {
+        setDetectingLocation(false);
+        toast({ title: "Could not get location", variant: "destructive" });
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -38,6 +67,8 @@ const DashboardDeliveryTab = ({ business, onUpdate }: Props) => {
         delivery_radius_km: form.delivery_radius_km ? Number(form.delivery_radius_km) : null,
         delivery_fee: Number(form.delivery_fee) || 0,
         free_delivery_above: form.free_delivery_above ? Number(form.free_delivery_above) : null,
+        latitude: form.latitude ? Number(form.latitude) : null,
+        longitude: form.longitude ? Number(form.longitude) : null,
       });
       toast({ title: "Delivery settings saved!" });
     } catch (e: any) {
@@ -67,11 +98,31 @@ const DashboardDeliveryTab = ({ business, onUpdate }: Props) => {
           <Switch checked={form.pickup_available} onCheckedChange={(v) => setForm({ ...form, pickup_available: v })} />
         </div>
 
+        {/* Store Location */}
+        <div className="pt-2 border-t border-border">
+          <h4 className="text-xs font-bold flex items-center gap-2 mb-2"><MapPin className="h-3.5 w-3.5 text-primary" /> Store Location</h4>
+          <p className="text-[10px] text-muted-foreground mb-2">Set your store coordinates for delivery radius filtering</p>
+          <Button variant="outline" size="sm" className="w-full mb-2 text-xs" onClick={detectLocation} disabled={detectingLocation}>
+            <Navigation className="h-3 w-3 mr-1.5" /> {detectingLocation ? "Detecting..." : "Use Current Location"}
+          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-[10px]">Latitude</Label>
+              <Input type="number" step="any" value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} placeholder="41.9981" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Longitude</Label>
+              <Input type="number" step="any" value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} placeholder="21.4254" />
+            </div>
+          </div>
+        </div>
+
         {form.delivery_available && (
           <>
             <div className="space-y-2">
               <Label className="text-xs">Delivery Radius (km)</Label>
               <Input type="number" value={form.delivery_radius_km} onChange={(e) => setForm({ ...form, delivery_radius_km: e.target.value })} placeholder="10" min="1" />
+              <p className="text-[10px] text-muted-foreground">Only users within this radius will see your products</p>
             </div>
 
             <div className="space-y-2">
