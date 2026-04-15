@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, MapPin, Grid3X3, UserPlus, UserCheck, MessageCircle,
@@ -23,6 +24,7 @@ type TabType = "posts" | "pets" | "tagged";
 const UserProfilePage = () => {
   const { username } = useParams<{ username: string }>();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
 
