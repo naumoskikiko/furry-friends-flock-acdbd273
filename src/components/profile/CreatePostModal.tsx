@@ -223,6 +223,7 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(o) => { if (!o) resetForm(); onOpenChange(o); }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
