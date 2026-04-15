@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import {
-  X, ChevronLeft, ChevronRight, Check, Clock, Coins, CreditCard,
+  X, ChevronLeft, ChevronRight, Check, Clock, CreditCard,
   Calendar as CalendarIcon, FileText, Star, DollarSign, Loader2,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCredits } from "@/hooks/useCredits";
+
 import { useBooking, useProviderAvailability, useProviderBookedSlots, useProviderBlockedSlots, useTrainingPackages, useUserTrainingPackages, generateTimeSlots, calculateNights, CATEGORIES, getBookingTypeForCategory, type CareProvider, type CareService, type BookingType, type TrainingPackage, type UserTrainingPackage } from "@/hooks/useCare";
 import { useProcessPayment, calculateFees } from "@/hooks/usePayments";
 import { useToast } from "@/hooks/use-toast";
@@ -76,7 +76,7 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
   const { toast } = useToast();
   const { createBooking } = useBooking();
   const { processPayment } = useProcessPayment();
-  const { balance: creditBalance, applyCreditsToPayment } = useCredits();
+  
   const availability = useProviderAvailability(provider.id);
   const { bookedDates, bookedTimeSlots } = useProviderBookedSlots(provider.id);
   const { blockedSlots } = useProviderBlockedSlots(provider.id);
@@ -94,7 +94,7 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
   const [selectedUserPackage, setSelectedUserPackage] = useState<UserTrainingPackage | null>(null);
   const [notes, setNotes] = useState("");
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
-  const [useCareCredits, setUseCareCredits] = useState(true);
+  
   const [processing, setProcessing] = useState(false);
   const [userPets, setUserPets] = useState<{ id: string; name: string; animal_type: string; breed: string | null; photo_url: string | null }[]>([]);
 
@@ -195,13 +195,7 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
     return selectedService.price;
   }, [selectedService, bookingType, nights, isUsingPackage]);
 
-  // Price calculation
-  const creditsApplied = useMemo(() => {
-    if (!selectedService || !useCareCredits || isUsingPackage) return 0;
-    return Math.min(creditBalance, totalServicePrice);
-  }, [selectedService, useCareCredits, creditBalance, totalServicePrice, isUsingPackage]);
-
-  const finalPrice = Math.max(0, totalServicePrice - creditsApplied);
+  const finalPrice = totalServicePrice;
 
   const currentStepKey = STEPS[step]?.key;
 
@@ -245,10 +239,6 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
           await useSession(selectedUserPackage.id);
         }
 
-        // Apply credits
-        if (creditsApplied > 0) {
-          await applyCreditsToPayment(creditsApplied);
-        }
         await processPayment(result.id, provider.id, totalServicePrice);
 
         // Send booking message
@@ -764,19 +754,6 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
                 </div>
               </div>
 
-              {/* Credits toggle */}
-              {creditBalance > 0 && (
-                <div className="flex items-center justify-between rounded-xl bg-primary/5 border border-primary/20 p-3">
-                  <div className="flex items-center gap-2">
-                    <Coins className="h-4 w-4 text-primary" />
-                    <div>
-                      <p className="text-xs font-semibold">Use Credits</p>
-                      <p className="text-[9px] text-muted-foreground">{creditBalance.toFixed(2)} MKD available</p>
-                    </div>
-                  </div>
-                  <Switch checked={useCareCredits} onCheckedChange={setUseCareCredits} />
-                </div>
-              )}
 
               {/* Price breakdown */}
               <div className="rounded-2xl bg-secondary/50 border border-border p-4 space-y-2">
@@ -789,14 +766,6 @@ const BookingModal = ({ provider, initialService, services, onClose, onSuccess }
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Service Price</span>
                     <span className="font-semibold">{totalServicePrice} MKD</span>
-                  </div>
-                )}
-                {creditsApplied > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-primary font-bold flex items-center gap-1">
-                      <Coins className="h-3.5 w-3.5" /> Credits Used
-                    </span>
-                    <span className="font-bold text-primary">-{creditsApplied.toFixed(2)} MKD</span>
                   </div>
                 )}
                 <div className="border-t border-border pt-2 flex justify-between text-sm">
