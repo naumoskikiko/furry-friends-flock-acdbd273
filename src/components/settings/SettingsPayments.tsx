@@ -23,7 +23,7 @@ const SettingsPayments = () => {
     transaction_reference: "",
   });
 
-  const isProviderOrBusiness = profile?.role === "provider" || profile?.role === "business" || profile?.role === "owner" || profile?.role === "admin";
+  const isProviderOrBusiness = profile?.role === "sitter" || (profile?.role as string) === "business" || (profile?.role as string) === "owner" || (profile?.role as string) === "admin" || (profile?.role as string) === "provider";
 
   const startEditing = () => {
     setForm({
