@@ -118,8 +118,42 @@ const MarketplacePage = () => {
   const { all: rankedBusinesses } = useRankedBusinesses(businesses);
   const rankedProducts = useRankedProducts(products, wishlistProductIds);
 
-  const featured = rankedBusinesses.filter((b) => b.avg_rating >= 4.0).slice(0, 6);
-  const popularProducts = rankedProducts.slice(0, 6);
+  // Build business location map for filtering products by delivery radius
+  const bizLocationMap = useMemo(() => {
+    const map = new Map<string, { lat: number | null; lng: number | null; radius: number | null }>();
+    for (const b of businesses) {
+      map.set(b.id, {
+        lat: (b as any).latitude ?? null,
+        lng: (b as any).longitude ?? null,
+        radius: (b as any).delivery_radius_km ?? null,
+      });
+    }
+    return map;
+  }, [businesses]);
+
+  // Filter businesses by delivery radius
+  const filteredBusinesses = useMemo(() => {
+    return rankedBusinesses.filter((b) =>
+      canDeliver(userLocation?.lat, userLocation?.lng, (b as any).latitude, (b as any).longitude, (b as any).delivery_radius_km)
+    );
+  }, [rankedBusinesses, userLocation]);
+
+  // Filter products by their business delivery radius
+  const filteredProducts = useMemo(() => {
+    return rankedProducts.filter((p) => {
+      const biz = bizLocationMap.get(p.business_id);
+      if (!biz) return true;
+      return canDeliver(userLocation?.lat, userLocation?.lng, biz.lat, biz.lng, biz.radius);
+    });
+  }, [rankedProducts, bizLocationMap, userLocation]);
+
+  // Distance helper for display
+  const getBizDistance = useCallback((b: any): number | null => {
+    return getDeliveryDistance(userLocation?.lat, userLocation?.lng, b.latitude, b.longitude);
+  }, [userLocation]);
+
+  const featured = filteredBusinesses.filter((b) => b.avg_rating >= 4.0).slice(0, 6);
+  const popularProducts = filteredProducts.slice(0, 6);
 
   const handleQuickAdd = async (productId: string, productName: string) => {
     try {
