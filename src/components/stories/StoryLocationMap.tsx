@@ -16,13 +16,27 @@ function formatDistance(meters: number) {
   return `${(meters / 1000).toFixed(1)} km`;
 }
 
-function formatDuration(seconds: number) {
-  if (seconds < 60) return "< 1 min";
-  const mins = Math.round(seconds / 60);
-  if (mins < 60) return `${mins} min`;
-  const hrs = Math.floor(mins / 60);
-  const rem = mins % 60;
+/** Walking time: 1 km ≈ 12.5 min */
+function walkingDuration(meters: number): string {
+  const minutes = Math.round((meters / 1000) * 12.5);
+  if (minutes < 1) return "< 1 min";
+  if (minutes < 60) return `${minutes} min`;
+  const hrs = Math.floor(minutes / 60);
+  const rem = minutes % 60;
   return rem ? `${hrs} h ${rem} min` : `${hrs} h`;
+}
+
+/** Simplify a polyline by keeping every Nth point (Douglas-Peucker lite) */
+function simplifyCoords(coords: [number, number][], maxPoints = 200): [number, number][] {
+  if (coords.length <= maxPoints) return coords;
+  const step = Math.ceil(coords.length / maxPoints);
+  const result: [number, number][] = [];
+  for (let i = 0; i < coords.length; i += step) result.push(coords[i]);
+  // Always include last point
+  if (result[result.length - 1] !== coords[coords.length - 1]) {
+    result.push(coords[coords.length - 1]);
+  }
+  return result;
 }
 
 const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocationMapProps) => {
@@ -32,9 +46,12 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
   const routeShadowRef = useRef<L.Polyline | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
   const watchIdRef = useRef<number | null>(null);
+  const cachedRouteRef = useRef<{ coords: [number, number][]; distance: number } | null>(null);
+  const lastFetchRef = useRef(0);
+
   const [loadingRoute, setLoadingRoute] = useState(false);
   const [routeShown, setRouteShown] = useState(false);
-  const [routeInfo, setRouteInfo] = useState<{ distance: number; duration: number } | null>(null);
+  const [routeInfo, setRouteInfo] = useState<{ distance: number; walkTime: string } | null>(null);
   const [mapBearing, setMapBearing] = useState(0);
 
   const destinationIcon = L.divIcon({
@@ -55,14 +72,13 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
     iconAnchor: [18, 18],
   });
 
-  // Initialize map with leaflet-rotate
+  // Initialize map
   useEffect(() => {
     if (!open || !containerRef.current) return;
 
     const timer = setTimeout(async () => {
       if (mapRef.current || !containerRef.current) return;
 
-      // Dynamically import leaflet-rotate only for this map
       await import("leaflet-rotate");
 
       const map = L.map(containerRef.current!, {
@@ -102,6 +118,7 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
       routeLayerRef.current = null;
       routeShadowRef.current = null;
       userMarkerRef.current = null;
+      cachedRouteRef.current = null;
       setRouteShown(false);
       setLoadingRoute(false);
       setRouteInfo(null);
@@ -109,55 +126,71 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
     };
   }, [open, lat, lng]);
 
-  const drawRoute = useCallback(
-    async (userLat: number, userLng: number) => {
+  /** Fetch walking route from OSRM (foot profile), cache result, throttle to 10s */
+  const fetchAndDrawRoute = useCallback(
+    async (userLat: number, userLng: number, fitBounds = false) => {
       if (!mapRef.current) return;
 
-      try {
-        const res = await fetch(
-          `https://router.project-osrm.org/route/v1/foot/${userLng},${userLat};${lng},${lat}?overview=full&geometries=geojson&steps=true`
-        );
-        const data = await res.json();
+      const now = Date.now();
+      const shouldFetch = now - lastFetchRef.current > 10_000 || !cachedRouteRef.current;
 
-        if (!data.routes?.[0]?.geometry?.coordinates || !mapRef.current) return;
+      if (shouldFetch) {
+        try {
+          const res = await fetch(
+            `https://router.project-osrm.org/route/v1/foot/${userLng},${userLat};${lng},${lat}?overview=full&geometries=geojson`
+          );
+          const data = await res.json();
+          if (!data.routes?.[0]?.geometry?.coordinates) return;
 
-        const coords: [number, number][] = data.routes[0].geometry.coordinates.map(
-          (c: [number, number]) => [c[1], c[0]] as [number, number]
-        );
+          const rawCoords: [number, number][] = data.routes[0].geometry.coordinates.map(
+            (c: [number, number]) => [c[1], c[0]] as [number, number]
+          );
 
-        const route = data.routes[0];
-        setRouteInfo({ distance: route.distance, duration: route.duration });
+          const coords = simplifyCoords(rawCoords, 200);
+          const distance = data.routes[0].distance as number;
 
-        // Remove old layers
-        if (routeShadowRef.current && mapRef.current) mapRef.current.removeLayer(routeShadowRef.current);
-        if (routeLayerRef.current && mapRef.current) mapRef.current.removeLayer(routeLayerRef.current);
-
-        // Shadow line for depth
-        routeShadowRef.current = L.polyline(coords, {
-          color: "rgba(0,0,0,0.15)",
-          weight: 9,
-          lineCap: "round",
-          lineJoin: "round",
-        }).addTo(mapRef.current);
-
-        // Main route line
-        routeLayerRef.current = L.polyline(coords, {
-          color: "hsl(210,100%,50%)",
-          weight: 5,
-          opacity: 0.9,
-          lineCap: "round",
-          lineJoin: "round",
-          smoothFactor: 1,
-        }).addTo(mapRef.current);
-
-        // Update user marker position
-        if (userMarkerRef.current) {
-          userMarkerRef.current.setLatLng([userLat, userLng]);
-        } else {
-          userMarkerRef.current = L.marker([userLat, userLng], { icon: userIcon }).addTo(mapRef.current!);
+          cachedRouteRef.current = { coords, distance };
+          lastFetchRef.current = now;
+        } catch {
+          // Use cached route if available
+          if (!cachedRouteRef.current) return;
         }
-      } catch {
-        // Silently fail on route update
+      }
+
+      const { coords, distance } = cachedRouteRef.current!;
+      setRouteInfo({ distance, walkTime: walkingDuration(distance) });
+
+      // Remove old layers
+      if (routeShadowRef.current && mapRef.current) mapRef.current.removeLayer(routeShadowRef.current);
+      if (routeLayerRef.current && mapRef.current) mapRef.current.removeLayer(routeLayerRef.current);
+
+      // Shadow line
+      routeShadowRef.current = L.polyline(coords, {
+        color: "rgba(0,0,0,0.15)",
+        weight: 9,
+        lineCap: "round",
+        lineJoin: "round",
+      }).addTo(mapRef.current);
+
+      // Main route line
+      routeLayerRef.current = L.polyline(coords, {
+        color: "hsl(210,100%,50%)",
+        weight: 5,
+        opacity: 0.9,
+        lineCap: "round",
+        lineJoin: "round",
+        smoothFactor: 1.5,
+      }).addTo(mapRef.current);
+
+      // Update user marker
+      if (userMarkerRef.current) {
+        userMarkerRef.current.setLatLng([userLat, userLng]);
+      } else {
+        userMarkerRef.current = L.marker([userLat, userLng], { icon: userIcon }).addTo(mapRef.current!);
+      }
+
+      if (fitBounds && mapRef.current) {
+        mapRef.current.fitBounds(L.latLngBounds([[userLat, userLng], [lat, lng]]), { padding: [60, 80] });
       }
     },
     [lat, lng]
@@ -171,6 +204,7 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
       if (routeShadowRef.current) { mapRef.current.removeLayer(routeShadowRef.current); routeShadowRef.current = null; }
       if (userMarkerRef.current) { mapRef.current.removeLayer(userMarkerRef.current); userMarkerRef.current = null; }
       if (watchIdRef.current !== null) { navigator.geolocation.clearWatch(watchIdRef.current); watchIdRef.current = null; }
+      cachedRouteRef.current = null;
       mapRef.current.setView([lat, lng], 15);
       setRouteShown(false);
       setRouteInfo(null);
@@ -187,19 +221,19 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
         });
       });
 
-      const userLat = pos.coords.latitude;
-      const userLng = pos.coords.longitude;
+      await fetchAndDrawRoute(pos.coords.latitude, pos.coords.longitude, true);
 
-      await drawRoute(userLat, userLng);
-
-      if (mapRef.current) {
-        const bounds = L.latLngBounds([[userLat, userLng], [lat, lng]]);
-        mapRef.current.fitBounds(bounds, { padding: [60, 80] });
-      }
-
+      // Watch position — only update marker, re-fetch route throttled
       if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = navigator.geolocation.watchPosition(
-        (p) => { drawRoute(p.coords.latitude, p.coords.longitude); },
+        (p) => {
+          // Always move marker immediately
+          if (userMarkerRef.current) {
+            userMarkerRef.current.setLatLng([p.coords.latitude, p.coords.longitude]);
+          }
+          // Throttled route re-fetch
+          fetchAndDrawRoute(p.coords.latitude, p.coords.longitude, false);
+        },
         () => {},
         { enableHighAccuracy: true, maximumAge: 5000 }
       );
@@ -213,12 +247,11 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
     } finally {
       setLoadingRoute(false);
     }
-  }, [lat, lng, routeShown, drawRoute]);
+  }, [lat, lng, routeShown, fetchAndDrawRoute]);
 
   const recenterToUser = useCallback(() => {
     if (!mapRef.current || !userMarkerRef.current) return;
-    const pos = userMarkerRef.current.getLatLng();
-    mapRef.current.flyTo(pos, 16, { duration: 0.6 });
+    mapRef.current.flyTo(userMarkerRef.current.getLatLng(), 16, { duration: 0.6 });
   }, []);
 
   const rotateLeft = useCallback(() => {
@@ -250,7 +283,7 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold truncate">{locationName}</p>
           <p className="text-[11px] text-muted-foreground">
-            {routeShown ? "Navigation active" : "Story location"}
+            {routeShown ? "🚶 Walking mode" : "Story location"}
           </p>
         </div>
         <button
@@ -279,7 +312,7 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
           <div className="h-4 w-px bg-border" />
           <div className="flex items-center gap-1.5">
             <Navigation className="h-4 w-4 text-primary" />
-            <span className="text-sm font-bold text-foreground">{formatDuration(routeInfo.duration)}</span>
+            <span className="text-sm font-bold text-foreground">{routeInfo.walkTime}</span>
             <span className="text-xs text-muted-foreground">walk</span>
           </div>
         </div>
@@ -291,39 +324,17 @@ const StoryLocationMap = ({ open, onClose, locationName, lat, lng }: StoryLocati
 
         {/* Map controls */}
         <div className="absolute top-3 right-3 z-[400] flex flex-col gap-2">
-          <button
-            onClick={rotateLeft}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-card/95 shadow-lg border border-border backdrop-blur-sm transition-all active:scale-90"
-            aria-label="Rotate left"
-          >
+          <button onClick={rotateLeft} className="flex h-10 w-10 items-center justify-center rounded-xl bg-card/95 shadow-lg border border-border backdrop-blur-sm transition-all active:scale-90" aria-label="Rotate left">
             <RotateCcw className="h-4 w-4 text-foreground" />
           </button>
-
-          <button
-            onClick={resetNorth}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-card/95 shadow-lg border border-border backdrop-blur-sm transition-all active:scale-90"
-            aria-label="Reset north"
-          >
-            <Compass
-              className="h-5 w-5 text-foreground transition-transform duration-300"
-              style={{ transform: `rotate(${-mapBearing}deg)` }}
-            />
+          <button onClick={resetNorth} className="flex h-10 w-10 items-center justify-center rounded-xl bg-card/95 shadow-lg border border-border backdrop-blur-sm transition-all active:scale-90" aria-label="Reset north">
+            <Compass className="h-5 w-5 text-foreground transition-transform duration-300" style={{ transform: `rotate(${-mapBearing}deg)` }} />
           </button>
-
-          <button
-            onClick={rotateRight}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-card/95 shadow-lg border border-border backdrop-blur-sm transition-all active:scale-90"
-            aria-label="Rotate right"
-          >
+          <button onClick={rotateRight} className="flex h-10 w-10 items-center justify-center rounded-xl bg-card/95 shadow-lg border border-border backdrop-blur-sm transition-all active:scale-90" aria-label="Rotate right">
             <RotateCw className="h-4 w-4 text-foreground" />
           </button>
-
           {routeShown && (
-            <button
-              onClick={recenterToUser}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-card/95 shadow-lg border border-border backdrop-blur-sm transition-all active:scale-90"
-              aria-label="Recenter"
-            >
+            <button onClick={recenterToUser} className="flex h-10 w-10 items-center justify-center rounded-xl bg-card/95 shadow-lg border border-border backdrop-blur-sm transition-all active:scale-90" aria-label="Recenter">
               <LocateFixed className="h-5 w-5 text-primary" />
             </button>
           )}
