@@ -99,11 +99,11 @@ const MarketplacePage = () => {
   const { business: myBusiness, loading: myBizLoading } = useMyBusiness();
   const hasStore = !!myBusiness;
   const canManageStore = isBusiness || isAdmin;
-  const { count: wishlistCount } = useWishlist();
+  const { count: wishlistCount, wishlistProductIds } = useWishlist();
 
   // Apply ranking algorithm (boost affects order, not visual)
   const { all: rankedBusinesses } = useRankedBusinesses(businesses);
-  const rankedProducts = useRankedProducts(products);
+  const rankedProducts = useRankedProducts(products, wishlistProductIds);
 
   const featured = rankedBusinesses.filter((b) => b.avg_rating >= 4.0).slice(0, 6);
   const popularProducts = rankedProducts.slice(0, 6);

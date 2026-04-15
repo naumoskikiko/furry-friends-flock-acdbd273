@@ -137,7 +137,7 @@ function useProductEngagement(productIds: string[]) {
   return engMap;
 }
 
-export function useRankedProducts(products: Product[]) {
+export function useRankedProducts(products: Product[], wishedProductIds?: Set<string>) {
   const { boosts: productBoosts } = useActiveBoosts("product");
   const { boosts: storeBoosts } = useActiveBoosts("store");
   const productIds = useMemo(() => products.map((p) => p.id), [products]);
@@ -147,6 +147,24 @@ export function useRankedProducts(products: Product[]) {
     if (products.length === 0) return products;
     const prodBoostMap = boostsToMap(productBoosts);
     const storeBoostMap = boostsToMap(storeBoosts);
-    return rankProducts(products, prodBoostMap, storeBoostMap, engagementMap);
-  }, [products, productBoosts, storeBoosts, engagementMap]);
+
+    // Separate liked products first (preserve recency order from wishlist)
+    const liked: Product[] = [];
+    const rest: Product[] = [];
+    const likedSet = wishedProductIds || new Set<string>();
+
+    for (const p of products) {
+      if (likedSet.has(p.id)) {
+        liked.push(p);
+      } else {
+        rest.push(p);
+      }
+    }
+
+    // Rank remaining products (promoted will rise via boost multiplier)
+    const rankedRest = rankProducts(rest, prodBoostMap, storeBoostMap, engagementMap);
+
+    // Liked first, then ranked rest — one seamless list
+    return [...liked, ...rankedRest];
+  }, [products, productBoosts, storeBoosts, engagementMap, wishedProductIds]);
 }
