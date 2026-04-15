@@ -101,7 +101,7 @@ export const useStories = () => {
         created_at: s.created_at,
         likes_count: storyLikes.length,
         is_liked: user ? storyLikes.includes(user.id) : false,
-        overlay_data: Array.isArray(s.overlay_data) ? s.overlay_data : [],
+        overlay_data: Array.isArray(s.overlay_data) ? (s.overlay_data as any[]) : [],
       });
     }
 
