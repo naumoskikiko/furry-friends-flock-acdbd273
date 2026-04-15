@@ -1,10 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useTabRefresh } from "@/hooks/useTabRefresh";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
-import { Search, ChevronRight, Star, MapPin, Store, Package, Plus, BadgeCheck, ShoppingCart, Heart } from "lucide-react";
+import { Search, ChevronRight, Star, MapPin, Store, Package, Plus, BadgeCheck, ShoppingCart, Heart, Navigation } from "lucide-react";
 import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAllBusinesses, useAllProducts, useMyBusiness, BUSINESS_CATEGORIES, PRODUCT_CATEGORIES } from "@/hooks/useBusiness";
@@ -16,6 +16,8 @@ import BusinessDashboard from "@/components/business/BusinessDashboard";
 import { useWishlist } from "@/hooks/useWishlist";
 import ProductImage from "@/components/marketplace/ProductImage";
 import { useRankedBusinesses, useRankedProducts } from "@/hooks/useRankedBusinesses";
+import { useUserLocation } from "@/hooks/useUserLocation";
+import { canDeliver, getDeliveryDistance, formatDistance } from "@/lib/deliveryRadius";
 
 const StoreRow = ({ b, navigate }: { b: any; navigate: (path: string) => void }) => {
   const catInfo = BUSINESS_CATEGORIES.find((c) => c.value === b.category);
