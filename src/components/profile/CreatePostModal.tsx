@@ -143,7 +143,7 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
       return;
     }
     setPosting(true);
-    const { error } = await supabase.from("posts").insert({
+    const { data: newPost, error } = await supabase.from("posts").insert({
       user_id: user.id,
       caption,
       image_url: mediaUrl || null,
@@ -152,11 +152,25 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
       longitude: locationLng,
       pet_id: petId,
       post_type: mediaType,
-    } as any);
+    } as any).select("id").single();
     setPosting(false);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
+      // Save tags
+      if (newPost && taggedUsers.length > 0) {
+        const tagRows = taggedUsers.map(u => ({
+          post_id: newPost.id,
+          tagged_user_id: u.id,
+          tagged_by: user.id,
+          status: "approved",
+        }));
+        await (supabase as any).from("post_tags").insert(tagRows);
+        // Send notifications
+        for (const u of taggedUsers) {
+          createNotification(user.id, u.id, "tag", "post", newPost.id, "tagged you in a post");
+        }
+      }
       toast({ title: "Posted!" });
       earnCredits("create_post");
       resetForm();
@@ -176,6 +190,7 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
     setMediaType("image");
     setVideoFile(null);
     setPhotoFile(null);
+    setTaggedUsers([]);
   };
 
   const removeMedia = () => {
