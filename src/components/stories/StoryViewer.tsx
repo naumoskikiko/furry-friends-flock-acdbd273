@@ -457,6 +457,18 @@ const StoryViewer = ({
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
       >
+        {showMenu && !confirmDeleteOpen && (
+          <button
+            type="button"
+            aria-label="Close story menu"
+            className="absolute inset-0 z-[79]"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowMenu(false);
+            }}
+          />
+        )}
+
         {/* Top buttons */}
         <div className="absolute right-4 top-4 z-[80] flex items-center gap-2 pointer-events-auto" onMouseDown={e => e.stopPropagation()} onMouseUp={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onTouchEnd={e => e.stopPropagation()}>
           {(isMine || isAdmin) && (
@@ -680,10 +692,6 @@ const StoryViewer = ({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Close menu on outside click */}
-      {showMenu && !confirmDeleteOpen && (
-        <div className="fixed inset-0 z-[101]" onClick={() => setShowMenu(false)} />
-      )}
 
       {/* Location map viewer */}
       {locationMap && (
