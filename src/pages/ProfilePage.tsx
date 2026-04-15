@@ -175,7 +175,7 @@ const ProfilePage = () => {
 
         {/* Centered profile info */}
         <div className="flex flex-col items-center px-4 pt-4">
-          <div className="relative">
+          <div className="relative z-10">
             <button
               onClick={() => {
                 if (hasOwnStory) {
