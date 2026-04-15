@@ -27,7 +27,7 @@ const sectionDefs = [
   { id: "payments" as const, labelKey: "settings.payments", descKey: "settings.paymentsDesc", icon: CreditCard },
   { id: "privacy" as const, labelKey: "settings.privacy", descKey: "settings.privacyDesc", icon: Lock },
   { id: "appearance" as const, labelKey: "settings.appearance", descKey: "settings.appearanceDesc", icon: Palette },
-  { id: "pet" as const, labelKey: "settings.petSettings", descKey: "settings.petSettingsDesc", icon: PawPrint },
+  
   { id: "trust" as const, labelKey: "settings.trust", descKey: "settings.trustDesc", icon: ShieldCheck },
   { id: "support" as const, labelKey: "settings.support", descKey: "settings.supportDesc", icon: HelpCircle },
   { id: "legal" as const, labelKey: "settings.legal", descKey: "settings.legalDesc", icon: FileText },
