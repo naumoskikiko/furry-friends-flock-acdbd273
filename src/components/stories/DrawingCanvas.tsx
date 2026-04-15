@@ -27,6 +27,7 @@ const DrawingCanvas = ({ width, height, active, color, brushSize, erasing, canva
     historyRef.current.push(ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height));
     if (historyRef.current.length > 30) historyRef.current.shift();
     redoRef.current = [];
+    forceRender(n => n + 1);
   }, [getCtx, canvasRef]);
 
   const startDraw = useCallback((x: number, y: number) => {
