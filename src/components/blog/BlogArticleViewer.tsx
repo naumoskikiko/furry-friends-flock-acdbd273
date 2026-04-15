@@ -20,6 +20,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useCredits } from "@/hooks/useCredits";
 import { createNotification } from "@/hooks/useNotifications";
 import type { BlogPostData } from "./BlogCard";
