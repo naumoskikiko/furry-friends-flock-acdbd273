@@ -50,7 +50,7 @@ import PostTagsOverlay from "@/components/profile/PostTagsOverlay";
 
 interface FeedPostCardProps {
   post: FeedPostData;
-  onLikeToggle: (postId: string, isLiked: boolean) => void;
+  onLikeToggle: (postId: string, isLiked: boolean, newCount: number) => void;
   onSaveToggle: (postId: string, isSaved: boolean) => void;
   onDelete?: (postId: string) => void;
 }
@@ -168,7 +168,7 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
       if (freshPost) {
         setLikesCount(freshPost.likes_count);
       }
-      onLikeToggle(post.id, newLiked);
+      onLikeToggle(post.id, newLiked, freshPost?.likes_count ?? (newLiked ? likesCount + 1 : Math.max(0, likesCount - 1)));
     } finally {
       likeInProgressRef.current = false;
     }
