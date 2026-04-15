@@ -489,13 +489,13 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
           </span>
         </div>
         {isOwner ? (
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <button className="rounded-full p-1.5 hover:bg-secondary transition-colors">
                 <MoreVertical className="h-5 w-5" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="z-[120]">
               {!isMeetupEnded && (
                 <DropdownMenuItem
                   className="gap-2"
