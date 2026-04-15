@@ -16,7 +16,6 @@ export interface FeedPostData {
   comments_count: number;
   created_at: string;
   pet_id: string | null;
-  // joined data
   username: string;
   avatar_url: string | null;
   user_role: string;
@@ -35,7 +34,7 @@ export const useFeed = () => {
   const [loading, setLoading] = useState(!cacheGet<FeedPostData[]>(CACHE_KEY));
   const [hasMore, setHasMore] = useState(true);
   const offsetRef = useRef(0);
-  const lastFetchTimeRef = useRef(0);
+  const fetchingRef = useRef(false);
 
   const enrichPosts = useCallback(async (rawPosts: any[]): Promise<FeedPostData[]> => {
     if (rawPosts.length === 0) return [];
@@ -86,7 +85,9 @@ export const useFeed = () => {
   }, [user]);
 
   const fetchFeed = useCallback(async (reset = false) => {
-    if (!user) return;
+    if (!user || fetchingRef.current) return;
+    fetchingRef.current = true;
+
     if (reset) {
       offsetRef.current = 0;
       setHasMore(true);
@@ -94,49 +95,50 @@ export const useFeed = () => {
 
     setLoading(true);
 
-    // Get list of users the current user follows
-    const { data: followingData } = await supabase
-      .from("followers")
-      .select("following_id")
-      .eq("follower_id", user.id);
+    try {
+      const { data: followingData } = await supabase
+        .from("followers")
+        .select("following_id")
+        .eq("follower_id", user.id);
 
-    const followingIds = followingData?.map((f) => f.following_id) || [];
-    // Include own posts + followed users' posts
-    const feedUserIds = [user.id, ...followingIds];
+      const followingIds = followingData?.map((f) => f.following_id) || [];
+      const feedUserIds = [user.id, ...followingIds];
 
-    if (feedUserIds.length === 0) {
-      if (reset) setPosts([]);
-      setHasMore(false);
+      if (feedUserIds.length === 0) {
+        if (reset) setPosts([]);
+        setHasMore(false);
+        setLoading(false);
+        return;
+      }
+
+      const { data: rawPosts } = await supabase
+        .from("posts")
+        .select("*")
+        .in("user_id", feedUserIds)
+        .order("created_at", { ascending: false })
+        .range(offsetRef.current, offsetRef.current + BATCH_SIZE - 1);
+
+      const enriched = await enrichPosts(rawPosts || []);
+
+      if (reset) {
+        setPosts(enriched);
+        cacheSet(CACHE_KEY, enriched, CacheTTL.FEED);
+      } else {
+        setPosts((prev) => {
+          const merged = [...prev, ...enriched];
+          cacheSet(CACHE_KEY, merged, CacheTTL.FEED);
+          return merged;
+        });
+      }
+
+      if (!rawPosts || rawPosts.length < BATCH_SIZE) {
+        setHasMore(false);
+      }
+      offsetRef.current += rawPosts?.length || 0;
+    } finally {
       setLoading(false);
-      return;
+      fetchingRef.current = false;
     }
-
-    const { data: rawPosts } = await supabase
-      .from("posts")
-      .select("*")
-      .in("user_id", feedUserIds)
-      .order("created_at", { ascending: false })
-      .range(offsetRef.current, offsetRef.current + BATCH_SIZE - 1);
-
-    const enriched = await enrichPosts(rawPosts || []);
-
-    if (reset) {
-      setPosts(enriched);
-      cacheSet(CACHE_KEY, enriched, CacheTTL.FEED);
-    } else {
-      setPosts((prev) => {
-        const merged = [...prev, ...enriched];
-        cacheSet(CACHE_KEY, merged, CacheTTL.FEED);
-        return merged;
-      });
-    }
-
-    if (!rawPosts || rawPosts.length < BATCH_SIZE) {
-      setHasMore(false);
-    }
-    offsetRef.current += rawPosts?.length || 0;
-    lastFetchTimeRef.current = Date.now();
-    setLoading(false);
   }, [user, enrichPosts]);
 
   // Initial load
@@ -144,28 +146,22 @@ export const useFeed = () => {
     fetchFeed(true);
   }, [fetchFeed]);
 
-  // Refetch when page becomes visible (e.g. navigating back to home tab)
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible" && Date.now() - lastFetchTimeRef.current > 15_000) {
-        fetchFeed(true);
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [fetchFeed]);
-
-  // Realtime subscription — listen to posts table for authoritative count updates
+  // Realtime: only sync individual post updates, don't refetch the whole feed
   useEffect(() => {
     if (!user) return;
 
     const channel = supabase
       .channel("feed-realtime")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "posts" }, () => {
-        fetchFeed(true);
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "posts" }, (payload) => {
+        // Only prepend if it's from someone we follow (or ourselves)
+        // Simple approach: just refetch on new post from self
+        const newPost = payload.new as any;
+        if (newPost?.user_id === user.id) {
+          fetchFeed(true);
+        }
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "posts" }, (payload) => {
-        // DB triggers update likes_count/comments_count — sync to local state
+        // DB triggers now update likes_count/comments_count — just sync local
         const updated = payload.new as any;
         if (updated?.id) {
           setPosts((prev) =>
@@ -184,7 +180,6 @@ export const useFeed = () => {
         }
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "post_likes" }, (payload) => {
-        // Update is_liked for the current user only
         const postId = (payload.new as any)?.post_id || (payload.old as any)?.post_id;
         const userId = (payload.new as any)?.user_id || (payload.old as any)?.user_id;
         if (postId && userId === user.id) {
@@ -206,7 +201,7 @@ export const useFeed = () => {
     if (hasMore && !loading) fetchFeed(false);
   };
 
-  // Expose a way for external callers to update a single post's like state
+  // Update a single post's like state from child component
   const updatePostLike = useCallback((postId: string, isLiked: boolean, newCount: number) => {
     setPosts((prev) =>
       prev.map((p) =>
