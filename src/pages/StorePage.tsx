@@ -5,6 +5,7 @@ import { ArrowLeft, Star, MapPin, Globe, Phone, MessageCircle, BadgeCheck, Plus,
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/hooks/useCart";
+import BusinessConflictModal from "@/components/marketplace/BusinessConflictModal";
 import { useToast } from "@/hooks/use-toast";
 import { BUSINESS_CATEGORIES, PRODUCT_CATEGORIES, type BusinessProfile, type Product } from "@/hooks/useBusiness";
 import ProductImage from "@/components/marketplace/ProductImage";

@@ -6,6 +6,7 @@ import SharePostModal from "@/components/messages/SharePostModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/hooks/useCart";
+import BusinessConflictModal from "@/components/marketplace/BusinessConflictModal";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useProductReviews } from "@/hooks/useProductReviews";
 import { useProductVariants } from "@/hooks/useProductVariants";

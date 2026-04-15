@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAllBusinesses, useAllProducts, useMyBusiness, BUSINESS_CATEGORIES, PRODUCT_CATEGORIES } from "@/hooks/useBusiness";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useCart } from "@/hooks/useCart";
+import BusinessConflictModal from "@/components/marketplace/BusinessConflictModal";
 import { useToast } from "@/hooks/use-toast";
 import BusinessDashboard from "@/components/business/BusinessDashboard";
 import { useWishlist } from "@/hooks/useWishlist";
