@@ -41,6 +41,8 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
   const [showVideoEditor, setShowVideoEditor] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [showPhotoEditor, setShowPhotoEditor] = useState(false);
+  const [taggedUsers, setTaggedUsers] = useState<{ id: string; name: string; avatar_url: string | null; username: string }[]>([]);
+  const [tagModalOpen, setTagModalOpen] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
