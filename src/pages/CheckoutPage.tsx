@@ -42,6 +42,9 @@ const CheckoutPage = () => {
   const { applyCoupon, incrementUsage, applying } = useApplyCoupon();
   const { defaultMethod, saveCard, loading: paymentLoading } = usePaymentMethods();
   const { balance: creditBalance, applyCreditsToPayment } = useCredits();
+  const { location: userLocation, requestLocation } = useUserLocation();
+
+  useEffect(() => { requestLocation(); }, [requestLocation]);
 
   const [step, setStep] = useState<"checkout" | "confirmed">("checkout");
   const [shipping, setShipping] = useState<ShippingInfo>({
@@ -59,9 +62,30 @@ const CheckoutPage = () => {
   const [couponError, setCouponError] = useState("");
   const [useCreditsToggle, setUseCreditsToggle] = useState(true);
 
+  // Calculate delivery fee from business profile (use first item's business)
+  const cartBusiness = items[0]?.product?.business;
+  const bizDeliveryFee = (cartBusiness as any)?.delivery_fee ?? 120;
+  const bizFreeAbove = (cartBusiness as any)?.free_delivery_above;
+  const deliveryFee = bizFreeAbove && totalPrice >= bizFreeAbove ? 0 : bizDeliveryFee;
+
+  // Delivery radius validation
+  const deliveryBlocked = useMemo(() => {
+    if (!cartBusiness) return false;
+    const biz = cartBusiness as any;
+    if (!biz.latitude || !biz.longitude || !biz.delivery_radius_km) return false;
+    if (!userLocation) return false;
+    return !canDeliver(userLocation.lat, userLocation.lng, biz.latitude, biz.longitude, biz.delivery_radius_km);
+  }, [cartBusiness, userLocation]);
+
+  const deliveryDistance = useMemo(() => {
+    if (!cartBusiness) return null;
+    const biz = cartBusiness as any;
+    return getDeliveryDistance(userLocation?.lat, userLocation?.lng, biz.latitude, biz.longitude);
+  }, [cartBusiness, userLocation]);
+
   // Platform fee is deducted server-side, not shown to users
   const discount = appliedCoupon?.discount || 0;
-  const subtotalAfterDiscount = Math.max(0, totalPrice + DELIVERY_FEE - discount);
+  const subtotalAfterDiscount = Math.max(0, totalPrice + deliveryFee - discount);
   const maxCreditsAllowed = Math.floor(totalPrice * 0.04 * 100) / 100; // 4% of product subtotal
   const creditsApplied = useCreditsToggle ? Math.min(creditBalance, maxCreditsAllowed, subtotalAfterDiscount) : 0;
   const grandTotal = Math.max(0, subtotalAfterDiscount - creditsApplied);
