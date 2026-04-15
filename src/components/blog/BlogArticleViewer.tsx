@@ -339,7 +339,9 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
       fromTable("blog_saves").delete().eq("blog_post_id", post.id),
       fromTable("blog_event_participants").delete().eq("blog_post_id", post.id),
     ]);
-    await fromTable("blog_posts").delete().eq("id", post.id).eq("user_id", user.id);
+    const deleteQuery = fromTable("blog_posts").delete().eq("id", post.id);
+    if (!isAdmin) deleteQuery.eq("user_id", user.id);
+    await deleteQuery;
     setDeleting(false);
     setShowDeleteConfirm(false);
     onOpenChange(false);
