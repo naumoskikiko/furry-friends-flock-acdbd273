@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { UserX, Download, Lock, MessageCircle, Shield, Loader2 } from "lucide-re
 
 const SettingsPrivacy = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [settings, setSettings] = useState({
     private_account: false,
@@ -97,12 +99,12 @@ const SettingsPrivacy = () => {
       <div className="rounded-2xl bg-card p-4 petkeep-card-shadow space-y-1">
         <div className="flex items-center gap-2 mb-2">
           <Lock className="h-4 w-4 text-primary" />
-          <p className="text-sm font-bold">Privacy</p>
+          <p className="text-sm font-bold">{t("settings.privacy")}</p>
         </div>
         {[
-          { key: "private_account", label: "Private Account", desc: "Only approved followers can see your content" },
-          { key: "show_in_search", label: "Show in Search", desc: "Allow your profile to appear in search results" },
-          { key: "show_activity_status", label: "Activity Status", desc: "Show when you're online or last seen" },
+          { key: "private_account", label: t("privacy.privateAccount"), desc: t("privacy.privateAccountDesc") },
+          { key: "show_in_search", label: t("privacy.showInSearch"), desc: t("privacy.showInSearchDesc") },
+          { key: "show_activity_status", label: t("privacy.activityStatus"), desc: t("privacy.activityStatusDesc") },
         ].map(item => (
           <div key={item.key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
             <div>
@@ -129,7 +131,7 @@ const SettingsPrivacy = () => {
               settings.messaging_access === opt ? "bg-primary/10 font-semibold text-primary" : "hover:bg-secondary"
             }`}
           >
-            {opt === "everyone" ? "Everyone" : "Only booked users"}
+            {opt === "everyone" ? t("privacy.everyone") : t("privacy.followersOnly")}
           </button>
         ))}
       </div>
@@ -173,7 +175,7 @@ const SettingsPrivacy = () => {
           <Shield className="h-4 w-4 text-primary" />
           <p className="text-sm font-bold">Account Data</p>
         </div>
-        <p className="text-xs text-muted-foreground">Download a copy of all your data including profile, posts, pets, and orders.</p>
+        <p className="text-xs text-muted-foreground">{t("privacy.dataExportDesc")}</p>
         <Button variant="outline" className="w-full" onClick={handleDownloadData} disabled={downloading}>
           {downloading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
           Download My Data (GDPR)
