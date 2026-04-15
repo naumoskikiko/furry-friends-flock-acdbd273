@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingUp, Store, Heart, Package, Users, Star, ShoppingCart } from "lucide-react";
+import { TrendingUp, Store, Heart, Package, Users, Star, ShoppingCart, Eye } from "lucide-react";
+import BusinessVisitAnalytics from "./BusinessVisitAnalytics";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
@@ -30,7 +31,7 @@ interface TopProduct {
 }
 
 const PlatformAnalyticsPanel = () => {
-  const [tab, setTab] = useState<"stores" | "providers" | "products" | "growth">("stores");
+  const [tab, setTab] = useState<"stores" | "providers" | "products" | "growth" | "visits">("stores");
   const [topStores, setTopStores] = useState<TopStore[]>([]);
   const [topProviders, setTopProviders] = useState<TopProvider[]>([]);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
@@ -125,6 +126,7 @@ const PlatformAnalyticsPanel = () => {
           { key: "providers" as const, label: "Providers", icon: Heart },
           { key: "products" as const, label: "Products", icon: Package },
           { key: "growth" as const, label: "Growth", icon: Users },
+          { key: "visits" as const, label: "Visits", icon: Eye },
         ].map(t => (
           <button
             key={t.key}
@@ -232,6 +234,8 @@ const PlatformAnalyticsPanel = () => {
               </div>
             </div>
           )}
+
+          {tab === "visits" && <BusinessVisitAnalytics />}
         </>
       )}
     </div>
