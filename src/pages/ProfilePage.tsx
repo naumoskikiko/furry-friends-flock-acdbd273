@@ -5,6 +5,7 @@ import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Settings, Grid3X3, Bookmark, Heart, Tag, MapPin, CreditCard, Camera, Plus, Star, Link as LinkIcon, ShoppingBag, Coins } from "lucide-react";
 import { Input } from "@/components/ui/input";
