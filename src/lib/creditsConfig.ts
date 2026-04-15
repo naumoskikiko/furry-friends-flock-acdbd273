@@ -1,5 +1,6 @@
 // PetKeep Credits Economy Configuration
 // 1 PetKeep Credit = 1 MKD discount (platform currency only, non-withdrawable)
+// Credits can ONLY be spent on marketplace purchases
 
 export const CREDIT_REWARDS = {
   create_post: 2,
@@ -25,15 +26,4 @@ export const CREDIT_COOLDOWNS: Record<CreditAction, number> = {
   helpful_blog_answer: 0,
 };
 
-export const CREDIT_SPENDING = {
-  boost_post: 10,
-  boost_story: 5,
-  feature_profile: 20,
-  store_discount_5pct: 50,
-  store_discount_10pct: 90,
-  care_discount_5pct: 50,
-  care_discount_10pct: 90,
-} as const;
-
 export type CreditAction = keyof typeof CREDIT_REWARDS;
-export type CreditSpendAction = keyof typeof CREDIT_SPENDING;

@@ -4,10 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   CREDIT_REWARDS,
   CREDIT_LIMITS,
-  CREDIT_SPENDING,
   CREDIT_COOLDOWNS,
   type CreditAction,
-  type CreditSpendAction,
 } from "@/lib/creditsConfig";
 
 const fromTable = (table: string) => (supabase as any).from(table);
@@ -33,7 +31,6 @@ export function useCredits() {
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<any[]>([]);
 
-  // Cooldown tracker: action -> last timestamp (ms)
   const cooldownRef = useRef<Record<string, number>>({});
 
   const fetchBalance = useCallback(async () => {
@@ -96,18 +93,15 @@ export function useCredits() {
 
       const amount = CREDIT_REWARDS[action];
 
-      // Daily & monthly limit checks
       if (dailyEarned + amount > CREDIT_LIMITS.daily_max) return false;
       if (monthlyEarned + amount > CREDIT_LIMITS.monthly_max) return false;
 
-      // Cooldown check (client-side anti-spam)
       const cooldown = CREDIT_COOLDOWNS[action];
       if (cooldown > 0) {
         const lastTime = cooldownRef.current[action] || 0;
         if (Date.now() - lastTime < cooldown * 1000) return false;
       }
 
-      // Prevent double-reward for same source
       if (sourceId) {
         const { data: existing } = await fromTable("credit_daily_log")
           .select("id")
@@ -118,7 +112,6 @@ export function useCredits() {
         if (existing && existing.length > 0) return false;
       }
 
-      // Record the earning
       await fromTable("credit_daily_log").insert({
         user_id: user.id,
         action_type: action,
@@ -141,7 +134,6 @@ export function useCredits() {
         description: `Earned from ${action.replace(/_/g, " ")}`,
       });
 
-      // Update cooldown
       cooldownRef.current[action] = Date.now();
 
       setBalance((b) => b + amount);
@@ -153,33 +145,7 @@ export function useCredits() {
     [user, balance, dailyEarned, monthlyEarned]
   );
 
-  const spendCredits = useCallback(
-    async (action: CreditSpendAction): Promise<boolean> => {
-      if (!user) return false;
-      const cost = CREDIT_SPENDING[action];
-      if (balance < cost) return false;
-
-      await supabase
-        .from("credits")
-        .update({
-          balance: balance - cost,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id);
-
-      await supabase.from("credit_transactions").insert({
-        user_id: user.id,
-        amount: -cost,
-        type: "spend",
-        description: `Spent on ${action.replace(/_/g, " ")}`,
-      });
-
-      setBalance((b) => b - cost);
-      return true;
-    },
-    [user, balance]
-  );
-
+  /** Apply credits as a discount to a marketplace payment. Returns credits actually used. */
   const applyCreditsToPayment = useCallback(
     async (maxAmount: number): Promise<number> => {
       if (!user || balance <= 0) return 0;
@@ -197,7 +163,7 @@ export function useCredits() {
         user_id: user.id,
         amount: -creditsToUse,
         type: "spend",
-        description: `Used as payment discount`,
+        description: `Used as marketplace payment discount`,
       });
 
       setBalance((b) => b - creditsToUse);
@@ -213,7 +179,6 @@ export function useCredits() {
     loading,
     transactions,
     earnCredits,
-    spendCredits,
     applyCreditsToPayment,
     dailyLimit: CREDIT_LIMITS.daily_max,
     monthlyLimit: CREDIT_LIMITS.monthly_max,

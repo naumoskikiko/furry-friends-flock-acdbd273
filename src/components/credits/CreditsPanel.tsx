@@ -1,23 +1,11 @@
 import { useState } from "react";
-import { Coins, TrendingUp, ShieldCheck, Gift, Zap, Star, ShoppingBag, Sparkles, History, ArrowDown, ArrowUp } from "lucide-react";
+import { Coins, TrendingUp, ShieldCheck, History, ArrowDown, ArrowUp, ShoppingBag } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useCredits } from "@/hooks/useCredits";
-import { useToast } from "@/hooks/use-toast";
-import { CREDIT_REWARDS, CREDIT_SPENDING, type CreditSpendAction } from "@/lib/creditsConfig";
+import { CREDIT_REWARDS } from "@/lib/creditsConfig";
 import { formatDistanceToNow } from "date-fns";
-
-const SPEND_OPTIONS: { key: CreditSpendAction; label: string; icon: React.ReactNode; cost: number }[] = [
-  { key: "boost_post", label: "Boost Post", icon: <Zap className="h-4 w-4" />, cost: CREDIT_SPENDING.boost_post },
-  { key: "boost_story", label: "Boost Story", icon: <Sparkles className="h-4 w-4" />, cost: CREDIT_SPENDING.boost_story },
-  { key: "feature_profile", label: "Feature Profile", icon: <Star className="h-4 w-4" />, cost: CREDIT_SPENDING.feature_profile },
-  { key: "store_discount_5pct", label: "5% Store Discount", icon: <ShoppingBag className="h-4 w-4" />, cost: CREDIT_SPENDING.store_discount_5pct },
-  { key: "store_discount_10pct", label: "10% Store Discount", icon: <ShoppingBag className="h-4 w-4" />, cost: CREDIT_SPENDING.store_discount_10pct },
-  { key: "care_discount_5pct", label: "5% Care Discount", icon: <Gift className="h-4 w-4" />, cost: CREDIT_SPENDING.care_discount_5pct },
-  { key: "care_discount_10pct", label: "10% Care Discount", icon: <Gift className="h-4 w-4" />, cost: CREDIT_SPENDING.care_discount_10pct },
-];
 
 const EARN_INFO = [
   { action: "Create Post", credits: CREDIT_REWARDS.create_post },
@@ -29,21 +17,8 @@ const EARN_INFO = [
 ];
 
 const CreditsPanel = () => {
-  const { balance, dailyEarned, monthlyEarned, dailyLimit, monthlyLimit, transactions, spendCredits, loading } = useCredits();
-  const { toast } = useToast();
-  const [spending, setSpending] = useState(false);
+  const { balance, dailyEarned, monthlyEarned, dailyLimit, monthlyLimit, transactions, loading } = useCredits();
   const [showHistory, setShowHistory] = useState(false);
-
-  const handleSpend = async (action: CreditSpendAction, label: string) => {
-    setSpending(true);
-    const ok = await spendCredits(action);
-    if (ok) {
-      toast({ title: `${label} activated!`, description: "Credits deducted from your balance." });
-    } else {
-      toast({ title: "Not enough credits", variant: "destructive" });
-    }
-    setSpending(false);
-  };
 
   if (loading) return <div className="p-6 text-center text-muted-foreground">Loading credits...</div>;
 
@@ -66,7 +41,10 @@ const CreditsPanel = () => {
           </div>
           <p className="text-xs text-muted-foreground">1 Credit = 1 MKD discount · Platform currency only</p>
           <div className="mt-3 rounded-xl bg-accent/10 border border-accent/20 p-2.5">
-            <p className="text-[11px] text-accent font-semibold">💡 Credits reduce your payment at checkout (max 4% per order) — they cannot be withdrawn as cash.</p>
+            <p className="text-[11px] text-accent font-semibold">
+              <ShoppingBag className="inline h-3.5 w-3.5 mr-1" />
+              Credits can only be used for marketplace purchases at checkout.
+            </p>
           </div>
         </CardContent>
       </Card>
