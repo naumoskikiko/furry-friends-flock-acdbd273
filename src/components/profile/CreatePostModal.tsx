@@ -327,6 +327,14 @@ const CreatePostModal = ({ open, onOpenChange, onPostCreated, pets }: CreatePost
         </div>
       </DialogContent>
     </Dialog>
+
+    <TagPeopleModal
+      open={tagModalOpen}
+      onOpenChange={setTagModalOpen}
+      selectedUsers={taggedUsers}
+      onDone={setTaggedUsers}
+    />
+    </>
   );
 };
 
