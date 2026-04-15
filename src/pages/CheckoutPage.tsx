@@ -138,6 +138,11 @@ const CheckoutPage = () => {
   };
 
   const handlePlaceOrder = async () => {
+    if (deliveryBlocked) {
+      toast({ title: "Delivery unavailable", description: "This business does not deliver to your location", variant: "destructive" });
+      throw new Error("Outside delivery radius");
+    }
+
     if (!shippingValid) {
       const message = shippingSchema.safeParse(shipping);
       const firstIssue = message.success ? "Enter valid shipping details" : message.error.issues[0]?.message;
