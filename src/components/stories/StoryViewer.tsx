@@ -230,7 +230,7 @@ const StoryViewer = ({
 
   // --- Gesture handlers ---
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (showReply || insightsOpen) return;
+    if (showReply || insightsOpen || showMenu || confirmDeleteOpen) return;
     const { clientX, clientY } = e.touches[0];
     touchStartRef.current = { x: clientX, y: clientY, time: Date.now() };
     gestureActiveRef.current = "none";
