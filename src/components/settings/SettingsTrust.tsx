@@ -61,12 +61,6 @@ const SettingsTrust = () => {
           Request Badge
         </Button>
       </div>
-
-      {/* Background Check */}
-      <div className="rounded-2xl bg-secondary/50 p-4 border border-dashed border-border">
-        <p className="text-sm font-bold text-muted-foreground">Background Check</p>
-        <p className="text-xs text-muted-foreground mt-1">Coming soon — Enhanced trust for professional sitters</p>
-      </div>
     </div>
   );
 };
