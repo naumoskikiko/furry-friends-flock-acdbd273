@@ -692,10 +692,6 @@ const StoryViewer = ({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Close menu on outside click */}
-      {showMenu && !confirmDeleteOpen && (
-        <div className="fixed inset-0 z-[101]" onClick={() => setShowMenu(false)} />
-      )}
 
       {/* Location map viewer */}
       {locationMap && (
