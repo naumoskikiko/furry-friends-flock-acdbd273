@@ -3,7 +3,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, MessageCircle, ShoppingBag, CalendarCheck, PawPrint, MapPin, Shield, Bell, X } from "lucide-react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { Heart, MessageCircle, ShoppingBag, CalendarCheck, PawPrint, MapPin, Shield, Bell, BellOff, X, Pill } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const AVAILABLE_TYPES = ["Social", "Messages", "Orders", "Bookings", "PetMatch", "Tracking", "System"];
 
@@ -112,6 +114,8 @@ const SettingsNotifications = () => {
     </div>
   );
 
+  const { permissionStatus, enablePush, loading: pushLoading } = usePushNotifications();
+
   return (
     <div className="px-4 py-4 space-y-4">
       {/* Quick info */}
@@ -119,6 +123,31 @@ const SettingsNotifications = () => {
         <p className="text-xs text-muted-foreground text-center">
           Control what notifications you receive. Changes apply instantly.
         </p>
+      </div>
+
+      {/* Push Permission & Medication Reminders */}
+      <div className="rounded-2xl bg-card p-4 petkeep-card-shadow space-y-3">
+        <p className="text-sm font-bold">💊 Medication Reminders</p>
+        <p className="text-xs text-muted-foreground">
+          Get push notifications when it's time to give your pet their medication.
+        </p>
+        {permissionStatus !== "granted" ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-9 text-xs font-bold"
+            onClick={enablePush}
+            disabled={pushLoading}
+          >
+            <BellOff className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+            {pushLoading ? "Enabling..." : "Enable Push Notifications"}
+          </Button>
+        ) : (
+          <div className="flex items-center gap-2 rounded-xl bg-petkeep-green/10 px-3 py-2">
+            <Bell className="h-4 w-4 text-petkeep-green" />
+            <span className="text-xs font-bold text-petkeep-green">Push notifications enabled</span>
+          </div>
+        )}
       </div>
 
       <Section title="Push Notifications" emoji="🔔" items={pushItems} />

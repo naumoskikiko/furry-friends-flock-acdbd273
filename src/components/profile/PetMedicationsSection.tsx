@@ -59,15 +59,6 @@ const PetMedicationsSection = ({ petId, petName }: Props) => {
           <p className="text-sm font-bold">Medications</p>
         </div>
         <div className="flex items-center gap-1">
-          {permissionStatus !== "granted" ? (
-            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={enablePush} disabled={pushLoading}>
-              <BellOff className="h-3.5 w-3.5 mr-1 text-muted-foreground" /> Enable Push
-            </Button>
-          ) : (
-            <span className="flex items-center gap-1 text-[10px] text-petkeep-green font-bold">
-              <Bell className="h-3 w-3" /> Push On
-            </span>
-          )}
           <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setShowAdd(!showAdd)}>
             <Plus className="h-3.5 w-3.5 mr-1" /> Add
           </Button>
