@@ -26,6 +26,7 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   fontSize: string;
   setAppFontSize: (fs: string) => void;
+  loadedLanguage: string | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -37,6 +38,7 @@ const AuthContext = createContext<AuthContextType>({
   refreshProfile: async () => {},
   fontSize: "normal",
   setAppFontSize: () => {},
+  loadedLanguage: null,
 });
 
 export const useAuth = () => useContext(AuthContext);
