@@ -14,6 +14,7 @@ const SettingsPayments = () => {
   const { toast } = useToast();
   const { details, loading: detailsLoading, save } = useMyPayoutDetails();
   const { requests, loading: reqLoading, requestPayout } = useMyPayoutRequests();
+  const { orders, loading: ordersLoading } = useMyOrders();
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
