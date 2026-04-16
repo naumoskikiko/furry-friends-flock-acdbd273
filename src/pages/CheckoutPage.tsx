@@ -170,7 +170,18 @@ const CheckoutPage = () => {
         business_id: item.product?.business_id || "",
       }));
 
-      const id = await createOrder(cartItems, shipping);
+      const round2 = (n: number) => Math.round(n * 100) / 100;
+      if (import.meta.env.DEV) {
+        console.log("[checkout] paying", { subtotal: totalPrice, deliveryFee, discount, creditsApplied, grandTotal });
+      }
+
+      const id = await createOrder(cartItems, shipping, {
+        subtotal: round2(totalPrice),
+        deliveryFee: round2(deliveryFee),
+        discount: round2(discount),
+        creditsUsed: round2(creditsApplied),
+        totalPaid: round2(grandTotal),
+      });
       
       // Apply credits discount
       if (creditsApplied > 0) {
