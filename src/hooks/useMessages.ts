@@ -617,10 +617,16 @@ export function useChatMessages(conversationId: string | null) {
     fetchMessages();
   }, [fetchMessages]);
 
-  // Realtime
+  // Realtime — attaches to current conversation, cleans up on switch, with status logging + safety polling
   useEffect(() => {
     if (!conversationId) return;
-    const channelName = `chat-${conversationId}-${Math.random().toString(36).slice(2, 8)}`;
+    const userId = user?.id;
+    const channelName = `chat-${conversationId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    let isSubscribed = false;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+    console.log(`[realtime] attaching listener for chat ${conversationId} (channel=${channelName})`);
+
     const channel = supabase
       .channel(channelName)
       .on(
@@ -628,8 +634,9 @@ export function useChatMessages(conversationId: string | null) {
         { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
         (payload) => {
           const newMsg = payload.new as Message;
+          console.log(`[realtime] INSERT received for ${conversationId}`, newMsg.id);
           setMessages((prev) => upsertMessage(prev, newMsg));
-          if (user && newMsg.sender_id !== user.id) {
+          if (userId && newMsg.sender_id !== userId) {
             fromTable("messages").update({ is_read: true }).eq("id", newMsg.id).then();
           }
         }
@@ -651,13 +658,33 @@ export function useChatMessages(conversationId: string | null) {
         }
       )
       .subscribe((status) => {
-        if (status === "CHANNEL_ERROR") {
-          // Fallback: refetch messages on subscription error
-          setTimeout(() => fetchMessages(), 1000);
+        console.log(`[realtime] channel ${channelName} status: ${status}`);
+        if (status === "SUBSCRIBED") {
+          isSubscribed = true;
+          // Stop polling fallback once realtime is healthy
+          if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+          }
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          isSubscribed = false;
+          // Activate polling fallback so messages still flow
+          if (!pollTimer) {
+            console.warn(`[realtime] degraded (${status}) — enabling 3s polling fallback`);
+            pollTimer = setInterval(() => fetchMessages(), 3000);
+          }
         }
       });
 
-    // Visibility change handler - refetch when tab becomes visible
+    // Safety net: if realtime hasn't subscribed within 4s, start polling
+    const subscribeWatchdog = setTimeout(() => {
+      if (!isSubscribed && !pollTimer) {
+        console.warn(`[realtime] subscribe watchdog firing for ${conversationId} — enabling polling`);
+        pollTimer = setInterval(() => fetchMessages(), 3000);
+      }
+    }, 4000);
+
+    // Visibility change handler — refetch when tab becomes visible
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
         fetchMessages();
@@ -666,10 +693,13 @@ export function useChatMessages(conversationId: string | null) {
     document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
+      console.log(`[realtime] detaching listener for chat ${conversationId}`);
+      clearTimeout(subscribeWatchdog);
+      if (pollTimer) clearInterval(pollTimer);
       supabase.removeChannel(channel);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [conversationId, user]);
+  }, [conversationId, user?.id, fetchMessages]);
 
   // --- Send with optional reply + offline support + optimistic UI ---
   const sendMessage = useCallback(
