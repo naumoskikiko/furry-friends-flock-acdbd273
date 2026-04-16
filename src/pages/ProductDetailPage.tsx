@@ -315,14 +315,24 @@ const ProductDetailPage = () => {
           {relatedProducts.length > 0 && (
             <div>
               <h3 className="text-sm font-bold mb-2">You might also like</h3>
-              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 snap-x snap-mandatory">
                 {relatedProducts.map((rp) => (
-                  <div key={rp.id} onClick={() => navigate(`/product/${rp.id}`)}
-                    className="min-w-[140px] rounded-2xl bg-card border border-border overflow-hidden shrink-0 petkeep-card-hover cursor-pointer">
-                    <ProductImage src={rp.image_url} alt={rp.name} category={rp.category} size="lg" aspectRatio="square" className="rounded-t-2xl" />
-                    <div className="p-2">
-                      <p className="text-[10px] font-bold truncate">{rp.name}</p>
-                      <p className="text-xs font-extrabold text-primary mt-0.5">{rp.price} MKD</p>
+                  <div
+                    key={rp.id}
+                    onClick={() => navigate(`/product/${rp.id}`)}
+                    className="w-[150px] shrink-0 snap-start rounded-2xl bg-card border border-border overflow-hidden petkeep-card-hover cursor-pointer flex flex-col"
+                  >
+                    <ProductImage
+                      src={rp.image_url}
+                      alt={rp.name}
+                      category={rp.category}
+                      size="lg"
+                      aspectRatio="square"
+                      className="rounded-t-2xl"
+                    />
+                    <div className="p-2 flex flex-col gap-0.5 min-w-0">
+                      <p className="text-xs font-bold truncate">{rp.name}</p>
+                      <p className="text-sm font-extrabold text-primary">{rp.price} MKD</p>
                     </div>
                   </div>
                 ))}
