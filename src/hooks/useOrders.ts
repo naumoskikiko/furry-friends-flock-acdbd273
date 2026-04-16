@@ -11,6 +11,11 @@ export interface Order {
   id: string;
   buyer_id: string;
   total_price: number;
+  subtotal: number;
+  delivery_fee: number;
+  discount: number;
+  credits_used: number;
+  total_paid: number;
   platform_fee: number;
   status: string;
   shipping_name: string;
@@ -45,6 +50,14 @@ export interface ShippingInfo {
   city: string;
   postalCode: string;
   country: string;
+}
+
+export interface PriceBreakdown {
+  subtotal: number;
+  deliveryFee: number;
+  discount: number;
+  creditsUsed: number;
+  totalPaid: number;
 }
 
 export function useCreateOrder() {
