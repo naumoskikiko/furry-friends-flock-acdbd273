@@ -206,7 +206,7 @@ const CheckoutPage = () => {
     }
   };
 
-  if (cartLoading || paymentLoading) {
+  if (cartLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center py-20">
