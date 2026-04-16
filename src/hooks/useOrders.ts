@@ -70,18 +70,38 @@ export function useCreateOrder() {
       price: number;
       business_id: string;
     }>,
-    shipping: ShippingInfo
+    shipping: ShippingInfo,
+    breakdown?: PriceBreakdown
   ) => {
     if (!user) throw new Error("Not authenticated");
 
-    const totalPrice = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-    const platformFee = Math.round(totalPrice * PLATFORM_FEE_RATE * 100) / 100;
+    const subtotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    // Authoritative single-source-of-truth values, rounded to 2 decimals
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+    const finalSubtotal = round2(breakdown?.subtotal ?? subtotal);
+    const finalDeliveryFee = round2(breakdown?.deliveryFee ?? 0);
+    const finalDiscount = round2(breakdown?.discount ?? 0);
+    const finalCreditsUsed = round2(breakdown?.creditsUsed ?? 0);
+    const finalTotalPaid = round2(
+      breakdown?.totalPaid ??
+      Math.max(0, finalSubtotal + finalDeliveryFee - finalDiscount - finalCreditsUsed)
+    );
+    const platformFee = round2(finalSubtotal * PLATFORM_FEE_RATE);
+
+    if (import.meta.env.DEV) {
+      console.log("[order] create breakdown", { finalSubtotal, finalDeliveryFee, finalDiscount, finalCreditsUsed, finalTotalPaid });
+    }
 
     // Create order
     const { data: order, error: orderError } = await fromTable("orders")
       .insert({
         buyer_id: user.id,
-        total_price: totalPrice,
+        total_price: finalTotalPaid,
+        subtotal: finalSubtotal,
+        delivery_fee: finalDeliveryFee,
+        discount: finalDiscount,
+        credits_used: finalCreditsUsed,
+        total_paid: finalTotalPaid,
         platform_fee: platformFee,
         status: "paid",
         shipping_name: shipping.name,
