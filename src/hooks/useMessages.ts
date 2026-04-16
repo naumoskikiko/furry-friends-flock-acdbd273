@@ -620,7 +620,7 @@ export function useChatMessages(conversationId: string | null) {
   // Realtime
   useEffect(() => {
     if (!conversationId) return;
-    const channelName = `chat-${conversationId}`;
+    const channelName = `chat-${conversationId}-${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
       .channel(channelName)
       .on(
