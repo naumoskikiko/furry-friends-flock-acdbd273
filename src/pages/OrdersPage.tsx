@@ -73,11 +73,37 @@ const OrdersPage = () => {
                     ))}
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-border">
+                  <div className="mt-3 pt-3 border-t border-border space-y-1">
                     <p className="text-[10px] text-muted-foreground">Ship to: {order.shipping_name}, {order.shipping_city}</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs text-muted-foreground">Total</span>
-                      <span className="text-sm font-extrabold text-primary">{Number(order.total_price).toLocaleString()} MKD</span>
+                    {Number(order.subtotal) > 0 && (
+                      <div className="flex justify-between text-[10px] text-muted-foreground pt-1">
+                        <span>Subtotal</span>
+                        <span>{Number(order.subtotal).toFixed(2)} MKD</span>
+                      </div>
+                    )}
+                    {Number(order.delivery_fee) > 0 && (
+                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                        <span>Delivery</span>
+                        <span>{Number(order.delivery_fee).toFixed(2)} MKD</span>
+                      </div>
+                    )}
+                    {Number(order.discount) > 0 && (
+                      <div className="flex justify-between text-[10px] text-primary">
+                        <span>Discount</span>
+                        <span>-{Number(order.discount).toFixed(2)} MKD</span>
+                      </div>
+                    )}
+                    {Number(order.credits_used) > 0 && (
+                      <div className="flex justify-between text-[10px] text-primary">
+                        <span>Credits used</span>
+                        <span>-{Number(order.credits_used).toFixed(2)} MKD</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xs font-bold">Total Paid</span>
+                      <span className="text-sm font-extrabold text-primary">
+                        {Number(order.total_paid ?? order.total_price).toFixed(2)} MKD
+                      </span>
                     </div>
                   </div>
                 </div>

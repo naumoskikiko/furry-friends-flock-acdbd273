@@ -1484,6 +1484,9 @@ export type Database = {
         Row: {
           buyer_id: string
           created_at: string
+          credits_used: number
+          delivery_fee: number
+          discount: number
           id: string
           platform_fee: number
           shipping_address: string
@@ -1493,12 +1496,17 @@ export type Database = {
           shipping_phone: string
           shipping_postal_code: string
           status: string
+          subtotal: number
+          total_paid: number
           total_price: number
           updated_at: string
         }
         Insert: {
           buyer_id: string
           created_at?: string
+          credits_used?: number
+          delivery_fee?: number
+          discount?: number
           id?: string
           platform_fee?: number
           shipping_address?: string
@@ -1508,12 +1516,17 @@ export type Database = {
           shipping_phone?: string
           shipping_postal_code?: string
           status?: string
+          subtotal?: number
+          total_paid?: number
           total_price?: number
           updated_at?: string
         }
         Update: {
           buyer_id?: string
           created_at?: string
+          credits_used?: number
+          delivery_fee?: number
+          discount?: number
           id?: string
           platform_fee?: number
           shipping_address?: string
@@ -1523,6 +1536,8 @@ export type Database = {
           shipping_phone?: string
           shipping_postal_code?: string
           status?: string
+          subtotal?: number
+          total_paid?: number
           total_price?: number
           updated_at?: string
         }
