@@ -1543,51 +1543,6 @@ export type Database = {
         }
         Relationships: []
       }
-      payment_methods: {
-        Row: {
-          card_brand: string
-          card_last4: string
-          cardholder_name: string
-          created_at: string
-          exp_month: number
-          exp_year: number
-          id: string
-          is_default: boolean
-          provider: string
-          provider_payment_method_id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          card_brand?: string
-          card_last4: string
-          cardholder_name: string
-          created_at?: string
-          exp_month: number
-          exp_year: number
-          id?: string
-          is_default?: boolean
-          provider?: string
-          provider_payment_method_id: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          card_brand?: string
-          card_last4?: string
-          cardholder_name?: string
-          created_at?: string
-          exp_month?: number
-          exp_year?: number
-          id?: string
-          is_default?: boolean
-          provider?: string
-          provider_payment_method_id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       payout_details: {
         Row: {
           account_number: string
