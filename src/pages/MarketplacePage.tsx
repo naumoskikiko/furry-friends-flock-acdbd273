@@ -46,14 +46,14 @@ const StoreRow = ({ b, navigate, distance }: { b: any; navigate: (path: string) 
               {Number(b.avg_rating).toFixed(1)} ({b.total_reviews})
             </span>
           )}
-          {distance != null && (
-            <span className="flex items-center gap-0.5 text-primary font-semibold">
-              <MapPin className="h-2.5 w-2.5" /> {formatDistance(distance)}
-            </span>
-          )}
-          {distance == null && b.location && (
+          {b.location && (
             <span className="flex items-center gap-0.5">
               <MapPin className="h-2.5 w-2.5" /> {b.location}
+            </span>
+          )}
+          {b.delivery_available && (
+            <span className="flex items-center gap-0.5 text-primary font-semibold">
+              <Truck className="h-2.5 w-2.5" /> Delivery
             </span>
           )}
         </div>
