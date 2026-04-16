@@ -495,7 +495,7 @@ export function useTotalUnread() {
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel("unread-count")
+      .channel(`unread-count-${user.id}-${Math.random().toString(36).slice(2, 8)}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
         fetchCount();
       })
