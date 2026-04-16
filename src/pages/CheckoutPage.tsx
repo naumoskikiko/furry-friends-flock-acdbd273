@@ -333,40 +333,71 @@ const CheckoutPage = () => {
               </div>
             </div>
 
-            {/* Payment method */}
+            {/* Payment method — manual entry only, never saved */}
             <div className="rounded-2xl bg-card border border-border p-4">
               <div className="flex items-center gap-2 mb-3">
                 <CreditCard className="h-4 w-4 text-primary" />
                 <h3 className="text-sm font-bold">Payment Method</h3>
               </div>
-              {hasSavedCard ? (
-                <div className="rounded-xl bg-secondary p-3">
-                  <p className="text-xs font-semibold capitalize">{defaultMethod?.card_brand} •••• {defaultMethod?.card_last4}</p>
-                  <p className="text-[10px] text-muted-foreground">Expires {String(defaultMethod?.exp_month).padStart(2, "0")}/{String(defaultMethod?.exp_year).slice(-2)} · {defaultMethod?.cardholder_name}</p>
+              <form autoComplete="off" onSubmit={(e) => e.preventDefault()} className="space-y-3">
+                <p className="text-[10px] text-muted-foreground">Enter your card details — they are not saved.</p>
+                {/* Hidden dummy fields to discourage browser autofill */}
+                <input type="text" name="prevent_autofill" autoComplete="off" className="hidden" />
+                <input type="password" name="password_fake" autoComplete="new-password" className="hidden" />
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Card number</Label>
+                  <Input
+                    inputMode="numeric"
+                    autoComplete="off"
+                    name="cc-number-nosave"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    value={cardForm.cardNumber}
+                    onChange={(e) => setCardForm((p) => ({ ...p, cardNumber: e.target.value.replace(/[^\d\s]/g, "") }))}
+                    placeholder="1234 5678 9012 3456"
+                  />
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground">Add Payment Method</p>
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Card number</Label>
-                    <Input inputMode="numeric" autoComplete="cc-number" value={cardForm.cardNumber} onChange={(e) => setCardForm((p) => ({ ...p, cardNumber: e.target.value.replace(/[^\d\s]/g, "") }))} placeholder="4242 4242 4242 4242" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Expiration</Label>
-                      <Input autoComplete="cc-exp" value={cardForm.expiry} onChange={(e) => setCardForm((p) => ({ ...p, expiry: e.target.value.replace(/[^\d/]/g, "") }))} placeholder="MM/YY" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">CVV</Label>
-                      <Input inputMode="numeric" autoComplete="cc-csc" type="password" value={cardForm.cvv} onChange={(e) => setCardForm((p) => ({ ...p, cvv: e.target.value.replace(/\D/g, "") }))} placeholder="123" />
-                    </div>
+                    <Label className="text-xs">Expiration</Label>
+                    <Input
+                      autoComplete="off"
+                      name="cc-exp-nosave"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      value={cardForm.expiry}
+                      onChange={(e) => setCardForm((p) => ({ ...p, expiry: e.target.value.replace(/[^\d/]/g, "") }))}
+                      placeholder="MM/YY"
+                    />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Card holder name</Label>
-                    <Input autoComplete="cc-name" value={cardForm.cardholderName} onChange={(e) => setCardForm((p) => ({ ...p, cardholderName: e.target.value }))} placeholder="Card holder name" />
+                    <Label className="text-xs">CVV</Label>
+                    <Input
+                      inputMode="numeric"
+                      autoComplete="off"
+                      name="cc-csc-nosave"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      type="password"
+                      value={cardForm.cvv}
+                      onChange={(e) => setCardForm((p) => ({ ...p, cvv: e.target.value.replace(/\D/g, "") }))}
+                      placeholder="123"
+                    />
                   </div>
                 </div>
-              )}
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Card holder name</Label>
+                  <Input
+                    autoComplete="off"
+                    name="cc-name-nosave"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    value={cardForm.cardholderName}
+                    onChange={(e) => setCardForm((p) => ({ ...p, cardholderName: e.target.value }))}
+                    placeholder="Card holder name"
+                  />
+                </div>
+              </form>
             </div>
 
             {/* Credits */}
