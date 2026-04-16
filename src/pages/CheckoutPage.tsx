@@ -13,7 +13,7 @@ import { useApplyCoupon } from "@/hooks/useCoupons";
 import { useToast } from "@/hooks/use-toast";
 import { useCredits } from "@/hooks/useCredits";
 import SlideToPayButton from "@/components/marketplace/SlideToPayButton";
-import { usePaymentMethods } from "@/hooks/usePaymentMethods";
+
 import ProductImage from "@/components/marketplace/ProductImage";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { canDeliver, getDeliveryDistance, formatDistance } from "@/lib/deliveryRadius";
@@ -40,7 +40,7 @@ const CheckoutPage = () => {
   const { items, totalPrice, itemCount, loading: cartLoading } = useCart();
   const { createOrder } = useCreateOrder();
   const { applyCoupon, incrementUsage, applying } = useApplyCoupon();
-  const { defaultMethod, saveCard, loading: paymentLoading } = usePaymentMethods();
+  
   const { balance: creditBalance, applyCreditsToPayment } = useCredits();
   const { location: userLocation, requestLocation } = useUserLocation();
 
@@ -91,13 +91,12 @@ const CheckoutPage = () => {
   const grandTotal = Math.max(0, subtotalAfterDiscount - creditsApplied);
 
   const shippingValid = useMemo(() => shippingSchema.safeParse(shipping).success, [shipping]);
-  const hasSavedCard = !!defaultMethod;
-  const cardValid = useMemo(() => hasSavedCard || cardSchema.safeParse({
+  const cardValid = useMemo(() => cardSchema.safeParse({
     cardNumber: cardForm.cardNumber.replace(/\s+/g, ""),
     expiry: cardForm.expiry,
     cvv: cardForm.cvv,
     cardholderName: cardForm.cardholderName,
-  }).success, [hasSavedCard, cardForm]);
+  }).success, [cardForm]);
 
   const canPay = shippingValid && cardValid && items.length > 0;
 
