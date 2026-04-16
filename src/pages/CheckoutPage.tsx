@@ -151,15 +151,18 @@ const CheckoutPage = () => {
 
     setProcessingPayment(true);
     try {
-      let method = defaultMethod;
-      if (!method) {
-        method = await saveCard({
-          cardNumber: cardForm.cardNumber, expiry: cardForm.expiry,
-          cvv: cardForm.cvv, cardholderName: cardForm.cardholderName,
-        });
+      // Validate card details freshly entered for this checkout
+      const parsedCard = cardSchema.safeParse({
+        cardNumber: cardForm.cardNumber.replace(/\s+/g, ""),
+        expiry: cardForm.expiry,
+        cvv: cardForm.cvv,
+        cardholderName: cardForm.cardholderName,
+      });
+      if (!parsedCard.success) {
+        throw new Error(parsedCard.error.issues[0]?.message || "Enter valid card details");
       }
-      if (!method) throw new Error("Add a payment method first");
 
+      // Tokenize + charge via payment provider (simulated). Card details are NEVER persisted.
       await simulateCardCharge();
 
       const cartItems = items.map((item) => ({
