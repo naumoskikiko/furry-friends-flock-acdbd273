@@ -39,14 +39,19 @@ const AuthPage = () => {
 
   const check2FAStatus = async (userId: string): Promise<boolean> => {
     try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      };
+      if (currentSession?.access_token) {
+        headers.Authorization = `Bearer ${currentSession.access_token}`;
+      }
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/totp`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
+          headers,
           body: JSON.stringify({ action: "check-status", user_id: userId }),
         }
       );

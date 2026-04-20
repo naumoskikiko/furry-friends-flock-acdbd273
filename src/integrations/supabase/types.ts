@@ -3392,11 +3392,7 @@ export type Database = {
         Returns: string
       }
       create_meetup_chat: {
-        Args: {
-          _blog_post_id: string
-          _creator_id: string
-          _meetup_title: string
-        }
+        Args: { _blog_post_id: string; _meetup_title: string }
         Returns: string
       }
       group_add_member: {
@@ -3436,14 +3432,8 @@ export type Database = {
         Args: { _order_id: string; _user_id: string }
         Returns: boolean
       }
-      join_meetup_chat: {
-        Args: { _blog_post_id: string; _user_id: string }
-        Returns: undefined
-      }
-      leave_meetup_chat: {
-        Args: { _blog_post_id: string; _user_id: string }
-        Returns: undefined
-      }
+      join_meetup_chat: { Args: { _blog_post_id: string }; Returns: undefined }
+      leave_meetup_chat: { Args: { _blog_post_id: string }; Returns: undefined }
       process_care_payment: {
         Args: {
           _booking_id: string

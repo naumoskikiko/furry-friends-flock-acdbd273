@@ -57,10 +57,15 @@ const MessagesPage = () => {
 
         // Auto-create chat if missing (fallback for older meetups)
         if (!convId) {
+          // Only the meetup creator can create the chat now (server-enforced)
+          if (blogPost.user_id !== user.id) {
+            toast({ title: "Meetup chat not ready yet", description: "The organizer needs to open it first.", variant: "destructive" });
+            setSearchParams({}, { replace: true });
+            return;
+          }
           try {
             const { data: newConvId } = await (supabase as any).rpc("create_meetup_chat", {
               _blog_post_id: meetupId,
-              _creator_id: blogPost.user_id,
               _meetup_title: blogPost.title,
             });
             convId = newConvId;
@@ -92,7 +97,7 @@ const MessagesPage = () => {
           if (eventPart) {
             // Auto-add to chat
             try {
-              await (supabase as any).rpc("join_meetup_chat", { _blog_post_id: meetupId, _user_id: user.id });
+              await (supabase as any).rpc("join_meetup_chat", { _blog_post_id: meetupId });
             } catch {}
           } else {
             toast({ title: "Join the meetup to access the chat", variant: "destructive" });

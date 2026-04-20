@@ -255,14 +255,14 @@ const BlogArticleViewer = ({ post, open, onOpenChange, onRefresh }: BlogArticleV
       await fromTable("blog_event_participants").insert({ blog_post_id: post.id, user_id: user.id });
       // Auto-join meetup chat
       try {
-        await (supabase as any).rpc("join_meetup_chat", { _blog_post_id: post.id, _user_id: user.id });
+        await (supabase as any).rpc("join_meetup_chat", { _blog_post_id: post.id });
       } catch {}
       toast({ title: "You joined the event! 🎉" });
     } else {
       await fromTable("blog_event_participants").delete().eq("blog_post_id", post.id).eq("user_id", user.id);
       // Auto-leave meetup chat
       try {
-        const { error } = await (supabase as any).rpc("leave_meetup_chat", { _blog_post_id: post.id, _user_id: user.id });
+        const { error } = await (supabase as any).rpc("leave_meetup_chat", { _blog_post_id: post.id });
         if (error) console.error("leave_meetup_chat error:", error);
       } catch (e) { console.error("leave_meetup_chat exception:", e); }
       toast({ title: "Left the event" });
