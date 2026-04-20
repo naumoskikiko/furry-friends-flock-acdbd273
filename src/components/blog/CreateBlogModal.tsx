@@ -161,7 +161,6 @@ const CreateBlogModal = ({ open, onOpenChange, onBlogCreated }: CreateBlogModalP
       try {
         await (supabase as any).rpc("create_meetup_chat", {
           _blog_post_id: data.id,
-          _creator_id: user.id,
           _meetup_title: title.trim(),
         });
       } catch (chatErr) {
