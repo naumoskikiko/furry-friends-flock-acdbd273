@@ -115,6 +115,21 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action } = body;
 
+    // verify-login is intentionally unauthenticated (called between password
+    // step and full session establishment), but every other action must be
+    // authenticated. We resolve the caller's identity once up-front so we can
+    // gate sensitive actions like check-status against it.
+    let callerId: string | null = null;
+    let callerEmail = "user";
+    if (authHeader?.startsWith("Bearer ")) {
+      const jwt = authHeader.replace("Bearer ", "");
+      const { data: claimsData } = await supabaseAuth.auth.getClaims(jwt);
+      if (claimsData?.claims?.sub) {
+        callerId = String(claimsData.claims.sub);
+        callerEmail = String(claimsData.claims.email ?? "user");
+      }
+    }
+
     if (action === "verify-login") {
       const { user_id, token } = body;
       if (!user_id || !token) {
@@ -155,33 +170,27 @@ Deno.serve(async (req) => {
     }
 
     if (action === "check-status") {
-      const { user_id } = body;
-      if (!user_id) {
-        return json({ error: "Missing user_id" }, 400);
+      // Require auth and only allow checking your OWN status to prevent
+      // unauthenticated account/2FA enumeration.
+      if (!callerId) {
+        return json({ error: "Unauthorized" }, 401);
       }
 
       const { data: totp } = await supabaseAdmin
         .from("totp_secrets")
         .select("is_verified")
-        .eq("user_id", user_id)
+        .eq("user_id", callerId)
         .single();
 
       return json({ enabled: totp?.is_verified === true });
     }
 
-    if (!authHeader?.startsWith("Bearer ")) {
+    if (!callerId) {
       return json({ error: "Unauthorized" }, 401);
     }
 
-    const jwt = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(jwt);
-
-    if (claimsError || !claimsData?.claims?.sub) {
-      return json({ error: "Unauthorized" }, 401);
-    }
-
-    const userId = String(claimsData.claims.sub);
-    const userEmail = String(claimsData.claims.email ?? "user");
+    const userId = callerId;
+    const userEmail = callerEmail;
 
     if (action === "setup") {
       const secret = generateBase32Secret();
