@@ -566,7 +566,7 @@ const PetMatchTab = () => {
   const handleCreate = async () => {
     if (!selectedPet || !user) return;
     // Gate: pet must have at least one verified document
-    const pet = myPets.find(p => p.id === selectedPet);
+    const pet = pets.find(p => p.id === selectedPet);
     if (!pet?.is_verified) {
       toast({
         title: "Verification required",
