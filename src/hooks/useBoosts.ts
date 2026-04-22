@@ -99,7 +99,7 @@ export function useAllBoosts() {
   return { boosts, loading, refresh, cancelBoost, extendBoost };
 }
 
-// Get boost pricing
+// Get boost pricing — live-syncs across the app via realtime
 export function useBoostPricing(boostType?: string) {
   const [pricing, setPricing] = useState<BoostPricing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,9 +115,49 @@ export function useBoostPricing(boostType?: string) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  // Subscribe to live pricing changes so admin edits propagate everywhere instantly
+  useEffect(() => {
+    const channel = supabase
+      .channel(`boost-pricing-${boostType || "all"}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "boost_pricing" },
+        (payload: any) => {
+          const row = (payload.new || payload.old) as BoostPricing | undefined;
+          if (!row) return;
+          if (boostType && row.boost_type !== boostType) return;
+          setPricing((prev) => {
+            if (payload.eventType === "DELETE") {
+              return prev.filter((p) => p.id !== row.id);
+            }
+            const next = payload.new as BoostPricing;
+            const idx = prev.findIndex((p) => p.id === next.id);
+            if (idx === -1) {
+              return [...prev, next].sort((a, b) => a.duration_hours - b.duration_hours);
+            }
+            const copy = [...prev];
+            copy[idx] = next;
+            return copy;
+          });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [boostType]);
+
   const updatePrice = async (id: string, price: number) => {
-    await fromTable("boost_pricing").update({ price, updated_at: new Date().toISOString() }).eq("id", id);
-    refresh();
+    // Optimistic update for the admin actor
+    setPricing((prev) => prev.map((p) => (p.id === id ? { ...p, price } : p)));
+    const { error } = await fromTable("boost_pricing")
+      .update({ price, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      // Revert on failure
+      refresh();
+      throw error;
+    }
   };
 
   return { pricing, loading, refresh, updatePrice };
