@@ -145,7 +145,12 @@ const PetProfileModal = ({ pet, open, onOpenChange, isOwner, onEdit, onDelete, o
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 gap-0 w-[100vw] sm:w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] max-h-[100dvh] rounded-none sm:rounded-lg border-0 sm:border overflow-y-auto top-0 sm:top-[50%] left-0 sm:left-[50%] translate-x-0 sm:translate-x-[-50%] translate-y-0 sm:translate-y-[-50%] pb-[calc(env(safe-area-inset-bottom)+16px)]">
+      <DialogContent className="w-screen max-w-none sm:max-w-md p-0 gap-0 h-[100dvh] sm:h-auto sm:max-h-[90vh] rounded-none sm:rounded-lg border-0 sm:border overflow-x-hidden overflow-y-auto inset-x-0 top-0 sm:left-[50%] sm:top-[50%] translate-x-0 sm:translate-x-[-50%] translate-y-0 sm:translate-y-[-50%] pb-[calc(env(safe-area-inset-bottom)+16px)]">
+        <DialogHeader className="sr-only">
+          <DialogTitle>{pet.name}</DialogTitle>
+          <DialogDescription>Pet profile details for {pet.name}.</DialogDescription>
+        </DialogHeader>
+
         {/* Photo */}
         <div className="relative">
           <button
@@ -155,9 +160,9 @@ const PetProfileModal = ({ pet, open, onOpenChange, isOwner, onEdit, onDelete, o
             <X className="h-4 w-4" />
           </button>
           {(editing ? form.photo_url : pet.photo_url) ? (
-            <img src={editing ? form.photo_url : pet.photo_url} alt={pet.name} className="w-full aspect-square object-cover" />
+            <img src={editing ? form.photo_url : pet.photo_url} alt={pet.name} className="w-full h-[38vh] min-h-[240px] max-h-[360px] object-cover sm:aspect-square sm:h-auto" />
           ) : (
-            <div className="w-full aspect-square bg-secondary flex items-center justify-center text-6xl">{emoji}</div>
+            <div className="w-full h-[38vh] min-h-[240px] max-h-[360px] bg-secondary flex items-center justify-center text-6xl sm:aspect-square sm:h-auto">{emoji}</div>
           )}
           {editing && (
             <label className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground cursor-pointer shadow-lg">
@@ -167,7 +172,7 @@ const PetProfileModal = ({ pet, open, onOpenChange, isOwner, onEdit, onDelete, o
           )}
         </div>
 
-        <div className="p-4 space-y-1">
+        <div className="p-4 space-y-1 overflow-x-hidden">
           {/* Header */}
           <div className="flex items-center justify-between">
             {editing ? (
