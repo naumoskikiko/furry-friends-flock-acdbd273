@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { HelpCircle, MessageSquare, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { HelpCircle, MessageSquare, AlertCircle, ChevronDown, ChevronUp, Info } from "lucide-react";
+import { APP_VERSION, APP_BUILD_ID, APP_BUILD_MODE, formatAppVersion } from "@/lib/appVersion";
 
 const faqs = [
   { q: "How do I book a pet sitter?", a: "Go to the Care tab, browse available sitters, and tap 'Book' to start the booking process." },
@@ -100,6 +101,31 @@ const SettingsSupport = () => {
         <Button onClick={handleSubmit} className="w-full petkeep-gradient text-primary-foreground font-bold" disabled={sending}>
           {sending ? "Sending..." : "Submit Ticket"}
         </Button>
+      </div>
+
+      {/* About — version + build, also copied into every support ticket */}
+      <div className="rounded-2xl bg-card p-4 petkeep-card-shadow space-y-2">
+        <p className="text-sm font-bold flex items-center gap-2">
+          <Info aria-hidden="true" className="h-4 w-4" /> About
+        </p>
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(formatAppVersion());
+            toast({ title: "Version copied", description: formatAppVersion() });
+          }}
+          className="w-full text-left rounded-lg bg-secondary px-3 py-2 text-xs font-mono text-muted-foreground hover:bg-secondary/80 transition-colors"
+          aria-label={`App version ${APP_VERSION}, build ${APP_BUILD_ID}. Tap to copy.`}
+        >
+          v{APP_VERSION} · {APP_BUILD_ID}
+          {APP_BUILD_MODE !== "production" && (
+            <span className="ml-2 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-primary">
+              {APP_BUILD_MODE}
+            </span>
+          )}
+        </button>
+        <p className="text-[11px] text-muted-foreground">
+          Include this when contacting support — it speeds up triage.
+        </p>
       </div>
     </div>
   );
