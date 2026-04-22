@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { trackScreen } from "@/lib/analytics";
+import { addBreadcrumb } from "@/lib/crashReporter";
 
 /**
  * Fires a `screen_view` analytics event whenever the route changes.
@@ -10,6 +11,9 @@ import { trackScreen } from "@/lib/analytics";
  *
  * We pass the *path pattern* rather than full URL to avoid leaking ids/usernames
  * into analytics. e.g. `/user/janedoe` becomes `/user/:slug`.
+ *
+ * Also drops a `navigation` breadcrumb so crash reports show the user's last
+ * few routes — invaluable for reproducing route-specific bugs post-launch.
  */
 function normalizePath(pathname: string): string {
   return (
@@ -29,7 +33,9 @@ function normalizePath(pathname: string): string {
 export default function AnalyticsRouteTracker() {
   const { pathname } = useLocation();
   useEffect(() => {
-    trackScreen(normalizePath(pathname));
+    const normalized = normalizePath(pathname);
+    trackScreen(normalized);
+    addBreadcrumb("navigation", `route ${normalized}`);
   }, [pathname]);
   return null;
 }
