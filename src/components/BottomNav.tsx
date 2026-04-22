@@ -84,29 +84,46 @@ const BottomNav = ({ onBeforeNavigate }: BottomNavProps) => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md pb-safe">
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md pb-safe"
+      role="navigation"
+      aria-label="Primary"
+    >
       <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-1 safe-x">
         {tabKeys.map(({ path, icon: Icon, labelKey }) => {
           const isActive = location.pathname === path;
           const showBadge = path === "/messages" && unreadCount > 0;
           const isRefreshing = refreshingTab === path;
+          const label = t(labelKey);
+          // Compose an accessible name that includes the unread count for screen
+          // readers — visual badge alone is invisible to assistive tech.
+          const ariaLabel =
+            showBadge ? `${label}, ${unreadCount} unread message${unreadCount === 1 ? "" : "s"}` : label;
           return (
             <button
               key={path}
               onClick={() => handleTabClick(path)}
+              aria-label={ariaLabel}
+              aria-current={isActive ? "page" : undefined}
               className={`relative flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 transition-colors ${
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <Icon className={`h-5 w-5 transition-transform duration-300 ${isActive ? "stroke-[2.5]" : ""} ${isRefreshing ? "animate-spin" : ""}`} />
+              <Icon
+                aria-hidden="true"
+                className={`h-5 w-5 transition-transform duration-300 ${isActive ? "stroke-[2.5]" : ""} ${isRefreshing ? "animate-spin" : ""}`}
+              />
               {showBadge && (
-                <span className="absolute -top-0.5 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
+                <span
+                  aria-hidden="true"
+                  className="absolute -top-0.5 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground"
+                >
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
-              <span className="text-[10px] font-semibold">{t(labelKey)}</span>
+              <span className="text-[10px] font-semibold">{label}</span>
             </button>
           );
         })}
