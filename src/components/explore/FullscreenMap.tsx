@@ -415,6 +415,7 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
           ))}
         </div>
       </div>
+      <LocationPermissionDialog />
     </div>
   );
 };

@@ -513,6 +513,7 @@ const MarketplacePage = () => {
 
       {showDashboard && <BusinessDashboard onClose={() => setShowDashboard(false)} />}
       <BusinessConflictModal conflict={businessConflict} onResolve={resolveConflict} />
+      <LocationPermissionDialog />
     </AppLayout>
   );
 };
