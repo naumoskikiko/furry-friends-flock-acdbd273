@@ -31,7 +31,7 @@ interface FullscreenMapProps {
 
 const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet }: FullscreenMapProps) => {
   const navigate = useNavigate();
-  const { location: userLocation, error: locationError, loading: locationLoading, requestLocation, startWatching, stopWatching } = useUserLocation();
+  const { location: userLocation, error: locationError, loading: locationLoading, requestLocation, startWatching, stopWatching, PermissionDialog: LocationPermissionDialog } = useUserLocation();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);

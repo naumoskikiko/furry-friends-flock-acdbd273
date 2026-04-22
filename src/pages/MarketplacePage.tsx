@@ -80,7 +80,7 @@ const MarketplacePage = () => {
   );
 
   // User location for delivery filtering
-  const { location: userLocation, requestLocation } = useUserLocation();
+  const { location: userLocation, requestLocation, PermissionDialog: LocationPermissionDialog } = useUserLocation();
 
   // Request location on mount
   useEffect(() => { requestLocation(); }, [requestLocation]);

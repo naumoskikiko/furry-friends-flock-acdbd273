@@ -42,7 +42,7 @@ const CheckoutPage = () => {
   const { applyCoupon, incrementUsage, applying } = useApplyCoupon();
   
   const { balance: creditBalance, applyCreditsToPayment } = useCredits();
-  const { location: userLocation, requestLocation } = useUserLocation();
+  const { location: userLocation, requestLocation, PermissionDialog: LocationPermissionDialog } = useUserLocation();
 
   useEffect(() => { requestLocation(); }, [requestLocation]);
 
