@@ -1,6 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { reportCrash } from "@/lib/crashReporter";
 
 interface Props {
   children: ReactNode;
@@ -30,10 +31,12 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    // Surface to the console; production deployments can wire this into a
-    // remote logger (Sentry / LogRocket / Cloud edge function) without
-    // touching call sites.
-    console.error(`[ErrorBoundary${this.props.area ? ` · ${this.props.area}` : ""}]`, error, info);
+    // Funnel through the central reporter so route/user/version context is
+    // attached and (in production) the report can be shipped to a sink.
+    reportCrash("react-error-boundary", error, {
+      area: this.props.area,
+      componentStack: info.componentStack ?? undefined,
+    });
   }
 
   reset = () => this.setState({ error: null });
