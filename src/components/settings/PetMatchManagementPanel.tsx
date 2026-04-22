@@ -103,7 +103,7 @@ const VerificationDetail = ({
           <button onClick={onClose} className="rounded-full p-1 hover:bg-secondary"><X className="h-4 w-4" /></button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-4">
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
           {/* Pet info */}
           <div className="flex items-start gap-3">
             <Avatar className="h-16 w-16 rounded-xl">
