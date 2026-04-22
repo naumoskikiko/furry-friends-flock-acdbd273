@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, createElement } from "react";
 import { usePermissionPrompt } from "@/hooks/usePermissionPrompt";
 import { PermissionPrompt } from "@/components/permissions/PermissionPrompt";
 
@@ -97,7 +97,7 @@ export const useUserLocation = () => {
     return () => stopWatching();
   }, [stopWatching]);
 
-  const PermissionDialog = () => <PermissionPrompt {...promptProps} />;
+  const PermissionDialog = () => createElement(PermissionPrompt, promptProps);
 
   return {
     location,
