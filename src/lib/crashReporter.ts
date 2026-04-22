@@ -15,6 +15,7 @@
  * later by editing `sendToSink` only.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { APP_VERSION, APP_BUILD_ID } from "@/lib/appVersion";
 
 export type CrashSource =
   | "react-error-boundary"
@@ -41,11 +42,11 @@ interface CrashPayload {
   userId: string | null;
   userAgent: string;
   appVersion: string;
+  buildId: string;
   timestamp: string;
   extra?: Record<string, unknown>;
 }
 
-const APP_VERSION = (import.meta.env.VITE_APP_VERSION as string | undefined) ?? "dev";
 const isProd = import.meta.env.PROD;
 
 let cachedUserId: string | null = null;
@@ -102,6 +103,7 @@ export function reportCrash(
     userId: cachedUserId,
     userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
     appVersion: APP_VERSION,
+    buildId: APP_BUILD_ID,
     timestamp: new Date().toISOString(),
     extra: context.extra,
   };
