@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "appId": "app.lovable.petkeep",
+  "displayName": "PetKeep",
+  "developer": {
+    "name": "PetKeep",
+    "supportEmail": "support@petkeepapp.com",
+    "supportUrl": "https://petkeepapp.com/support",
+    "privacyPolicyUrl": "https://petkeepapp.com/legal/privacy",
+    "termsUrl": "https://petkeepapp.com/legal/terms",
+    "accountDeletionUrl": "https://petkeepapp.com/support#delete-account"
+  },
+  "_comment": "Reviewer-facing data-safety mapping. Mirrors Apple App Privacy nutrition label and Google Play Data Safety form so reviewers can verify our declarations against runtime behavior.",
+  "dataCollection": {
+    "personalInfo": {
+      "email":   { "collected": true,  "linkedToUser": true, "usedForTracking": false, "purpose": "account" },
+      "name":    { "collected": true,  "linkedToUser": true, "usedForTracking": false, "purpose": "appFunctionality" },
+      "phone":   { "collected": true,  "linkedToUser": true, "usedForTracking": false, "purpose": "appFunctionality", "optional": true }
+    },
+    "userContent": {
+      "photos":   { "collected": true, "linkedToUser": true, "usedForTracking": false, "purpose": "appFunctionality" },
+      "messages": { "collected": true, "linkedToUser": true, "usedForTracking": false, "purpose": "appFunctionality" }
+    },
+    "location": {
+      "coarse":  { "collected": true, "linkedToUser": true, "usedForTracking": false, "purpose": "appFunctionality" },
+      "precise": { "collected": true, "linkedToUser": true, "usedForTracking": false, "purpose": "appFunctionality", "optInOnly": true }
+    },
+    "financial": {
+      "paymentInfo": { "collected": true, "linkedToUser": true, "usedForTracking": false, "purpose": "purchases", "fieldsStored": ["brand", "last4", "expMonth", "expYear"] }
+    },
+    "diagnostics": {
+      "crashLogs":     { "collected": true, "linkedToUser": false, "usedForTracking": false, "purpose": "appFunctionality" },
+      "performance":   { "collected": true, "linkedToUser": false, "usedForTracking": false, "purpose": "appFunctionality" },
+      "productInteraction": { "collected": true, "linkedToUser": false, "usedForTracking": false, "purpose": "analytics", "userOptOut": "Settings > Privacy > Help improve PetKeep" }
+    }
+  },
+  "trackingAcrossAppsOrSites": false,
+  "thirdPartySharing": {
+    "advertising": false,
+    "paymentProcessor": { "name": "Stripe", "purpose": "Process care bookings and marketplace purchases", "data": ["paymentToken", "amount", "currency"] }
+  },
+  "security": {
+    "encryptionInTransit": true,
+    "encryptionAtRest": true,
+    "userCanRequestDeletion": true,
+    "deletionMethod": "Settings > Danger Zone > Delete account (in-app) OR support@petkeepapp.com"
+  },
+  "permissions": {
+    "ios": {
+      "NSCameraUsageDescription":           "PetKeep uses the camera so you can take photos of your pets, post stories, and capture moments to share with the community.",
+      "NSPhotoLibraryUsageDescription":     "PetKeep needs access to your photo library so you can choose pictures for your pet profiles, posts, and stories.",
+      "NSLocationWhenInUseUsageDescription":"PetKeep uses your location to show nearby pet care providers, businesses, and lost-pet alerts in your area.",
+      "NSMicrophoneUsageDescription":       "PetKeep uses your microphone only when you tap-and-hold to record a voice message.",
+      "NSBluetoothAlwaysUsageDescription":  "PetKeep uses Bluetooth to keep your pet tracker connected so you receive lost-pet alerts.",
+      "NSBluetoothPeripheralUsageDescription": "PetKeep uses Bluetooth to connect to your pet tracker so you can locate your pet when nearby."
+    },
+    "android": [
+      "android.permission.INTERNET",
+      "android.permission.ACCESS_FINE_LOCATION",
+      "android.permission.ACCESS_COARSE_LOCATION",
+      "android.permission.CAMERA",
+      "android.permission.READ_MEDIA_IMAGES",
+      "android.permission.RECORD_AUDIO",
+      "android.permission.BLUETOOTH_SCAN",
+      "android.permission.BLUETOOTH_CONNECT",
+      "android.permission.POST_NOTIFICATIONS"
+    ]
+  },
+  "ageRating": {
+    "apple": "4+",
+    "googlePlay": "Everyone",
+    "minimumAge": 13
+  }
+}
