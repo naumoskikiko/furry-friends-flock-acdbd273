@@ -62,26 +62,43 @@ const StoriesBar = () => {
 
   return (
     <>
-      <div className="border-b border-border bg-card px-4 py-3">
-        <div className="flex gap-4 overflow-x-auto scrollbar-hide">
+      <section
+        aria-label="Stories"
+        className="border-b border-border bg-card px-4 py-3"
+      >
+        <div className="flex gap-4 overflow-x-auto scrollbar-hide" role="list">
           {/* Own story — single icon */}
-          <div className="flex flex-col items-center gap-1">
-            <button onClick={handleOwnStoryTap} className="relative">
+          <div className="flex flex-col items-center gap-1" role="listitem">
+            <button
+              onClick={handleOwnStoryTap}
+              className="relative"
+              aria-label={hasOwnStory ? "View your story" : "Create a new story"}
+            >
               <div className={`flex h-16 w-16 items-center justify-center rounded-full p-[2px] ${hasOwnStory ? "bg-gradient-to-br from-primary via-petkeep-orange-light to-accent" : "bg-secondary"}`}>
                 <div className="flex h-full w-full items-center justify-center rounded-full bg-card">
                   {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} className="h-full w-full rounded-full object-cover" />
+                    <img src={profile.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
                   ) : (
-                    <span className="font-display text-sm font-bold">{initials}</span>
+                    <span aria-hidden="true" className="font-display text-sm font-bold">{initials}</span>
                   )}
                 </div>
               </div>
               {/* Small + badge on bottom-right corner */}
               <span
+                role="button"
+                aria-label="Create a new story"
+                tabIndex={0}
                 onClick={(e) => { e.stopPropagation(); setCreateOpen(true); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCreateOpen(true);
+                  }
+                }}
                 className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground border-2 border-card shadow-sm z-10"
               >
-                <Plus className="h-3 w-3" />
+                <Plus aria-hidden="true" className="h-3 w-3" />
               </span>
             </button>
             <span className="w-16 truncate text-center text-[10px] font-medium">Your Story</span>
@@ -102,13 +119,15 @@ const StoriesBar = () => {
                   key={group.user_id}
                   className="flex flex-col items-center gap-1"
                   onClick={() => openStory(realIndex)}
+                  role="listitem"
+                  aria-label={`View ${group.username}'s story`}
                 >
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary via-petkeep-orange-light to-accent p-[2px]">
                     <div className="flex h-full w-full items-center justify-center rounded-full bg-card">
                       {group.avatar_url ? (
-                        <img src={group.avatar_url} className="h-full w-full rounded-full object-cover" />
+                        <img src={group.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
                       ) : (
-                        <span className="font-display text-sm font-bold">{group.initials}</span>
+                        <span aria-hidden="true" className="font-display text-sm font-bold">{group.initials}</span>
                       )}
                     </div>
                   </div>
@@ -117,7 +136,7 @@ const StoriesBar = () => {
               );
             })}
         </div>
-      </div>
+      </section>
 
       {viewerOpen && storyGroups.length > 0 && (
         <StoryViewer
