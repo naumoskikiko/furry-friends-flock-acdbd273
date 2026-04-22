@@ -37,6 +37,7 @@ interface Pet {
   owner_id?: string;
   vaccination_verified?: boolean;
   neutered_verified?: boolean;
+  is_verified?: boolean;
 }
 
 interface PetMatchListing {
@@ -501,7 +502,7 @@ const PetMatchTab = () => {
     setLoading(true);
 
     const [petsRes, myRes, allRes] = await Promise.all([
-      supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight, temperament, medical_notes, special_care, emergency_contact, vet_info").eq("owner_id", user.id),
+      supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight, temperament, medical_notes, special_care, emergency_contact, vet_info, is_verified").eq("owner_id", user.id),
       fromTable("petmatch_listings").select("*").eq("user_id", user.id),
       fromTable("petmatch_listings").select("*").eq("is_active", true).neq("user_id", user.id),
     ]);
@@ -516,7 +517,7 @@ const PetMatchTab = () => {
       const petIds = listings.map((l) => l.pet_id);
       const userIds = [...new Set(listings.map((l) => l.user_id))];
       const [petsData, profilesData, verificationsData] = await Promise.all([
-        supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight, temperament, medical_notes, special_care, emergency_contact, vet_info, owner_id").in("id", petIds),
+        supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight, temperament, medical_notes, special_care, emergency_contact, vet_info, is_verified, owner_id").in("id", petIds),
         supabase.from("profiles").select("user_id, full_name, avatar_url, username").in("user_id", userIds),
         fromTable("pet_verifications").select("pet_id, verification_type, status").in("pet_id", petIds).eq("status", "verified"),
       ]);
