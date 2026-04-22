@@ -69,19 +69,32 @@ function safeRoute(): string {
 }
 
 async function sendToSink(payload: CrashPayload) {
-  // No remote sink in dev — keeps local console readable.
+  // No remote sink in dev — keeps local console readable and avoids polluting
+  // the prod crash table with hot-reload noise.
   if (!isProd) return;
   try {
-    // Keep the request small and fire-and-forget. Use `keepalive` so it
-    // survives a tab close. The endpoint is optional — if the host returns
-    // 404 we silently drop. Replace with your real ingestion endpoint
-    // (Sentry tunnel, edge function, etc.) when ready.
-    await fetch("/__crash", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      keepalive: true,
-    }).catch(() => {});
+    // The auth header is best-effort — the function tolerates anonymous
+    // submissions so we still capture crashes that happen on the auth screen
+    // before the session is restored.
+    const { data: { session } } = await supabase.auth.getSession();
+    const authHeader = session?.access_token
+      ? `Bearer ${session.access_token}`
+      : `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? ""}`;
+
+    await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ingest-crash`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authHeader,
+          // Required by Supabase edge runtime even for anonymous calls.
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "",
+        },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      },
+    ).catch(() => {});
   } catch {
     // Never let the reporter itself throw.
   }
