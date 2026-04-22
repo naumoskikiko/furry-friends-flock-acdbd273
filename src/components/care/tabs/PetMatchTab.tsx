@@ -15,6 +15,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext
 import { Progress } from "@/components/ui/progress";
 import AddPetFlow from "@/components/profile/AddPetFlow";
 import PetProfileModal from "@/components/profile/PetProfileModal";
+import PetVerificationSection from "@/components/profile/PetVerificationSection";
 
 const fromTable = (table: string) => (supabase as any).from(table);
 
