@@ -612,6 +612,14 @@ export function useChatMessages(conversationId: string | null) {
     }
   }, [fetchMessages, hasMore]);
 
+  // Keep an always-fresh ref to fetchMessages so the realtime effect can
+  // call the latest version without listing it as a dep (which would tear
+  // down and re-subscribe the channel on every render).
+  const fetchMessagesRef = useRef(fetchMessages);
+  useEffect(() => {
+    fetchMessagesRef.current = fetchMessages;
+  }, [fetchMessages]);
+
   useEffect(() => {
     oldestRef.current = null;
     fetchMessages();
@@ -661,33 +669,29 @@ export function useChatMessages(conversationId: string | null) {
         console.log(`[realtime] channel ${channelName} status: ${status}`);
         if (status === "SUBSCRIBED") {
           isSubscribed = true;
-          // Stop polling fallback once realtime is healthy
           if (pollTimer) {
             clearInterval(pollTimer);
             pollTimer = null;
           }
         } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
           isSubscribed = false;
-          // Activate polling fallback so messages still flow
           if (!pollTimer) {
             console.warn(`[realtime] degraded (${status}) — enabling 3s polling fallback`);
-            pollTimer = setInterval(() => fetchMessages(), 3000);
+            pollTimer = setInterval(() => fetchMessagesRef.current(), 3000);
           }
         }
       });
 
-    // Safety net: if realtime hasn't subscribed within 4s, start polling
     const subscribeWatchdog = setTimeout(() => {
       if (!isSubscribed && !pollTimer) {
         console.warn(`[realtime] subscribe watchdog firing for ${conversationId} — enabling polling`);
-        pollTimer = setInterval(() => fetchMessages(), 3000);
+        pollTimer = setInterval(() => fetchMessagesRef.current(), 3000);
       }
     }, 4000);
 
-    // Visibility change handler — refetch when tab becomes visible
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
-        fetchMessages();
+        fetchMessagesRef.current();
       }
     };
     document.addEventListener("visibilitychange", handleVisibility);
@@ -699,7 +703,10 @@ export function useChatMessages(conversationId: string | null) {
       supabase.removeChannel(channel);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [conversationId, user?.id, fetchMessages]);
+    // Deliberately omit fetchMessages — it's accessed via ref to keep the
+    // realtime channel stable across renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId, user?.id]);
 
   // --- Send with optional reply + offline support + optimistic UI ---
   const sendMessage = useCallback(
