@@ -357,7 +357,7 @@ const PetMatchCard = ({
         <div className="absolute top-2 left-2 flex flex-col gap-1">
           {pet.is_verified && (
             <span className="inline-flex items-center gap-1 rounded-full bg-green-500/90 backdrop-blur-sm px-2 py-0.5 text-[10px] font-bold text-white">
-              <ShieldCheck className="h-3 w-3" /> Verified
+              <Shield className="h-3 w-3" /> Verified
             </span>
           )}
           {listing.breed_document_url && (
