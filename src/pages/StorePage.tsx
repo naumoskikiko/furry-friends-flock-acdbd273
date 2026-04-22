@@ -190,8 +190,7 @@ const StorePage = () => {
               {business.delivery_available && (
                 <span className="flex items-center gap-1 text-[10px] font-bold bg-primary/10 text-primary px-2 py-1 rounded-full">
                   <Truck className="h-3 w-3" />
-                  Delivery {business.delivery_fee ? `${business.delivery_fee} MKD` : "Free"}
-                  {business.free_delivery_above && ` · Free over ${business.free_delivery_above} MKD`}
+                  Delivery 120 MKD
                 </span>
               )}
               {business.pickup_available && (

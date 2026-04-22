@@ -62,11 +62,9 @@ const CheckoutPage = () => {
   const [couponError, setCouponError] = useState("");
   const [useCreditsToggle, setUseCreditsToggle] = useState(true);
 
-  // Calculate delivery fee from business profile (use first item's business)
-  const cartBusiness = items[0]?.product?.business;
-  const bizDeliveryFee = (cartBusiness as any)?.delivery_fee ?? 120;
-  const bizFreeAbove = (cartBusiness as any)?.free_delivery_above;
-  const deliveryFee = bizFreeAbove && totalPrice >= bizFreeAbove ? 0 : bizDeliveryFee;
+  // Fixed flat delivery fee across the platform
+  const deliveryFee = 120;
+  const cartBusiness = items[0]?.product?.business as any;
 
   // Delivery radius validation
   const deliveryBlocked = useMemo(() => {
@@ -432,7 +430,7 @@ const CheckoutPage = () => {
                     Delivery fee
                     {deliveryDistance != null && <span className="ml-1">({formatDistance(deliveryDistance)})</span>}
                   </span>
-                  <span className="font-semibold">{deliveryFee === 0 ? "Free" : `${deliveryFee.toLocaleString()} MKD`}</span>
+                  <span className="font-semibold">{deliveryFee.toLocaleString()} MKD</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-xs">
