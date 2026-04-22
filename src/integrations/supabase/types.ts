@@ -1161,6 +1161,78 @@ export type Database = {
         }
         Relationships: []
       }
+      find_my_pet_access: {
+        Row: {
+          chip_enabled: boolean
+          chip_enabled_until: string | null
+          created_at: string
+          last_reason: string | null
+          tracking_enabled: boolean
+          tracking_enabled_until: string | null
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          chip_enabled?: boolean
+          chip_enabled_until?: string | null
+          created_at?: string
+          last_reason?: string | null
+          tracking_enabled?: boolean
+          tracking_enabled_until?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          chip_enabled?: boolean
+          chip_enabled_until?: string | null
+          created_at?: string
+          last_reason?: string | null
+          tracking_enabled?: boolean
+          tracking_enabled_until?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      find_my_pet_access_log: {
+        Row: {
+          changed_by: string
+          chip_enabled: boolean
+          chip_enabled_until: string | null
+          created_at: string
+          id: string
+          reason: string | null
+          target_user_id: string
+          tracking_enabled: boolean
+          tracking_enabled_until: string | null
+        }
+        Insert: {
+          changed_by: string
+          chip_enabled: boolean
+          chip_enabled_until?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          target_user_id: string
+          tracking_enabled: boolean
+          tracking_enabled_until?: string | null
+        }
+        Update: {
+          changed_by?: string
+          chip_enabled?: boolean
+          chip_enabled_until?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          target_user_id?: string
+          tracking_enabled?: boolean
+          tracking_enabled_until?: string | null
+        }
+        Relationships: []
+      }
       follow_requests: {
         Row: {
           created_at: string
@@ -3454,6 +3526,17 @@ export type Database = {
         Args: { _new_role: string; _target_user_id: string }
         Returns: undefined
       }
+      admin_set_find_my_pet_access: {
+        Args: {
+          _chip_enabled: boolean
+          _chip_until?: string
+          _reason?: string
+          _target_user_id: string
+          _tracking_enabled: boolean
+          _tracking_until?: string
+        }
+        Returns: undefined
+      }
       create_conversation_with_participant: {
         Args: { _other_user_id: string }
         Returns: string
@@ -3465,6 +3548,11 @@ export type Database = {
       create_meetup_chat: {
         Args: { _blog_post_id: string; _meetup_title: string }
         Returns: string
+      }
+      findmypet_chip_allowed: { Args: { _user_id: string }; Returns: boolean }
+      findmypet_tracking_allowed: {
+        Args: { _user_id: string }
+        Returns: boolean
       }
       group_add_member: {
         Args: { _conversation_id: string; _target_user_id: string }

@@ -1,9 +1,11 @@
 import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
 import { useTrackers, useTrackerSubscriptions } from "@/hooks/useTracking";
+import { useFindMyPetAccess } from "@/hooks/useFindMyPetAccess";
 import AddTrackerForm from "@/components/tracking/AddTrackerForm";
 import TrackerDashboard from "@/components/tracking/TrackerDashboard";
 import TrackerSubscriptionModal from "@/components/tracking/TrackerSubscriptionModal";
+import FeatureLockedNotice from "@/components/tracking/FeatureLockedNotice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PawPrint, Plus, CheckCircle2, XCircle, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,19 +15,29 @@ import { format } from "date-fns";
 const FindMyPetPage = () => {
   const { trackers, loading: trackLoading, addTracker } = useTrackers();
   const { isTrackerActive, getTrackerSub, activateTracker, renewTracker, loading: subLoading } = useTrackerSubscriptions();
+  const { canTrack, canUseChip, loading: accessLoading } = useFindMyPetAccess();
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedTrackerId, setSelectedTrackerId] = useState<string | null>(null);
   const [subModal, setSubModal] = useState<{ open: boolean; trackerId: string; petName: string; isRenewal: boolean }>({
     open: false, trackerId: "", petName: "", isRenewal: false,
   });
 
-  if (trackLoading || subLoading) {
+  if (trackLoading || subLoading || accessLoading) {
     return (
       <AppLayout>
         <div className="mx-auto max-w-lg p-4 space-y-4">
           <Skeleton className="h-12 w-48" />
           <Skeleton className="h-64 w-full rounded-2xl" />
         </div>
+      </AppLayout>
+    );
+  }
+
+  // Admin-controlled access gate — block tracking entirely if disabled
+  if (!canTrack) {
+    return (
+      <AppLayout>
+        <FeatureLockedNotice feature="Pet Tracking" />
       </AppLayout>
     );
   }
@@ -84,6 +96,7 @@ const FindMyPetPage = () => {
     return (
       <AppLayout>
         <AddTrackerForm
+          chipEnabled={canUseChip}
           onSubmit={async (data) => {
             const newTracker = await addTracker(data);
             setShowAddForm(false);
