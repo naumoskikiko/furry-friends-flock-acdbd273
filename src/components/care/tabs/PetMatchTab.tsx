@@ -621,9 +621,23 @@ const PetMatchTab = () => {
     fetchData();
   };
 
-  const handleContact = (listing: PetMatchListing) => {
-    if (listing.profile?.username) navigate(`/user/${listing.profile.username}`);
-    else toast({ title: "Cannot contact this user" });
+  const handleContact = async (listing: PetMatchListing) => {
+    if (!user) {
+      toast({ title: "Sign in required", description: "Please sign in to contact this user.", variant: "destructive" });
+      return;
+    }
+    if (!listing.user_id || listing.user_id === user.id) {
+      toast({ title: "Cannot contact this user" });
+      return;
+    }
+    const { data, error } = await supabase.rpc("create_conversation_with_participant", {
+      _other_user_id: listing.user_id,
+    });
+    if (error || !data) {
+      toast({ title: "Error", description: error?.message || "Could not start chat", variant: "destructive" });
+      return;
+    }
+    navigate(`/messages?conversation=${data}`);
   };
 
   const handleReport = async (listing: PetMatchListing) => {
