@@ -170,6 +170,7 @@ export function reportCrash(
     buildId: APP_BUILD_ID,
     timestamp: new Date().toISOString(),
     extra: context.extra,
+    breadcrumbs: getBreadcrumbs(),
   };
 
   // Always log locally — shows up in Xcode/Logcat for native builds.
