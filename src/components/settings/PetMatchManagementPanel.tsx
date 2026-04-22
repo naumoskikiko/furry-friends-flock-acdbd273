@@ -218,28 +218,29 @@ const VerificationDetail = ({
             />
           </div>
 
-          {/* Actions */}
-          <div className="sticky bottom-0 -mx-4 border-t border-border bg-card px-4 pt-3 pb-[calc(0.25rem+env(safe-area-inset-bottom))]">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <button
-                onClick={() => onAction(listing.id, "rejected")}
-                className="flex w-full items-center justify-center gap-1 rounded-xl bg-destructive/10 px-3 py-2.5 text-sm font-bold text-destructive"
-              >
-                <XCircle className="h-4 w-4" /> Reject
-              </button>
-              <button
-                onClick={() => onAction(listing.id, "pending")}
-                className="flex w-full items-center justify-center gap-1 rounded-xl bg-amber-500/10 px-3 py-2.5 text-sm font-bold text-amber-600"
-              >
-                <Clock className="h-4 w-4" /> Request More
-              </button>
-              <button
-                onClick={() => onAction(listing.id, "approved")}
-                className="flex w-full items-center justify-center gap-1 rounded-xl bg-green-500/10 px-3 py-2.5 text-sm font-bold text-green-600"
-              >
-                <CheckCircle className="h-4 w-4" /> Approve
-              </button>
-            </div>
+        </div>
+
+        {/* Actions - fixed footer */}
+        <div className="shrink-0 border-t border-border bg-card px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => onAction(listing.id, "rejected")}
+              className="flex w-full items-center justify-center gap-1 rounded-xl bg-destructive/10 px-2 py-2.5 text-xs font-bold text-destructive"
+            >
+              <XCircle className="h-4 w-4" /> Reject
+            </button>
+            <button
+              onClick={() => onAction(listing.id, "pending")}
+              className="flex w-full items-center justify-center gap-1 rounded-xl bg-amber-500/10 px-2 py-2.5 text-xs font-bold text-amber-600"
+            >
+              <Clock className="h-4 w-4" /> More
+            </button>
+            <button
+              onClick={() => onAction(listing.id, "approved")}
+              className="flex w-full items-center justify-center gap-1 rounded-xl bg-green-500/10 px-2 py-2.5 text-xs font-bold text-green-600"
+            >
+              <CheckCircle className="h-4 w-4" /> Approve
+            </button>
           </div>
         </div>
       </div>
