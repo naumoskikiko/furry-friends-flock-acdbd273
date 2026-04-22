@@ -108,6 +108,19 @@ const UserManagementPanel = () => {
     toast({ title: "User content removed" });
   };
 
+  const handleChangeProfileType = async (userId: string, newRole: "user" | "provider" | "business") => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ role: newRole })
+      .eq("user_id", userId);
+    if (error) {
+      toast({ title: "Failed to update profile type", description: error.message, variant: "destructive" });
+      return;
+    }
+    setUsers(prev => prev.map(u => u.user_id === userId ? { ...u, role: newRole } : u));
+    toast({ title: `Profile changed to ${newRole}` });
+  };
+
   const getRoleBadge = (u: UserProfile) => {
     if (u.roles.includes("owner")) return <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 text-[9px]">Owner</Badge>;
     if (u.roles.includes("admin")) return <Badge className="bg-primary/10 text-primary border-primary/30 text-[9px]">Admin</Badge>;
