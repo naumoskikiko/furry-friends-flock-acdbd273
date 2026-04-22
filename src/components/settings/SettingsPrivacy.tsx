@@ -175,6 +175,31 @@ const SettingsPrivacy = () => {
         )}
       </div>
 
+      {/* Analytics opt-out — required for App Store / Play Store data-safety disclosures.
+          Users can disable non-essential telemetry without affecting core features. */}
+      <div className="rounded-2xl bg-card p-4 petkeep-card-shadow">
+        <div className="flex items-center gap-2 mb-2">
+          <BarChart3 className="h-4 w-4 text-primary" />
+          <p className="text-sm font-bold">Usage analytics</p>
+        </div>
+        <div className="flex items-center justify-between gap-4 py-2">
+          <div className="flex-1">
+            <p className="text-sm font-semibold">Help improve PetKeep</p>
+            <p className="text-xs text-muted-foreground">
+              Share anonymous usage data (screens visited, feature taps) so we can fix bugs and
+              improve the app. No messages, photos, or personal info are ever collected.
+            </p>
+          </div>
+          <Switch
+            checked={analyticsOn}
+            onCheckedChange={(v) => {
+              setAnalyticsEnabled(v);
+              toast({ title: v ? "Analytics enabled" : "Analytics disabled" });
+            }}
+          />
+        </div>
+      </div>
+
       {/* Account / GDPR Section */}
       <div className="rounded-2xl bg-card p-4 petkeep-card-shadow space-y-3">
         <div className="flex items-center gap-2">
