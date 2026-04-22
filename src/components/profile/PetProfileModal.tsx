@@ -145,7 +145,7 @@ const PetProfileModal = ({ pet, open, onOpenChange, isOwner, onEdit, onDelete, o
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-md p-0 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto pb-[env(safe-area-inset-bottom)]">
         {/* Photo */}
         <div className="relative">
           <button
