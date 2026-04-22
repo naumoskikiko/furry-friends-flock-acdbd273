@@ -993,7 +993,7 @@ const PetMatchTab = () => {
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setShowCreate(false)} className="flex-1 rounded-xl bg-secondary py-2.5 text-sm font-bold">Cancel</button>
-                <button onClick={handleCreate} disabled={!selectedPet || !pets.find(p => p.id === selectedPet)?.is_verified} className="flex-1 petkeep-gradient rounded-xl py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50">Create Listing</button>
+                <button onClick={handleCreate} disabled={!selectedPet} className="flex-1 petkeep-gradient rounded-xl py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50">Create Listing</button>
               </div>
             </div>
           )}
