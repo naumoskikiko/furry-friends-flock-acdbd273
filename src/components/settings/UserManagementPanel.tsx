@@ -108,6 +108,19 @@ const UserManagementPanel = () => {
     toast({ title: "User content removed" });
   };
 
+  const handleChangeProfileType = async (userId: string, newRole: "user" | "provider" | "business") => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ role: newRole })
+      .eq("user_id", userId);
+    if (error) {
+      toast({ title: "Failed to update profile type", description: error.message, variant: "destructive" });
+      return;
+    }
+    setUsers(prev => prev.map(u => u.user_id === userId ? { ...u, role: newRole } : u));
+    toast({ title: `Profile changed to ${newRole}` });
+  };
+
   const getRoleBadge = (u: UserProfile) => {
     if (u.roles.includes("owner")) return <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 text-[9px]">Owner</Badge>;
     if (u.roles.includes("admin")) return <Badge className="bg-primary/10 text-primary border-primary/30 text-[9px]">Admin</Badge>;
@@ -218,6 +231,29 @@ const UserManagementPanel = () => {
                       <p className="text-[10px] text-muted-foreground">
                         Last active: {formatDistanceToNow(new Date(u.last_active_at), { addSuffix: true })}
                       </p>
+                    )}
+
+                    {/* Profile type switcher */}
+                    {!u.roles.includes("owner") && !u.roles.includes("admin") && (
+                      <div className="rounded-xl bg-secondary p-2.5">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Profile Type</p>
+                        <div className="flex gap-1.5">
+                          {(["user", "provider", "business"] as const).map(r => (
+                            <button
+                              key={r}
+                              onClick={() => handleChangeProfileType(u.user_id, r)}
+                              disabled={u.role === r}
+                              className={`flex-1 rounded-lg px-2 py-1.5 text-[10px] font-bold capitalize transition-colors ${
+                                u.role === r
+                                  ? "petkeep-gradient text-primary-foreground"
+                                  : "bg-card hover:bg-card/80 text-foreground border border-border"
+                              }`}
+                            >
+                              {r}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     )}
 
                     <div className="flex flex-wrap gap-2">
