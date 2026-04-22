@@ -570,16 +570,7 @@ const PetMatchTab = () => {
 
   const handleCreate = async () => {
     if (!selectedPet || !user) return;
-    // Gate: pet must have at least one verified document
     const pet = pets.find(p => p.id === selectedPet);
-    if (!pet?.is_verified) {
-      toast({
-        title: "Verification required",
-        description: "Upload a pet document (vaccination, passport, ownership proof, etc.) and wait for admin verification before listing.",
-        variant: "destructive",
-      });
-      return;
-    }
     const { error } = await fromTable("petmatch_listings").insert({
       user_id: user.id,
       pet_id: selectedPet,
@@ -590,7 +581,12 @@ const PetMatchTab = () => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Listing created!", description: "It will be reviewed before going live." });
+    toast({
+      title: "Listing created!",
+      description: pet?.is_verified
+        ? "It will be reviewed before going live."
+        : "Saved! Your listing will appear publicly once your pet is verified by an admin.",
+    });
     setShowCreate(false);
     setSelectedPet("");
     setLookingFor("");
@@ -964,12 +960,12 @@ const PetMatchTab = () => {
                   return (
                     <>
                       {!selPet.is_verified && (
-                        <div className="mt-2 rounded-xl bg-destructive/10 border border-destructive/30 p-2.5">
-                          <p className="text-[10px] font-bold text-destructive flex items-center gap-1">
-                            <Shield className="h-3 w-3" /> Verification required
+                        <div className="mt-2 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-300/40 p-2.5">
+                          <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                            <Shield className="h-3 w-3" /> Hidden until verified
                           </p>
-                          <p className="text-[10px] text-destructive/80 mt-0.5">
-                            Open this pet's profile and upload at least one document (vaccination, passport, ownership proof, etc.). An admin must approve it before you can list this pet in PetMatch.
+                          <p className="text-[10px] text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+                            You can save this listing now, but it won't appear publicly until an admin verifies a pet document (vaccination, passport, ownership proof, etc.).
                           </p>
                         </div>
                       )}
@@ -997,7 +993,7 @@ const PetMatchTab = () => {
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setShowCreate(false)} className="flex-1 rounded-xl bg-secondary py-2.5 text-sm font-bold">Cancel</button>
-                <button onClick={handleCreate} disabled={!selectedPet || !pets.find(p => p.id === selectedPet)?.is_verified} className="flex-1 petkeep-gradient rounded-xl py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50">Create Listing</button>
+                <button onClick={handleCreate} disabled={!selectedPet} className="flex-1 petkeep-gradient rounded-xl py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50">Create Listing</button>
               </div>
             </div>
           )}
