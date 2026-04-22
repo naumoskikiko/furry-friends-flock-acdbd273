@@ -96,8 +96,8 @@ const VerificationDetail = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50">
-      <div className="absolute inset-x-0 bottom-0 top-16 flex flex-col bg-card rounded-t-2xl shadow-lg sm:left-1/2 sm:top-1/2 sm:max-h-[85vh] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl">
+    <div className="fixed inset-0 z-[100] bg-black/50">
+      <div className="absolute inset-x-0 bottom-0 top-4 flex flex-col bg-card rounded-t-2xl shadow-lg sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:max-h-[90vh] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-4 py-3 shrink-0">
           <h3 className="font-display text-sm font-bold">Verification Review</h3>
           <button onClick={onClose} className="rounded-full p-1 hover:bg-secondary"><X className="h-4 w-4" /></button>
