@@ -38,6 +38,22 @@ const PetVerificationReviewPanel = () => {
   const [filter, setFilter] = useState<"pending" | "verified" | "rejected" | "all">("pending");
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
   const [viewImage, setViewImage] = useState<string | null>(null);
+  const [viewIsPdf, setViewIsPdf] = useState(false);
+
+  const openDocument = async (v: PetVerification) => {
+    // Try to extract storage path from stored URL and create a fresh signed URL
+    const match = v.document_url.match(/\/object\/sign\/pet-verification-docs\/([^?]+)/);
+    let url = v.document_url;
+    if (match) {
+      const path = decodeURIComponent(match[1]);
+      const { data } = await supabase.storage
+        .from("pet-verification-docs")
+        .createSignedUrl(path, 60 * 60);
+      if (data?.signedUrl) url = data.signedUrl;
+    }
+    setViewIsPdf((v.document_name || "").toLowerCase().endsWith(".pdf"));
+    setViewImage(url);
+  };
 
   const fetchData = async () => {
     setLoading(true);
