@@ -797,10 +797,12 @@ const PetMatchTab = () => {
         open={!!profileListing}
         onOpenChange={(open) => { if (!open) setProfileListing(null); }}
         myPet={activePet}
-        onMessageOwner={(userId) => {
-          setProfileListing(null);
-          const username = profileListing?.profile?.username;
-          if (username) navigate(`/user/${username}`);
+        onMessageOwner={() => {
+          if (profileListing) {
+            const target = profileListing;
+            setProfileListing(null);
+            handleContact(target);
+          }
         }}
       />
 
