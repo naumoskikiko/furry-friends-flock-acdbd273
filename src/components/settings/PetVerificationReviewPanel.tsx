@@ -81,10 +81,13 @@ const PetVerificationReviewPanel = () => {
       return;
     }
 
-    // If verified, update the pet's vaccinated/neutered field
+    // For legacy vaccination/neutered docs, also flip the pet's boolean field
     if (status === "verified") {
-      const updateField = type === "vaccination" ? { vaccinated: true } : { neutered: true };
-      await supabase.from("pets").update(updateField).eq("id", petId);
+      if (type === "vaccination") {
+        await supabase.from("pets").update({ vaccinated: true }).eq("id", petId);
+      } else if (type === "neutered") {
+        await supabase.from("pets").update({ neutered: true }).eq("id", petId);
+      }
     }
 
     toast({ title: status === "verified" ? "Verification approved ✅" : "Verification rejected ❌" });
