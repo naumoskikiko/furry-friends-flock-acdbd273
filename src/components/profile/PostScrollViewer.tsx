@@ -411,7 +411,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
                   className="flex items-center gap-2.5"
                 >
                   {profileAvatar ? (
-                    <img src={profileAvatar} alt="" className="h-9 w-9 rounded-full object-cover ring-1 ring-border" />
+                    <img src={profileAvatar} alt="" className="h-9 w-9 rounded-full object-cover ring-1 ring-border" loading="lazy" decoding="async" />
                   ) : (
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-[10px] font-bold text-primary-foreground">
                       {profileInitials}
@@ -484,13 +484,11 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
                       </button>
                     </>
                   ) : (
-                    <img
-                      src={post.image_url}
+                    <img src={post.image_url}
                       alt=""
                       className="w-full max-h-[600px] object-contain"
                       loading={Math.abs(idx - startIndex) <= 2 ? "eager" : "lazy"}
-                      draggable={false}
-                    />
+                      draggable={false} decoding="async" />
                   )
                 ) : (
                   <div className="w-full py-12 flex items-center justify-center">
@@ -577,7 +575,7 @@ const PostScrollViewer = ({ posts, startIndex, onClose, onRefresh, ownerProfile 
               <div key={c.id} className="flex items-start gap-2">
                 <button onClick={() => { setCommentsOpen(false); goToProfile(c.user_id); }} className="shrink-0">
                   {c.avatar_url ? (
-                    <img src={c.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                    <img src={c.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" loading="lazy" decoding="async" />
                   ) : (
                     <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary text-[9px] font-bold">
                       {(c.username || "U")[0].toUpperCase()}

@@ -150,7 +150,7 @@ const FindMyPetPage = () => {
                   className="flex w-full items-center gap-3 rounded-2xl bg-card p-4 petkeep-card-shadow hover:bg-secondary/30 transition-colors text-left"
                 >
                   {tracker.pet_photo ? (
-                    <img src={tracker.pet_photo} alt="" className="h-12 w-12 rounded-xl object-cover" />
+                    <img src={tracker.pet_photo} alt="" className="h-12 w-12 rounded-xl object-cover" loading="lazy" decoding="async" />
                   ) : (
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 text-2xl">
                       🐾

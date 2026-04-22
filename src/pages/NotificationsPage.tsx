@@ -314,7 +314,7 @@ const NotificationsPage = () => {
       >
         <button onClick={(e) => handleActorTap(e, n.actor_id)} className="relative shrink-0">
           {n.actor_avatar ? (
-            <img src={n.actor_avatar} alt="" className="h-11 w-11 rounded-full object-cover" />
+            <img src={n.actor_avatar} alt="" className="h-11 w-11 rounded-full object-cover" loading="lazy" decoding="async" />
           ) : (
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-primary to-petkeep-orange-light font-display text-xs font-bold text-primary-foreground">
               {initials}
@@ -429,7 +429,7 @@ const NotificationsPage = () => {
                     <div key={req.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
                       <button onClick={() => navigate(`/user/${req.requester_username || req.requester_id}`)} className="shrink-0">
                         {req.requester_avatar ? (
-                          <img src={req.requester_avatar} alt="" className="h-11 w-11 rounded-full object-cover" />
+                          <img src={req.requester_avatar} alt="" className="h-11 w-11 rounded-full object-cover" loading="lazy" decoding="async" />
                         ) : (
                           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent font-display text-xs font-bold text-primary-foreground">
                             {initials}

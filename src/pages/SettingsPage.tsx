@@ -1,22 +1,35 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { ArrowLeft, User, Shield, Bell, CreditCard, Lock, Palette, PawPrint, ShieldCheck, HelpCircle, FileText, AlertTriangle, Sparkles, ChevronRight, LogOut } from "lucide-react";
-import SettingsAccount from "@/components/settings/SettingsAccount";
-import SettingsSecurity from "@/components/settings/SettingsSecurity";
-import SettingsNotifications from "@/components/settings/SettingsNotifications";
-import SettingsPayments from "@/components/settings/SettingsPayments";
-import SettingsPrivacy from "@/components/settings/SettingsPrivacy";
-import SettingsAppearance from "@/components/settings/SettingsAppearance";
-import SettingsPet from "@/components/settings/SettingsPet";
-import SettingsTrust from "@/components/settings/SettingsTrust";
-import SettingsSupport from "@/components/settings/SettingsSupport";
-import SettingsLegal from "@/components/settings/SettingsLegal";
-import SettingsDangerZone from "@/components/settings/SettingsDangerZone";
-import ProfessionalMode from "@/components/settings/ProfessionalMode";
+
+// Each settings section is its own chunk so the Settings landing page stays
+// snappy. Without this, the admin-only ProfessionalMode (which pulls every
+// platform-management panel) bloats Settings to ~290 KB even for regular
+// users who never open it. Code-splitting drops the initial Settings cost
+// to whatever the user actually opens.
+const SettingsAccount = lazy(() => import("@/components/settings/SettingsAccount"));
+const SettingsSecurity = lazy(() => import("@/components/settings/SettingsSecurity"));
+const SettingsNotifications = lazy(() => import("@/components/settings/SettingsNotifications"));
+const SettingsPayments = lazy(() => import("@/components/settings/SettingsPayments"));
+const SettingsPrivacy = lazy(() => import("@/components/settings/SettingsPrivacy"));
+const SettingsAppearance = lazy(() => import("@/components/settings/SettingsAppearance"));
+const SettingsPet = lazy(() => import("@/components/settings/SettingsPet"));
+const SettingsTrust = lazy(() => import("@/components/settings/SettingsTrust"));
+const SettingsSupport = lazy(() => import("@/components/settings/SettingsSupport"));
+const SettingsLegal = lazy(() => import("@/components/settings/SettingsLegal"));
+const SettingsDangerZone = lazy(() => import("@/components/settings/SettingsDangerZone"));
+const ProfessionalMode = lazy(() => import("@/components/settings/ProfessionalMode"));
+
+/** Lightweight in-page fallback while a section chunk loads. */
+const SectionFallback = () => (
+  <div className="flex items-center justify-center py-12">
+    <div className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+  </div>
+);
 
 type SettingsSection = "main" | "account" | "security" | "notifications" | "payments" | "privacy" | "appearance" | "pet" | "trust" | "support" | "legal" | "danger" | "professional";
 
@@ -117,18 +130,20 @@ const SettingsPage = () => {
           </div>
         )}
 
-        {activeSection === "account" && <SettingsAccount />}
-        {activeSection === "security" && <SettingsSecurity />}
-        {activeSection === "notifications" && <SettingsNotifications />}
-        {activeSection === "payments" && <SettingsPayments />}
-        {activeSection === "privacy" && <SettingsPrivacy />}
-        {activeSection === "appearance" && <SettingsAppearance />}
-        {activeSection === "pet" && <SettingsPet />}
-        {activeSection === "trust" && <SettingsTrust />}
-        {activeSection === "support" && <SettingsSupport />}
-        {activeSection === "legal" && <SettingsLegal />}
-        {activeSection === "danger" && <SettingsDangerZone />}
-        {activeSection === "professional" && <ProfessionalMode />}
+        <Suspense fallback={<SectionFallback />}>
+          {activeSection === "account" && <SettingsAccount />}
+          {activeSection === "security" && <SettingsSecurity />}
+          {activeSection === "notifications" && <SettingsNotifications />}
+          {activeSection === "payments" && <SettingsPayments />}
+          {activeSection === "privacy" && <SettingsPrivacy />}
+          {activeSection === "appearance" && <SettingsAppearance />}
+          {activeSection === "pet" && <SettingsPet />}
+          {activeSection === "trust" && <SettingsTrust />}
+          {activeSection === "support" && <SettingsSupport />}
+          {activeSection === "legal" && <SettingsLegal />}
+          {activeSection === "danger" && <SettingsDangerZone />}
+          {activeSection === "professional" && <ProfessionalMode />}
+        </Suspense>
       </div>
     </AppLayout>
   );

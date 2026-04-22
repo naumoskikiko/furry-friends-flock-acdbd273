@@ -117,7 +117,7 @@ const ExplorePage = () => {
                 className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-secondary/50 transition-colors"
               >
                 {r.avatar_url ? (
-                  <img src={r.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
+                  <img src={r.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" loading="lazy" decoding="async" />
                 ) : (
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-base">
                     {r.emoji}
