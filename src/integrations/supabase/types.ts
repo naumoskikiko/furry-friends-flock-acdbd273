@@ -2715,6 +2715,33 @@ export type Database = {
         }
         Relationships: []
       }
+      role_change_log: {
+        Row: {
+          changed_by: string
+          created_at: string
+          from_role: string | null
+          id: string
+          target_user_id: string
+          to_role: string
+        }
+        Insert: {
+          changed_by: string
+          created_at?: string
+          from_role?: string | null
+          id?: string
+          target_user_id: string
+          to_role: string
+        }
+        Update: {
+          changed_by?: string
+          created_at?: string
+          from_role?: string | null
+          id?: string
+          target_user_id?: string
+          to_role?: string
+        }
+        Relationships: []
+      }
       safe_zones: {
         Row: {
           center_lat: number
@@ -3386,6 +3413,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_change_user_role: {
+        Args: { _new_role: string; _target_user_id: string }
+        Returns: undefined
+      }
       create_conversation_with_participant: {
         Args: { _other_user_id: string }
         Returns: string
