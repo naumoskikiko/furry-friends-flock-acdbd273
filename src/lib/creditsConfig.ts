@@ -12,8 +12,8 @@ export const CREDIT_REWARDS = {
 } as const;
 
 export const CREDIT_LIMITS = {
-  daily_max: 20,
-  monthly_max: 500,
+  daily_max: 20,    // Max credits a user can EARN per day (resets at midnight)
+  monthly_max: 600, // Max credits a user can EARN per calendar month (resets on the 1st)
 } as const;
 
 // Minimum seconds between earning the same action type (anti-spam)

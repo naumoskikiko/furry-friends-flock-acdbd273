@@ -93,7 +93,12 @@ export function useCredits() {
 
       const amount = CREDIT_REWARDS[action];
 
+      // Daily cap (resets at midnight)
+      if (dailyEarned >= CREDIT_LIMITS.daily_max) return false;
       if (dailyEarned + amount > CREDIT_LIMITS.daily_max) return false;
+
+      // Monthly cap (resets on the 1st) — daily earnings accumulate into this
+      if (monthlyEarned >= CREDIT_LIMITS.monthly_max) return false;
       if (monthlyEarned + amount > CREDIT_LIMITS.monthly_max) return false;
 
       const cooldown = CREDIT_COOLDOWNS[action];

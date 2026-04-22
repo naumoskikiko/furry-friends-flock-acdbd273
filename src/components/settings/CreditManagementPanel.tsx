@@ -1,13 +1,21 @@
 import { useState, useEffect } from "react";
-import { Coins, Search, Plus, Minus, BarChart3, ShieldAlert } from "lucide-react";
+import { Coins, Search, Plus, Minus, BarChart3, ShieldAlert, History, User as UserIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CREDIT_REWARDS, CREDIT_LIMITS } from "@/lib/creditsConfig";
+import { formatDistanceToNow } from "date-fns";
 
 const CreditManagementPanel = () => {
   const { toast } = useToast();
@@ -15,23 +23,60 @@ const CreditManagementPanel = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({ totalCredits: 0, totalUsers: 0, totalEarned: 0, totalSpent: 0 });
+  const [adminLog, setAdminLog] = useState<any[]>([]);
+  const [adjustTarget, setAdjustTarget] = useState<any | null>(null);
+  const [adjustAmount, setAdjustAmount] = useState("");
+  const [adjustReason, setAdjustReason] = useState("");
+  const [adjustMode, setAdjustMode] = useState<"add" | "deduct">("add");
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchStats = async () => {
     const { data: credits } = await supabase.from("credits").select("balance");
     const totalCredits = (credits || []).reduce((s, c) => s + Number(c.balance), 0);
-    
-    const { data: earned } = await supabase.from("credit_transactions").select("amount").eq("type", "earn");
-    const { data: spent } = await supabase.from("credit_transactions").select("amount").eq("type", "spend");
-    
+
+    const { data: earned } = await supabase.from("credit_transactions").select("amount").gt("amount", 0);
+    const { data: spent } = await supabase.from("credit_transactions").select("amount").lt("amount", 0);
+
     setStats({
       totalCredits: Math.round(totalCredits * 100) / 100,
       totalUsers: credits?.length || 0,
-      totalEarned: (earned || []).reduce((s, t) => s + Number(t.amount), 0),
-      totalSpent: Math.abs((spent || []).reduce((s, t) => s + Number(t.amount), 0)),
+      totalEarned: Math.round((earned || []).reduce((s, t) => s + Number(t.amount), 0) * 100) / 100,
+      totalSpent: Math.round(Math.abs((spent || []).reduce((s, t) => s + Number(t.amount), 0)) * 100) / 100,
     });
   };
 
-  useEffect(() => { fetchStats(); }, []);
+  const fetchAdminLog = async () => {
+    const { data } = await (supabase as any)
+      .from("credit_admin_log")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (!data || data.length === 0) {
+      setAdminLog([]);
+      return;
+    }
+    const ids = Array.from(new Set([
+      ...data.map((r: any) => r.target_user_id),
+      ...data.map((r: any) => r.changed_by),
+    ]));
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, full_name, username")
+      .in("user_id", ids);
+    const map = Object.fromEntries((profiles || []).map((p: any) => [p.user_id, p]));
+    setAdminLog(
+      data.map((r: any) => ({
+        ...r,
+        target: map[r.target_user_id],
+        admin: map[r.changed_by],
+      }))
+    );
+  };
+
+  useEffect(() => {
+    fetchStats();
+    fetchAdminLog();
+  }, []);
 
   const searchUsers = async () => {
     if (!search.trim()) return;
@@ -45,7 +90,7 @@ const CreditManagementPanel = () => {
       const userIds = profiles.map(p => p.user_id);
       const { data: credits } = await supabase.from("credits").select("user_id, balance").in("user_id", userIds);
       const creditMap = Object.fromEntries((credits || []).map(c => [c.user_id, c.balance]));
-      
+
       setUsers(profiles.map(p => ({
         ...p,
         balance: creditMap[p.user_id] ?? 0,
@@ -56,29 +101,52 @@ const CreditManagementPanel = () => {
     setLoading(false);
   };
 
-  const adjustCredits = async (userId: string, amount: number) => {
-    const user = users.find(u => u.user_id === userId);
-    if (!user) return;
+  const openAdjust = (user: any, mode: "add" | "deduct") => {
+    setAdjustTarget(user);
+    setAdjustMode(mode);
+    setAdjustAmount("");
+    setAdjustReason("");
+  };
 
-    const newBalance = Math.max(0, user.balance + amount);
-    await supabase.from("credits").update({ balance: newBalance, updated_at: new Date().toISOString() }).eq("user_id", userId);
-    await supabase.from("credit_transactions").insert({
-      user_id: userId,
-      amount,
-      type: amount > 0 ? "earn" : "spend",
-      description: `Admin ${amount > 0 ? "added" : "removed"} credits`,
+  const submitAdjust = async () => {
+    if (!adjustTarget) return;
+    const raw = parseFloat(adjustAmount);
+    if (!raw || raw <= 0) {
+      toast({ title: "Enter a positive amount", variant: "destructive" });
+      return;
+    }
+    const signed = adjustMode === "add" ? raw : -raw;
+    setSubmitting(true);
+    const { data, error } = await (supabase as any).rpc("admin_adjust_user_credits", {
+      _target_user_id: adjustTarget.user_id,
+      _amount: signed,
+      _reason: adjustReason.trim() || null,
     });
+    setSubmitting(false);
 
-    setUsers(prev => prev.map(u => u.user_id === userId ? { ...u, balance: newBalance } : u));
+    if (error) {
+      toast({ title: "Adjustment failed", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    const newBalance = Number(data ?? 0);
+    setUsers(prev => prev.map(u => u.user_id === adjustTarget.user_id ? { ...u, balance: newBalance } : u));
+    toast({
+      title: adjustMode === "add" ? `Added ${raw} credits` : `Deducted ${raw} credits`,
+      description: `New balance: ${newBalance.toFixed(2)}`,
+    });
+    setAdjustTarget(null);
     fetchStats();
-    toast({ title: `${amount > 0 ? "Added" : "Removed"} ${Math.abs(amount)} credits` });
+    fetchAdminLog();
   };
 
   return (
     <div className="px-4 py-4 space-y-4">
       <div className="rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 p-4">
         <p className="text-sm font-bold flex items-center gap-2"><Coins className="h-4 w-4" /> PetKeep Credits Management</p>
-        <p className="text-xs text-muted-foreground mt-1">Monitor and manage the platform credit economy.</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Daily earnings accumulate into a monthly cap of {CREDIT_LIMITS.monthly_max}. Daily counter resets at midnight, monthly resets on the 1st.
+        </p>
       </div>
 
       {/* Economy Stats */}
@@ -127,11 +195,11 @@ const CreditManagementPanel = () => {
           </div>
           <div className="mt-3 pt-2 border-t border-border space-y-1">
             <div className="flex justify-between text-xs">
-              <span>Daily limit</span>
+              <span>Daily earn limit</span>
               <Badge variant="secondary">{CREDIT_LIMITS.daily_max}</Badge>
             </div>
             <div className="flex justify-between text-xs">
-              <span>Monthly limit</span>
+              <span>Monthly earn limit</span>
               <Badge variant="secondary">{CREDIT_LIMITS.monthly_max}</Badge>
             </div>
           </div>
@@ -147,8 +215,13 @@ const CreditManagementPanel = () => {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex gap-2">
-            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or username" className="text-xs"
-              onKeyDown={e => e.key === "Enter" && searchUsers()} />
+            <Input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by name or username"
+              className="text-xs"
+              onKeyDown={e => e.key === "Enter" && searchUsers()}
+            />
             <Button size="sm" onClick={searchUsers} disabled={loading} className="shrink-0 text-xs">Search</Button>
           </div>
           {users.length > 0 && (
@@ -164,15 +237,30 @@ const CreditManagementPanel = () => {
                 <TableBody>
                   {users.map(u => (
                     <TableRow key={u.user_id}>
-                      <TableCell className="text-xs font-semibold">{u.full_name || u.username || "Unknown"}</TableCell>
+                      <TableCell className="text-xs font-semibold">
+                        <div className="flex flex-col">
+                          <span>{u.full_name || u.username || "Unknown"}</span>
+                          {u.username && <span className="text-[10px] text-muted-foreground">@{u.username}</span>}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-xs text-right font-mono">{Number(u.balance).toFixed(2)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-1 justify-end">
-                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => adjustCredits(u.user_id, 10)}>
-                            <Plus className="h-3 w-3" />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-[11px] gap-1"
+                            onClick={() => openAdjust(u, "add")}
+                          >
+                            <Plus className="h-3 w-3" /> Add
                           </Button>
-                          <Button size="sm" variant="outline" className="h-7 w-7 p-0" onClick={() => adjustCredits(u.user_id, -10)}>
-                            <Minus className="h-3 w-3" />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-[11px] gap-1"
+                            onClick={() => openAdjust(u, "deduct")}
+                          >
+                            <Minus className="h-3 w-3" /> Deduct
                           </Button>
                         </div>
                       </TableCell>
@@ -180,6 +268,43 @@ const CreditManagementPanel = () => {
                   ))}
                 </TableBody>
               </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Admin Adjustment Log */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <History className="h-4 w-4" /> Recent Admin Adjustments
+            <Badge variant="secondary" className="ml-auto text-[10px]">{adminLog.length}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {adminLog.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-4">No admin adjustments yet</p>
+          ) : (
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {adminLog.map((r) => (
+                <div key={r.id} className="flex items-start gap-2 py-2 border-b border-border last:border-0">
+                  <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${Number(r.amount) > 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-destructive/10 text-destructive"}`}>
+                    {Number(r.amount) > 0 ? <Plus className="h-3.5 w-3.5" /> : <Minus className="h-3.5 w-3.5" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-semibold truncate">
+                      {r.target?.full_name || r.target?.username || "User"} — {Number(r.amount) > 0 ? "+" : ""}{r.amount}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground truncate">
+                      by {r.admin?.full_name || r.admin?.username || "Admin"} · {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}
+                    </p>
+                    {r.reason && <p className="text-[10px] text-muted-foreground italic truncate">"{r.reason}"</p>}
+                  </div>
+                  <span className="text-[10px] font-mono text-muted-foreground shrink-0">
+                    {Number(r.previous_balance).toFixed(1)} → {Number(r.new_balance).toFixed(1)}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
@@ -193,8 +318,9 @@ const CreditManagementPanel = () => {
             <div>
               <p className="text-xs font-bold">Anti-Abuse Protections Active</p>
               <ul className="text-[11px] text-muted-foreground mt-1 space-y-0.5 list-disc pl-3">
-                <li>Daily earning cap: {CREDIT_LIMITS.daily_max} credits</li>
-                <li>Monthly earning cap: {CREDIT_LIMITS.monthly_max} credits</li>
+                <li>Daily earn cap: {CREDIT_LIMITS.daily_max} credits (resets at midnight)</li>
+                <li>Monthly earn cap: {CREDIT_LIMITS.monthly_max} credits (resets on the 1st)</li>
+                <li>Negative balances are blocked at the database layer</li>
                 <li>Duplicate interaction filtering (source_id dedup)</li>
                 <li>Anti-spam cooldown enforcement</li>
                 <li>Credits are non-withdrawable platform currency</li>
@@ -203,6 +329,61 @@ const CreditManagementPanel = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Adjust Dialog */}
+      <Dialog open={!!adjustTarget} onOpenChange={(o) => !o && setAdjustTarget(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              {adjustMode === "add" ? <Plus className="h-4 w-4 text-emerald-500" /> : <Minus className="h-4 w-4 text-destructive" />}
+              {adjustMode === "add" ? "Add Credits" : "Deduct Credits"}
+            </DialogTitle>
+          </DialogHeader>
+          {adjustTarget && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 rounded-lg bg-muted p-2.5">
+                <UserIcon className="h-4 w-4 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold truncate">{adjustTarget.full_name || adjustTarget.username}</p>
+                  <p className="text-[10px] text-muted-foreground">Current balance: {Number(adjustTarget.balance).toFixed(2)}</p>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold mb-1 block">Amount</label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={adjustAmount}
+                  onChange={(e) => setAdjustAmount(e.target.value)}
+                  placeholder="e.g. 50"
+                  className="text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold mb-1 block">Reason (optional)</label>
+                <Input
+                  value={adjustReason}
+                  onChange={(e) => setAdjustReason(e.target.value)}
+                  placeholder="e.g. Compensation for issue"
+                  className="text-sm"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" size="sm" onClick={() => setAdjustTarget(null)} disabled={submitting}>Cancel</Button>
+            <Button
+              size="sm"
+              variant={adjustMode === "add" ? "default" : "destructive"}
+              onClick={submitAdjust}
+              disabled={submitting || !adjustAmount}
+            >
+              {submitting ? "Saving..." : adjustMode === "add" ? "Add Credits" : "Deduct Credits"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
