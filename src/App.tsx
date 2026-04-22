@@ -117,7 +117,8 @@ const App = () => (
                     <Route path="/tag/:tag" element={<ProtectedRoute><TagFeedPage /></ProtectedRoute>} />
                     <Route path="/provider/:id" element={<ProtectedRoute><ProviderPage /></ProtectedRoute>} />
                     <Route path="*" element={<NotFound />} />
-                  </Routes>
+                    </Routes>
+                  </main>
                 </Suspense>
               </ErrorBoundary>
             </BrowserRouter>
