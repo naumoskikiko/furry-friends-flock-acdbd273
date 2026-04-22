@@ -184,7 +184,7 @@ const PetVerificationReviewPanel = () => {
                 {/* Document */}
                 <div className="mt-3 flex items-center gap-2">
                   <p className="text-xs text-muted-foreground truncate flex-1">📄 {v.document_name}</p>
-                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setViewImage(v.document_url)}>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openDocument(v)}>
                     <Eye className="h-3 w-3 mr-1" /> View
                   </Button>
                 </div>
