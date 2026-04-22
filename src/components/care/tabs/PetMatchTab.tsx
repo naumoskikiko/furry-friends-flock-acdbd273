@@ -951,6 +951,7 @@ const PetMatchTab = () => {
                         className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${selectedPet === p.id ? "petkeep-gradient text-primary-foreground" : "bg-secondary"}`}>
                         {p.photo_url ? <img src={p.photo_url} className="h-6 w-6 rounded-full object-cover" /> : <PawPrint className="h-4 w-4" />}
                         {p.name}
+                        {p.is_verified && <Shield className="h-3 w-3 text-green-500" />}
                         {!safety.safe && <AlertTriangle className="h-3 w-3 text-amber-500" />}
                       </button>
                     );
@@ -960,16 +961,29 @@ const PetMatchTab = () => {
                   const selPet = availablePets.find(p => p.id === selectedPet);
                   if (!selPet) return null;
                   const safety = isSafeForBreeding({ animal_type: selPet.animal_type, breed: selPet.breed, gender: selPet.gender, age: selPet.age, neutered: selPet.neutered, vaccinated: selPet.vaccinated, weight: selPet.weight });
-                  if (safety.safe) return null;
                   return (
-                    <div className="mt-2 rounded-xl bg-amber-50 dark:bg-amber-900/10 p-2.5">
-                      <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" /> Safety Warnings
-                      </p>
-                      {safety.warnings.map((w, i) => (
-                        <p key={i} className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">• {w}</p>
-                      ))}
-                    </div>
+                    <>
+                      {!selPet.is_verified && (
+                        <div className="mt-2 rounded-xl bg-destructive/10 border border-destructive/30 p-2.5">
+                          <p className="text-[10px] font-bold text-destructive flex items-center gap-1">
+                            <Shield className="h-3 w-3" /> Verification required
+                          </p>
+                          <p className="text-[10px] text-destructive/80 mt-0.5">
+                            Open this pet's profile and upload at least one document (vaccination, passport, ownership proof, etc.). An admin must approve it before you can list this pet in PetMatch.
+                          </p>
+                        </div>
+                      )}
+                      {!safety.safe && (
+                        <div className="mt-2 rounded-xl bg-amber-50 dark:bg-amber-900/10 p-2.5">
+                          <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" /> Safety Warnings
+                          </p>
+                          {safety.warnings.map((w, i) => (
+                            <p key={i} className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">• {w}</p>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   );
                 })()}
               </div>
