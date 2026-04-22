@@ -28,6 +28,8 @@ export function useVoiceRecorder() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const startTimeRef = useRef<number>(0);
+  const grantedRef = useRef(false);
+  const { request, promptProps } = usePermissionPrompt("microphone");
 
   const cleanup = useCallback(() => {
     if (timerRef.current) {
@@ -49,7 +51,32 @@ export function useVoiceRecorder() {
   const startRecording = useCallback(async () => {
     try {
       cleanup();
+
+      // Show explanatory rationale before the OS mic prompt (App Store / Play Store requirement).
+      if (!grantedRef.current) {
+        try {
+          const status = await (navigator as any).permissions?.query?.({ name: "microphone" as PermissionName });
+          if (status?.state === "granted") {
+            grantedRef.current = true;
+          }
+        } catch {
+          /* permissions API unsupported — fall through to rationale */
+        }
+      }
+      if (!grantedRef.current) {
+        const allowed = await request();
+        if (!allowed) {
+          setState((prev) => ({
+            ...prev,
+            error: "Microphone access required to send voice messages",
+            permissionDenied: true,
+          }));
+          return;
+        }
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      grantedRef.current = true;
       streamRef.current = stream;
 
       // Choose best supported format
