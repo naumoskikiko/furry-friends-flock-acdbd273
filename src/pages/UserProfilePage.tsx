@@ -330,11 +330,9 @@ const UserProfilePage = () => {
             {/* Avatar */}
             <div className="shrink-0">
               {profile.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
+                <img src={profile.avatar_url}
                   alt="Avatar"
-                  className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/20"
-                />
+                  className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/20" loading="lazy" decoding="async" />
               ) : (
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent font-display text-2xl font-bold text-primary-foreground">
                   {initials}
@@ -451,7 +449,7 @@ const UserProfilePage = () => {
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 text-accent">
                   {businessData.logo_url ? (
-                    <img src={businessData.logo_url} alt="" className="h-10 w-10 rounded-xl object-cover" />
+                    <img src={businessData.logo_url} alt="" className="h-10 w-10 rounded-xl object-cover" loading="lazy" decoding="async" />
                   ) : (
                     <Briefcase className="h-5 w-5" />
                   )}
@@ -557,7 +555,7 @@ const UserProfilePage = () => {
                             className="rounded-2xl border border-border bg-card overflow-hidden text-left transition-all active:scale-[0.97]"
                           >
                             {pet.photo_url ? (
-                              <img src={pet.photo_url} alt={pet.name} className="w-full aspect-square object-cover" />
+                              <img src={pet.photo_url} alt={pet.name} className="w-full aspect-square object-cover" loading="lazy" decoding="async" />
                             ) : (
                               <div className="w-full aspect-square bg-secondary flex items-center justify-center text-4xl">
                                 {emoji}

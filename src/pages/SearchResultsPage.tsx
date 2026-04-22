@@ -100,7 +100,7 @@ const SearchResultsPage = () => {
                       className="flex w-full items-center gap-3 rounded-xl p-3 hover:bg-secondary/50 transition-colors text-left"
                     >
                       {u.avatar_url ? (
-                        <img src={u.avatar_url} alt="" className="h-12 w-12 rounded-full object-cover" />
+                        <img src={u.avatar_url} alt="" className="h-12 w-12 rounded-full object-cover" loading="lazy" decoding="async" />
                       ) : (
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-lg font-bold text-primary-foreground">
                           {(u.full_name || "U")[0].toUpperCase()}
@@ -152,7 +152,7 @@ const SearchResultsPage = () => {
                       className="aspect-square bg-secondary rounded-md overflow-hidden"
                     >
                       {p.image_url ? (
-                        <img src={p.image_url} alt="" className="h-full w-full object-cover" />
+                        <img src={p.image_url} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground p-2">
                           {p.caption?.slice(0, 40) || "Post"}

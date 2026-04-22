@@ -166,7 +166,7 @@ const PetProfileDetailModal = ({
         {/* Image */}
         <div className="relative aspect-square bg-secondary">
           {pet.photo_url ? (
-            <img src={pet.photo_url} alt={pet.name} className="h-full w-full object-cover" />
+            <img src={pet.photo_url} alt={pet.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
               <PawPrint className="h-20 w-20 text-muted-foreground/20" />
@@ -348,7 +348,7 @@ const PetMatchCard = ({
       {/* Photo header - clickable */}
       <button onClick={onViewProfile} className="relative aspect-[4/3] bg-gradient-to-br from-primary/10 to-accent/10 w-full">
         {pet.photo_url ? (
-          <img src={pet.photo_url} alt={pet.name} className="h-full w-full object-cover" />
+          <img src={pet.photo_url} alt={pet.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <PawPrint className="h-16 w-16 text-muted-foreground/20" />
@@ -881,7 +881,7 @@ const PetMatchTab = () => {
                     }`}
                   >
                     {p.photo_url ? (
-                      <img src={p.photo_url} className="h-4 w-4 rounded-full object-cover" />
+                      <img src={p.photo_url} className="h-4 w-4 rounded-full object-cover" loading="lazy" decoding="async" />
                     ) : (
                       <PawPrint className="h-3 w-3" />
                     )}
@@ -981,7 +981,7 @@ const PetMatchTab = () => {
                     return (
                       <button key={p.id} onClick={() => setSelectedPet(p.id)}
                         className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${selectedPet === p.id ? "petkeep-gradient text-primary-foreground" : "bg-secondary"}`}>
-                        {p.photo_url ? <img src={p.photo_url} className="h-6 w-6 rounded-full object-cover" /> : <PawPrint className="h-4 w-4" />}
+                        {p.photo_url ? <img src={p.photo_url} className="h-6 w-6 rounded-full object-cover" loading="lazy" decoding="async" /> : <PawPrint className="h-4 w-4" />}
                         {p.name}
                         {p.is_verified && <Shield className="h-3 w-3 text-green-500" />}
                         {!safety.safe && <AlertTriangle className="h-3 w-3 text-amber-500" />}
@@ -1054,7 +1054,7 @@ const PetMatchTab = () => {
                   {/* Pet photo strip */}
                   {pet?.photo_url && (
                     <div className="h-24 bg-gradient-to-br from-primary/10 to-accent/10">
-                      <img src={pet.photo_url} alt={pet.name} className="h-full w-full object-cover" />
+                      <img src={pet.photo_url} alt={pet.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
                     </div>
                   )}
                   <div className="p-4">
@@ -1166,7 +1166,7 @@ const PetMatchTab = () => {
                     }`}>
                       <div className="flex items-start gap-3">
                         {w.petPhoto ? (
-                          <img src={w.petPhoto} alt={w.petName} className="h-10 w-10 rounded-full object-cover shrink-0" />
+                          <img src={w.petPhoto} alt={w.petName} className="h-10 w-10 rounded-full object-cover shrink-0" loading="lazy" decoding="async" />
                         ) : (
                           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary shrink-0">
                             <PawPrint className="h-5 w-5 text-muted-foreground" />
@@ -1260,7 +1260,7 @@ const PetMatchTab = () => {
                   {/* Pet header */}
                   <div className="flex items-center gap-3 p-3 border-b border-border">
                     {pet.photo_url ? (
-                      <img src={pet.photo_url} alt={pet.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-primary/20" />
+                      <img src={pet.photo_url} alt={pet.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-primary/20" loading="lazy" decoding="async" />
                     ) : (
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary ring-2 ring-primary/20">
                         <PawPrint className="h-5 w-5 text-muted-foreground" />

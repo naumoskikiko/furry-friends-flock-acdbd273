@@ -77,7 +77,7 @@ const StoriesBar = () => {
               <div className={`flex h-16 w-16 items-center justify-center rounded-full p-[2px] ${hasOwnStory ? "bg-gradient-to-br from-primary via-petkeep-orange-light to-accent" : "bg-secondary"}`}>
                 <div className="flex h-full w-full items-center justify-center rounded-full bg-card">
                   {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
+                    <img src={profile.avatar_url} alt="" className="h-full w-full rounded-full object-cover" loading="lazy" decoding="async" />
                   ) : (
                     <span aria-hidden="true" className="font-display text-sm font-bold">{initials}</span>
                   )}
@@ -125,7 +125,7 @@ const StoriesBar = () => {
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary via-petkeep-orange-light to-accent p-[2px]">
                     <div className="flex h-full w-full items-center justify-center rounded-full bg-card">
                       {group.avatar_url ? (
-                        <img src={group.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
+                        <img src={group.avatar_url} alt="" className="h-full w-full rounded-full object-cover" loading="lazy" decoding="async" />
                       ) : (
                         <span aria-hidden="true" className="font-display text-sm font-bold">{group.initials}</span>
                       )}

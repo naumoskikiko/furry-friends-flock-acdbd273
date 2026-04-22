@@ -103,7 +103,7 @@ const TagPeopleModal = ({ open, onOpenChange, selectedUsers, onDone, maxTags = 1
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-secondary transition-colors"
             >
               {u.avatar_url ? (
-                <img src={u.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
+                <img src={u.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" loading="lazy" decoding="async" />
               ) : (
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-xs font-bold">
                   {(u.full_name || "U")[0].toUpperCase()}

@@ -137,7 +137,7 @@ const ShelterAdoptionTab = ({ providerId }: Props) => {
           <div key={listing.id} className={`rounded-2xl bg-card border border-border overflow-hidden ${isAdopted ? "opacity-70" : ""}`}>
             {listing.images && listing.images.length > 0 && (
               <div className="h-32 overflow-hidden">
-                <img src={listing.images[0].image_url} alt={listing.name} className="w-full h-full object-cover" />
+                <img src={listing.images[0].image_url} alt={listing.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
               </div>
             )}
             <div className="p-4">

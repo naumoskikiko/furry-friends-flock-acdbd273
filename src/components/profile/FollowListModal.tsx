@@ -100,7 +100,7 @@ const FollowListModal = ({ open, onOpenChange, userId, type }: FollowListModalPr
             <div key={u.user_id} className="flex items-center gap-3">
               <button onClick={() => { onOpenChange(false); navigate(user?.id === u.user_id ? "/profile" : `/user/${u.user_id}`); }} className="shrink-0">
                 {u.avatar_url ? (
-                  <img src={u.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+                  <img src={u.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" loading="lazy" decoding="async" />
                 ) : (
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-petkeep-orange-light text-xs font-bold text-primary-foreground">
                     {u.full_name?.[0]?.toUpperCase() || "U"}
