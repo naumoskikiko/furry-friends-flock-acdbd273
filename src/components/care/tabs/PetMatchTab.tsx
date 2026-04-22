@@ -426,14 +426,8 @@ const PetMatchCard = ({
           <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{listing.description}</p>
         )}
 
-        {/* Like / Skip buttons */}
+        {/* View / Like buttons */}
         <div className="mt-3 flex items-center justify-center gap-4">
-          <button
-            onClick={onSkip}
-            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
           <button
             onClick={onViewProfile}
             className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary/30 text-primary hover:bg-primary/10 transition-colors"
