@@ -46,15 +46,29 @@ const SettingsDangerZone = () => {
   const handleDelete = async () => {
     if (confirmText !== "DELETE") return;
     setDeleting(true);
-    toast({
-      title: "Account deletion requested",
-      description: "Your account and data will be removed within 30 days.",
-    });
-    setDeleting(false);
-    setDeleteOpen(false);
-    setConfirmText("");
-    await signOut();
-    navigate("/auth", { replace: true });
+    try {
+      // Calls the secure edge function that wipes app data and removes the auth user.
+      // Required for App Store / Google Play in-app account deletion compliance.
+      const { error } = await supabase.functions.invoke("delete-account");
+      if (error) throw error;
+      toast({
+        title: "Account deleted",
+        description: "Your account and all associated data have been permanently removed.",
+      });
+      setDeleteOpen(false);
+      setConfirmText("");
+      await signOut();
+      navigate("/auth", { replace: true });
+    } catch (err) {
+      console.error("Account deletion failed", err);
+      toast({
+        title: "Deletion failed",
+        description: err instanceof Error ? err.message : "Please try again or contact support.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
