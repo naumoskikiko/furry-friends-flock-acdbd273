@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { ShieldCheck, Check, X, Eye, FileText } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { ShieldCheck, Check, X, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,15 @@ interface VerificationRequest {
   profile?: { full_name: string; avatar_url: string | null };
 }
 
+interface ProviderGroup {
+  provider_id: string;
+  provider?: VerificationRequest["provider"];
+  profile?: VerificationRequest["profile"];
+  items: VerificationRequest[];
+  latestSubmittedAt: string;
+  overallStatus: "pending" | "approved" | "rejected" | "mixed";
+}
+
 const TYPE_STYLES: Record<string, string> = {
   license: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
   clinic_docs: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400",
@@ -44,15 +53,11 @@ const CareVerificationPanel = () => {
 
   const fetchRequests = useCallback(async () => {
     setLoading(true);
-    let query = fromTable("provider_verifications")
+    // Always fetch ALL for a provider so we can group; filter is applied per-card via overallStatus
+    const { data } = await fromTable("provider_verifications")
       .select("*")
       .order("submitted_at", { ascending: false });
 
-    if (filter !== "all") {
-      query = query.eq("status", filter);
-    }
-
-    const { data } = await query;
     const list = (data || []) as VerificationRequest[];
 
     if (list.length > 0) {
@@ -81,9 +86,53 @@ const CareVerificationPanel = () => {
 
     setRequests(list);
     setLoading(false);
-  }, [filter]);
+  }, []);
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
+
+  // Group by provider
+  const groups = useMemo<ProviderGroup[]>(() => {
+    const map = new Map<string, ProviderGroup>();
+    for (const r of requests) {
+      const g = map.get(r.provider_id);
+      if (g) {
+        g.items.push(r);
+        if (r.submitted_at > g.latestSubmittedAt) g.latestSubmittedAt = r.submitted_at;
+      } else {
+        map.set(r.provider_id, {
+          provider_id: r.provider_id,
+          provider: r.provider,
+          profile: r.profile,
+          items: [r],
+          latestSubmittedAt: r.submitted_at,
+          overallStatus: "pending",
+        });
+      }
+    }
+    // Compute overallStatus
+    const result = Array.from(map.values()).map(g => {
+      const statuses = new Set(g.items.map(i => i.status));
+      let overall: ProviderGroup["overallStatus"] = "pending";
+      if (statuses.size === 1) {
+        const only = [...statuses][0] as any;
+        overall = only === "approved" ? "approved" : only === "rejected" ? "rejected" : "pending";
+      } else {
+        overall = "mixed";
+      }
+      return { ...g, overallStatus: overall };
+    });
+    // Filter by status chip
+    const filtered = result.filter(g => {
+      if (filter === "all") return true;
+      if (filter === "pending") return g.items.some(i => i.status === "pending");
+      if (filter === "approved") return g.overallStatus === "approved";
+      if (filter === "rejected") return g.overallStatus === "rejected";
+      return true;
+    });
+    // Sort by latest submission desc
+    filtered.sort((a, b) => (a.latestSubmittedAt < b.latestSubmittedAt ? 1 : -1));
+    return filtered;
+  }, [requests, filter]);
 
   const openDocument = async (r: VerificationRequest) => {
     const match = r.document_url.match(/\/object\/sign\/verification-docs\/([^?]+)/);
@@ -138,7 +187,7 @@ const CareVerificationPanel = () => {
   return (
     <div className="px-4 py-4 space-y-3 pb-24">
       <h2 className="font-display text-lg font-bold">🛡️ Care Verification Review</h2>
-      <p className="text-xs text-muted-foreground">Review uploaded provider verification documents</p>
+      <p className="text-xs text-muted-foreground">One card per provider — review all required certificates together</p>
 
       {/* Filter chips */}
       <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
@@ -159,94 +208,118 @@ const CareVerificationPanel = () => {
         <div className="flex justify-center py-16">
           <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
         </div>
-      ) : requests.length === 0 ? (
+      ) : groups.length === 0 ? (
         <div className="text-center py-12">
           <ShieldCheck className="h-10 w-10 mx-auto text-muted-foreground/30 mb-2" />
           <p className="text-sm font-semibold">No {filter !== "all" ? filter : ""} verifications</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {requests.map(r => {
-            const typeInfo = VERIFICATION_TYPES.find(t => t.value === r.verification_type);
-            const typeClass = TYPE_STYLES[r.verification_type] || "bg-secondary text-foreground";
+          {groups.map(g => {
+            const approvedCount = g.items.filter(i => i.status === "approved").length;
+            const pendingCount = g.items.filter(i => i.status === "pending").length;
+            const isFullyVerified = approvedCount >= 2 && g.items.every(i => i.status === "approved");
 
             return (
-              <div key={r.id} className="rounded-2xl bg-card border border-border overflow-hidden">
+              <div key={g.provider_id} className="rounded-2xl bg-card border border-border overflow-hidden">
                 <div className="p-4">
-                  {/* Header */}
+                  {/* Provider header */}
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-xs font-bold text-primary-foreground">
-                        {r.profile?.full_name?.charAt(0) || "?"}
+                        {g.profile?.full_name?.charAt(0) || "?"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold truncate">{r.provider?.business_name || "Unknown Provider"}</p>
-                        <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${typeClass}`}>
-                          {typeInfo?.icon} {typeInfo?.label || r.verification_type}
-                        </span>
-                      </div>
+                      <p className="text-sm font-bold truncate">{g.provider?.business_name || "Unknown Provider"}</p>
                       <p className="text-[10px] text-muted-foreground">
-                        {r.profile?.full_name || "Unknown"} · {r.provider?.category}
+                        {g.profile?.full_name || "Unknown"} · {g.provider?.category}
                       </p>
                     </div>
                     <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold capitalize ${
-                      r.status === "pending" ? "bg-amber-100 text-amber-800" :
-                      r.status === "approved" ? "bg-green-100 text-green-800" :
-                      "bg-red-100 text-red-800"
+                      isFullyVerified ? "bg-green-100 text-green-800" :
+                      pendingCount > 0 ? "bg-amber-100 text-amber-800" :
+                      g.overallStatus === "rejected" ? "bg-red-100 text-red-800" :
+                      "bg-secondary text-foreground"
                     }`}>
-                      {r.status}
+                      {isFullyVerified ? "verified" : pendingCount > 0 ? `${pendingCount} pending` : g.overallStatus}
                     </span>
                   </div>
 
-                  {/* Document */}
-                  <div className="mt-3 flex items-center gap-2">
-                    <p className="text-xs text-muted-foreground truncate flex-1">📄 {r.document_name}</p>
-                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openDocument(r)}>
-                      <Eye className="h-3 w-3 mr-1" /> View
-                    </Button>
-                  </div>
-
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    Submitted {formatDistanceToNow(new Date(r.submitted_at), { addSuffix: true })}
+                  {/* Progress hint */}
+                  <p className="mt-2 text-[10px] text-muted-foreground">
+                    {approvedCount}/{Math.max(2, g.items.length)} required certificates approved
                   </p>
 
-                  {/* Review actions */}
-                  {r.status === "pending" && (
-                    <div className="mt-3 space-y-2">
-                      <Input
-                        placeholder="Review notes (optional)"
-                        value={reviewNotes[r.id] || ""}
-                        onChange={e => setReviewNotes(prev => ({ ...prev, [r.id]: e.target.value }))}
-                        className="h-8 text-xs"
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          className="flex-1 h-8 text-xs bg-green-600 hover:bg-green-700"
-                          onClick={() => handleAction(r.id, "approved")}
-                        >
-                          <Check className="h-3.5 w-3.5 mr-1" /> Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="flex-1 h-8 text-xs"
-                          onClick={() => handleAction(r.id, "rejected")}
-                        >
-                          <X className="h-3.5 w-3.5 mr-1" /> Reject
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  {/* Certificates list */}
+                  <div className="mt-3 space-y-2">
+                    {g.items.map(r => {
+                      const typeInfo = VERIFICATION_TYPES.find(t => t.value === r.verification_type);
+                      const typeClass = TYPE_STYLES[r.verification_type] || "bg-secondary text-foreground";
 
-                  {/* Previous notes */}
-                  {r.reviewer_notes && r.status !== "pending" && (
-                    <div className="mt-2 text-[10px] text-muted-foreground">
-                      <span className="font-semibold">Notes:</span> {r.reviewer_notes}
-                    </div>
-                  )}
+                      return (
+                        <div key={r.id} className="rounded-xl border border-border/60 bg-secondary/40 p-3">
+                          <div className="flex items-center gap-2">
+                            <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${typeClass}`}>
+                              {typeInfo?.icon} {typeInfo?.label || r.verification_type}
+                            </span>
+                            <span className={`ml-auto rounded-full px-2 py-0.5 text-[9px] font-bold capitalize ${
+                              r.status === "pending" ? "bg-amber-100 text-amber-800" :
+                              r.status === "approved" ? "bg-green-100 text-green-800" :
+                              "bg-red-100 text-red-800"
+                            }`}>
+                              {r.status}
+                            </span>
+                          </div>
+
+                          <div className="mt-2 flex items-center gap-2">
+                            <p className="text-xs text-muted-foreground truncate flex-1">📄 {r.document_name}</p>
+                            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openDocument(r)}>
+                              <Eye className="h-3 w-3 mr-1" /> View
+                            </Button>
+                          </div>
+
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            Submitted {formatDistanceToNow(new Date(r.submitted_at), { addSuffix: true })}
+                          </p>
+
+                          {r.status === "pending" && (
+                            <div className="mt-2 space-y-2">
+                              <Input
+                                placeholder="Review notes (optional)"
+                                value={reviewNotes[r.id] || ""}
+                                onChange={e => setReviewNotes(prev => ({ ...prev, [r.id]: e.target.value }))}
+                                className="h-8 text-xs"
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  className="flex-1 h-8 text-xs bg-green-600 hover:bg-green-700"
+                                  onClick={() => handleAction(r.id, "approved")}
+                                >
+                                  <Check className="h-3.5 w-3.5 mr-1" /> Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="flex-1 h-8 text-xs"
+                                  onClick={() => handleAction(r.id, "rejected")}
+                                >
+                                  <X className="h-3.5 w-3.5 mr-1" /> Reject
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                          {r.reviewer_notes && r.status !== "pending" && (
+                            <div className="mt-2 text-[10px] text-muted-foreground">
+                              <span className="font-semibold">Notes:</span> {r.reviewer_notes}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             );
