@@ -69,7 +69,8 @@ const PetVerificationSection = ({ petId, onStatusChange }: PetVerificationSectio
     if (!user) return;
     setUploading(type);
 
-    const filePath = `${user.id}/${petId}/${type}_${Date.now()}_${file.name}`;
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const filePath = `${user.id}/${petId}/${type}_${Date.now()}_${safeName}`;
     const { error: uploadErr } = await supabase.storage
       .from("pet-verification-docs")
       .upload(filePath, file, { upsert: true });

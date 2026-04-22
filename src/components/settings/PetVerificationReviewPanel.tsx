@@ -38,6 +38,22 @@ const PetVerificationReviewPanel = () => {
   const [filter, setFilter] = useState<"pending" | "verified" | "rejected" | "all">("pending");
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
   const [viewImage, setViewImage] = useState<string | null>(null);
+  const [viewIsPdf, setViewIsPdf] = useState(false);
+
+  const openDocument = async (v: PetVerification) => {
+    // Try to extract storage path from stored URL and create a fresh signed URL
+    const match = v.document_url.match(/\/object\/sign\/pet-verification-docs\/([^?]+)/);
+    let url = v.document_url;
+    if (match) {
+      const path = decodeURIComponent(match[1]);
+      const { data } = await supabase.storage
+        .from("pet-verification-docs")
+        .createSignedUrl(path, 60 * 60);
+      if (data?.signedUrl) url = data.signedUrl;
+    }
+    setViewIsPdf((v.document_name || "").toLowerCase().endsWith(".pdf"));
+    setViewImage(url);
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -168,7 +184,7 @@ const PetVerificationReviewPanel = () => {
                 {/* Document */}
                 <div className="mt-3 flex items-center gap-2">
                   <p className="text-xs text-muted-foreground truncate flex-1">📄 {v.document_name}</p>
-                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setViewImage(v.document_url)}>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openDocument(v)}>
                     <Eye className="h-3 w-3 mr-1" /> View
                   </Button>
                 </div>
@@ -222,7 +238,7 @@ const PetVerificationReviewPanel = () => {
       <Dialog open={!!viewImage} onOpenChange={() => setViewImage(null)}>
         <DialogContent className="max-w-lg p-2">
           {viewImage && (
-            viewImage.endsWith(".pdf") ? (
+            viewIsPdf ? (
               <iframe src={viewImage} className="w-full h-[70vh] rounded-lg" />
             ) : (
               <img src={viewImage} alt="Verification document" className="w-full rounded-lg object-contain max-h-[70vh]" />
