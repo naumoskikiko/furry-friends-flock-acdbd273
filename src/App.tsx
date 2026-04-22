@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import NativeShell from "@/components/NativeShell";
 import Index from "./pages/Index";
 import ExplorePage from "./pages/ExplorePage";
 import MarketplacePage from "./pages/MarketplacePage";
@@ -53,6 +54,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <NativeShell />
               <ErrorBoundary area="this page">
                 <Routes>
                   <Route path="/auth" element={<AuthPage />} />
