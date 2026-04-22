@@ -965,7 +965,7 @@ const PetMatchTab = () => {
                             <Shield className="h-3 w-3" /> Hidden until verified
                           </p>
                           <p className="text-[10px] text-amber-700/80 dark:text-amber-400/80 mt-0.5">
-                            You can save this listing now, but it won't appear publicly until an admin verifies a pet document (vaccination, passport, ownership proof, etc.).
+                            You can save this listing now, but it won't appear publicly until an admin approves all 3 required documents: Vaccination, Health Certificate, and Ownership Proof.
                           </p>
                         </div>
                       )}

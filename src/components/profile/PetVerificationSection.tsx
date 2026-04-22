@@ -128,27 +128,53 @@ const PetVerificationSection = ({ petId, onStatusChange }: PetVerificationSectio
   }
 
   const types = [
-    { key: "vaccination", label: "Vaccination Proof", icon: <Syringe className="h-4 w-4" />, desc: "Upload vet certificate or vaccination card" },
-    { key: "neutered", label: "Neutered / Spayed Proof", icon: <Heart className="h-4 w-4" />, desc: "Upload surgery certificate or vet confirmation" },
-    { key: "health_certificate", label: "Health Certificate", icon: <FileText className="h-4 w-4" />, desc: "Upload an official vet health certificate" },
-    { key: "pet_passport", label: "Pet Passport", icon: <BookMarked className="h-4 w-4" />, desc: "Upload your pet's passport document" },
-    { key: "ownership_proof", label: "Ownership Proof", icon: <FileBadge className="h-4 w-4" />, desc: "Upload microchip / registration / adoption papers" },
+    { key: "vaccination", label: "Vaccination Proof", icon: <Syringe className="h-4 w-4" />, desc: "Upload vet certificate or vaccination card", required: true },
+    { key: "health_certificate", label: "Health Certificate", icon: <FileText className="h-4 w-4" />, desc: "Upload an official vet health certificate", required: true },
+    { key: "ownership_proof", label: "Ownership Proof", icon: <FileBadge className="h-4 w-4" />, desc: "Upload microchip / registration / adoption papers", required: true },
+    { key: "neutered", label: "Neutered / Spayed Proof", icon: <Heart className="h-4 w-4" />, desc: "Upload surgery certificate or vet confirmation", required: false },
+    { key: "pet_passport", label: "Pet Passport", icon: <BookMarked className="h-4 w-4" />, desc: "Upload your pet's passport document", required: false },
   ];
+
+  const requiredTypes = types.filter(t => t.required);
+  const approvedRequired = requiredTypes.filter(t => getVerification(t.key)?.status === "verified").length;
+  const fullyVerified = approvedRequired === requiredTypes.length;
 
   return (
     <div className="space-y-3">
-      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Verification Documents</p>
-      {types.map(({ key, label, icon, desc }) => {
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Verification Documents</p>
+        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+          fullyVerified
+            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+            : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+        }`}>
+          {fullyVerified ? <ShieldCheck className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+          {approvedRequired}/{requiredTypes.length} required approved
+        </span>
+      </div>
+      {!fullyVerified && (
+        <div className="rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-300/40 p-2.5">
+          <p className="text-[10px] text-amber-800 dark:text-amber-400">
+            All <strong>3 required documents</strong> (Vaccination, Health Certificate, Ownership Proof) must be approved by an admin before this pet can appear publicly in PetMatch.
+          </p>
+        </div>
+      )}
+      {types.map(({ key, label, icon, desc, required }) => {
         const v = getVerification(key);
         const status = v?.status || "not_submitted";
         const config = STATUS_CONFIG[status];
 
         return (
           <div key={key} className="rounded-xl bg-secondary/40 border border-border p-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2">
                 {icon}
                 <span className="text-sm font-semibold">{label}</span>
+                {required ? (
+                  <span className="text-[9px] font-bold text-destructive">REQUIRED</span>
+                ) : (
+                  <span className="text-[9px] font-semibold text-muted-foreground">Optional</span>
+                )}
               </div>
               {config && (
                 <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${config.className}`}>
