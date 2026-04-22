@@ -58,8 +58,42 @@ const VerificationDetail = ({
   onClose: () => void;
 }) => {
   const [adminNote, setAdminNote] = useState("");
+  const [petDocs, setPetDocs] = useState<Array<{ id: string; verification_type: string; document_url: string; document_name: string; status: string; created_at: string; reviewer_notes: string | null }>>([]);
+  const [viewDoc, setViewDoc] = useState<{ url: string; isPdf: boolean } | null>(null);
   const pet = listing.pet;
   const trust = getBreederTrustScore(listing);
+
+  useEffect(() => {
+    if (!pet?.id) return;
+    (async () => {
+      const { data } = await fromTable("pet_verifications")
+        .select("id, verification_type, document_url, document_name, status, created_at, reviewer_notes")
+        .eq("pet_id", pet.id)
+        .order("created_at", { ascending: false });
+      setPetDocs((data || []) as any);
+    })();
+  }, [pet?.id]);
+
+  const openDoc = async (doc: { document_url: string; document_name: string }) => {
+    const match = doc.document_url.match(/\/object\/sign\/pet-verification-docs\/([^?]+)/);
+    let url = doc.document_url;
+    if (match) {
+      const path = decodeURIComponent(match[1]);
+      const { data } = await supabase.storage
+        .from("pet-verification-docs")
+        .createSignedUrl(path, 60 * 60);
+      if (data?.signedUrl) url = data.signedUrl;
+    }
+    setViewDoc({ url, isPdf: (doc.document_name || "").toLowerCase().endsWith(".pdf") });
+  };
+
+  const TYPE_LABELS: Record<string, string> = {
+    vaccination: "💉 Vaccination",
+    neutered: "✂️ Neutered/Spayed",
+    health_certificate: "📋 Health Certificate",
+    pet_passport: "📘 Pet Passport",
+    ownership_proof: "🪪 Ownership Proof",
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50">
