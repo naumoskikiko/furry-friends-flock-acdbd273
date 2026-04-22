@@ -31,6 +31,7 @@ const AuthPage = () => {
   const [totpCode, setTotpCode] = useState("");
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [confirmedAge, setConfirmedAge] = useState(false);
   const [termsError, setTermsError] = useState("");
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [termsModalTab, setTermsModalTab] = useState<"terms" | "privacy">("terms");
@@ -166,8 +167,17 @@ const AuthPage = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!agreedToTerms) {
-      setTermsError("You must agree to the Terms and Privacy Policy to continue");
+    // App Store Guideline 1.3 / Play UGC policy require explicit user
+    // confirmation that they meet the minimum age (13). We capture this as
+    // a separate boolean from T&C so reviewers can see it's an explicit step.
+    if (!agreedToTerms || !confirmedAge) {
+      setTermsError(
+        !confirmedAge && !agreedToTerms
+          ? "Please confirm your age and agree to the Terms to continue"
+          : !confirmedAge
+          ? "You must confirm you are at least 13 years old"
+          : "You must agree to the Terms and Privacy Policy to continue"
+      );
       return;
     }
     setTermsError("");
