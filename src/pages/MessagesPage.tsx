@@ -203,7 +203,7 @@ const MessagesPage = () => {
   return (
     <AppLayout>
       {activeConversation ? (
-        <div className="fixed inset-0 z-30 mx-auto flex h-[100dvh] max-w-lg flex-col overflow-hidden bg-background">
+        <div className="fixed inset-0 z-[60] mx-auto flex h-[100dvh] max-w-lg flex-col overflow-hidden bg-background">
           <ChatView
             conversation={activeConversation}
             onBack={() => { setActiveConversation(null); refresh(); }}
