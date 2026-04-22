@@ -307,11 +307,15 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
     <article className="border-b border-border bg-card">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3">
-        <button className="flex items-center gap-3" onClick={() => goToProfile(post.user_id)}>
+        <button
+          className="flex items-center gap-3"
+          onClick={() => goToProfile(post.user_id)}
+          aria-label={`View ${post.username}'s profile`}
+        >
           {post.avatar_url ? (
             <img src={post.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
           ) : (
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-petkeep-orange-light font-display text-xs font-bold text-primary-foreground">
+            <div aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-petkeep-orange-light font-display text-xs font-bold text-primary-foreground">
               {initials}
             </div>
           )}
@@ -326,8 +330,8 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
         </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-1 text-muted-foreground">
-              <MoreHorizontal className="h-5 w-5" />
+            <button className="p-1 text-muted-foreground" aria-label="Post options">
+              <MoreHorizontal aria-hidden="true" className="h-5 w-5" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -384,8 +388,10 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
               <button
                 onClick={(e) => { e.stopPropagation(); setMuted(!muted); }}
                 className="absolute bottom-3 right-3 rounded-full bg-foreground/60 p-1.5 text-background"
+                aria-label={muted ? "Unmute video" : "Mute video"}
+                aria-pressed={!muted}
               >
-                {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                {muted ? <VolumeX aria-hidden="true" className="h-4 w-4" /> : <Volume2 aria-hidden="true" className="h-4 w-4" />}
               </button>
             </>
           ) : (
@@ -397,20 +403,29 @@ const FeedPostCard = ({ post, onLikeToggle, onSaveToggle, onDelete }: FeedPostCa
       )}
 
       {/* Actions */}
-      <div className="flex items-center justify-between px-4 py-2">
+      <div className="flex items-center justify-between px-4 py-2" role="group" aria-label="Post actions">
         <div className="flex items-center gap-4">
-          <button onClick={toggleLike} className="transition-transform active:scale-90">
-            <Heart className={`h-6 w-6 ${liked ? "fill-primary text-primary" : "text-foreground"}`} />
+          <button
+            onClick={toggleLike}
+            className="transition-transform active:scale-90"
+            aria-label={liked ? `Unlike post, ${likesCount} likes` : `Like post, ${likesCount} likes`}
+            aria-pressed={liked}
+          >
+            <Heart aria-hidden="true" className={`h-6 w-6 ${liked ? "fill-primary text-primary" : "text-foreground"}`} />
           </button>
-          <button onClick={openComments}>
-            <MessageCircle className="h-6 w-6 text-foreground" />
+          <button onClick={openComments} aria-label={`View ${commentsCount} comments`}>
+            <MessageCircle aria-hidden="true" className="h-6 w-6 text-foreground" />
           </button>
-          <button onClick={sharePost}>
-            <Send className="h-5 w-5 text-foreground" />
+          <button onClick={sharePost} aria-label="Share post">
+            <Send aria-hidden="true" className="h-5 w-5 text-foreground" />
           </button>
         </div>
-        <button onClick={toggleSave}>
-          <Bookmark className={`h-6 w-6 ${saved ? "fill-foreground text-foreground" : "text-foreground"}`} />
+        <button
+          onClick={toggleSave}
+          aria-label={saved ? "Remove from saved posts" : "Save post"}
+          aria-pressed={saved}
+        >
+          <Bookmark aria-hidden="true" className={`h-6 w-6 ${saved ? "fill-foreground text-foreground" : "text-foreground"}`} />
         </button>
       </div>
 
