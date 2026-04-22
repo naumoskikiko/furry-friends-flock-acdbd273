@@ -1051,24 +1051,10 @@ const PetMatchTab = () => {
                     {/* Safety check for own pet */}
                     {pet && <SafetyIndicators pet={pet as Pet} />}
 
-                    {/* Verification docs */}
-                    {!listing.breed_document_url && (
-                      <div className="mt-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 p-3 flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-amber-600 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-amber-800 dark:text-amber-400">Upload breed documents</p>
-                          <p className="text-[9px] text-amber-600/70">Required for listing approval</p>
-                        </div>
-                        <label className="shrink-0 rounded-lg bg-amber-600 px-2.5 py-1 text-[10px] font-bold text-white cursor-pointer">
-                          <Upload className="h-3 w-3 inline mr-0.5" /> Upload
-                          <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUploadDoc(listing.id, f); }} />
-                        </label>
-                      </div>
-                    )}
-                    {listing.breed_document_url && (
-                      <div className="mt-2 flex items-center gap-2 text-xs">
-                        <BadgeCheck className="h-3.5 w-3.5 text-accent" />
-                        <span className="text-muted-foreground">{listing.breed_document_name}</span>
+                    {/* Required verification documents (all 3 must be approved) */}
+                    {pet && (
+                      <div className="mt-3">
+                        <PetVerificationSection petId={pet.id} onStatusChange={fetchAll} />
                       </div>
                     )}
                   </div>
