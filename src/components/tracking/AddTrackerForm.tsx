@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Bluetooth } from "lucide-react";
+import { Bluetooth, Lock } from "lucide-react";
 import BLEScanner from "./BLEScanner";
 
 interface Props {
@@ -13,11 +13,13 @@ interface Props {
     tracker_device_id: string;
   }) => Promise<void>;
   onCancel: () => void;
+  /** When false, hide chip pairing (BLE scan) per admin control */
+  chipEnabled?: boolean;
 }
 
 const PET_TYPES = ["Dog", "Cat", "Bird", "Rabbit", "Other"];
 
-const AddTrackerForm = ({ onSubmit, onCancel }: Props) => {
+const AddTrackerForm = ({ onSubmit, onCancel, chipEnabled = true }: Props) => {
   const [petName, setPetName] = useState("");
   const [petType, setPetType] = useState("Dog");
   const [breed, setBreed] = useState("");
@@ -92,18 +94,33 @@ const AddTrackerForm = ({ onSubmit, onCancel }: Props) => {
               placeholder="PK-XXXX-XXXX"
               className="rounded-xl font-mono flex-1"
             />
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setShowBLEScanner(true)}
-              className="rounded-xl gap-1.5 shrink-0"
-            >
-              <Bluetooth className="h-4 w-4" />
-              Scan
-            </Button>
+            {chipEnabled ? (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setShowBLEScanner(true)}
+                className="rounded-xl gap-1.5 shrink-0"
+              >
+                <Bluetooth className="h-4 w-4" />
+                Scan
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                disabled
+                className="rounded-xl gap-1.5 shrink-0 opacity-60"
+                title="Chip pairing is not available for your account"
+              >
+                <Lock className="h-4 w-4" />
+                Locked
+              </Button>
+            )}
           </div>
           <p className="text-[10px] text-muted-foreground mt-1">
-            Enter manually or scan via Bluetooth
+            {chipEnabled
+              ? "Enter manually or scan via Bluetooth"
+              : "Chip pairing is not available for your account. Enter the Tracker Device ID manually."}
           </p>
           {bleBattery !== null && (
             <p className="text-[10px] text-primary mt-1">🔋 Battery: {bleBattery}%</p>
