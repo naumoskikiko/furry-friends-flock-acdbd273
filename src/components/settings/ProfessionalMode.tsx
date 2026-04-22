@@ -90,7 +90,6 @@ const ProfessionalMode = () => {
   const sections = [
     { id: "map-management" as const, label: "Map Management", desc: "Add, edit & delete map locations", icon: Map, color: "bg-primary/10 text-primary" },
     { id: "care-verification" as const, label: "Care Verification", desc: "Review provider verification requests", icon: ShieldCheck, color: "bg-primary/10 text-primary" },
-    { id: "pet-verification" as const, label: "Pet Verification", desc: "Review vaccination & neutering proof", icon: PawPrint, color: "bg-green-500/10 text-green-600" },
     { id: "care-management" as const, label: "Care Management", desc: "Manage providers, reviews & reports", icon: Users, color: "bg-primary/10 text-primary" },
     { id: "marketplace-control" as const, label: "Marketplace Control", desc: "Manage stores, products & listings", icon: Store, color: "bg-primary/10 text-primary" },
     { id: "petmatch" as const, label: "PetMatch Management", desc: "Verify breeders, reports & analytics", icon: Heart, color: "bg-pink-500/10 text-pink-500" },
