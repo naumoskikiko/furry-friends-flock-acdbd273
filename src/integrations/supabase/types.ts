@@ -3585,6 +3585,10 @@ export type Database = {
         Args: { _blog_post_id: string; _meetup_title: string }
         Returns: string
       }
+      delete_user_account: {
+        Args: { _target_user_id: string }
+        Returns: undefined
+      }
       findmypet_chip_allowed: { Args: { _user_id: string }; Returns: boolean }
       findmypet_tracking_allowed: {
         Args: { _user_id: string }
