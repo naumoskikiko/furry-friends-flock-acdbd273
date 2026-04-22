@@ -236,5 +236,5 @@ export const useFeed = () => {
     );
   }, []);
 
-  return { posts, loading, hasMore, loadMore, refreshFeed: () => fetchFeed(true), updatePostLike };
+  return { posts, loading, hasMore, error, loadMore, refreshFeed: () => fetchFeed(true), updatePostLike };
 };
