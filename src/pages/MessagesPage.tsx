@@ -202,7 +202,7 @@ const MessagesPage = () => {
 
   return (
     <AppLayout>
-      <div className={`mx-auto max-w-lg ${activeConversation ? "h-[calc(100dvh-4rem)] flex flex-col overflow-hidden" : ""}`}>
+      <div className={`mx-auto max-w-lg ${activeConversation ? "fixed inset-x-0 top-0 bottom-0 max-w-lg left-1/2 -translate-x-1/2 flex flex-col overflow-hidden bg-background z-30" : ""}`}>
         {activeConversation ? (
           <ChatView
             conversation={activeConversation}
