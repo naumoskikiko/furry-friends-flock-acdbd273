@@ -170,7 +170,7 @@ const CrashReportsPanel = () => {
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-1">
-          Latest {PAGE_SIZE} reports from production. Visible to owners and admins only.
+          Latest {PAGE_SIZE} reports from production. Auto-pruned after 30 days. Visible to owners and admins only.
         </p>
       </div>
 
