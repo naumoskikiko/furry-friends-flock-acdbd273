@@ -430,7 +430,7 @@ const CheckoutPage = () => {
                     Delivery fee
                     {deliveryDistance != null && <span className="ml-1">({formatDistance(deliveryDistance)})</span>}
                   </span>
-                  <span className="font-semibold">{deliveryFee === 0 ? "Free" : `${deliveryFee.toLocaleString()} MKD`}</span>
+                  <span className="font-semibold">{deliveryFee.toLocaleString()} MKD</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-xs">
