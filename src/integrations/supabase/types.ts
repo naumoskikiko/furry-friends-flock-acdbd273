@@ -1905,6 +1905,7 @@ export type Database = {
           emergency_contact: string | null
           gender: string | null
           id: string
+          is_verified: boolean
           medical_notes: string | null
           name: string
           neutered: boolean | null
@@ -1925,6 +1926,7 @@ export type Database = {
           emergency_contact?: string | null
           gender?: string | null
           id?: string
+          is_verified?: boolean
           medical_notes?: string | null
           name: string
           neutered?: boolean | null
@@ -1945,6 +1947,7 @@ export type Database = {
           emergency_contact?: string | null
           gender?: string | null
           id?: string
+          is_verified?: boolean
           medical_notes?: string | null
           name?: string
           neutered?: boolean | null
