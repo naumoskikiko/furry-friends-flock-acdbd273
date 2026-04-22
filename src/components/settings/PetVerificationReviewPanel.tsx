@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ShieldCheck, Check, X, Eye, Loader2, PawPrint, Syringe, Heart } from "lucide-react";
+import { ShieldCheck, Check, X, Eye, Loader2, PawPrint, Syringe, Heart, FileText, BookMarked, FileBadge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,6 +22,14 @@ interface PetVerification {
   pet?: { name: string; breed: string; animal_type: string; photo_url: string | null };
   owner?: { full_name: string; avatar_url: string | null };
 }
+
+const TYPE_META: Record<string, { label: string; icon: JSX.Element; className: string }> = {
+  vaccination: { label: "Vaccination", icon: <Syringe className="h-2.5 w-2.5 inline mr-0.5" />, className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
+  neutered: { label: "Neutered/Spayed", icon: <Heart className="h-2.5 w-2.5 inline mr-0.5" />, className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  health_certificate: { label: "Health Certificate", icon: <FileText className="h-2.5 w-2.5 inline mr-0.5" />, className: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400" },
+  pet_passport: { label: "Pet Passport", icon: <BookMarked className="h-2.5 w-2.5 inline mr-0.5" />, className: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" },
+  ownership_proof: { label: "Ownership Proof", icon: <FileBadge className="h-2.5 w-2.5 inline mr-0.5" />, className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" },
+};
 
 const PetVerificationReviewPanel = () => {
   const { toast } = useToast();
