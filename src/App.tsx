@@ -81,6 +81,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <NativeShell />
+              <OfflineBanner />
               <ErrorBoundary area="this page">
                 <Suspense fallback={<RouteFallback />}>
                   <Routes>
