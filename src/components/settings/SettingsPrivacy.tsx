@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { UserX, Download, Lock, MessageCircle, Shield, Loader2 } from "lucide-react";
+import { UserX, Download, Lock, MessageCircle, Shield, Loader2, BarChart3 } from "lucide-react";
+import { isAnalyticsEnabled, setAnalyticsEnabled, subscribeAnalytics } from "@/lib/analytics";
 
 const SettingsPrivacy = () => {
   const { user } = useAuth();
@@ -21,6 +22,11 @@ const SettingsPrivacy = () => {
   const [blockedUsers, setBlockedUsers] = useState<any[]>([]);
   const [blockedProfiles, setBlockedProfiles] = useState<Record<string, any>>({});
   const [downloading, setDownloading] = useState(false);
+  // Mirror the analytics opt-out flag so the Switch reflects external changes
+  // (e.g. user toggles it from another tab — preference is stored in localStorage).
+  const [analyticsOn, setAnalyticsOn] = useState(isAnalyticsEnabled());
+
+  useEffect(() => subscribeAnalytics(setAnalyticsOn), []);
 
   useEffect(() => {
     if (!user) return;
