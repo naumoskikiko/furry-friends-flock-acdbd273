@@ -202,8 +202,8 @@ const MessagesPage = () => {
 
   return (
     <AppLayout>
-      <div className={`mx-auto max-w-lg ${activeConversation ? "fixed inset-x-0 top-0 bottom-0 max-w-lg left-1/2 -translate-x-1/2 flex flex-col overflow-hidden bg-background z-30" : ""}`}>
-        {activeConversation ? (
+      {activeConversation ? (
+        <div className="fixed inset-0 z-30 mx-auto flex max-w-lg flex-col overflow-hidden bg-background">
           <ChatView
             conversation={activeConversation}
             onBack={() => { setActiveConversation(null); refresh(); }}
@@ -212,13 +212,15 @@ const MessagesPage = () => {
             onDeleteChat={handleDeleteChat}
             onClearChat={handleClearChat}
           />
-        ) : (
+        </div>
+      ) : (
+        <div className="mx-auto max-w-lg">
           <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
             <PullToRefreshIndicator refreshing={refreshing} pullDistance={pullDistance} />
             <ConversationList onSelect={setActiveConversation} />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {forwardingMessage && (
         <ForwardModal
