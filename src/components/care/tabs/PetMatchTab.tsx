@@ -37,6 +37,7 @@ interface Pet {
   owner_id?: string;
   vaccination_verified?: boolean;
   neutered_verified?: boolean;
+  is_verified?: boolean;
 }
 
 interface PetMatchListing {
@@ -354,6 +355,11 @@ const PetMatchCard = ({
         )}
         {/* Overlay badges */}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
+          {pet.is_verified && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-green-500/90 backdrop-blur-sm px-2 py-0.5 text-[10px] font-bold text-white">
+              <Shield className="h-3 w-3" /> Verified
+            </span>
+          )}
           {listing.breed_document_url && (
             <span className="inline-flex items-center gap-1 rounded-full bg-accent/90 backdrop-blur-sm px-2 py-0.5 text-[10px] font-bold text-accent-foreground">
               <BadgeCheck className="h-3 w-3" /> Verified Breed
@@ -501,7 +507,7 @@ const PetMatchTab = () => {
     setLoading(true);
 
     const [petsRes, myRes, allRes] = await Promise.all([
-      supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight, temperament, medical_notes, special_care, emergency_contact, vet_info").eq("owner_id", user.id),
+      supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight, temperament, medical_notes, special_care, emergency_contact, vet_info, is_verified").eq("owner_id", user.id),
       fromTable("petmatch_listings").select("*").eq("user_id", user.id),
       fromTable("petmatch_listings").select("*").eq("is_active", true).neq("user_id", user.id),
     ]);
@@ -516,7 +522,7 @@ const PetMatchTab = () => {
       const petIds = listings.map((l) => l.pet_id);
       const userIds = [...new Set(listings.map((l) => l.user_id))];
       const [petsData, profilesData, verificationsData] = await Promise.all([
-        supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight, temperament, medical_notes, special_care, emergency_contact, vet_info, owner_id").in("id", petIds),
+        supabase.from("pets").select("id, name, animal_type, breed, gender, age, photo_url, neutered, vaccinated, weight, temperament, medical_notes, special_care, emergency_contact, vet_info, is_verified, owner_id").in("id", petIds),
         supabase.from("profiles").select("user_id, full_name, avatar_url, username").in("user_id", userIds),
         fromTable("pet_verifications").select("pet_id, verification_type, status").in("pet_id", petIds).eq("status", "verified"),
       ]);
@@ -564,6 +570,16 @@ const PetMatchTab = () => {
 
   const handleCreate = async () => {
     if (!selectedPet || !user) return;
+    // Gate: pet must have at least one verified document
+    const pet = pets.find(p => p.id === selectedPet);
+    if (!pet?.is_verified) {
+      toast({
+        title: "Verification required",
+        description: "Upload a pet document (vaccination, passport, ownership proof, etc.) and wait for admin verification before listing.",
+        variant: "destructive",
+      });
+      return;
+    }
     const { error } = await fromTable("petmatch_listings").insert({
       user_id: user.id,
       pet_id: selectedPet,
@@ -935,6 +951,7 @@ const PetMatchTab = () => {
                         className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${selectedPet === p.id ? "petkeep-gradient text-primary-foreground" : "bg-secondary"}`}>
                         {p.photo_url ? <img src={p.photo_url} className="h-6 w-6 rounded-full object-cover" /> : <PawPrint className="h-4 w-4" />}
                         {p.name}
+                        {p.is_verified && <Shield className="h-3 w-3 text-green-500" />}
                         {!safety.safe && <AlertTriangle className="h-3 w-3 text-amber-500" />}
                       </button>
                     );
@@ -944,16 +961,29 @@ const PetMatchTab = () => {
                   const selPet = availablePets.find(p => p.id === selectedPet);
                   if (!selPet) return null;
                   const safety = isSafeForBreeding({ animal_type: selPet.animal_type, breed: selPet.breed, gender: selPet.gender, age: selPet.age, neutered: selPet.neutered, vaccinated: selPet.vaccinated, weight: selPet.weight });
-                  if (safety.safe) return null;
                   return (
-                    <div className="mt-2 rounded-xl bg-amber-50 dark:bg-amber-900/10 p-2.5">
-                      <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" /> Safety Warnings
-                      </p>
-                      {safety.warnings.map((w, i) => (
-                        <p key={i} className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">• {w}</p>
-                      ))}
-                    </div>
+                    <>
+                      {!selPet.is_verified && (
+                        <div className="mt-2 rounded-xl bg-destructive/10 border border-destructive/30 p-2.5">
+                          <p className="text-[10px] font-bold text-destructive flex items-center gap-1">
+                            <Shield className="h-3 w-3" /> Verification required
+                          </p>
+                          <p className="text-[10px] text-destructive/80 mt-0.5">
+                            Open this pet's profile and upload at least one document (vaccination, passport, ownership proof, etc.). An admin must approve it before you can list this pet in PetMatch.
+                          </p>
+                        </div>
+                      )}
+                      {!safety.safe && (
+                        <div className="mt-2 rounded-xl bg-amber-50 dark:bg-amber-900/10 p-2.5">
+                          <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" /> Safety Warnings
+                          </p>
+                          {safety.warnings.map((w, i) => (
+                            <p key={i} className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">• {w}</p>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   );
                 })()}
               </div>
@@ -967,7 +997,7 @@ const PetMatchTab = () => {
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setShowCreate(false)} className="flex-1 rounded-xl bg-secondary py-2.5 text-sm font-bold">Cancel</button>
-                <button onClick={handleCreate} disabled={!selectedPet} className="flex-1 petkeep-gradient rounded-xl py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50">Create Listing</button>
+                <button onClick={handleCreate} disabled={!selectedPet || !pets.find(p => p.id === selectedPet)?.is_verified} className="flex-1 petkeep-gradient rounded-xl py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50">Create Listing</button>
               </div>
             </div>
           )}

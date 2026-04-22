@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ShieldCheck, Check, X, Eye, Loader2, PawPrint, Syringe, Heart } from "lucide-react";
+import { ShieldCheck, Check, X, Eye, Loader2, PawPrint, Syringe, Heart, FileText, BookMarked, FileBadge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,6 +22,14 @@ interface PetVerification {
   pet?: { name: string; breed: string; animal_type: string; photo_url: string | null };
   owner?: { full_name: string; avatar_url: string | null };
 }
+
+const TYPE_META: Record<string, { label: string; icon: JSX.Element; className: string }> = {
+  vaccination: { label: "Vaccination", icon: <Syringe className="h-2.5 w-2.5 inline mr-0.5" />, className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
+  neutered: { label: "Neutered/Spayed", icon: <Heart className="h-2.5 w-2.5 inline mr-0.5" />, className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  health_certificate: { label: "Health Certificate", icon: <FileText className="h-2.5 w-2.5 inline mr-0.5" />, className: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400" },
+  pet_passport: { label: "Pet Passport", icon: <BookMarked className="h-2.5 w-2.5 inline mr-0.5" />, className: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400" },
+  ownership_proof: { label: "Ownership Proof", icon: <FileBadge className="h-2.5 w-2.5 inline mr-0.5" />, className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" },
+};
 
 const PetVerificationReviewPanel = () => {
   const { toast } = useToast();
@@ -73,10 +81,13 @@ const PetVerificationReviewPanel = () => {
       return;
     }
 
-    // If verified, update the pet's vaccinated/neutered field
+    // For legacy vaccination/neutered docs, also flip the pet's boolean field
     if (status === "verified") {
-      const updateField = type === "vaccination" ? { vaccinated: true } : { neutered: true };
-      await supabase.from("pets").update(updateField).eq("id", petId);
+      if (type === "vaccination") {
+        await supabase.from("pets").update({ vaccinated: true }).eq("id", petId);
+      } else if (type === "neutered") {
+        await supabase.from("pets").update({ neutered: true }).eq("id", petId);
+      }
     }
 
     toast({ title: status === "verified" ? "Verification approved ✅" : "Verification rejected ❌" });
@@ -132,17 +143,14 @@ const PetVerificationReviewPanel = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-bold truncate">{v.pet?.name || "Unknown Pet"}</p>
-                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
-                        v.verification_type === "vaccination"
-                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                          : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                      }`}>
-                        {v.verification_type === "vaccination" ? (
-                          <><Syringe className="h-2.5 w-2.5 inline mr-0.5" /> Vaccination</>
-                        ) : (
-                          <><Heart className="h-2.5 w-2.5 inline mr-0.5" /> Neutered/Spayed</>
-                        )}
-                      </span>
+                      {(() => {
+                        const meta = TYPE_META[v.verification_type] || { label: v.verification_type, icon: <FileText className="h-2.5 w-2.5 inline mr-0.5" />, className: "bg-secondary text-foreground" };
+                        return (
+                          <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${meta.className}`}>
+                            {meta.icon} {meta.label}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <p className="text-[10px] text-muted-foreground">
                       {v.pet?.breed || v.pet?.animal_type} • Owner: {v.owner?.full_name || "Unknown"}

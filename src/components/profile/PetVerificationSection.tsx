@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, ShieldCheck, Clock, XCircle, Loader2, Trash2, Syringe, Heart } from "lucide-react";
+import { Upload, ShieldCheck, Clock, XCircle, Loader2, Trash2, Syringe, Heart, FileText, BookMarked, FileBadge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const fromTable = (table: string) => (supabase as any).from(table);
@@ -130,6 +130,9 @@ const PetVerificationSection = ({ petId, onStatusChange }: PetVerificationSectio
   const types = [
     { key: "vaccination", label: "Vaccination Proof", icon: <Syringe className="h-4 w-4" />, desc: "Upload vet certificate or vaccination card" },
     { key: "neutered", label: "Neutered / Spayed Proof", icon: <Heart className="h-4 w-4" />, desc: "Upload surgery certificate or vet confirmation" },
+    { key: "health_certificate", label: "Health Certificate", icon: <FileText className="h-4 w-4" />, desc: "Upload an official vet health certificate" },
+    { key: "pet_passport", label: "Pet Passport", icon: <BookMarked className="h-4 w-4" />, desc: "Upload your pet's passport document" },
+    { key: "ownership_proof", label: "Ownership Proof", icon: <FileBadge className="h-4 w-4" />, desc: "Upload microchip / registration / adoption papers" },
   ];
 
   return (
