@@ -97,15 +97,9 @@ const DashboardDeliveryTab = ({ business, onUpdate }: Props) => {
               <p className="text-[10px] text-muted-foreground">Only users within this radius will see your products</p>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs">Delivery Fee (MKD)</Label>
-              <Input type="number" value={form.delivery_fee} onChange={(e) => setForm({ ...form, delivery_fee: e.target.value as any })} placeholder="120" min="0" />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs">Free Delivery Above (MKD)</Label>
-              <Input type="number" value={form.free_delivery_above} onChange={(e) => setForm({ ...form, free_delivery_above: e.target.value })} placeholder="Leave empty for no free delivery" min="0" />
-              <p className="text-[10px] text-muted-foreground">Orders above this amount get free delivery</p>
+            <div className="rounded-xl bg-secondary/50 border border-border p-3">
+              <p className="text-xs font-bold">Delivery Fee: 120 MKD</p>
+              <p className="text-[10px] text-muted-foreground mt-1">A flat platform-wide delivery fee is charged to customers at checkout. Stores cannot change this.</p>
             </div>
           </>
         )}
