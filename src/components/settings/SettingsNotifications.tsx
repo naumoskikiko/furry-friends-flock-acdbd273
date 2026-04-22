@@ -43,33 +43,7 @@ const SettingsNotifications = () => {
     sms_enabled: false,
   });
 
-  // Custom filter pills
-  const STORAGE_KEY = "petkeep_custom_notif_filters";
-  const [customFilters, setCustomFilters] = useState<CustomFilter[]>(() => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
-  });
-  const [showAddFilter, setShowAddFilter] = useState(false);
-  const [newFilterName, setNewFilterName] = useState("");
-  const [newFilterTypes, setNewFilterTypes] = useState<string[]>([]);
 
-  const saveFilters = (filters: CustomFilter[]) => {
-    setCustomFilters(filters);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
-  };
-
-  const addCustomFilter = () => {
-    if (!newFilterName.trim() || newFilterTypes.length === 0) return;
-    saveFilters([...customFilters, { name: newFilterName.trim(), types: newFilterTypes }]);
-    setNewFilterName("");
-    setNewFilterTypes([]);
-    setShowAddFilter(false);
-    toast({ title: "Custom filter created!" });
-  };
-
-  const removeCustomFilter = (idx: number) => {
-    saveFilters(customFilters.filter((_, i) => i !== idx));
-    toast({ title: "Filter removed" });
-  };
 
   useEffect(() => {
     if (!user) return;
