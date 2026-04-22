@@ -3693,6 +3693,7 @@ export type Database = {
         }
         Returns: string
       }
+      prune_old_crash_reports: { Args: never; Returns: number }
       reduce_product_stock: {
         Args: { _product_id: string; _quantity: number }
         Returns: boolean
