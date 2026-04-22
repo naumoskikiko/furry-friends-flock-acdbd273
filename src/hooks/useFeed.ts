@@ -33,6 +33,7 @@ export const useFeed = () => {
   const [posts, setPosts] = useState<FeedPostData[]>(() => cacheGet<FeedPostData[]>(CACHE_KEY) || []);
   const [loading, setLoading] = useState(!cacheGet<FeedPostData[]>(CACHE_KEY));
   const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const offsetRef = useRef(0);
   const fetchingRef = useRef(false);
 
@@ -94,51 +95,74 @@ export const useFeed = () => {
     }
 
     setLoading(true);
+    setError(null);
 
-    try {
-      const { data: followingData } = await supabase
-        .from("followers")
-        .select("following_id")
-        .eq("follower_id", user.id);
+    // Retry with exponential backoff for transient network failures.
+    // Keeps the cached feed visible if everything fails so users never see a blank screen.
+    const MAX_ATTEMPTS = 3;
+    let attempt = 0;
+    let lastError: any = null;
 
-      const followingIds = followingData?.map((f) => f.following_id) || [];
-      const feedUserIds = [user.id, ...followingIds];
+    while (attempt < MAX_ATTEMPTS) {
+      try {
+        const { data: followingData, error: followErr } = await supabase
+          .from("followers")
+          .select("following_id")
+          .eq("follower_id", user.id);
+        if (followErr) throw followErr;
 
-      if (feedUserIds.length === 0) {
-        if (reset) setPosts([]);
-        setHasMore(false);
-        setLoading(false);
-        return;
+        const followingIds = followingData?.map((f) => f.following_id) || [];
+        const feedUserIds = [user.id, ...followingIds];
+
+        if (feedUserIds.length === 0) {
+          if (reset) setPosts([]);
+          setHasMore(false);
+          setLoading(false);
+          fetchingRef.current = false;
+          return;
+        }
+
+        const { data: rawPosts, error: postsErr } = await supabase
+          .from("posts")
+          .select("*")
+          .in("user_id", feedUserIds)
+          .order("created_at", { ascending: false })
+          .range(offsetRef.current, offsetRef.current + BATCH_SIZE - 1);
+        if (postsErr) throw postsErr;
+
+        const enriched = await enrichPosts(rawPosts || []);
+
+        if (reset) {
+          setPosts(enriched);
+          cacheSet(CACHE_KEY, enriched, CacheTTL.FEED);
+        } else {
+          setPosts((prev) => {
+            const merged = [...prev, ...enriched];
+            cacheSet(CACHE_KEY, merged, CacheTTL.FEED);
+            return merged;
+          });
+        }
+
+        if (!rawPosts || rawPosts.length < BATCH_SIZE) setHasMore(false);
+        offsetRef.current += rawPosts?.length || 0;
+        lastError = null;
+        break;
+      } catch (err) {
+        lastError = err;
+        attempt += 1;
+        if (attempt >= MAX_ATTEMPTS) break;
+        // Exponential backoff: 400ms, 800ms, 1600ms
+        await new Promise((r) => setTimeout(r, 400 * Math.pow(2, attempt - 1)));
       }
-
-      const { data: rawPosts } = await supabase
-        .from("posts")
-        .select("*")
-        .in("user_id", feedUserIds)
-        .order("created_at", { ascending: false })
-        .range(offsetRef.current, offsetRef.current + BATCH_SIZE - 1);
-
-      const enriched = await enrichPosts(rawPosts || []);
-
-      if (reset) {
-        setPosts(enriched);
-        cacheSet(CACHE_KEY, enriched, CacheTTL.FEED);
-      } else {
-        setPosts((prev) => {
-          const merged = [...prev, ...enriched];
-          cacheSet(CACHE_KEY, merged, CacheTTL.FEED);
-          return merged;
-        });
-      }
-
-      if (!rawPosts || rawPosts.length < BATCH_SIZE) {
-        setHasMore(false);
-      }
-      offsetRef.current += rawPosts?.length || 0;
-    } finally {
-      setLoading(false);
-      fetchingRef.current = false;
     }
+
+    if (lastError) {
+      console.error("[useFeed] failed after retries", lastError);
+      setError(lastError instanceof Error ? lastError : new Error(String(lastError)));
+    }
+
+    setLoading(false);
+    fetchingRef.current = false;
   }, [user, enrichPosts]);
 
   // Initial load
