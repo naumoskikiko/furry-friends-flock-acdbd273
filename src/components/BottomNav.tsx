@@ -84,8 +84,8 @@ const BottomNav = ({ onBeforeNavigate }: BottomNavProps) => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md">
-      <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-1">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md pb-safe">
+      <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-1 safe-x">
         {tabKeys.map(({ path, icon: Icon, labelKey }) => {
           const isActive = location.pathname === path;
           const showBadge = path === "/messages" && unreadCount > 0;
