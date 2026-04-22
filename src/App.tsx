@@ -10,6 +10,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import NativeShell from "@/components/NativeShell";
 import OfflineBanner from "@/components/OfflineBanner";
+import AnalyticsRouteTracker from "@/components/AnalyticsRouteTracker";
 
 // Auth & root tabs are eagerly loaded (entry points users hit first / most often).
 import Index from "./pages/Index";
@@ -82,6 +83,7 @@ const App = () => (
             <BrowserRouter>
               <NativeShell />
               <OfflineBanner />
+              <AnalyticsRouteTracker />
               <ErrorBoundary area="this page">
                 <Suspense fallback={<RouteFallback />}>
                   <Routes>
