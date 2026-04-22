@@ -179,11 +179,14 @@ export function useVoiceRecorder() {
     });
   }, [state.audioUrl]);
 
+  const PermissionDialog = () => createElement(PermissionPrompt, promptProps);
+
   return {
     ...state,
     startRecording,
     stopRecording,
     cancelRecording,
     resetRecording,
+    PermissionDialog,
   };
 }
