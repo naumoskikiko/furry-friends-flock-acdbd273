@@ -565,6 +565,16 @@ const PetMatchTab = () => {
 
   const handleCreate = async () => {
     if (!selectedPet || !user) return;
+    // Gate: pet must have at least one verified document
+    const pet = myPets.find(p => p.id === selectedPet);
+    if (!pet?.is_verified) {
+      toast({
+        title: "Verification required",
+        description: "Upload a pet document (vaccination, passport, ownership proof, etc.) and wait for admin verification before listing.",
+        variant: "destructive",
+      });
+      return;
+    }
     const { error } = await fromTable("petmatch_listings").insert({
       user_id: user.id,
       pet_id: selectedPet,
