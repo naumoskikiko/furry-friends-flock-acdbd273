@@ -9,6 +9,7 @@ import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import NativeShell from "@/components/NativeShell";
+import OfflineBanner from "@/components/OfflineBanner";
 
 // Auth & root tabs are eagerly loaded (entry points users hit first / most often).
 import Index from "./pages/Index";
@@ -55,7 +56,17 @@ const queryClient = new QueryClient({
       staleTime: 3 * 60 * 1000,     // 3 min — cache-first
       gcTime: 10 * 60 * 1000,       // 10 min garbage collection
       refetchOnWindowFocus: false,
+      // Retry transient failures (network drops, 5xx) up to 2x with backoff.
+      // React Query auto-pauses fetches while offline and resumes on reconnect.
+      retry: 2,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
+      networkMode: "offlineFirst",
+    },
+    mutations: {
+      // Mutations queued while offline are paused and replayed on reconnect.
+      // This prevents silent failures when the user taps during a dropout.
       retry: 1,
+      networkMode: "offlineFirst",
     },
   },
 });
