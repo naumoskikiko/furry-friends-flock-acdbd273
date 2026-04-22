@@ -1032,6 +1032,39 @@ export type Database = {
           },
         ]
       }
+      credit_admin_log: {
+        Row: {
+          amount: number
+          changed_by: string
+          created_at: string
+          id: string
+          new_balance: number
+          previous_balance: number
+          reason: string | null
+          target_user_id: string
+        }
+        Insert: {
+          amount: number
+          changed_by: string
+          created_at?: string
+          id?: string
+          new_balance: number
+          previous_balance: number
+          reason?: string | null
+          target_user_id: string
+        }
+        Update: {
+          amount?: number
+          changed_by?: string
+          created_at?: string
+          id?: string
+          new_balance?: number
+          previous_balance?: number
+          reason?: string | null
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       credit_daily_log: {
         Row: {
           action_type: string
@@ -3413,6 +3446,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_user_credits: {
+        Args: { _amount: number; _reason?: string; _target_user_id: string }
+        Returns: number
+      }
       admin_change_user_role: {
         Args: { _new_role: string; _target_user_id: string }
         Returns: undefined
