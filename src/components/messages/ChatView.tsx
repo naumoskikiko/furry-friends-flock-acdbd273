@@ -1248,6 +1248,7 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
           />
         )
       )}
+      <voiceRecorder.PermissionDialog />
     </div>
   );
 };

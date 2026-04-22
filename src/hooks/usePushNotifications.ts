@@ -1,12 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, createElement } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { requestNotificationPermission, onForegroundMessage } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { usePermissionPrompt } from "@/hooks/usePermissionPrompt";
+import { PermissionPrompt } from "@/components/permissions/PermissionPrompt";
 
 export const usePushNotifications = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { request, promptProps } = usePermissionPrompt("notifications");
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>(
     typeof Notification !== "undefined" ? Notification.permission : "default"
   );
@@ -53,6 +56,13 @@ export const usePushNotifications = () => {
   );
 
   const enablePush = useCallback(async () => {
+    // Skip rationale if the OS already granted; otherwise show explanatory sheet
+    // before triggering the OS prompt (App Store / Play Store requirement).
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      const allowed = await request();
+      if (!allowed) return;
+    }
+
     setLoading(true);
     try {
       const token = await requestNotificationPermission();
@@ -75,7 +85,7 @@ export const usePushNotifications = () => {
       console.error("Push enable error:", err);
     }
     setLoading(false);
-  }, [saveToken, toast]);
+  }, [saveToken, toast, request]);
 
   // Auto-register if already granted
   useEffect(() => {
@@ -84,5 +94,7 @@ export const usePushNotifications = () => {
     }
   }, [user, permissionStatus, fcmToken, enablePush]);
 
-  return { permissionStatus, fcmToken, enablePush, loading };
+  const PermissionDialog = () => createElement(PermissionPrompt, promptProps);
+
+  return { permissionStatus, fcmToken, enablePush, loading, PermissionDialog };
 };
