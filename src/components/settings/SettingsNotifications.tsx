@@ -4,15 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import { Heart, MessageCircle, ShoppingBag, CalendarCheck, PawPrint, MapPin, Shield, Bell, BellOff, X, Pill } from "lucide-react";
+import { Heart, MessageCircle, ShoppingBag, CalendarCheck, PawPrint, MapPin, Shield, Bell, BellOff, Pill } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const AVAILABLE_TYPES = ["Social", "Messages", "Orders", "Bookings", "PetMatch", "Tracking", "System"];
-
-interface CustomFilter {
-  name: string;
-  types: string[];
-}
 
 type NotifKey =
   | "push_booking_request" | "push_booking_confirmation" | "push_new_message"
