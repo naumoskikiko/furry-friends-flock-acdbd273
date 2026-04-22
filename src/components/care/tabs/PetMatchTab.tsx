@@ -1054,7 +1054,7 @@ const PetMatchTab = () => {
                     {/* Required verification documents (all 3 must be approved) */}
                     {pet && (
                       <div className="mt-3">
-                        <PetVerificationSection petId={pet.id} onStatusChange={fetchAll} />
+                        <PetVerificationSection petId={pet.id} onStatusChange={fetchData} />
                       </div>
                     )}
                   </div>
