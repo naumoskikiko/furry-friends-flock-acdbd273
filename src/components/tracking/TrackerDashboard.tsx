@@ -46,7 +46,8 @@ const TrackerDashboard = ({ tracker, onBack }: Props) => {
   const { history } = useTrackingHistory(tracker.id, historyRange);
   const [showHistory, setShowHistory] = useState(false);
   const [showSafeZone, setShowSafeZone] = useState(false);
-  const [bleStatus, setBleStatus] = useState<BLEStatus>("disconnected");
+  // On web/preview, BLE isn't available — show as connected to reflect the simulated stream
+  const [bleStatus, setBleStatus] = useState<BLEStatus>(isNativePlatform() ? "disconnected" : "connected");
   const [finding, setFinding] = useState(false);
 
   const mapRef = useRef<HTMLDivElement>(null);
