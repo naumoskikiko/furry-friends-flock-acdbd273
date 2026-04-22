@@ -960,12 +960,12 @@ const PetMatchTab = () => {
                   return (
                     <>
                       {!selPet.is_verified && (
-                        <div className="mt-2 rounded-xl bg-destructive/10 border border-destructive/30 p-2.5">
-                          <p className="text-[10px] font-bold text-destructive flex items-center gap-1">
-                            <Shield className="h-3 w-3" /> Verification required
+                        <div className="mt-2 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-300/40 p-2.5">
+                          <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                            <Shield className="h-3 w-3" /> Hidden until verified
                           </p>
-                          <p className="text-[10px] text-destructive/80 mt-0.5">
-                            Open this pet's profile and upload at least one document (vaccination, passport, ownership proof, etc.). An admin must approve it before you can list this pet in PetMatch.
+                          <p className="text-[10px] text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+                            You can save this listing now, but it won't appear publicly until an admin verifies a pet document (vaccination, passport, ownership proof, etc.).
                           </p>
                         </div>
                       )}
