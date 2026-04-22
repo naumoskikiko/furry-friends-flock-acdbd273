@@ -1,4 +1,6 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, createElement } from "react";
+import { usePermissionPrompt } from "@/hooks/usePermissionPrompt";
+import { PermissionPrompt } from "@/components/permissions/PermissionPrompt";
 
 export interface VoiceRecorderState {
   isRecording: boolean;

@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, createElement } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { requestNotificationPermission, onForegroundMessage } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { usePermissionPrompt } from "@/hooks/usePermissionPrompt";
+import { PermissionPrompt } from "@/components/permissions/PermissionPrompt";
 
 export const usePushNotifications = () => {
   const { user } = useAuth();
