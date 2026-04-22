@@ -153,7 +153,7 @@ const CrashReportsPanel = () => {
   return (
     <div className="px-4 py-4 space-y-4 pb-24">
       {/* Header */}
-      <div className="rounded-2xl bg-gradient-to-r from-destructive/10 to-amber-500/10 p-4">
+      <div className="rounded-2xl bg-gradient-to-r from-destructive/10 to-accent/10 p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <AlertTriangle aria-hidden="true" className="h-5 w-5 text-destructive" />
