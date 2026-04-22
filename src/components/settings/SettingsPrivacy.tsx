@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { UserX, Download, Lock, MessageCircle, Shield, Loader2 } from "lucide-react";
+import { UserX, Download, Lock, MessageCircle, Shield, Loader2, BarChart3 } from "lucide-react";
+import { isAnalyticsEnabled, setAnalyticsEnabled, subscribeAnalytics } from "@/lib/analytics";
 
 const SettingsPrivacy = () => {
   const { user } = useAuth();
@@ -21,6 +22,11 @@ const SettingsPrivacy = () => {
   const [blockedUsers, setBlockedUsers] = useState<any[]>([]);
   const [blockedProfiles, setBlockedProfiles] = useState<Record<string, any>>({});
   const [downloading, setDownloading] = useState(false);
+  // Mirror the analytics opt-out flag so the Switch reflects external changes
+  // (e.g. user toggles it from another tab — preference is stored in localStorage).
+  const [analyticsOn, setAnalyticsOn] = useState(isAnalyticsEnabled());
+
+  useEffect(() => subscribeAnalytics(setAnalyticsOn), []);
 
   useEffect(() => {
     if (!user) return;
@@ -167,6 +173,31 @@ const SettingsPrivacy = () => {
             );
           })
         )}
+      </div>
+
+      {/* Analytics opt-out — required for App Store / Play Store data-safety disclosures.
+          Users can disable non-essential telemetry without affecting core features. */}
+      <div className="rounded-2xl bg-card p-4 petkeep-card-shadow">
+        <div className="flex items-center gap-2 mb-2">
+          <BarChart3 className="h-4 w-4 text-primary" />
+          <p className="text-sm font-bold">Usage analytics</p>
+        </div>
+        <div className="flex items-center justify-between gap-4 py-2">
+          <div className="flex-1">
+            <p className="text-sm font-semibold">Help improve PetKeep</p>
+            <p className="text-xs text-muted-foreground">
+              Share anonymous usage data (screens visited, feature taps) so we can fix bugs and
+              improve the app. No messages, photos, or personal info are ever collected.
+            </p>
+          </div>
+          <Switch
+            checked={analyticsOn}
+            onCheckedChange={(v) => {
+              setAnalyticsEnabled(v);
+              toast({ title: v ? "Analytics enabled" : "Analytics disabled" });
+            }}
+          />
+        </div>
       </div>
 
       {/* Account / GDPR Section */}
