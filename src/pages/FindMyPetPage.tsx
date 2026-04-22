@@ -33,20 +33,14 @@ const FindMyPetPage = () => {
     );
   }
 
-  // Admin-controlled access gate — block tracking entirely if disabled
-  if (!canTrack) {
-    return (
-      <AppLayout>
-        <FeatureLockedNotice feature="Pet Tracking" />
-      </AppLayout>
-    );
-  }
+  // Admin-granted access bypasses paid subscription entirely (free access)
+  const hasFreeAccess = canTrack;
 
   const selectedTracker = trackers.find((t) => t.id === selectedTrackerId) || null;
 
-  // If selecting a tracker, check subscription first
+  // If selecting a tracker, check subscription first (skipped if admin granted free access)
   if (selectedTracker) {
-    if (!isTrackerActive(selectedTracker.id)) {
+    if (!hasFreeAccess && !isTrackerActive(selectedTracker.id)) {
       return (
         <AppLayout>
           <div className="mx-auto max-w-lg p-4 flex flex-col items-center pt-16">
