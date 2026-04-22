@@ -19,7 +19,11 @@ const MessagesPage = () => {
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { messages, forwardMessage } = useChatMessages(activeConversation?.id || null);
+  // Only attach the chat-messages hook when actively forwarding — avoids a
+  // duplicate realtime subscription racing with the one inside <ChatView>.
+  const { messages, forwardMessage } = useChatMessages(
+    forwardingMessageId ? activeConversation?.id || null : null
+  );
   const { toggleMute, deleteConversation, refresh } = useConversations();
 
   const refreshMessages = useCallback(async () => {
