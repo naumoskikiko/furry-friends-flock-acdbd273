@@ -140,17 +140,14 @@ const PetVerificationReviewPanel = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-bold truncate">{v.pet?.name || "Unknown Pet"}</p>
-                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
-                        v.verification_type === "vaccination"
-                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                          : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                      }`}>
-                        {v.verification_type === "vaccination" ? (
-                          <><Syringe className="h-2.5 w-2.5 inline mr-0.5" /> Vaccination</>
-                        ) : (
-                          <><Heart className="h-2.5 w-2.5 inline mr-0.5" /> Neutered/Spayed</>
-                        )}
-                      </span>
+                      {(() => {
+                        const meta = TYPE_META[v.verification_type] || { label: v.verification_type, icon: <FileText className="h-2.5 w-2.5 inline mr-0.5" />, className: "bg-secondary text-foreground" };
+                        return (
+                          <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${meta.className}`}>
+                            {meta.icon} {meta.label}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <p className="text-[10px] text-muted-foreground">
                       {v.pet?.breed || v.pet?.animal_type} • Owner: {v.owner?.full_name || "Unknown"}
