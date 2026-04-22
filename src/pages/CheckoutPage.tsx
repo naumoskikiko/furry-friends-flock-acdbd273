@@ -502,6 +502,7 @@ const CheckoutPage = () => {
           </div>
         )}
       </div>
+      <LocationPermissionDialog />
     </AppLayout>
   );
 };
