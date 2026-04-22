@@ -12,6 +12,15 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Native safe-area helpers — respect iOS notch / Android gesture bar.
+     Use on fixed headers/footers and full-bleed containers. */
+  .safe-top { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-left { padding-left: env(safe-area-inset-left); }
+  .safe-right { padding-right: env(safe-area-inset-right); }
+  .safe-x { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+  .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
 }
 
 @layer base {
