@@ -1032,6 +1032,57 @@ export type Database = {
           },
         ]
       }
+      crash_reports: {
+        Row: {
+          app_version: string | null
+          area: string | null
+          build_id: string | null
+          client_timestamp: string | null
+          component_stack: string | null
+          created_at: string
+          extra: Json | null
+          id: string
+          message: string
+          route: string | null
+          source: string
+          stack: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          area?: string | null
+          build_id?: string | null
+          client_timestamp?: string | null
+          component_stack?: string | null
+          created_at?: string
+          extra?: Json | null
+          id?: string
+          message: string
+          route?: string | null
+          source: string
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          area?: string | null
+          build_id?: string | null
+          client_timestamp?: string | null
+          component_stack?: string | null
+          created_at?: string
+          extra?: Json | null
+          id?: string
+          message?: string
+          route?: string | null
+          source?: string
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       credit_admin_log: {
         Row: {
           amount: number
