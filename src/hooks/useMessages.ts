@@ -3,6 +3,97 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { cacheGet, cacheSet, CacheTTL } from "@/lib/cache";
 
+// ---------------------------------------------------------------------------
+// Shared realtime subscription registry
+// ---------------------------------------------------------------------------
+// Multiple components can mount useChatMessages for the same conversation
+// (e.g. MessagesPage + ChatView). Without sharing, each instance creates its
+// own Supabase channel; one closes the other, both flap to CLOSED, and the
+// polling fallback kicks in. We dedupe here so there is exactly ONE channel
+// per conversation, fanned out to N listeners.
+
+type ChatEventHandler = (kind: "INSERT" | "UPDATE" | "DELETE", row: any) => void;
+type ChatStatusHandler = (status: string) => void;
+
+interface SharedChatChannel {
+  channel: ReturnType<typeof supabase.channel>;
+  listeners: Set<ChatEventHandler>;
+  statusListeners: Set<ChatStatusHandler>;
+  lastStatus: string;
+  refCount: number;
+}
+
+const chatChannelRegistry = new Map<string, SharedChatChannel>();
+
+function subscribeToChatChannel(
+  conversationId: string,
+  onEvent: ChatEventHandler,
+  onStatus: ChatStatusHandler,
+): () => void {
+  let entry = chatChannelRegistry.get(conversationId);
+
+  if (!entry) {
+    const channelName = `chat-${conversationId}`;
+    console.log(`[realtime] creating shared channel ${channelName}`);
+
+    const newEntry: SharedChatChannel = {
+      channel: null as any,
+      listeners: new Set(),
+      statusListeners: new Set(),
+      lastStatus: "INITIAL",
+      refCount: 0,
+    };
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
+        (payload) => newEntry.listeners.forEach((l) => l("INSERT", payload.new)),
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
+        (payload) => newEntry.listeners.forEach((l) => l("UPDATE", payload.new)),
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
+        (payload) => newEntry.listeners.forEach((l) => l("DELETE", payload.old)),
+      )
+      .subscribe((status) => {
+        newEntry.lastStatus = status;
+        console.log(`[realtime] shared channel ${channelName} status: ${status}`);
+        newEntry.statusListeners.forEach((s) => s(status));
+      });
+
+    newEntry.channel = channel;
+    chatChannelRegistry.set(conversationId, newEntry);
+    entry = newEntry;
+  }
+
+  entry.listeners.add(onEvent);
+  entry.statusListeners.add(onStatus);
+  entry.refCount += 1;
+
+  if (entry.lastStatus !== "INITIAL") {
+    onStatus(entry.lastStatus);
+  }
+
+  return () => {
+    const e = chatChannelRegistry.get(conversationId);
+    if (!e) return;
+    e.listeners.delete(onEvent);
+    e.statusListeners.delete(onStatus);
+    e.refCount -= 1;
+    if (e.refCount <= 0) {
+      console.log(`[realtime] tearing down shared channel for ${conversationId}`);
+      supabase.removeChannel(e.channel);
+      chatChannelRegistry.delete(conversationId);
+    }
+  };
+}
+
 export interface Conversation {
   id: string;
   created_at: string;
