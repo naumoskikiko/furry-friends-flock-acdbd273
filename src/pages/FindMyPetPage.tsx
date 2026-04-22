@@ -95,8 +95,14 @@ const FindMyPetPage = () => {
             const newTracker = await addTracker(data);
             setShowAddForm(false);
             if (newTracker) {
-              // Open subscription modal for new tracker
-              setSubModal({ open: true, trackerId: newTracker.id, petName: data.pet_name, isRenewal: false });
+              if (hasFreeAccess) {
+                // Admin granted free access — auto-activate with a free yearly sub
+                await activateTracker(newTracker.id, "yearly");
+                toast.success("Tracker activated (free access)");
+              } else {
+                // Paid flow: open subscription modal for new tracker
+                setSubModal({ open: true, trackerId: newTracker.id, petName: data.pet_name, isRenewal: false });
+              }
             }
           }}
           onCancel={() => setShowAddForm(false)}
