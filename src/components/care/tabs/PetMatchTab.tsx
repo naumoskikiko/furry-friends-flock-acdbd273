@@ -443,6 +443,12 @@ const PetMatchCard = ({
               <Flag className="h-3.5 w-3.5" />
             </button>
             <button
+              onClick={onViewProfile}
+              className="flex items-center gap-1 rounded-xl border border-primary/30 px-3 py-1.5 text-[10px] font-bold text-primary hover:bg-primary/10 transition-colors"
+            >
+              <Eye className="h-3 w-3" /> Review
+            </button>
+            <button
               onClick={onContact}
               className="flex items-center gap-1 rounded-xl petkeep-gradient px-3 py-1.5 text-[10px] font-bold text-primary-foreground"
             >
