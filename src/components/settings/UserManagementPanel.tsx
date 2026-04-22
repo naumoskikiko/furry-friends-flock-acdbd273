@@ -220,6 +220,29 @@ const UserManagementPanel = () => {
                       </p>
                     )}
 
+                    {/* Profile type switcher */}
+                    {!u.roles.includes("owner") && !u.roles.includes("admin") && (
+                      <div className="rounded-xl bg-secondary p-2.5">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Profile Type</p>
+                        <div className="flex gap-1.5">
+                          {(["user", "provider", "business"] as const).map(r => (
+                            <button
+                              key={r}
+                              onClick={() => handleChangeProfileType(u.user_id, r)}
+                              disabled={u.role === r}
+                              className={`flex-1 rounded-lg px-2 py-1.5 text-[10px] font-bold capitalize transition-colors ${
+                                u.role === r
+                                  ? "petkeep-gradient text-primary-foreground"
+                                  : "bg-card hover:bg-card/80 text-foreground border border-border"
+                              }`}
+                            >
+                              {r}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => handleDeleteContent(u.user_id)}
