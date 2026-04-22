@@ -42,6 +42,7 @@ const TagFeedPage = lazy(() => import("./pages/TagFeedPage"));
 const ProviderPage = lazy(() => import("./pages/ProviderPage"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
+const StatusPage = lazy(() => import("./pages/StatusPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 /**
@@ -101,6 +102,9 @@ const App = () => (
                     <Route path="/legal" element={<LegalPage />} />
                     <Route path="/legal/:slug" element={<LegalPage />} />
                     <Route path="/support" element={<SupportPage />} />
+                    {/* Public service-status page — used by uptime monitors and by
+                        store reviewers to verify backend reachability. */}
+                    <Route path="/status" element={<StatusPage />} />
                     <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                     <Route path="/explore" element={<ProtectedRoute><ExplorePage /></ProtectedRoute>} />
                     <Route path="/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />

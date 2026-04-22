@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
+import { addBreadcrumb } from "@/lib/crashReporter";
 
 type Profile = Tables<"profiles">;
 
@@ -96,7 +97,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
+        // Auth-state breadcrumb (no PII — just the event name) so crash
+        // reports show whether the user was mid-signin / signed-out / etc.
+        addBreadcrumb("auth", `auth ${event}`, {
+          hasUser: !!session?.user,
+        });
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {

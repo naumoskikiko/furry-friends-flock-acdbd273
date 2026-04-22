@@ -45,6 +45,57 @@ interface CrashPayload {
   buildId: string;
   timestamp: string;
   extra?: Record<string, unknown>;
+  /** Recent user/system events leading up to the crash (no PII). */
+  breadcrumbs?: Breadcrumb[];
+}
+
+/**
+ * A breadcrumb is a small, non-sensitive event recorded in a ring buffer.
+ * When a crash fires, the buffer is attached so we can reconstruct the
+ * user's last few steps — far cheaper than a full session replay and good
+ * enough to triage 90% of crashes.
+ */
+export type BreadcrumbCategory =
+  | "navigation"
+  | "ui"
+  | "network"
+  | "auth"
+  | "info";
+
+export interface Breadcrumb {
+  category: BreadcrumbCategory;
+  message: string;
+  /** ISO timestamp. */
+  at: string;
+  /** Optional small bag of context — keep PII out. */
+  data?: Record<string, string | number | boolean | null>;
+}
+
+// Ring buffer — bounded so a long session can't grow memory unbounded and
+// so the eventual POST stays small. 25 entries covers ~last 1-2 minutes of
+// activity in practice.
+const BREADCRUMB_LIMIT = 25;
+const breadcrumbs: Breadcrumb[] = [];
+
+export function addBreadcrumb(
+  category: BreadcrumbCategory,
+  message: string,
+  data?: Breadcrumb["data"],
+) {
+  breadcrumbs.push({
+    category,
+    message: message.length > 200 ? message.slice(0, 200) : message,
+    at: new Date().toISOString(),
+    data,
+  });
+  if (breadcrumbs.length > BREADCRUMB_LIMIT) {
+    breadcrumbs.shift();
+  }
+}
+
+/** Returns a copy of the current breadcrumb buffer (newest last). */
+export function getBreadcrumbs(): Breadcrumb[] {
+  return breadcrumbs.slice();
 }
 
 const isProd = import.meta.env.PROD;
@@ -119,6 +170,7 @@ export function reportCrash(
     buildId: APP_BUILD_ID,
     timestamp: new Date().toISOString(),
     extra: context.extra,
+    breadcrumbs: getBreadcrumbs(),
   };
 
   // Always log locally — shows up in Xcode/Logcat for native builds.
