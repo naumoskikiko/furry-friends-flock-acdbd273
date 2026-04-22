@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useTabRefresh } from "@/hooks/useTabRefresh";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCareProviders, useMyProvider, useMyBookings, useProviderAvailability, CATEGORIES, type CareProvider } from "@/hooks/useCare";
 import ProviderDashboard from "@/components/care/ProviderDashboard";
 import BookingHistory from "@/components/care/BookingHistory";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { useBoostedIds } from "@/hooks/useBoosts";
 import PetMatchTab from "@/components/care/tabs/PetMatchTab";
@@ -36,6 +36,7 @@ const ProviderStatusBadge = ({ providerId }: { providerId: string }) => {
 
 const CarePage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -44,7 +45,14 @@ const CarePage = () => {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showPetMatch, setShowPetMatch] = useState(false);
-  
+
+  // Auto-open PetMatch when arriving via /care?petmatch=1 (e.g. from chat card)
+  useEffect(() => {
+    if (searchParams.get("petmatch") === "1") {
+      setShowPetMatch(true);
+    }
+  }, [searchParams]);
+
   const boostedProviderIds = useBoostedIds("provider");
 
   const refreshCare = useCallback(async () => {
@@ -282,7 +290,7 @@ const CarePage = () => {
         <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
           <div className="mx-auto max-w-lg min-h-screen">
             <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center gap-3">
-              <button onClick={() => setShowPetMatch(false)} className="rounded-full p-1.5 hover:bg-secondary">
+              <button onClick={() => { setShowPetMatch(false); if (searchParams.get("petmatch")) { searchParams.delete("petmatch"); setSearchParams(searchParams, { replace: true }); } }} className="rounded-full p-1.5 hover:bg-secondary">
                 <ChevronRight className="h-5 w-5 rotate-180" />
               </button>
               <Heart className="h-5 w-5 text-pink-500" />

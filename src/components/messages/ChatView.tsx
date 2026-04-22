@@ -822,7 +822,7 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
                     className={`group flex items-end gap-1.5 ${isMine ? "justify-end" : "justify-start"}`}
                   >
                     <button
-                      onClick={() => navigate(`/care?tab=petmatch&listing=${meta.listing_id}`)}
+                      onClick={() => navigate(`/care?petmatch=1&listing=${meta.listing_id}`)}
                       className={`max-w-[80%] rounded-2xl overflow-hidden text-left shadow-sm transition-transform active:scale-[0.98] ${
                         isMine ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-secondary text-secondary-foreground rounded-bl-sm"
                       }`}
