@@ -36,6 +36,7 @@ const ProviderStatusBadge = ({ providerId }: { providerId: string }) => {
 
 const CarePage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -44,7 +45,14 @@ const CarePage = () => {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showPetMatch, setShowPetMatch] = useState(false);
-  
+
+  // Auto-open PetMatch when arriving via /care?petmatch=1 (e.g. from chat card)
+  useEffect(() => {
+    if (searchParams.get("petmatch") === "1") {
+      setShowPetMatch(true);
+    }
+  }, [searchParams]);
+
   const boostedProviderIds = useBoostedIds("provider");
 
   const refreshCare = useCallback(async () => {
