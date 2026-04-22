@@ -94,33 +94,18 @@ const AddTrackerForm = ({ onSubmit, onCancel, chipEnabled = true }: Props) => {
               placeholder="PK-XXXX-XXXX"
               className="rounded-xl font-mono flex-1"
             />
-            {chipEnabled ? (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setShowBLEScanner(true)}
-                className="rounded-xl gap-1.5 shrink-0"
-              >
-                <Bluetooth className="h-4 w-4" />
-                Scan
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="secondary"
-                disabled
-                className="rounded-xl gap-1.5 shrink-0 opacity-60"
-                title="Chip pairing is not available for your account"
-              >
-                <Lock className="h-4 w-4" />
-                Locked
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowBLEScanner(true)}
+              className="rounded-xl gap-1.5 shrink-0"
+            >
+              <Bluetooth className="h-4 w-4" />
+              Scan
+            </Button>
           </div>
           <p className="text-[10px] text-muted-foreground mt-1">
-            {chipEnabled
-              ? "Enter manually or scan via Bluetooth"
-              : "Chip pairing is not available for your account. Enter the Tracker Device ID manually."}
+            Enter manually or scan via Bluetooth
           </p>
           {bleBattery !== null && (
             <p className="text-[10px] text-primary mt-1">🔋 Battery: {bleBattery}%</p>
