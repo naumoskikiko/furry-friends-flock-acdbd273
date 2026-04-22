@@ -62,14 +62,14 @@ const VerificationDetail = ({
   const trust = getBreederTrustScore(listing);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center">
-      <div className="w-full max-w-lg bg-card rounded-t-2xl sm:rounded-2xl max-h-[85vh] overflow-y-auto">
-        <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between z-10">
+    <div className="fixed inset-0 z-50 bg-black/50">
+      <div className="absolute inset-x-0 bottom-0 top-16 flex flex-col bg-card rounded-t-2xl shadow-lg sm:left-1/2 sm:top-1/2 sm:max-h-[85vh] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-4 py-3 shrink-0">
           <h3 className="font-display text-sm font-bold">Verification Review</h3>
           <button onClick={onClose} className="rounded-full p-1 hover:bg-secondary"><X className="h-4 w-4" /></button>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-4">
           {/* Pet info */}
           <div className="flex items-start gap-3">
             <Avatar className="h-16 w-16 rounded-xl">
@@ -140,32 +140,34 @@ const VerificationDetail = ({
             <textarea
               value={adminNote}
               onChange={(e) => setAdminNote(e.target.value)}
-              rows={2}
+              rows={3}
               placeholder="Add internal notes..."
               className="mt-1 w-full rounded-xl bg-secondary px-3 py-2 text-sm outline-none resize-none"
             />
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => onAction(listing.id, "rejected")}
-              className="flex-1 flex items-center justify-center gap-1 rounded-xl bg-destructive/10 py-2.5 text-sm font-bold text-destructive"
-            >
-              <XCircle className="h-4 w-4" /> Reject
-            </button>
-            <button
-              onClick={() => onAction(listing.id, "pending")}
-              className="flex-1 flex items-center justify-center gap-1 rounded-xl bg-amber-500/10 py-2.5 text-sm font-bold text-amber-600"
-            >
-              <Clock className="h-4 w-4" /> Request More
-            </button>
-            <button
-              onClick={() => onAction(listing.id, "approved")}
-              className="flex-1 flex items-center justify-center gap-1 rounded-xl bg-green-500/10 py-2.5 text-sm font-bold text-green-600"
-            >
-              <CheckCircle className="h-4 w-4" /> Approve
-            </button>
+          <div className="sticky bottom-0 -mx-4 border-t border-border bg-card px-4 pt-3 pb-[calc(0.25rem+env(safe-area-inset-bottom))]">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <button
+                onClick={() => onAction(listing.id, "rejected")}
+                className="flex w-full items-center justify-center gap-1 rounded-xl bg-destructive/10 px-3 py-2.5 text-sm font-bold text-destructive"
+              >
+                <XCircle className="h-4 w-4" /> Reject
+              </button>
+              <button
+                onClick={() => onAction(listing.id, "pending")}
+                className="flex w-full items-center justify-center gap-1 rounded-xl bg-amber-500/10 px-3 py-2.5 text-sm font-bold text-amber-600"
+              >
+                <Clock className="h-4 w-4" /> Request More
+              </button>
+              <button
+                onClick={() => onAction(listing.id, "approved")}
+                className="flex w-full items-center justify-center gap-1 rounded-xl bg-green-500/10 px-3 py-2.5 text-sm font-bold text-green-600"
+              >
+                <CheckCircle className="h-4 w-4" /> Approve
+              </button>
+            </div>
           </div>
         </div>
       </div>
