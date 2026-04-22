@@ -40,6 +40,8 @@ const LikedProductsPage = lazy(() => import("./pages/LikedProductsPage"));
 const PostDetailPage = lazy(() => import("./pages/PostDetailPage"));
 const TagFeedPage = lazy(() => import("./pages/TagFeedPage"));
 const ProviderPage = lazy(() => import("./pages/ProviderPage"));
+const LegalPage = lazy(() => import("./pages/LegalPage"));
+const SupportPage = lazy(() => import("./pages/SupportPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 /**
@@ -94,6 +96,11 @@ const App = () => (
                   <Routes>
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
+                    {/* Public legal + support routes — required by App Store / Play Store
+                        reviewers and by GDPR/CCPA. Must be reachable without authentication. */}
+                    <Route path="/legal" element={<LegalPage />} />
+                    <Route path="/legal/:slug" element={<LegalPage />} />
+                    <Route path="/support" element={<SupportPage />} />
                     <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                     <Route path="/explore" element={<ProtectedRoute><ExplorePage /></ProtectedRoute>} />
                     <Route path="/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />

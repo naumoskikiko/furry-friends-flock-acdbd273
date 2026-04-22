@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ const AuthPage = () => {
   const [totpCode, setTotpCode] = useState("");
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [confirmedAge, setConfirmedAge] = useState(false);
   const [termsError, setTermsError] = useState("");
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [termsModalTab, setTermsModalTab] = useState<"terms" | "privacy">("terms");
@@ -166,8 +167,17 @@ const AuthPage = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!agreedToTerms) {
-      setTermsError("You must agree to the Terms and Privacy Policy to continue");
+    // App Store Guideline 1.3 / Play UGC policy require explicit user
+    // confirmation that they meet the minimum age (13). We capture this as
+    // a separate boolean from T&C so reviewers can see it's an explicit step.
+    if (!agreedToTerms || !confirmedAge) {
+      setTermsError(
+        !confirmedAge && !agreedToTerms
+          ? "Please confirm your age and agree to the Terms to continue"
+          : !confirmedAge
+          ? "You must confirm you are at least 13 years old"
+          : "You must agree to the Terms and Privacy Policy to continue"
+      );
       return;
     }
     setTermsError("");
@@ -235,7 +245,7 @@ const AuthPage = () => {
         <Card className="petkeep-card-shadow border-0">
           <CardHeader className="pb-4">
             {view !== "login" && (
-              <button onClick={() => { if (view === "2fa" || view === "reaccept") { supabase.auth.signOut(); } setView("login"); setTotpCode(""); setPendingUserId(null); setTermsError(""); setAgreedToTerms(false); }} className="mb-2 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+              <button onClick={() => { if (view === "2fa" || view === "reaccept") { supabase.auth.signOut(); } setView("login"); setTotpCode(""); setPendingUserId(null); setTermsError(""); setAgreedToTerms(false); setConfirmedAge(false); }} className="mb-2 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-4 w-4" /> Back to login
               </button>
             )}
@@ -407,8 +417,32 @@ const AuthPage = () => {
                   </div>
                 </div>
 
-                {/* Terms & Conditions */}
+                {/* Age confirmation — App Store 1.3 + Play UGC policy.
+                    Stored client-side only at signup; we DO NOT collect a date of birth. */}
                 <div className="space-y-2 pt-1">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="confirm-age"
+                      checked={confirmedAge}
+                      onCheckedChange={(checked) => {
+                        setConfirmedAge(checked === true);
+                        if (checked) setTermsError("");
+                      }}
+                      className="mt-0.5"
+                    />
+                    <label
+                      htmlFor="confirm-age"
+                      className="text-[11px] text-muted-foreground leading-relaxed cursor-pointer"
+                    >
+                      I confirm I am at least <strong className="text-foreground">13 years old</strong> (or the
+                      minimum age in my country) and accept the{" "}
+                      <Link to="/legal/guidelines" className="font-bold text-primary hover:underline">
+                        Community Guidelines
+                      </Link>
+                      .
+                    </label>
+                  </div>
+
                   <div className="flex items-start gap-3">
                     <Checkbox
                       id="agree-terms"
@@ -434,7 +468,7 @@ const AuthPage = () => {
                 <Button
                   type="submit"
                   className="w-full petkeep-gradient text-primary-foreground font-bold"
-                  disabled={loading || !agreedToTerms}
+                  disabled={loading || !agreedToTerms || !confirmedAge}
                 >
                   {loading ? "Creating account..." : "Create Account"}
                 </Button>

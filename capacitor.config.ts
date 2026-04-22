@@ -11,15 +11,34 @@ import type { CapacitorConfig } from '@capacitor/cli';
  * Capacitor v8 reads this `plugins` block on `npx cap sync` and writes the
  * matching `Info.plist` keys (iOS) and `AndroidManifest.xml` entries (Android)
  * for each installed plugin.
+ *
+ * --- RELEASE BUILDS ---
+ * The `server.url` block below points the native shell at the Lovable preview
+ * for hot-reload during development. Apple/Google reject builds that load the
+ * primary UI from a remote URL ("private API / external content" rejection).
+ *
+ * Set CAPACITOR_RELEASE=1 before running `npm run build && npx cap sync` to
+ * strip the dev URL and produce a store-ready binary that loads `dist/` from
+ * the app bundle.
+ *
+ *   CAPACITOR_RELEASE=1 npm run build
+ *   CAPACITOR_RELEASE=1 npx cap sync ios
+ *   CAPACITOR_RELEASE=1 npx cap sync android
  */
+const isRelease = process.env.CAPACITOR_RELEASE === '1';
+
+const devServer = {
+  url: 'https://4be74104-e87c-4008-8b67-4575353b752a.lovableproject.com?forceHideBadge=true',
+  cleartext: true,
+} as const;
+
 const config: CapacitorConfig = {
   appId: 'app.lovable.petkeep',
   appName: 'PetKeep',
   webDir: 'dist',
-  server: {
-    url: 'https://4be74104-e87c-4008-8b67-4575353b752a.lovableproject.com?forceHideBadge=true',
-    cleartext: true,
-  },
+  // In release mode we omit `server` entirely so the WebView loads the bundled
+  // `dist/` assets — the only configuration accepted by the stores.
+  ...(isRelease ? {} : { server: devServer }),
   ios: {
     contentInset: 'always',
     // Allow embedded http content (e.g. map tiles) — required for some providers.
