@@ -150,23 +150,61 @@ const VerificationDetail = ({
           </div>
 
           {/* Documents */}
-          <div className="rounded-xl bg-secondary/50 p-3">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Breed Documentation</p>
-            {listing.breed_document_url ? (
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-primary" />
-                <a href={listing.breed_document_url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-primary hover:underline flex-1 truncate">
-                  {listing.breed_document_name || "View Document"}
-                </a>
-                <span className="text-[9px] bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-1.5 py-0.5 rounded-full font-bold">Uploaded</span>
-              </div>
-            ) : (
+          <div className="rounded-xl bg-secondary/50 p-3 space-y-2">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Pet Verification Documents</p>
+
+            {petDocs.length === 0 && !listing.breed_document_url ? (
               <div className="flex items-center gap-2 text-amber-600">
                 <AlertTriangle className="h-4 w-4" />
                 <p className="text-xs font-semibold">No documents uploaded</p>
               </div>
+            ) : (
+              <>
+                {petDocs.map(doc => (
+                  <div key={doc.id} className="flex items-center gap-2 rounded-lg bg-card border border-border p-2">
+                    <FileText className="h-4 w-4 text-primary shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-bold truncate">{TYPE_LABELS[doc.verification_type] || doc.verification_type}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{doc.document_name}</p>
+                    </div>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full capitalize ${
+                      doc.status === "verified" ? "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400" :
+                      doc.status === "rejected" ? "bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400" :
+                      "bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400"
+                    }`}>{doc.status}</span>
+                    <button
+                      onClick={() => openDoc(doc)}
+                      className="text-[10px] font-bold text-primary hover:underline shrink-0"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                {listing.breed_document_url && (
+                  <div className="flex items-center gap-2 rounded-lg bg-card border border-border p-2">
+                    <FileText className="h-4 w-4 text-primary shrink-0" />
+                    <a href={listing.breed_document_url} target="_blank" rel="noopener noreferrer" className="text-[11px] font-semibold text-primary hover:underline flex-1 truncate">
+                      🐕 Breed: {listing.breed_document_name || "View"}
+                    </a>
+                  </div>
+                )}
+              </>
             )}
           </div>
+
+          {/* Document viewer overlay */}
+          {viewDoc && (
+            <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4" onClick={() => setViewDoc(null)}>
+              <div className="relative max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+                <button onClick={() => setViewDoc(null)} className="absolute -top-10 right-0 text-white"><X className="h-5 w-5" /></button>
+                {viewDoc.isPdf ? (
+                  <iframe src={viewDoc.url} className="w-full h-[80vh] rounded-lg bg-white" />
+                ) : (
+                  <img src={viewDoc.url} alt="Document" className="w-full max-h-[80vh] rounded-lg object-contain" />
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Admin note */}
           <div>
