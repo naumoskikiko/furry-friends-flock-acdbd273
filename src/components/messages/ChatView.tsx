@@ -64,19 +64,50 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout>>();
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const draftTimeout = useRef<ReturnType<typeof setTimeout>>();
   const justSentRef = useRef(false);
+  const isNearBottomRef = useRef(true);
+  const lastMessageCountRef = useRef(0);
+  const initialScrollDoneRef = useRef(false);
 
+  // Track whether the user is near the bottom of the chat
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    isNearBottomRef.current = distanceFromBottom < 120;
+  }, []);
+
+  // Auto-scroll only on initial load, when user just sent, or when already near bottom
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const totalCount = messages.length + pendingMessages.length;
+    const prevCount = lastMessageCountRef.current;
+    lastMessageCountRef.current = totalCount;
+
+    if (totalCount === 0) return;
+
+    // First load → jump to bottom (no animation)
+    if (!initialScrollDoneRef.current) {
+      initialScrollDoneRef.current = true;
+      bottomRef.current?.scrollIntoView({ behavior: "auto" });
+      return;
+    }
+
+    // New message arrived
+    if (totalCount > prevCount) {
+      if (justSentRef.current || isNearBottomRef.current) {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      }
+    }
   }, [messages, pendingMessages]);
 
-  // Handle mobile keyboard: scroll to bottom when virtual keyboard opens
+  // Handle mobile keyboard: only scroll to bottom if user was already near bottom
   useEffect(() => {
     const handleResize = () => {
-      // When keyboard opens, visualViewport height shrinks
+      if (!isNearBottomRef.current) return;
       setTimeout(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 100);
