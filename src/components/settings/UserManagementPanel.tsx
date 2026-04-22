@@ -109,16 +109,16 @@ const UserManagementPanel = () => {
   };
 
   const handleChangeProfileType = async (userId: string, newRole: "user" | "provider" | "business") => {
-    const { error } = await supabase
-      .from("profiles")
-      .update({ role: newRole })
-      .eq("user_id", userId);
+    const { error } = await supabase.rpc("admin_change_user_role" as any, {
+      _target_user_id: userId,
+      _new_role: newRole,
+    });
     if (error) {
-      toast({ title: "Failed to update profile type", description: error.message, variant: "destructive" });
+      toast({ title: "Failed to change role", description: error.message, variant: "destructive" });
       return;
     }
     setUsers(prev => prev.map(u => u.user_id === userId ? { ...u, role: newRole } : u));
-    toast({ title: `Profile changed to ${newRole}` });
+    toast({ title: `Role changed to ${newRole}`, description: "User's dashboard will update instantly." });
   };
 
   const getRoleBadge = (u: UserProfile) => {
