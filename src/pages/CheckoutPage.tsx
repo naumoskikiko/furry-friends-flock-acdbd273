@@ -64,6 +64,7 @@ const CheckoutPage = () => {
 
   // Fixed flat delivery fee across the platform
   const deliveryFee = 120;
+  const cartBusiness = items[0]?.product?.business as any;
 
   // Delivery radius validation
   const deliveryBlocked = useMemo(() => {
