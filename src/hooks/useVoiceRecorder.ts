@@ -137,7 +137,7 @@ export function useVoiceRecorder() {
         permissionDenied: denied,
       }));
     }
-  }, [cleanup]);
+  }, [cleanup, request]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current?.state === "recording" || mediaRecorderRef.current?.state === "paused") {
