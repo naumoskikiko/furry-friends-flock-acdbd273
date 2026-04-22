@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap, DollarSign, Sliders, TrendingUp, UserCog, Heart, Coins, CalendarDays, Settings, Package, Home, PawPrint, AlertTriangle, Banknote, Navigation } from "lucide-react";
+import { Map, BarChart3, ShieldCheck, Store, ChevronRight, ArrowLeft, Users, Crown, Zap, DollarSign, Sliders, TrendingUp, UserCog, Heart, Coins, CalendarDays, Settings, Package, Home, PawPrint, AlertTriangle, Banknote, Navigation, Bug } from "lucide-react";
 import SettingsMapManagement from "./SettingsMapManagement";
 import CareVerificationPanel from "./CareVerificationPanel";
 import CareManagementPanel from "./CareManagementPanel";
@@ -21,6 +21,7 @@ import PetVerificationReviewPanel from "./PetVerificationReviewPanel";
 import ReportsManagementPanel from "./ReportsManagementPanel";
 import PayoutManagementPanel from "./PayoutManagementPanel";
 import FindMyPetManagementPanel from "./FindMyPetManagementPanel";
+import CrashReportsPanel from "./CrashReportsPanel";
 import { useIsOwner } from "@/hooks/useIsOwner";
 
 type SubSection =
@@ -44,7 +45,8 @@ type SubSection =
   | "pet-verification"
   | "reports"
   | "payouts"
-  | "findmypet";
+  | "findmypet"
+  | "crashes";
 
 const ProfessionalMode = () => {
   const [sub, setSub] = useState<SubSection>("dashboard");
@@ -79,6 +81,7 @@ const ProfessionalMode = () => {
         {sub === "reports" && <ReportsManagementPanel />}
         {sub === "payouts" && <PayoutManagementPanel />}
         {sub === "findmypet" && <FindMyPetManagementPanel />}
+        {sub === "crashes" && <CrashReportsPanel />}
       </div>
     );
   }
@@ -109,6 +112,7 @@ const ProfessionalMode = () => {
   const ownerSections = [
     { id: "algorithm" as const, label: "Algorithm Control", desc: "Tune discovery ranking weights", icon: Sliders, color: "bg-purple-500/10 text-purple-500" },
     { id: "role-management" as const, label: "Role Management", desc: "Assign roles, promote & demote admins", icon: Crown, color: "bg-amber-500/10 text-amber-600" },
+    { id: "crashes" as const, label: "Crash Reports", desc: "Triage production runtime errors", icon: Bug, color: "bg-destructive/10 text-destructive" },
   ];
 
   const renderSection = (items: { id: SubSection; label: string; desc: string; icon: any; color: string }[]) => items.map(s => (
