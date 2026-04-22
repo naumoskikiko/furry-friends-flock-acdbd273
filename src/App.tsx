@@ -11,6 +11,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import NativeShell from "@/components/NativeShell";
 import OfflineBanner from "@/components/OfflineBanner";
 import AnalyticsRouteTracker from "@/components/AnalyticsRouteTracker";
+import SkipToContent from "@/components/SkipToContent";
 
 // Auth & root tabs are eagerly loaded (entry points users hit first / most often).
 import Index from "./pages/Index";
@@ -81,11 +82,15 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <SkipToContent />
               <NativeShell />
               <OfflineBanner />
               <AnalyticsRouteTracker />
               <ErrorBoundary area="this page">
                 <Suspense fallback={<RouteFallback />}>
+                  {/* Primary landmark — target of the SkipToContent link.
+                      tabIndex=-1 lets us programmatically focus it on route change. */}
+                  <main id="main-content" tabIndex={-1} className="outline-none">
                   <Routes>
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -112,7 +117,8 @@ const App = () => (
                     <Route path="/tag/:tag" element={<ProtectedRoute><TagFeedPage /></ProtectedRoute>} />
                     <Route path="/provider/:id" element={<ProtectedRoute><ProviderPage /></ProtectedRoute>} />
                     <Route path="*" element={<NotFound />} />
-                  </Routes>
+                    </Routes>
+                  </main>
                 </Suspense>
               </ErrorBoundary>
             </BrowserRouter>
