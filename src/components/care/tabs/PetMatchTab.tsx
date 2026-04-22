@@ -1062,14 +1062,19 @@ const PetMatchTab = () => {
                       </div>
                     </div>
 
-                    {/* Safety check for own pet */}
-                    {pet && <SafetyIndicators pet={pet as Pet} />}
+                    {/* Once approved, no further verification UI is needed */}
+                    {listing.status !== "approved" && (
+                      <>
+                        {/* Safety check for own pet */}
+                        {pet && <SafetyIndicators pet={pet as Pet} />}
 
-                    {/* Required verification documents (all 3 must be approved) */}
-                    {pet && (
-                      <div className="mt-3">
-                        <PetVerificationSection petId={pet.id} onStatusChange={fetchData} />
-                      </div>
+                        {/* Required verification documents (all 3 must be approved) */}
+                        {pet && (
+                          <div className="mt-3">
+                            <PetVerificationSection petId={pet.id} onStatusChange={fetchData} />
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
