@@ -813,6 +813,49 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
                 );
               }
 
+              if (msg.message_type === "pet_match_share" && msg.metadata) {
+                const meta: any = msg.metadata;
+                return (
+                  <div
+                    key={msg.id}
+                    ref={(el) => { if (el) messageRefs.current.set(msg.id, el); }}
+                    className={`group flex items-end gap-1.5 ${isMine ? "justify-end" : "justify-start"}`}
+                  >
+                    <button
+                      onClick={() => navigate(`/care?tab=petmatch&listing=${meta.listing_id}`)}
+                      className={`max-w-[80%] rounded-2xl overflow-hidden text-left shadow-sm transition-transform active:scale-[0.98] ${
+                        isMine ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-secondary text-secondary-foreground rounded-bl-sm"
+                      }`}
+                    >
+                      {meta.pet_photo && (
+                        <img src={meta.pet_photo} alt={meta.pet_name} className="w-full h-40 object-cover" />
+                      )}
+                      <div className="px-3.5 py-2">
+                        <p className={`text-[11px] font-semibold flex items-center gap-1 ${isMine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                          🐾 PetMatch
+                        </p>
+                        <p className="text-sm font-bold mt-0.5">{meta.pet_name}</p>
+                        <p className={`text-[11px] mt-0.5 ${isMine ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+                          {[meta.breed || meta.animal_type, meta.gender, meta.age].filter(Boolean).join(" · ")}
+                        </p>
+                        {meta.looking_for && (
+                          <p className={`text-[11px] mt-1 ${isMine ? "text-primary-foreground/80" : "text-foreground"}`}>
+                            <span className="font-semibold">Looking for:</span> {meta.looking_for}
+                          </p>
+                        )}
+                        <p className={`text-[10px] mt-1 ${isMine ? "text-primary-foreground/50" : "text-muted-foreground"}`}>Tap to view listing</p>
+                        <div className={`flex items-center gap-1 mt-1 ${isMine ? "justify-end" : ""}`}>
+                          <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                            {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                          </span>
+                          {isMine && renderOwnMessageStatus(msg)}
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                );
+              }
+
               if (editingId === msg.id) {
                 return (
                   <div key={msg.id} className="flex justify-end">

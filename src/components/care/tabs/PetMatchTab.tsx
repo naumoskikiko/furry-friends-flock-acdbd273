@@ -614,14 +614,49 @@ const PetMatchTab = () => {
       toast({ title: "Cannot contact this user" });
       return;
     }
-    const { data, error } = await supabase.rpc("create_conversation_with_participant", {
+    const { data: convId, error } = await supabase.rpc("create_conversation_with_participant", {
       _other_user_id: listing.user_id,
     });
-    if (error || !data) {
+    if (error || !convId) {
       toast({ title: "Error", description: error?.message || "Could not start chat", variant: "destructive" });
       return;
     }
-    navigate(`/messages?conversation=${data}`);
+
+    // Auto-send pet match card as first message (only if no prior messages from current user about this pet)
+    const pet = listing.pet;
+    if (pet) {
+      const { data: existing } = await fromTable("messages")
+        .select("id")
+        .eq("conversation_id", convId)
+        .eq("sender_id", user.id)
+        .eq("message_type", "pet_match_share")
+        .contains("metadata", { listing_id: listing.id })
+        .limit(1)
+        .maybeSingle();
+
+      if (!existing) {
+        await fromTable("messages").insert({
+          conversation_id: convId,
+          sender_id: user.id,
+          message_text: `🐾 Interested in ${pet.name}`,
+          message_type: "pet_match_share",
+          metadata: {
+            listing_id: listing.id,
+            pet_id: pet.id,
+            pet_name: pet.name,
+            pet_photo: pet.photo_url,
+            breed: pet.breed,
+            animal_type: pet.animal_type,
+            gender: pet.gender,
+            age: pet.age,
+            looking_for: listing.looking_for,
+            owner_name: listing.profile?.full_name,
+          },
+        });
+      }
+    }
+
+    navigate(`/messages?conversation=${convId}`);
   };
 
   const handleReport = async (listing: PetMatchListing) => {
@@ -762,10 +797,12 @@ const PetMatchTab = () => {
         open={!!profileListing}
         onOpenChange={(open) => { if (!open) setProfileListing(null); }}
         myPet={activePet}
-        onMessageOwner={(userId) => {
-          setProfileListing(null);
-          const username = profileListing?.profile?.username;
-          if (username) navigate(`/user/${username}`);
+        onMessageOwner={() => {
+          if (profileListing) {
+            const target = profileListing;
+            setProfileListing(null);
+            handleContact(target);
+          }
         }}
       />
 
