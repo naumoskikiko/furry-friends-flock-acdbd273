@@ -238,7 +238,7 @@ const PetVerificationReviewPanel = () => {
       <Dialog open={!!viewImage} onOpenChange={() => setViewImage(null)}>
         <DialogContent className="max-w-lg p-2">
           {viewImage && (
-            viewImage.endsWith(".pdf") ? (
+            viewIsPdf ? (
               <iframe src={viewImage} className="w-full h-[70vh] rounded-lg" />
             ) : (
               <img src={viewImage} alt="Verification document" className="w-full rounded-lg object-contain max-h-[70vh]" />
