@@ -135,11 +135,14 @@ const BusinessVisitAnalytics = () => {
     setDetailLoading(false);
   };
 
-  const TimeFilters = () => (
+  const renderTimeFilters = () => (
     <div className="flex rounded-lg bg-secondary p-0.5 gap-0.5">
       {([["today", "Today"], ["7d", "7D"], ["30d", "30D"], ["all", "All"]] as [TimeRange, string][]).map(([k, l]) => (
-        <button key={k} onClick={() => { setRange(k); if (selectedBiz) setSelectedBiz(null); }}
-          className={`flex-1 rounded-md py-1.5 text-[10px] font-bold transition-colors ${range === k ? "bg-card shadow-sm" : "text-muted-foreground"}`}>
+        <button
+          key={k}
+          onClick={() => { setRange(k); if (selectedBiz) setSelectedBiz(null); }}
+          className={`flex-1 rounded-md py-1.5 text-[10px] font-bold transition-colors ${range === k ? "bg-card shadow-sm" : "text-muted-foreground"}`}
+        >
           {l}
         </button>
       ))}
