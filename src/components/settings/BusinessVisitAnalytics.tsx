@@ -167,7 +167,7 @@ const BusinessVisitAnalytics = () => {
           <p className="text-[10px] text-muted-foreground capitalize">{selectedBiz.category.replace("_", " ")}</p>
         </div>
 
-        <TimeFilters />
+        {renderTimeFilters()}
 
         {detailLoading ? (
           <div className="flex justify-center py-10">
@@ -254,7 +254,7 @@ const BusinessVisitAnalytics = () => {
         </div>
       </div>
 
-      <TimeFilters />
+      {renderTimeFilters()}
 
       {loading ? (
         <div className="flex justify-center py-10">
