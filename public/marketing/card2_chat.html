@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PetKeep – Messaging</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --orange: #F07C2B;
+    --cream: #FDF6EE;
+    --dark: #1A1208;
+    --muted: #9B7E5C;
+  }
+
+  body {
+    width: 1080px;
+    height: 1080px;
+    overflow: hidden;
+    font-family: 'DM Sans', sans-serif;
+    position: relative;
+    background: var(--cream);
+  }
+
+  .bg-warm {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #FDF6EE 0%, #FAE8D2 50%, #F5D4B0 100%);
+  }
+
+  .bg-glow {
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(240,124,43,0.12) 0%, transparent 70%);
+    top: -100px; left: -100px;
+  }
+
+  .dots-pattern {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(240,124,43,0.08) 1.5px, transparent 1.5px);
+    background-size: 32px 32px;
+  }
+
+  .content {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    height: 100%;
+    padding: 70px 72px;
+    gap: 56px;
+    align-items: center;
+  }
+
+  /* LEFT: copy */
+  .copy-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .eyebrow::after {
+    content: '';
+    display: inline-block;
+    width: 28px; height: 2px;
+    background: var(--orange);
+    border-radius: 2px;
+  }
+
+  .headline {
+    font-family: 'Playfair Display', serif;
+    font-size: 70px;
+    font-weight: 900;
+    color: var(--dark);
+    line-height: 1.0;
+    margin-bottom: 28px;
+  }
+
+  .headline .accent { color: var(--orange); }
+  .headline .italic { font-style: italic; }
+
+  .body-text {
+    font-size: 17px;
+    line-height: 1.7;
+    color: rgba(26,18,8,0.5);
+    margin-bottom: 40px;
+    max-width: 360px;
+  }
+
+  .features {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 44px;
+  }
+
+  .feat-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .feat-dot {
+    width: 38px; height: 38px;
+    border-radius: 12px;
+    background: rgba(240,124,43,0.12);
+    border: 1px solid rgba(240,124,43,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .feat-text { font-size: 14px; color: rgba(26,18,8,0.7); font-weight: 500; }
+
+  .logo-wm {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    font-weight: 900;
+    color: rgba(26,18,8,0.2);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .logo-wm span { color: rgba(240,124,43,0.5); }
+
+  .store-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  .store-badge {
+    background: var(--dark);
+    border-radius: 12px;
+    padding: 9px 18px;
+    font-size: 11px;
+    color: rgba(253,246,238,0.7);
+    font-weight: 500;
+    display: flex; align-items: center; gap: 7px;
+  }
+
+  /* phone */
+  .phone-col { flex-shrink: 0; width: 310px; }
+
+  .phone-frame {
+    width: 310px;
+    height: 645px;
+    background: var(--cream);
+    border-radius: 44px;
+    overflow: hidden;
+    border: 6px solid rgba(240,124,43,0.3);
+    box-shadow: 20px 30px 60px rgba(90,50,10,0.22), 0 0 0 1px rgba(255,255,255,0.5);
+    position: relative;
+  }
+
+  .msg-header {
+    background: var(--cream);
+    padding: 24px 20px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #EEE3D5;
+  }
+
+  .msg-title { font-size: 22px; font-weight: 800; color: var(--dark); }
+
+  .new-grp-btn {
+    background: rgba(240,124,43,0.1);
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--orange);
+    display: flex; align-items: center; gap: 5px;
+  }
+
+  .search-bar {
+    margin: 12px 16px;
+    background: #F5EDE4;
+    border-radius: 20px;
+    padding: 10px 14px;
+    font-size: 11px;
+    color: #C4B8A8;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* mock conversations */
+  .convo-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(238,227,213,0.5);
+  }
+
+  .convo-av {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .av-green { background: linear-gradient(135deg, #C8E6C9, #81C784); }
+  .av-blue  { background: linear-gradient(135deg, #BBDEFB, #64B5F6); }
+  .av-pink  { background: linear-gradient(135deg, #F8BBD9, #F48FB1); }
+  .av-orange{ background: linear-gradient(135deg, #FDDBB0, #E8A876); }
+
+  .convo-name { font-size: 12px; font-weight: 700; color: var(--dark); }
+  .convo-preview { font-size: 10px; color: #BBB; margin-top: 2px; }
+  .convo-time { margin-left: auto; font-size: 9px; color: #CCC; flex-shrink: 0; }
+  .unread-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--orange);
+    flex-shrink: 0;
+  }
+
+  .empty-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 0 10px;
+  }
+
+  .empty-icon { font-size: 44px; margin-bottom: 10px; opacity: 0.3; }
+  .empty-title { font-size: 13px; font-weight: 700; color: var(--dark); margin-bottom: 4px; opacity: 0.5; }
+  .empty-sub { font-size: 10px; color: #BBB; text-align: center; padding: 0 20px; }
+
+  .group-strip {
+    margin: 10px 16px;
+    background: linear-gradient(90deg, rgba(240,124,43,0.12), rgba(240,124,43,0.05));
+    border: 1px solid rgba(240,124,43,0.2);
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .grp-icon { font-size: 20px; }
+  .grp-title { font-size: 11px; font-weight: 700; color: var(--dark); }
+  .grp-sub { font-size: 9px; color: var(--muted); margin-top: 1px; }
+  .grp-count {
+    margin-left: auto;
+    background: var(--orange);
+    color: white;
+    border-radius: 20px;
+    padding: 3px 9px;
+    font-size: 9px;
+    font-weight: 700;
+  }
+
+  .app-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(253,246,238,0.97);
+    border-top: 1px solid #EEE3D5;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0 16px;
+  }
+
+  .nav-item { text-align: center; font-size: 9px; color: #C4B8A8; }
+  .nav-item.active { color: var(--orange); }
+  .nav-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+
+  .corner-deco {
+    position: absolute;
+    bottom: 40px; right: 40px;
+    z-index: 2;
+    opacity: 0.05;
+    font-size: 240px;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+</style>
+
+<style id="emoji-fix">
+@font-face {
+  font-family: "EmojiFix";
+  src: local("Noto Color Emoji");
+}
+* { font-family: inherit, "EmojiFix", "Noto Color Emoji" !important; }
+body, body * {
+  font-family: 'DM Sans', 'EmojiFix', 'Noto Color Emoji', sans-serif !important;
+}
+.headline, .tag-line, h1, h2, .logo, [class*="serif"] {
+  font-family: 'Playfair Display', 'EmojiFix', 'Noto Color Emoji', serif !important;
+}
+</style>
+</head>
+<body>
+  <div class="bg-warm"></div>
+  <div class="bg-glow"></div>
+  <div class="dots-pattern"></div>
+  <div class="corner-deco">💬</div>
+
+  <div class="content">
+    <!-- COPY LEFT -->
+    <div class="copy-col">
+      <div class="eyebrow">PetKeep Feature</div>
+
+      <div class="headline">
+        Chat with<br><span class="accent">your</span><br><span class="italic">people.</span>
+      </div>
+
+      <div class="body-text">
+        Message any pet owner, start group chats, and stay connected with your pet community — all in one place.
+      </div>
+
+      <div class="features">
+        <div class="feat-row">
+          <div class="feat-dot">💬</div>
+          <div class="feat-text">Direct messages with any user</div>
+        </div>
+        <div class="feat-row">
+          <div class="feat-dot">👥</div>
+          <div class="feat-text">Create & manage group chats</div>
+        </div>
+        <div class="feat-row">
+          <div class="feat-dot">🔍</div>
+          <div class="feat-text">Search by @username or name</div>
+        </div>
+      </div>
+
+      <div class="logo-wm">PET<span>KEEP</span> · The Pet Community App</div>
+
+      <div class="store-row">
+        <div class="store-badge">🍎 App Store</div>
+        <div class="store-badge">▶ Google Play</div>
+      </div>
+    </div>
+
+    <!-- PHONE RIGHT -->
+    <div class="phone-col">
+      <div class="phone-frame">
+        <div class="msg-header">
+          <div class="msg-title">Messages</div>
+          <div class="new-grp-btn">👥 New Group</div>
+        </div>
+
+        <div class="search-bar">🔍 Search @username or name...</div>
+
+        <!-- mock convos -->
+        <div class="convo-item">
+          <div class="convo-av av-orange">🐶</div>
+          <div>
+            <div class="convo-name">@marta</div>
+            <div class="convo-preview">Luna says hi! 🐾</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
+            <div class="convo-time">now</div>
+            <div class="unread-dot"></div>
+          </div>
+        </div>
+
+        <div class="convo-item">
+          <div class="convo-av av-green">🐱</div>
+          <div>
+            <div class="convo-name">@petar_s</div>
+            <div class="convo-preview">Are you coming to the meetup?</div>
+          </div>
+          <div class="convo-time">2m</div>
+        </div>
+
+        <div class="convo-item">
+          <div class="convo-av av-blue">🐰</div>
+          <div>
+            <div class="convo-name">@narcis</div>
+            <div class="convo-preview">Great photo of Tobi! 😍</div>
+          </div>
+          <div class="convo-time">1h</div>
+        </div>
+
+        <!-- group chat strip -->
+        <div class="group-strip">
+          <span class="grp-icon">🐾</span>
+          <div>
+            <div class="grp-title">Skopje Dog Walkers</div>
+            <div class="grp-sub">Group · 8 members</div>
+          </div>
+          <span class="grp-count">3 new</span>
+        </div>
+
+        <div class="empty-area">
+          <div class="empty-icon">💭</div>
+          <div class="empty-title">Start a new conversation</div>
+          <div class="empty-sub">Search for a user to start chatting</div>
+        </div>
+
+        <div class="app-nav">
+          <div class="nav-item"><span class="nav-icon">🏠</span>Home</div>
+          <div class="nav-item"><span class="nav-icon">🗺️</span>Explore</div>
+          <div class="nav-item"><span class="nav-icon">🛍️</span>Market</div>
+          <div class="nav-item"><span class="nav-icon">🩺</span>Care</div>
+          <div class="nav-item active"><span class="nav-icon">💬</span>Chat</div>
+          <div class="nav-item"><span class="nav-icon">👤</span>Profile</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

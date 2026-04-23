@@ -1,0 +1,1012 @@
+<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PetKeep App Store Screenshots</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    --orange: #F07C2B;
+    --orange-light: #FF9A4D;
+    --cream: #FDF6EE;
+    --warm-bg: #FAF0E4;
+    --dark: #1A1208;
+    --dark2: #2D1F0E;
+    --text-muted: #8B7355;
+    --card-bg: #FFFFFF;
+    --green: #4CAF7A;
+  }
+
+  body {
+    background: #0F0A05;
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    color: var(--cream);
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    opacity: 0.5;
+  }
+
+  .screens-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  /* ===== SCREENSHOT CARD ===== */
+  .screenshot {
+    width: 390px;
+    height: 844px;
+    border-radius: 32px;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+  }
+
+  /* ============================================================
+     SCREEN 1 – Social Feed / Home  (warm cream, editorial)
+  ============================================================ */
+  .s1 {
+    background: var(--cream);
+  }
+
+  .s1 .bg-blob {
+    position: absolute;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #FDDBB0 0%, transparent 70%);
+    top: -100px; right: -150px;
+    pointer-events: none;
+  }
+
+  .s1 .tag-line {
+    position: absolute;
+    top: 54px; left: 0; right: 0;
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 42px;
+    font-weight: 900;
+    color: var(--dark);
+    line-height: 1.1;
+    padding: 0 32px;
+    z-index: 10;
+  }
+
+  .s1 .tag-line span { color: var(--orange); }
+
+  .s1 .sub {
+    position: absolute;
+    top: 200px; left: 32px; right: 32px;
+    text-align: center;
+    font-size: 15px;
+    color: var(--text-muted);
+    font-weight: 400;
+    z-index: 10;
+    line-height: 1.6;
+  }
+
+  .s1 .phone-mockup {
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    z-index: 5;
+  }
+
+  .s1 .phone-frame {
+    width: 280px;
+    height: 570px;
+    background: #fff;
+    border-radius: 36px;
+    overflow: hidden;
+    border: 6px solid #E8D9C6;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(90,50,10,0.2);
+  }
+
+  /* inner app UI – feed */
+  .s1 .app-header {
+    background: var(--cream);
+    padding: 18px 16px 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .s1 .app-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--orange);
+    letter-spacing: 1px;
+  }
+
+  .s1 .app-logo span { color: var(--dark); }
+
+  .s1 .story-row {
+    display: flex;
+    gap: 10px;
+    padding: 8px 14px;
+    overflow: hidden;
+  }
+
+  .s1 .story-bubble {
+    flex-shrink: 0;
+    text-align: center;
+  }
+
+  .s1 .story-ring {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    border: 2.5px solid var(--orange);
+    padding: 2px;
+    margin: 0 auto 4px;
+  }
+
+  .s1 .story-ring img, .s1 .story-ring .avatar-ph {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    background: linear-gradient(135deg, #F5CFA0, #E8A876);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .s1 .story-name { font-size: 9px; color: #888; }
+
+  .s1 .post-card {
+    margin: 8px 14px;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #F0E4D4;
+  }
+
+  .s1 .post-img {
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(135deg, #FDDBB0 0%, #F5A96A 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+  }
+
+  .s1 .post-info {
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .s1 .post-user { font-size: 11px; font-weight: 600; color: var(--dark); }
+  .s1 .post-desc { font-size: 10px; color: #999; margin-top: 2px; }
+
+  .s1 .post-likes {
+    font-size: 11px;
+    color: var(--orange);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .s1 .suggest-card {
+    margin: 8px 14px;
+    background: #FFF9F4;
+    border-radius: 14px;
+    padding: 10px 12px;
+    border: 1px solid #F0E4D4;
+  }
+
+  .s1 .suggest-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 8px;
+  }
+
+  .s1 .user-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .s1 .u-avatar {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FDDBB0, #E8A876);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: var(--dark);
+    flex-shrink: 0;
+  }
+
+  .s1 .u-name { font-size: 10px; font-weight: 600; flex: 1; margin-left: 6px; }
+
+  .s1 .follow-btn {
+    background: var(--orange);
+    color: white;
+    border-radius: 20px;
+    padding: 3px 8px;
+    font-size: 9px;
+    font-weight: 600;
+  }
+
+  .s1 .app-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(253,246,238,0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid #F0E4D4;
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0 12px;
+  }
+
+  .s1 .nav-item { text-align: center; font-size: 8px; color: #bbb; }
+  .s1 .nav-item.active { color: var(--orange); }
+  .s1 .nav-icon { font-size: 16px; display: block; }
+
+  /* label at bottom */
+  .s1 .screen-label {
+    position: absolute;
+    bottom: -50px; left: 0; right: 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1px;
+  }
+
+  /* ============================================================
+     SCREEN 2 – Explore / Map  (dark forest green with orange)
+  ============================================================ */
+  .s2 {
+    background: linear-gradient(160deg, #0D1F14 0%, #0A1509 50%, #1A1208 100%);
+  }
+
+  .s2 .glow-orb {
+    position: absolute;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(240,124,43,0.3) 0%, transparent 70%);
+    top: 80px; left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .s2 .tag-line {
+    position: absolute;
+    top: 60px; left: 32px; right: 32px;
+    font-family: 'Playfair Display', serif;
+    font-size: 44px;
+    font-weight: 900;
+    color: var(--cream);
+    line-height: 1.1;
+    z-index: 10;
+  }
+
+  .s2 .tag-line .accent { 
+    color: var(--orange);
+    display: block;
+  }
+
+  .s2 .sub {
+    position: absolute;
+    top: 245px; left: 32px; right: 32px;
+    font-size: 14px;
+    color: rgba(253,246,238,0.55);
+    line-height: 1.6;
+    z-index: 10;
+  }
+
+  .s2 .phone-wrap {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    z-index: 5;
+  }
+
+  .s2 .phone-frame {
+    width: 280px;
+    height: 540px;
+    background: #1C1108;
+    border-radius: 36px;
+    overflow: hidden;
+    border: 5px solid #2A1E10;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(240,124,43,0.15);
+  }
+
+  .s2 .map-bg {
+    width: 100%; height: 240px;
+    background: 
+      linear-gradient(rgba(30,20,8,0.4), rgba(30,20,8,0.4)),
+      repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(255,200,100,0.04) 20px, rgba(255,200,100,0.04) 21px),
+      repeating-linear-gradient(90deg, transparent, transparent 20px, rgba(255,200,100,0.04) 20px, rgba(255,200,100,0.04) 21px);
+    background-color: #1A2B18;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .s2 .map-road {
+    position: absolute;
+    background: rgba(255,220,150,0.12);
+    border-radius: 4px;
+  }
+
+  .s2 .map-pin {
+    position: absolute;
+    font-size: 20px;
+    animation: float 2s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+
+  .s2 .search-bar-inner {
+    margin: 10px 10px 8px;
+    background: #2A1E10;
+    border-radius: 20px;
+    padding: 8px 12px;
+    font-size: 10px;
+    color: rgba(253,246,238,0.4);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .s2 .place-list { padding: 0 10px; }
+
+  .s2 .place-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: rgba(253,246,238,0.05);
+    border-radius: 12px;
+    margin-bottom: 6px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .s2 .place-icon {
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    background: rgba(240,124,43,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .s2 .place-name { font-size: 11px; font-weight: 600; color: var(--cream); }
+  .s2 .place-dist { font-size: 9px; color: rgba(253,246,238,0.4); margin-top: 1px; }
+
+  .s2 .rating {
+    margin-left: auto;
+    font-size: 9px;
+    color: var(--orange);
+    font-weight: 700;
+  }
+
+  .s2 .find-pet-bar {
+    margin: 8px 10px 0;
+    background: linear-gradient(90deg, rgba(240,124,43,0.3), rgba(240,124,43,0.1));
+    border: 1px solid rgba(240,124,43,0.3);
+    border-radius: 12px;
+    padding: 8px 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .s2 .find-icon { font-size: 18px; }
+  .s2 .find-text { font-size: 11px; font-weight: 600; color: var(--cream); }
+  .s2 .find-sub { font-size: 9px; color: rgba(253,246,238,0.4); }
+
+  /* ============================================================
+     SCREEN 3 – Market + GPS  (bold orange gradient, premium)
+  ============================================================ */
+  .s3 {
+    background: linear-gradient(170deg, #FF7A1A 0%, #E05A00 40%, #1A0D00 100%);
+  }
+
+  .s3 .noise {
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .s3 .tag-line {
+    position: absolute;
+    top: 60px; left: 32px; right: 32px;
+    font-family: 'Playfair Display', serif;
+    font-size: 46px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.05;
+    z-index: 10;
+  }
+
+  .s3 .tag-line .dim { opacity: 0.55; font-size: 36px; display: block; margin-bottom: 4px; }
+
+  .s3 .sub {
+    position: absolute;
+    top: 250px; left: 32px; right: 32px;
+    font-size: 14px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.6;
+    z-index: 10;
+  }
+
+  .s3 .phone-wrap {
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    z-index: 5;
+  }
+
+  .s3 .phone-frame {
+    width: 280px;
+    height: 545px;
+    background: var(--cream);
+    border-radius: 36px;
+    overflow: hidden;
+    border: 5px solid rgba(255,255,255,0.3);
+    position: relative;
+    box-shadow: 0 20px 80px rgba(0,0,0,0.5), 0 0 60px rgba(255,100,0,0.3);
+  }
+
+  .s3 .market-header {
+    background: var(--cream);
+    padding: 14px 14px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .s3 .mh-title { font-size: 16px; font-weight: 800; color: var(--dark); }
+  .s3 .mh-sub { font-size: 9px; color: var(--text-muted); margin-top: 1px; }
+
+  .s3 .liked-btn {
+    background: #FFF;
+    border: 1px solid #F0E4D4;
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 9px;
+    color: var(--orange);
+    font-weight: 600;
+  }
+
+  .s3 .tabs {
+    display: flex;
+    margin: 0 14px 10px;
+    gap: 6px;
+  }
+
+  .s3 .tab {
+    flex: 1;
+    background: #F5EDE4;
+    border-radius: 12px;
+    padding: 7px;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .s3 .tab.active {
+    background: var(--orange);
+    color: white;
+  }
+
+  .s3 .cat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin: 0 14px 10px;
+  }
+
+  .s3 .cat-item {
+    background: #fff;
+    border-radius: 12px;
+    padding: 8px 4px;
+    text-align: center;
+    border: 1px solid #F0E4D4;
+  }
+
+  .s3 .cat-emoji { font-size: 18px; }
+  .s3 .cat-name { font-size: 8px; color: var(--dark); margin-top: 3px; font-weight: 600; }
+
+  .s3 .popular-title {
+    margin: 0 14px 6px;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--dark);
+    display: flex; justify-content: space-between;
+  }
+
+  .s3 .see-all { color: var(--orange); font-weight: 600; }
+
+  .s3 .prod-row {
+    display: flex;
+    gap: 8px;
+    padding: 0 14px;
+    overflow: hidden;
+  }
+
+  .s3 .prod-card {
+    flex: 1;
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #F0E4D4;
+  }
+
+  .s3 .prod-img {
+    width: 100%; height: 70px;
+    background: linear-gradient(135deg, #FDE8C8, #F5C590);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+  }
+
+  .s3 .prod-info { padding: 6px 7px; }
+  .s3 .prod-name { font-size: 9px; font-weight: 600; color: var(--dark); }
+  .s3 .prod-price { font-size: 10px; font-weight: 800; color: var(--orange); margin-top: 2px; }
+
+  .s3 .gps-strip {
+    margin: 8px 14px 0;
+    background: linear-gradient(90deg, #1A1208, #2D1F0E);
+    border-radius: 14px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .s3 .gps-icon { font-size: 22px; }
+  .s3 .gps-text { font-size: 11px; font-weight: 700; color: var(--cream); }
+  .s3 .gps-sub { font-size: 8px; color: rgba(253,246,238,0.5); margin-top: 1px; }
+  .s3 .gps-badge {
+    margin-left: auto;
+    background: var(--green);
+    color: white;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+
+  /* ============================================================
+     SCREEN 4 – Profile / Pet Owner  (deep charcoal with cream)
+  ============================================================ */
+  .s4 {
+    background: linear-gradient(170deg, #FDF6EE 0%, #FAE8D2 60%, #FDDBB0 100%);
+  }
+
+  .s4 .tag-line {
+    position: absolute;
+    top: 52px; left: 32px; right: 32px;
+    font-family: 'Playfair Display', serif;
+    font-size: 42px;
+    font-weight: 900;
+    color: var(--dark);
+    line-height: 1.1;
+    z-index: 10;
+  }
+
+  .s4 .tag-line .orange { color: var(--orange); }
+
+  .s4 .sub {
+    position: absolute;
+    top: 228px; left: 32px; right: 32px;
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    z-index: 10;
+  }
+
+  .s4 .phone-wrap {
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    z-index: 5;
+  }
+
+  .s4 .phone-frame {
+    width: 280px;
+    height: 548px;
+    background: var(--cream);
+    border-radius: 36px;
+    overflow: hidden;
+    border: 5px solid rgba(240,124,43,0.25);
+    position: relative;
+    box-shadow: 0 20px 60px rgba(90,50,10,0.25);
+  }
+
+  .s4 .prof-header {
+    background: var(--cream);
+    padding: 18px 14px 0;
+    text-align: center;
+  }
+
+  .s4 .avatar-wrap {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    margin: 0 auto 6px;
+    background: linear-gradient(135deg, #FDDBB0, #E8A876);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    border: 3px solid var(--orange);
+    position: relative;
+  }
+
+  .s4 .cam-badge {
+    position: absolute;
+    bottom: -2px; right: -2px;
+    width: 20px; height: 20px;
+    background: var(--orange);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+  }
+
+  .s4 .prof-name { font-size: 16px; font-weight: 800; color: var(--dark); }
+  .s4 .prof-bio { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+
+  .s4 .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin: 10px 0 10px;
+  }
+
+  .s4 .stat-num { font-size: 14px; font-weight: 800; color: var(--dark); text-align: center; }
+  .s4 .stat-label { font-size: 8px; color: var(--text-muted); }
+
+  .s4 .action-row {
+    display: flex;
+    gap: 8px;
+    margin: 0 14px 10px;
+  }
+
+  .s4 .edit-btn {
+    flex: 1;
+    background: var(--orange);
+    color: white;
+    border-radius: 12px;
+    padding: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .s4 .share-btn {
+    flex: 1;
+    background: #F5EDE4;
+    color: var(--dark);
+    border-radius: 12px;
+    padding: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .s4 .cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin: 0 14px 10px;
+  }
+
+  .s4 .mini-card {
+    background: white;
+    border-radius: 12px;
+    padding: 8px;
+    border: 1px solid #F0E4D4;
+  }
+
+  .s4 .mc-icon { font-size: 14px; margin-bottom: 4px; }
+  .s4 .mc-label { font-size: 7px; color: var(--text-muted); }
+  .s4 .mc-val { font-size: 14px; font-weight: 800; color: var(--dark); }
+
+  .s4 .pets-section {
+    margin: 0 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .s4 .pets-title { font-size: 11px; font-weight: 800; color: var(--dark); }
+  .s4 .add-pet { font-size: 9px; color: var(--orange); font-weight: 700; background: rgba(240,124,43,0.1); padding: 4px 8px; border-radius: 20px; }
+
+  .s4 .pet-avatar-row {
+    display: flex;
+    gap: 8px;
+    padding: 0 14px;
+  }
+
+  .s4 .pet-av {
+    text-align: center;
+  }
+
+  .s4 .pet-img-ring {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FDDBB0, #E8A876);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    border: 2px solid var(--orange);
+    margin: 0 auto 3px;
+  }
+
+  .s4 .pet-name { font-size: 8px; color: var(--dark); font-weight: 600; }
+
+  /* feature badges - floating */
+  .feature-badges {
+    position: absolute;
+    z-index: 20;
+  }
+
+  .badge {
+    background: rgba(253,246,238,0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    border: 1px solid rgba(240,124,43,0.2);
+    margin-bottom: 8px;
+  }
+
+  .badge-dark {
+    background: rgba(26,18,8,0.9);
+    border-color: rgba(240,124,43,0.3);
+  }
+
+  .badge .b-icon { font-size: 20px; }
+  .badge .b-text { font-size: 11px; font-weight: 700; color: var(--dark); }
+  .badge .b-sub { font-size: 9px; color: var(--text-muted); }
+  .badge-dark .b-text { color: var(--cream); }
+  .badge-dark .b-sub { color: rgba(253,246,238,0.5); }
+
+  /* dots */
+  .dots-row {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 16px;
+  }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+  }
+
+  .dot.active {
+    background: var(--orange);
+    width: 18px;
+    border-radius: 3px;
+  }
+
+  /* ============================================================
+     LAYOUT LABEL BAND
+  ============================================================ */
+  .label-band {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 6px 16px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 16px;
+  }
+
+  /* ============================================================
+     FEATURE STRIP  
+  ============================================================ */
+  .feature-strip {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 860px;
+  }
+
+  .feat-pill {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 100px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255,255,255,0.7);
+    font-size: 13px;
+  }
+
+  .feat-pill .fp-icon { font-size: 18px; }
+  .feat-pill .fp-text { font-weight: 500; }
+
+  /* Rating section */
+  .rating-section {
+    margin-top: 32px;
+    text-align: center;
+  }
+
+  .stars { font-size: 24px; letter-spacing: 4px; }
+  .rating-num { font-size: 52px; font-weight: 900; color: var(--orange); font-family: 'Playfair Display', serif; line-height: 1; }
+  .rating-label { font-size: 13px; color: rgba(255,255,255,0.35); margin-top: 4px; }
+
+  .review-cards {
+    display: flex;
+    gap: 14px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 860px;
+  }
+
+  .review-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 16px 18px;
+    max-width: 260px;
+    text-align: left;
+  }
+
+  .rv-stars { font-size: 12px; margin-bottom: 8px; }
+  .rv-text { font-size: 12px; color: rgba(255,255,255,0.65); line-height: 1.5; margin-bottom: 10px; }
+  .rv-user { font-size: 11px; font-weight: 700; color: var(--orange); }
+
+  /* page title big */
+  .hero-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.15);
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  .hero-brand span { color: var(--orange); opacity: 0.6; }
+</style>
+
+<style>
+html,body{margin:0;padding:0;background:transparent;width:390px;height:844px;overflow:hidden;}
+.screenshot{box-shadow:none !important;border-radius:0 !important;}
+</style>
+<style id="emoji-fix">
+@font-face {
+  font-family: "EmojiFix";
+  src: local("Noto Color Emoji");
+}
+* { font-family: inherit, "EmojiFix", "Noto Color Emoji" !important; }
+body, body * {
+  font-family: 'DM Sans', 'EmojiFix', 'Noto Color Emoji', sans-serif !important;
+}
+.headline, .tag-line, h1, h2, .logo, [class*="serif"] {
+  font-family: 'Playfair Display', 'EmojiFix', 'Noto Color Emoji', serif !important;
+}
+</style>
+</head><body><div class="screenshot s2">
+    <div class="glow-orb"></div>
+    
+    <div class="tag-line">
+      Discover the world<br>through your<br><span class="accent">pet's paws.</span>
+    </div>
+    <div class="sub">Find nearby vets, parks, pet shops & cafes — all on one intelligent map.</div>
+
+    <div class="phone-wrap">
+      <div class="phone-frame">
+        <!-- Find My Pet Bar -->
+        <div class="find-pet-bar" style="margin:10px 10px 6px;">
+          <span class="find-icon">📡</span>
+          <div>
+            <div class="find-text">Find My Pet</div>
+            <div class="find-sub">GPS tracking & safe zones</div>
+          </div>
+          <span style="margin-left:auto;color:rgba(253,246,238,0.4);font-size:14px;">›</span>
+        </div>
+
+        <!-- Map -->
+        <div class="map-bg">
+          <!-- roads -->
+          <div class="map-road" style="width:160px;height:4px;top:80px;left:40px;transform:rotate(-15deg)"></div>
+          <div class="map-road" style="width:100px;height:3px;top:120px;left:80px;transform:rotate(5deg)"></div>
+          <div class="map-road" style="width:80px;height:3px;top:150px;left:30px;transform:rotate(-20deg)"></div>
+          <div class="map-road" style="width:4px;height:120px;top:50px;left:130px;"></div>
+          <div class="map-road" style="width:4px;height:80px;top:80px;left:80px;"></div>
+          
+          <!-- pins -->
+          <div class="map-pin" style="top:70px;left:50px;">🌳</div>
+          <div class="map-pin" style="top:90px;left:100px;animation-delay:0.5s">✂️</div>
+          <div class="map-pin" style="top:110px;left:140px;animation-delay:1s">🏥</div>
+          <div class="map-pin" style="top:135px;left:65px;animation-delay:0.3s">🐾</div>
+
+          <!-- You are here -->
+          <div style="position:absolute;bottom:15px;left:50%;transform:translateX(-50%);background:var(--orange);border-radius:20px;padding:4px 10px;font-size:8px;font-weight:700;color:white;">📍 You are here</div>
+        </div>
+
+        <!-- search bar -->
+        <div class="search-bar-inner">
+          🔍 <span>Search places, users, @username...</span>
+        </div>
+
+        <!-- filter chips -->
+        <div style="display:flex;gap:5px;padding:0 10px 8px;overflow:hidden;">
+          <div style="background:var(--orange);border-radius:20px;padding:4px 10px;font-size:8px;font-weight:700;color:white;flex-shrink:0;">All</div>
+          <div style="background:rgba(253,246,238,0.07);border-radius:20px;padding:4px 10px;font-size:8px;color:rgba(253,246,238,0.5);flex-shrink:0;">Vets</div>
+          <div style="background:rgba(253,246,238,0.07);border-radius:20px;padding:4px 10px;font-size:8px;color:rgba(253,246,238,0.5);flex-shrink:0;">Stores</div>
+          <div style="background:rgba(253,246,238,0.07);border-radius:20px;padding:4px 10px;font-size:8px;color:rgba(253,246,238,0.5);flex-shrink:0;">Parks</div>
+        </div>
+
+        <!-- nearby list -->
+        <div class="place-list">
+          <div style="font-size:10px;font-weight:700;color:rgba(253,246,238,0.5);padding:0 0 6px 0;text-transform:uppercase;letter-spacing:1px;">Nearby Pet Shops</div>
+          <div class="place-item">
+            <div class="place-icon">🐾</div>
+            <div>
+              <div class="place-name">Zoo City Pet Shop</div>
+              <div class="place-dist">📍 1.0 km away</div>
+            </div>
+            <div class="rating">★ 4.5</div>
+          </div>
+          <div class="place-item">
+            <div class="place-icon">🐾</div>
+            <div>
+              <div class="place-name">Pet Center Skopje</div>
+              <div class="place-dist">📍 2.5 km away</div>
+            </div>
+            <div class="rating">★ 4.3</div>
+          </div>
+          <div style="font-size:10px;font-weight:700;color:rgba(253,246,238,0.5);padding:6px 0;text-transform:uppercase;letter-spacing:1px;">Nearby Vets</div>
+          <div class="place-item">
+            <div class="place-icon">🏥</div>
+            <div>
+              <div class="place-name">Vetland Veterinary</div>
+              <div class="place-dist">📍 0.5 km away</div>
+            </div>
+            <div class="rating">★ 4.8</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- floating badges (dark) -->
+    <div style="position:absolute;top:295px;left:14px;z-index:20;">
+      <div class="badge badge-dark">
+        <span class="b-icon">🗺️</span>
+        <div><div class="b-text">Smart Explore</div><div class="b-sub">Map-based discovery</div></div>
+      </div>
+      <div class="badge badge-dark">
+        <span class="b-icon">📡</span>
+        <div><div class="b-text">GPS Tracking</div><div class="b-sub">Always know where they are</div></div>
+      </div>
+    </div>
+  </div></body></html>

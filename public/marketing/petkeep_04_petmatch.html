@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PetKeep – PetMatch</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --orange: #F07C2B;
+    --pink: #FF6B9D;
+    --cream: #FDF6EE;
+    --dark: #1A1208;
+    --muted: #9B7E5C;
+  }
+
+  body {
+    width: 1080px;
+    height: 1080px;
+    overflow: hidden;
+    font-family: 'DM Sans', sans-serif;
+    position: relative;
+  }
+
+  .bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(145deg, #FFF0F5 0%, #FFE4EF 40%, #FDDBB0 100%);
+  }
+
+  .bg-glow-pink {
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,107,157,0.15) 0%, transparent 65%);
+    top: -100px; left: -50px;
+  }
+
+  .bg-glow-orange {
+    position: absolute;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(240,124,43,0.12) 0%, transparent 65%);
+    bottom: -50px; right: -50px;
+  }
+
+  .hearts-deco {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .heart-float {
+    position: absolute;
+    font-size: 20px;
+    opacity: 0.08;
+    animation: float-up 6s ease-in-out infinite;
+  }
+
+  @keyframes float-up {
+    0%,100% { transform: translateY(0) rotate(-10deg); opacity: 0.08; }
+    50% { transform: translateY(-20px) rotate(10deg); opacity: 0.15; }
+  }
+
+  .content {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    height: 100%;
+    padding: 70px 72px;
+    gap: 56px;
+    align-items: center;
+  }
+
+  /* LEFT copy */
+  .copy-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--pink);
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .eyebrow::after {
+    content: '';
+    display: inline-block;
+    width: 28px; height: 2px;
+    background: var(--pink);
+    border-radius: 2px;
+  }
+
+  .headline {
+    font-family: 'Playfair Display', serif;
+    font-size: 68px;
+    font-weight: 900;
+    color: var(--dark);
+    line-height: 1.0;
+    margin-bottom: 28px;
+  }
+
+  .headline .pink { color: var(--pink); }
+  .headline .orange { color: var(--orange); }
+  .headline .italic { font-style: italic; }
+
+  .body-text {
+    font-size: 17px;
+    line-height: 1.7;
+    color: rgba(26,18,8,0.5);
+    margin-bottom: 40px;
+    max-width: 370px;
+  }
+
+  .features {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 44px;
+  }
+
+  .feat-row { display: flex; align-items: center; gap: 14px; }
+
+  .feat-dot {
+    width: 38px; height: 38px;
+    border-radius: 12px;
+    background: rgba(255,107,157,0.1);
+    border: 1px solid rgba(255,107,157,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .feat-text { font-size: 14px; color: rgba(26,18,8,0.65); font-weight: 500; }
+
+  .logo-wm {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    font-weight: 900;
+    color: rgba(26,18,8,0.18);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .logo-wm span { color: rgba(240,124,43,0.45); }
+
+  .store-row { display: flex; gap: 12px; }
+
+  .store-badge {
+    background: var(--dark);
+    border-radius: 12px;
+    padding: 9px 18px;
+    font-size: 11px;
+    color: rgba(253,246,238,0.7);
+    font-weight: 500;
+    display: flex; align-items: center; gap: 7px;
+  }
+
+  /* PHONE */
+  .phone-col { flex-shrink: 0; width: 310px; }
+
+  .phone-frame {
+    width: 310px;
+    height: 648px;
+    background: var(--cream);
+    border-radius: 44px;
+    overflow: hidden;
+    border: 6px solid rgba(255,107,157,0.3);
+    box-shadow: 20px 30px 60px rgba(90,30,50,0.18), 0 0 60px rgba(255,107,157,0.12), 0 0 0 1px rgba(255,255,255,0.4);
+    position: relative;
+  }
+
+  .pm-header {
+    background: var(--cream);
+    padding: 22px 18px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #EEE3D5;
+  }
+
+  .back-btn {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+  }
+
+  .pm-title { font-size: 18px; font-weight: 800; color: var(--dark); display: flex; align-items: center; gap: 7px; }
+
+  .pm-heart { color: var(--pink); font-size: 16px; }
+
+  /* match banner */
+  .match-banner {
+    margin: 12px 16px;
+    background: linear-gradient(135deg, #FFF0F7, #FFE4EF);
+    border-radius: 18px;
+    padding: 12px 16px;
+    border: 1px solid rgba(255,107,157,0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .mb-icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--pink);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .mb-title { font-size: 12px; font-weight: 700; color: var(--dark); }
+  .mb-sub { font-size: 9px; color: var(--muted); margin-top: 1px; }
+
+  .listing-badge {
+    margin-left: auto;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .lb-num { font-size: 22px; font-weight: 900; color: var(--orange); line-height: 1; }
+  .lb-label { font-size: 8px; color: #BBB; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* tabs */
+  .pm-tabs {
+    display: flex;
+    margin: 0 16px 12px;
+    gap: 5px;
+  }
+
+  .pm-tab {
+    flex: 1;
+    padding: 8px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 12px;
+    color: var(--muted);
+  }
+
+  .pm-tab.active {
+    background: white;
+    color: var(--dark);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+
+  /* matching for */
+  .matching-for {
+    margin: 0 16px 10px;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #BBB;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .for-chip {
+    background: var(--orange);
+    color: white;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+    display: flex; align-items: center; gap: 5px;
+  }
+
+  /* breed filters */
+  .breed-filters {
+    display: flex;
+    gap: 6px;
+    margin: 0 16px 12px;
+    overflow: hidden;
+  }
+
+  .bf-chip {
+    border-radius: 20px;
+    padding: 5px 10px;
+    font-size: 9px;
+    font-weight: 600;
+    border: 1.5px solid #E8D5C0;
+    color: #8B7355;
+    white-space: nowrap;
+    display: flex; align-items: center; gap: 3px;
+  }
+
+  .bf-chip.active {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: white;
+  }
+
+  /* pet card */
+  .pet-match-card {
+    margin: 0 16px;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    height: 160px;
+    border: 1px solid rgba(255,107,157,0.15);
+  }
+
+  .pet-card-img {
+    width: 100%; height: 100%;
+    background: linear-gradient(160deg, #C8E6B8 0%, #A5D28A 50%, #8ABD6A 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 70px;
+    position: relative;
+  }
+
+  .pet-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.6));
+    padding: 20px 14px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .pet-card-name { font-size: 16px; font-weight: 800; color: white; }
+  .pet-card-breed { font-size: 9px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+
+  .excellent-badge {
+    background: rgba(62,207,122,0.9);
+    color: white;
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 9px;
+    font-weight: 700;
+  }
+
+  .star-badge {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: rgba(255,200,0,0.9);
+    color: white;
+    border-radius: 20px;
+    padding: 3px 8px;
+    font-size: 9px;
+    font-weight: 700;
+  }
+
+  /* status tags */
+  .status-tags {
+    display: flex;
+    gap: 6px;
+    margin: 8px 16px;
+    flex-wrap: wrap;
+  }
+
+  .status-tag {
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 9px;
+    font-weight: 600;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  .st-green { background: rgba(62,207,122,0.12); color: #2DAF62; border: 1px solid rgba(62,207,122,0.3); }
+  .st-yellow { background: rgba(255,180,0,0.1); color: #C48A00; border: 1px solid rgba(255,180,0,0.3); }
+
+  /* contact row */
+  .contact-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 16px;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 14px;
+    border: 1px solid #EEE3D5;
+  }
+
+  .user-av {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FDDBB0, #E8A876);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .user-name-s { font-size: 10px; font-weight: 600; color: var(--dark); }
+  .flag-btn { margin-left: auto; font-size: 12px; opacity: 0.4; }
+
+  .review-btn {
+    background: #F5EDE4;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--dark);
+  }
+
+  .contact-btn {
+    background: var(--orange);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 9px;
+    font-weight: 700;
+    color: white;
+  }
+
+  .app-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(253,246,238,0.97);
+    border-top: 1px solid #EEE3D5;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0 16px;
+  }
+
+  .nav-item { text-align: center; font-size: 9px; color: #C4B8A8; }
+  .nav-item.active { color: var(--orange); }
+  .nav-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+
+  .corner-deco {
+    position: absolute;
+    bottom: 30px; right: 40px;
+    z-index: 2;
+    opacity: 0.07;
+    font-size: 240px;
+    line-height: 1;
+    pointer-events: none;
+  }
+</style>
+
+<style id="emoji-fix">
+@font-face {
+  font-family: "EmojiFix";
+  src: local("Noto Color Emoji");
+}
+* { font-family: inherit, "EmojiFix", "Noto Color Emoji" !important; }
+body, body * {
+  font-family: 'DM Sans', 'EmojiFix', 'Noto Color Emoji', sans-serif !important;
+}
+.headline, .tag-line, h1, h2, .logo, [class*="serif"] {
+  font-family: 'Playfair Display', 'EmojiFix', 'Noto Color Emoji', serif !important;
+}
+</style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="bg-glow-pink"></div>
+  <div class="bg-glow-orange"></div>
+
+  <div class="hearts-deco">
+    <div class="heart-float" style="top:10%;left:5%;animation-delay:0s">💕</div>
+    <div class="heart-float" style="top:30%;left:20%;animation-delay:1s">🐾</div>
+    <div class="heart-float" style="top:70%;left:8%;animation-delay:2s">💕</div>
+    <div class="heart-float" style="top:80%;right:15%;animation-delay:0.5s">🐾</div>
+    <div class="heart-float" style="top:15%;right:5%;animation-delay:1.5s">💕</div>
+  </div>
+
+  <div class="corner-deco">💕</div>
+
+  <div class="content">
+    <!-- COPY LEFT -->
+    <div class="copy-col">
+      <div class="eyebrow">PetKeep Feature</div>
+
+      <div class="headline">
+        Find the<br><span class="pink italic">perfect</span><br><span class="orange">match.</span>
+      </div>
+
+      <div class="body-text">
+        Discover verified breeding partners for your pet. Browse by breed, filter by compatibility, and connect with trusted owners.
+      </div>
+
+      <div class="features">
+        <div class="feat-row">
+          <div class="feat-dot">💕</div>
+          <div class="feat-text">Verified breeding listings</div>
+        </div>
+        <div class="feat-row">
+          <div class="feat-dot">🔬</div>
+          <div class="feat-text">Compatibility breakdown by breed</div>
+        </div>
+        <div class="feat-row">
+          <div class="feat-dot">✅</div>
+          <div class="feat-text">Health & fertility status checks</div>
+        </div>
+      </div>
+
+      <div class="logo-wm">PET<span>KEEP</span> · The Pet Community App</div>
+
+      <div class="store-row">
+        <div class="store-badge">🍎 App Store</div>
+        <div class="store-badge">▶ Google Play</div>
+      </div>
+    </div>
+
+    <!-- PHONE RIGHT -->
+    <div class="phone-col">
+      <div class="phone-frame">
+        <div class="pm-header">
+          <div class="back-btn">←</div>
+          <div class="pm-title"><span class="pm-heart">♡</span> PetMatch</div>
+        </div>
+
+        <!-- banner -->
+        <div class="match-banner">
+          <div class="mb-icon">💕</div>
+          <div>
+            <div class="mb-title">PetMatch</div>
+            <div class="mb-sub">Find verified breeding partners</div>
+          </div>
+          <div class="listing-badge">
+            <div class="lb-num">1</div>
+            <div class="lb-label">Listings</div>
+          </div>
+        </div>
+
+        <!-- tabs -->
+        <div class="pm-tabs">
+          <div class="pm-tab active">🔍 Browse</div>
+          <div class="pm-tab">🐾 My Pets</div>
+          <div class="pm-tab">♡ Activity</div>
+        </div>
+
+        <!-- matching for -->
+        <div class="matching-for">
+          Matching for
+          <div class="for-chip">🐶 tobi</div>
+        </div>
+
+        <!-- filters -->
+        <div class="breed-filters">
+          <div class="bf-chip active">All</div>
+          <div class="bf-chip">🐶 Dogs</div>
+          <div class="bf-chip">🐱 Cats</div>
+          <div class="bf-chip">🐦 Birds</div>
+        </div>
+
+        <!-- pet card -->
+        <div class="pet-match-card">
+          <div class="pet-card-img">
+            🐶
+            <div class="star-badge">★ 4.0</div>
+          </div>
+          <div class="pet-overlay">
+            <div>
+              <div class="pet-card-name">Luna</div>
+              <div class="pet-card-breed">bishon · Female · Age unknown</div>
+            </div>
+            <div class="excellent-badge">Excellent Match</div>
+          </div>
+        </div>
+
+        <!-- status tags -->
+        <div class="status-tags">
+          <div class="status-tag st-green">✓ Fertile</div>
+          <div class="status-tag st-yellow">⚠ Vaccination not confirmed</div>
+        </div>
+
+        <!-- contact row -->
+        <div class="contact-row">
+          <div class="user-av">T</div>
+          <div class="user-name-s">Test_user</div>
+          <span class="flag-btn">🚩</span>
+          <div class="review-btn">👁 Review</div>
+          <div class="contact-btn">💬 Contact</div>
+        </div>
+
+        <div class="app-nav">
+          <div class="nav-item"><span class="nav-icon">🏠</span>Home</div>
+          <div class="nav-item"><span class="nav-icon">🗺️</span>Explore</div>
+          <div class="nav-item"><span class="nav-icon">🛍️</span>Market</div>
+          <div class="nav-item active"><span class="nav-icon">🩺</span>Care</div>
+          <div class="nav-item"><span class="nav-icon">💬</span>Chat</div>
+          <div class="nav-item"><span class="nav-icon">👤</span>Profile</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
