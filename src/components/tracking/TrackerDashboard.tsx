@@ -18,13 +18,16 @@ import "leaflet/dist/leaflet.css";
 import SafeZonePanel from "./SafeZonePanel";
 import {
   initBLE,
+  ensureBluetoothReady,
   connectToDevice,
   disconnectDevice,
   startLocationNotifications,
   stopLocationNotifications,
   triggerFindTracker,
+  onDeviceDisconnected,
   isNativePlatform,
 } from "@/lib/bleService";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface Props {
