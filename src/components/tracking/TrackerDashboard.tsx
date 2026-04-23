@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import {
   PetTracker,
   useTrackerLocation,
-  useGPSSimulator,
   useTrackingHistory,
   useSafeZones,
   useSafeZoneAlerts,
@@ -58,8 +57,7 @@ const TrackerDashboard = ({ tracker, onBack }: Props) => {
   const historyLineRef = useRef<L.Polyline | null>(null);
   const zoneCirclesRef = useRef<L.Circle[]>([]);
 
-  // GPS simulator only runs on web preview — never on native (would clobber real BLE).
-  useGPSSimulator(isNativePlatform() ? null : tracker.id, SKOPJE[0], SKOPJE[1]);
+  // No fake GPS data — all locations come from the real BLE tracker.
 
   const lat = location?.latitude ?? SKOPJE[0];
   const lng = location?.longitude ?? SKOPJE[1];
