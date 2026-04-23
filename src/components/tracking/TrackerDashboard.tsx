@@ -58,31 +58,65 @@ const TrackerDashboard = ({ tracker, onBack }: Props) => {
   const historyLineRef = useRef<L.Polyline | null>(null);
   const zoneCirclesRef = useRef<L.Circle[]>([]);
 
-  // Start GPS simulator for demo
-  useGPSSimulator(tracker.id, SKOPJE[0], SKOPJE[1]);
+  // GPS simulator only runs on web preview — never on native (would clobber real BLE).
+  useGPSSimulator(isNativePlatform() ? null : tracker.id, SKOPJE[0], SKOPJE[1]);
 
   const lat = location?.latitude ?? SKOPJE[0];
   const lng = location?.longitude ?? SKOPJE[1];
 
-  // BLE auto-connect
+  // BLE: connect, stream locations into Supabase, react to disconnects.
   useEffect(() => {
     if (!isNativePlatform()) return;
     let cancelled = false;
+    let unsubDisconnect: (() => void) | null = null;
 
     const tryConnect = async () => {
       setBleStatus("connecting");
-      await initBLE();
+      const ready = await initBLE();
+      if (!ready) {
+        if (!cancelled) {
+          setBleStatus("disconnected");
+          toast.error("Bluetooth not available on this device");
+        }
+        return;
+      }
+      const btReady = await ensureBluetoothReady();
+      if (!btReady.ok) {
+        if (!cancelled) {
+          setBleStatus("disconnected");
+          toast.error(btReady.reason || "Please enable Bluetooth");
+        }
+        return;
+      }
+
       const ok = await connectToDevice(tracker.tracker_device_id);
       if (cancelled) return;
-      if (ok) {
-        setBleStatus("connected");
-        // Start location streaming from BLE
-        await startLocationNotifications(tracker.tracker_device_id, (loc) => {
-          // Location updates from BLE would be stored via Supabase in a real implementation
-          console.log("[BLE] Location update:", loc);
-        });
-      } else {
+      if (!ok) {
         setBleStatus("disconnected");
+        return;
+      }
+
+      setBleStatus("connected");
+      unsubDisconnect = onDeviceDisconnected(tracker.tracker_device_id, () => {
+        if (!cancelled) setBleStatus("disconnected");
+      });
+
+      // Persist incoming GPS pushes so the realtime location hook + history table stay in sync.
+      try {
+        await startLocationNotifications(tracker.tracker_device_id, async (loc) => {
+          try {
+            await supabase.from("tracker_locations").insert({
+              tracker_id: tracker.id,
+              latitude: loc.latitude,
+              longitude: loc.longitude,
+              battery_level: 0, // battery comes from a separate read; keep schema happy
+            });
+          } catch (err) {
+            console.error("[BLE] Failed to persist location", err);
+          }
+        });
+      } catch (err) {
+        console.error("[BLE] Failed to subscribe to notifications", err);
       }
     };
 
@@ -90,12 +124,13 @@ const TrackerDashboard = ({ tracker, onBack }: Props) => {
 
     return () => {
       cancelled = true;
-      disconnectDevice(tracker.tracker_device_id);
+      unsubDisconnect?.();
       stopLocationNotifications(tracker.tracker_device_id);
+      disconnectDevice(tracker.tracker_device_id);
     };
-  }, [tracker.tracker_device_id]);
+  }, [tracker.id, tracker.tracker_device_id]);
 
-  // Auto-reconnect
+  // Auto-reconnect when the link drops.
   useEffect(() => {
     if (!isNativePlatform() || bleStatus !== "disconnected") return;
     const timer = setTimeout(async () => {
