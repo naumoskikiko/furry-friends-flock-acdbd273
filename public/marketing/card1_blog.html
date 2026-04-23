@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PetKeep – Blog & MeetUps</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --orange: #F07C2B;
+    --cream: #FDF6EE;
+    --dark: #1A1208;
+    --muted: #9B7E5C;
+  }
+
+  body {
+    width: 1080px;
+    height: 1080px;
+    overflow: hidden;
+    background: var(--dark);
+    font-family: 'DM Sans', sans-serif;
+    position: relative;
+  }
+
+  /* BG layers */
+  .bg-gradient {
+    position: absolute; inset: 0;
+    background: linear-gradient(145deg, #1E1205 0%, #0D0800 55%, #2A1500 100%);
+  }
+
+  .bg-glow1 {
+    position: absolute;
+    width: 700px; height: 700px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(240,124,43,0.18) 0%, transparent 65%);
+    top: -200px; right: -100px;
+    pointer-events: none;
+  }
+
+  .bg-glow2 {
+    position: absolute;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(240,124,43,0.08) 0%, transparent 70%);
+    bottom: 50px; left: -80px;
+  }
+
+  /* grid lines texture */
+  .grid-lines {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,200,120,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,200,120,0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* ---- CONTENT ---- */
+  .content {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    height: 100%;
+    padding: 70px 72px;
+    gap: 56px;
+    align-items: center;
+  }
+
+  /* LEFT: phone */
+  .phone-col {
+    flex-shrink: 0;
+    width: 310px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .phone-frame {
+    width: 310px;
+    height: 640px;
+    background: var(--cream);
+    border-radius: 44px;
+    overflow: hidden;
+    border: 6px solid rgba(240,124,43,0.35);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 60px rgba(240,124,43,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+    position: relative;
+  }
+
+  /* app chrome */
+  .app-header {
+    background: var(--cream);
+    padding: 22px 20px 10px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--orange);
+    letter-spacing: 1px;
+  }
+
+  .logo span { color: var(--dark); }
+
+  .story-row {
+    display: flex;
+    gap: 14px;
+    padding: 8px 18px 12px;
+  }
+
+  .story-av {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 2.5px solid var(--orange);
+    background: linear-gradient(135deg, #FDDBB0, #E8A876);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .tabs-row {
+    display: flex;
+    border-bottom: 1.5px solid #EEE3D5;
+    margin: 0 18px 12px;
+  }
+
+  .tab-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #BBB;
+  }
+
+  .tab-item.active {
+    color: var(--dark);
+    border-bottom: 2.5px solid var(--dark);
+    margin-bottom: -1.5px;
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 7px;
+    padding: 0 18px 12px;
+    overflow: hidden;
+  }
+
+  .chip {
+    border-radius: 30px;
+    padding: 5px 12px;
+    font-size: 10px;
+    font-weight: 600;
+    border: 1.5px solid #E8D5C0;
+    color: #8B7355;
+    white-space: nowrap;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  .chip.active {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: white;
+  }
+
+  .write-card {
+    margin: 0 18px 14px;
+    background: white;
+    border-radius: 18px;
+    padding: 14px 16px;
+    border: 1.5px dashed #E8D5C0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .write-icon {
+    width: 38px; height: 38px;
+    background: rgba(240,124,43,0.1);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .write-title { font-size: 12px; font-weight: 700; color: var(--dark); }
+  .write-sub { font-size: 10px; color: #BBB; margin-top: 2px; }
+
+  .empty-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 0;
+  }
+
+  .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-title { font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+  .empty-sub { font-size: 11px; color: #BBB; text-align: center; padding: 0 20px; }
+
+  .meetup-card {
+    margin: 0 18px;
+    background: linear-gradient(135deg, #FFF5EA, #FDE8CC);
+    border-radius: 16px;
+    padding: 12px 14px;
+    border: 1px solid #F0D8B8;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .meetup-emoji { font-size: 24px; }
+  .meetup-title { font-size: 11px; font-weight: 700; color: var(--dark); }
+  .meetup-sub { font-size: 9px; color: var(--muted); margin-top: 2px; }
+  .meetup-date {
+    margin-left: auto;
+    background: var(--orange);
+    color: white;
+    border-radius: 10px;
+    padding: 4px 10px;
+    font-size: 9px;
+    font-weight: 700;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .app-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(253,246,238,0.97);
+    border-top: 1px solid #EEE3D5;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0 16px;
+  }
+
+  .nav-item { text-align: center; font-size: 9px; color: #C4B8A8; }
+  .nav-item.active { color: var(--orange); }
+  .nav-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+
+  /* RIGHT: copy */
+  .copy-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 28px; height: 2px;
+    background: var(--orange);
+    border-radius: 2px;
+  }
+
+  .headline {
+    font-family: 'Playfair Display', serif;
+    font-size: 68px;
+    font-weight: 900;
+    color: var(--cream);
+    line-height: 1.0;
+    margin-bottom: 28px;
+  }
+
+  .headline .accent { color: var(--orange); }
+  .headline .italic { font-style: italic; }
+
+  .body-text {
+    font-size: 17px;
+    line-height: 1.7;
+    color: rgba(253,246,238,0.55);
+    margin-bottom: 40px;
+    max-width: 380px;
+  }
+
+  .features {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 44px;
+  }
+
+  .feat-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .feat-dot {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: rgba(240,124,43,0.15);
+    border: 1px solid rgba(240,124,43,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+
+  .feat-text { font-size: 14px; color: rgba(253,246,238,0.75); font-weight: 500; }
+
+  .logo-watermark {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    font-weight: 900;
+    color: rgba(253,246,238,0.2);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .logo-watermark span { color: rgba(240,124,43,0.4); }
+
+  /* store badges */
+  .store-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .store-badge {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* decorative corner */
+  .corner-deco {
+    position: absolute;
+    bottom: 50px; right: 50px;
+    z-index: 5;
+    opacity: 0.06;
+    font-size: 220px;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+</style>
+
+<style id="emoji-fix">
+@font-face {
+  font-family: "EmojiFix";
+  src: local("Noto Color Emoji");
+}
+* { font-family: inherit, "EmojiFix", "Noto Color Emoji" !important; }
+body, body * {
+  font-family: 'DM Sans', 'EmojiFix', 'Noto Color Emoji', sans-serif !important;
+}
+.headline, .tag-line, h1, h2, .logo, [class*="serif"] {
+  font-family: 'Playfair Display', 'EmojiFix', 'Noto Color Emoji', serif !important;
+}
+</style>
+</head>
+<body>
+  <div class="bg-gradient"></div>
+  <div class="bg-glow1"></div>
+  <div class="bg-glow2"></div>
+  <div class="grid-lines"></div>
+  <div class="corner-deco">📝</div>
+
+  <div class="content">
+    <!-- PHONE -->
+    <div class="phone-col">
+      <div class="phone-frame">
+        <div class="app-header"><div class="logo">PET<span>KEEP</span></div></div>
+
+        <div class="story-row">
+          <div class="story-av">🐶</div>
+          <div style="display:flex;flex-direction:column;justify-content:center;">
+            <div style="font-size:12px;color:#BBB;">Follow people to see their stories</div>
+          </div>
+        </div>
+
+        <div class="tabs-row">
+          <div class="tab-item">📷 Feed</div>
+          <div class="tab-item active">📝 Blog</div>
+        </div>
+
+        <div class="filter-row">
+          <div class="chip active">All</div>
+          <div class="chip">🐾 Training</div>
+          <div class="chip">💊 Health</div>
+          <div class="chip">🥦 Nutrition</div>
+        </div>
+
+        <div class="write-card">
+          <div class="write-icon">✏️</div>
+          <div>
+            <div class="write-title">Write a post or create a MeetUP</div>
+            <div class="write-sub">Share knowledge or organize a pet event</div>
+          </div>
+        </div>
+
+        <div class="meetup-card">
+          <div class="meetup-emoji">🌳</div>
+          <div>
+            <div class="meetup-title">Dog Park MeetUp – Skopje</div>
+            <div class="meetup-sub">12 owners · City Park</div>
+          </div>
+          <div class="meetup-date">SAT<br>MAY 3</div>
+        </div>
+
+        <div class="empty-area">
+          <div class="empty-icon">📋</div>
+          <div class="empty-title">No posts yet</div>
+          <div class="empty-sub">Be the first to share your pet knowledge!</div>
+        </div>
+
+        <div class="app-nav">
+          <div class="nav-item active"><span class="nav-icon">🏠</span>Home</div>
+          <div class="nav-item"><span class="nav-icon">🗺️</span>Explore</div>
+          <div class="nav-item"><span class="nav-icon">🛍️</span>Market</div>
+          <div class="nav-item"><span class="nav-icon">🩺</span>Care</div>
+          <div class="nav-item"><span class="nav-icon">💬</span>Chat</div>
+          <div class="nav-item"><span class="nav-icon">👤</span>Profile</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COPY -->
+    <div class="copy-col">
+      <div class="eyebrow">PetKeep Feature</div>
+
+      <div class="headline">
+        Share.<br><span class="accent">Learn.</span><br><span class="italic">Meet up.</span>
+      </div>
+
+      <div class="body-text">
+        Write training tips, health guides & nutrition advice — or organize real-life MeetUps with fellow pet owners in your city.
+      </div>
+
+      <div class="features">
+        <div class="feat-row">
+          <div class="feat-dot">📝</div>
+          <div class="feat-text">Publish blog posts by category</div>
+        </div>
+        <div class="feat-row">
+          <div class="feat-dot">🌳</div>
+          <div class="feat-text">Organize local pet MeetUp events</div>
+        </div>
+        <div class="feat-row">
+          <div class="feat-dot">🔖</div>
+          <div class="feat-text">Browse Training, Health & Nutrition tips</div>
+        </div>
+      </div>
+
+      <div class="logo-watermark">PET<span>KEEP</span> · The Pet Community App</div>
+
+      <div class="store-row">
+        <div class="store-badge">🍎 App Store</div>
+        <div class="store-badge">▶ Google Play</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
