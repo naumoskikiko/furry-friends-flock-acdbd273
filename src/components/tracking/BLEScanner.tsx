@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   initBLE,
+  ensureBluetoothReady,
   scanForTrackers,
   stopScan,
   connectToDevice,
