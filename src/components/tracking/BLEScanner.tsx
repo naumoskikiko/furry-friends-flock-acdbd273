@@ -53,9 +53,18 @@ const BLEScanner = ({ onDeviceBound, onCancel }: Props) => {
 
     const ready = await initBLE();
     if (!ready && isNativePlatform()) {
-      setError("Bluetooth is not available. Please enable Bluetooth and Location.");
+      setError("Bluetooth is not available on this device.");
       setState("error");
       return;
+    }
+
+    if (isNativePlatform()) {
+      const bt = await ensureBluetoothReady();
+      if (!bt.ok) {
+        setError(bt.reason || "Please turn on Bluetooth and try again.");
+        setState("error");
+        return;
+      }
     }
 
     try {
@@ -64,11 +73,10 @@ const BLEScanner = ({ onDeviceBound, onCancel }: Props) => {
         setDevices(Array.from(devicesRef.current.values()).sort((a, b) => b.rssi - a.rssi));
       }, 12000);
 
-      setTimeout(() => {
-        setState((prev) => (prev === "scanning" ? "idle" : prev));
-      }, 12000);
+      // scanForTrackers now resolves when the window ends.
+      setState((prev) => (prev === "scanning" ? "idle" : prev));
     } catch (err: any) {
-      setError(err?.message || "Scan failed");
+      setError(err?.message || "Scan failed. Make sure Bluetooth and Location are enabled.");
       setState("error");
     }
   }, []);
