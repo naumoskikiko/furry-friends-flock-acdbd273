@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import {
   PetTracker,
   useTrackerLocation,
-  useGPSSimulator,
   useTrackingHistory,
   useSafeZones,
   useSafeZoneAlerts,
