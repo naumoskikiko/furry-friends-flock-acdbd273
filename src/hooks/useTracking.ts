@@ -342,33 +342,8 @@ export function useBatteryAlert(location: TrackerLocation | null, petName: strin
   return location?.battery_level ?? null;
 }
 
-// ─── GPS Simulator (dev) ────────────────────────────────────
-export function useGPSSimulator(trackerId: string | null, centerLat: number, centerLng: number) {
-  const { user } = useAuth();
-
-  useEffect(() => {
-    if (!trackerId || !user) return;
-
-    let lat = centerLat + (Math.random() - 0.5) * 0.005;
-    let lng = centerLng + (Math.random() - 0.5) * 0.005;
-    let battery = 85 + Math.floor(Math.random() * 15);
-
-    const interval = setInterval(async () => {
-      lat += (Math.random() - 0.5) * 0.001;
-      lng += (Math.random() - 0.5) * 0.001;
-      battery = Math.max(10, battery - Math.floor(Math.random() * 2));
-
-      await supabase.from("tracker_locations").insert({
-        tracker_id: trackerId,
-        latitude: lat,
-        longitude: lng,
-        battery_level: battery,
-      });
-    }, 6000);
-
-    return () => clearInterval(interval);
-  }, [trackerId, user, centerLat, centerLng]);
-}
+// GPS simulator removed — locations come exclusively from real BLE trackers
+// to avoid polluting the tracker_locations table with fake data.
 
 // ─── Battery Color Helper ───────────────────────────────────
 export function getBatteryColor(level: number | null): string {
