@@ -114,7 +114,7 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
     leafletMarkersRef.current.clear();
 
     filteredMarkers.forEach((m) => {
-      const marker = L.marker([m.lat, m.lng], { icon: emojiIcon(m.emoji, false) });
+      const marker = L.marker([m.lat, m.lng], { icon: createMapMarkerIcon(m.type, false) });
 
       marker.on("click", () => {
         setSelectedMarker(m);
@@ -134,7 +134,7 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
       const prevLeaflet = leafletMarkersRef.current.get(prevId);
       const prevData = filteredMarkers.find((m) => m.id === prevId);
       if (prevLeaflet && prevData) {
-        prevLeaflet.setIcon(emojiIcon(prevData.emoji, false));
+        prevLeaflet.setIcon(createMapMarkerIcon(prevData.type, false));
       }
     }
 
@@ -142,7 +142,7 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
       const newLeaflet = leafletMarkersRef.current.get(newId);
       const newData = filteredMarkers.find((m) => m.id === newId);
       if (newLeaflet && newData) {
-        newLeaflet.setIcon(emojiIcon(newData.emoji, true));
+        newLeaflet.setIcon(createMapMarkerIcon(newData.type, true));
       }
     }
 
