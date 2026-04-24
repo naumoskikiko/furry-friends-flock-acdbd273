@@ -8,6 +8,7 @@ import { Search, MapPin, Locate, Maximize2, ChevronRight } from "lucide-react";
 import NearbySection from "@/components/explore/NearbySection";
 import FullscreenMap from "@/components/explore/FullscreenMap";
 import { useExplore, FILTERS } from "@/hooks/useExplore";
+import { useUserLocation } from "@/hooks/useUserLocation";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ExploreMap = lazy(() => import("@/components/explore/ExploreMap"));
@@ -28,6 +29,15 @@ const ExplorePage = () => {
     allNearbyItems,
     loading,
   } = useExplore();
+
+  // Auto-request the user's GPS so the blue "you are here" dot appears
+  // on the inline map without requiring the user to open fullscreen first.
+  const { location: userLocation, requestLocation, startWatching, stopWatching, PermissionDialog: ExplorePermissionDialog } = useUserLocation();
+  useEffect(() => {
+    requestLocation();
+    startWatching();
+    return () => stopWatching();
+  }, [requestLocation, startWatching, stopWatching]);
 
   useEffect(() => {
     if (searchParams.get("focus") === "search") {
@@ -188,7 +198,7 @@ const ExplorePage = () => {
               </button>
               <div onClick={() => setFullscreenOpen(true)} className="cursor-pointer">
                 <Suspense fallback={<Skeleton className="h-[45vh] w-full rounded-2xl" />}>
-                  <ExploreMap markers={allMarkers} center={center} />
+                  <ExploreMap markers={allMarkers} center={center} userLocation={userLocation} />
                 </Suspense>
               </div>
             </>
@@ -216,6 +226,7 @@ const ExplorePage = () => {
         nearbyItems={allNearbyItems}
         findMyPet={false}
       />
+      <ExplorePermissionDialog />
     </AppLayout>
   );
 };

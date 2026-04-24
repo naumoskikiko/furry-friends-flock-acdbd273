@@ -1,7 +1,22 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { createMapMarkerIcon } from "@/lib/mapMarkerIcon";
+import { createUserLocationIcon } from "@/lib/userLocationMarker";
+
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+});
+
+const emojiIcon = (emoji: string) =>
+  L.divIcon({
+    html: `<div style="font-size:24px;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:white;box-shadow:0 2px 8px rgba(0,0,0,0.2);">${emoji}</div>`,
+    className: "",
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+  });
 
 export interface MapMarker {
   id: string;
@@ -20,12 +35,15 @@ interface ExploreMapProps {
   markers: MapMarker[];
   center: [number, number];
   onMarkerClick?: (marker: MapMarker) => void;
+  /** When provided, renders a pulsing blue dot at the user's GPS position. */
+  userLocation?: { lat: number; lng: number } | null;
 }
 
-const ExploreMap = ({ markers, center, onMarkerClick }: ExploreMapProps) => {
+const ExploreMap = ({ markers, center, onMarkerClick, userLocation }: ExploreMapProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const userMarkerRef = useRef<L.Marker | null>(null);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -66,7 +84,7 @@ const ExploreMap = ({ markers, center, onMarkerClick }: ExploreMapProps) => {
     if (!layer) return;
     layer.clearLayers();
     markers.forEach((m) => {
-      const marker = L.marker([m.lat, m.lng], { icon: createMapMarkerIcon(m.type) });
+      const marker = L.marker([m.lat, m.lng], { icon: emojiIcon(m.emoji) });
 
       const imgHtml = m.image_url
         ? `<img src="${m.image_url}" style="width:100%;height:80px;object-fit:cover;border-radius:8px 8px 0 0;margin-bottom:6px;" />`
@@ -92,6 +110,28 @@ const ExploreMap = ({ markers, center, onMarkerClick }: ExploreMapProps) => {
       layer.addLayer(marker);
     });
   }, [markers, onMarkerClick]);
+
+  // Render the pulsing blue "you are here" dot whenever a fresh GPS fix arrives.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !userLocation) return;
+
+    if (userMarkerRef.current) {
+      userMarkerRef.current.setLatLng([userLocation.lat, userLocation.lng]);
+    } else {
+      userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], {
+        icon: createUserLocationIcon(),
+        zIndexOffset: 1000,
+        interactive: false,
+      }).addTo(map);
+    }
+
+    return () => {
+      if (userMarkerRef.current && !mapRef.current) {
+        userMarkerRef.current = null;
+      }
+    };
+  }, [userLocation]);
 
   return (
     <div
