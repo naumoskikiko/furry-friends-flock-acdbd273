@@ -57,6 +57,10 @@ const ExploreMap = ({ markers, center, onMarkerClick }: ExploreMapProps) => {
     markersLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
 
+    // Tiles can render at the wrong size when the container is laid out lazily
+    // (e.g. inside <Suspense> or a hidden tab). Force Leaflet to recalculate.
+    setTimeout(() => map.invalidateSize(), 100);
+
     return () => {
       map.remove();
       mapRef.current = null;
@@ -64,7 +68,11 @@ const ExploreMap = ({ markers, center, onMarkerClick }: ExploreMapProps) => {
   }, []);
 
   useEffect(() => {
-    mapRef.current?.setView(center);
+    // Preserve current zoom when re-centering, otherwise the map flashes back to zoom 14
+    // every time the user's GPS fix updates the center prop.
+    const map = mapRef.current;
+    if (!map) return;
+    map.setView(center, map.getZoom());
   }, [center]);
 
   useEffect(() => {

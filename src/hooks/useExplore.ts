@@ -75,48 +75,49 @@ export function useExplore() {
   }, []);
 
   useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setCenter([pos.coords.latitude, pos.coords.longitude]),
-        () => {}
-      );
-    }
+    if (!("geolocation" in navigator)) return;
+    // Use a fresh, high-accuracy fix so the user's pin and distance calculations are correct.
+    // Falls back silently to the Skopje default center on permission denial / failure.
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setCenter([pos.coords.latitude, pos.coords.longitude]),
+      () => {},
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+    );
   }, []);
 
   const placeMarkers: MapMarker[] = useMemo(
     () =>
-      dbPlaces.map((p: any) => {
-        const dist = haversineDistance(center[0], center[1], p.latitude, p.longitude);
-        return {
-          id: p.id,
-          lat: p.latitude,
-          lng: p.longitude,
-          name: p.name,
-          type: CATEGORY_TYPE_MAP[p.category] || p.category,
-          emoji: getCategoryEmoji(p.category),
-          rating: Number(p.rating) || 0,
-          distance: `${dist.toFixed(1)} km`,
-          image_url: p.image_url || undefined,
-          description: p.description || undefined,
-        };
-      }),
+      dbPlaces
+        // Drop rows with missing / invalid coordinates so we never plot 0,0 or NaN markers.
+        .filter((p: any) => {
+          const lat = Number(p.latitude);
+          const lng = Number(p.longitude);
+          return Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0);
+        })
+        .map((p: any) => {
+          const lat = Number(p.latitude);
+          const lng = Number(p.longitude);
+          const dist = haversineDistance(center[0], center[1], lat, lng);
+          return {
+            id: p.id,
+            lat,
+            lng,
+            name: p.name,
+            type: CATEGORY_TYPE_MAP[p.category] || p.category,
+            emoji: getCategoryEmoji(p.category),
+            rating: Number(p.rating) || 0,
+            distance: Number.isFinite(dist) ? `${dist.toFixed(1)} km` : "",
+            image_url: p.image_url || undefined,
+            description: p.description || undefined,
+          };
+        }),
     [dbPlaces, center]
   );
 
-  const sitterMarkers: MapMarker[] = useMemo(
-    () =>
-      sitterProfiles.map((s: any) => ({
-        id: `sitter-${s.id}`,
-        lat: SKOPJE[0] + (Math.random() - 0.5) * 0.01,
-        lng: SKOPJE[1] + (Math.random() - 0.5) * 0.01,
-        name: s.profile?.full_name || "Pet Sitter",
-        type: (s.services || []).includes("walking") ? "Pet Walker" : "Pet Sitter",
-        emoji: (s.services || []).includes("walking") ? "🐕‍🦺" : "🐾",
-        rating: Number(s.avg_rating) || 0,
-        distance: `${(0.2 + Math.random() * 2).toFixed(1)} km`,
-      })),
-    [sitterProfiles]
-  );
+  // Sitters/Walkers are intentionally NOT plotted on the Explore map.
+  // They don't store real coordinates on their profiles, and we never want
+  // to fall back to randomized positions (would mislead users about who's nearby).
+  const sitterMarkers: MapMarker[] = useMemo(() => [], []);
 
   const allMarkers = useMemo(() => {
     let markers = [...placeMarkers, ...sitterMarkers];
