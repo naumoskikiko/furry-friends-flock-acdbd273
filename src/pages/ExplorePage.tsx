@@ -30,6 +30,15 @@ const ExplorePage = () => {
     loading,
   } = useExplore();
 
+  // Auto-request the user's GPS so the blue "you are here" dot appears
+  // on the inline map without requiring the user to open fullscreen first.
+  const { location: userLocation, requestLocation, startWatching, stopWatching, PermissionDialog: ExplorePermissionDialog } = useUserLocation();
+  useEffect(() => {
+    requestLocation();
+    startWatching();
+    return () => stopWatching();
+  }, [requestLocation, startWatching, stopWatching]);
+
   useEffect(() => {
     if (searchParams.get("focus") === "search") {
       setTimeout(() => searchInputRef.current?.focus(), 300);
