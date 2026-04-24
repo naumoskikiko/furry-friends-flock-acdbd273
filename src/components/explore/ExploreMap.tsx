@@ -35,12 +35,15 @@ interface ExploreMapProps {
   markers: MapMarker[];
   center: [number, number];
   onMarkerClick?: (marker: MapMarker) => void;
+  /** When provided, renders a pulsing blue dot at the user's GPS position. */
+  userLocation?: { lat: number; lng: number } | null;
 }
 
-const ExploreMap = ({ markers, center, onMarkerClick }: ExploreMapProps) => {
+const ExploreMap = ({ markers, center, onMarkerClick, userLocation }: ExploreMapProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const userMarkerRef = useRef<L.Marker | null>(null);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
