@@ -198,7 +198,7 @@ const ExplorePage = () => {
               </button>
               <div onClick={() => setFullscreenOpen(true)} className="cursor-pointer">
                 <Suspense fallback={<Skeleton className="h-[45vh] w-full rounded-2xl" />}>
-                  <ExploreMap markers={allMarkers} center={center} />
+                  <ExploreMap markers={allMarkers} center={center} userLocation={userLocation} />
                 </Suspense>
               </div>
             </>
