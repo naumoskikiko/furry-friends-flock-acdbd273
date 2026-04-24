@@ -80,7 +80,7 @@ const ExploreMap = ({ markers, center, onMarkerClick }: ExploreMapProps) => {
     if (!layer) return;
     layer.clearLayers();
     markers.forEach((m) => {
-      const marker = L.marker([m.lat, m.lng], { icon: createMapMarkerIcon(m.type) });
+      const marker = L.marker([m.lat, m.lng], { icon: emojiIcon(m.emoji) });
 
       const imgHtml = m.image_url
         ? `<img src="${m.image_url}" style="width:100%;height:80px;object-fit:cover;border-radius:8px 8px 0 0;margin-bottom:6px;" />`
