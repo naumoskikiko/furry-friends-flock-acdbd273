@@ -10,8 +10,15 @@ import type { MapMarker } from "@/components/explore/ExploreMap";
 import type { NearbyItem } from "@/components/explore/NearbySection";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { createUserLocationIcon } from "@/lib/userLocationMarker";
-import { createMapMarkerIcon } from "@/lib/mapMarkerIcon";
 import { toast } from "sonner";
+
+const emojiIcon = (emoji: string, active = false) =>
+  L.divIcon({
+    html: `<div style="font-size:${active ? 28 : 24}px;display:flex;align-items:center;justify-content:center;width:${active ? 44 : 36}px;height:${active ? 44 : 36}px;border-radius:50%;background:white;box-shadow:0 2px 10px rgba(0,0,0,${active ? 0.35 : 0.2});${active ? "border:2px solid hsl(25,90%,55%);" : ""}">${emoji}</div>`,
+    className: "",
+    iconSize: [active ? 44 : 36, active ? 44 : 36],
+    iconAnchor: [active ? 22 : 18, active ? 22 : 18],
+  });
 
 interface FullscreenMapProps {
   open: boolean;
