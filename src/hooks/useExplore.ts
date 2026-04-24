@@ -88,7 +88,6 @@ export function useExplore() {
   const placeMarkers: MapMarker[] = useMemo(
     () =>
       dbPlaces
-        // Drop rows with missing / invalid coordinates so we never plot 0,0 or NaN markers.
         .filter((p: any) => {
           const lat = Number(p.latitude);
           const lng = Number(p.longitude);
@@ -110,6 +109,11 @@ export function useExplore() {
             image_url: p.image_url || undefined,
             description: p.description || undefined,
           };
+        })
+        .sort((a, b) => {
+          const aDistance = Number.parseFloat(a.distance || "999999");
+          const bDistance = Number.parseFloat(b.distance || "999999");
+          return aDistance - bDistance;
         }),
     [dbPlaces, center]
   );
