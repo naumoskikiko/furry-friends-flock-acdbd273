@@ -113,6 +113,16 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
     }
   }, [center, open]);
 
+  // Auto-request the user's location when the fullscreen map opens so the
+  // blue dot appears without forcing a tap on the crosshair button.
+  // We start the watcher (continuously updates the dot) and trigger an
+  // immediate fix; we do NOT enable follow mode, so the map view stays put.
+  useEffect(() => {
+    if (!open) return;
+    requestLocation();
+    startWatching();
+  }, [open, requestLocation, startWatching]);
+
   // Update markers (no selectedMarker dependency)
   useEffect(() => {
     const layer = markersLayerRef.current;
