@@ -111,6 +111,28 @@ const ExploreMap = ({ markers, center, onMarkerClick, userLocation }: ExploreMap
     });
   }, [markers, onMarkerClick]);
 
+  // Render the pulsing blue "you are here" dot whenever a fresh GPS fix arrives.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !userLocation) return;
+
+    if (userMarkerRef.current) {
+      userMarkerRef.current.setLatLng([userLocation.lat, userLocation.lng]);
+    } else {
+      userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], {
+        icon: createUserLocationIcon(),
+        zIndexOffset: 1000,
+        interactive: false,
+      }).addTo(map);
+    }
+
+    return () => {
+      if (userMarkerRef.current && !mapRef.current) {
+        userMarkerRef.current = null;
+      }
+    };
+  }, [userLocation]);
+
   return (
     <div
       ref={containerRef}
