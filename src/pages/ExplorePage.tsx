@@ -8,6 +8,7 @@ import { Search, MapPin, Locate, Maximize2, ChevronRight } from "lucide-react";
 import NearbySection from "@/components/explore/NearbySection";
 import FullscreenMap from "@/components/explore/FullscreenMap";
 import { useExplore, FILTERS } from "@/hooks/useExplore";
+import { useUserLocation } from "@/hooks/useUserLocation";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ExploreMap = lazy(() => import("@/components/explore/ExploreMap"));
