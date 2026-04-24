@@ -226,6 +226,7 @@ const ExplorePage = () => {
         nearbyItems={allNearbyItems}
         findMyPet={false}
       />
+      <ExplorePermissionDialog />
     </AppLayout>
   );
 };
