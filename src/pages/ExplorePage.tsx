@@ -227,6 +227,8 @@ const ExplorePage = () => {
         center={center}
         nearbyItems={allNearbyItems}
         findMyPet={false}
+        userLocation={userLocation}
+        onRequestLocation={requestLocation}
       />
       <ExplorePermissionDialog />
     </AppLayout>
