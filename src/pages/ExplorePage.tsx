@@ -17,6 +17,17 @@ const ExplorePage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  // Single source of truth for the user's GPS across this page, the
+  // useExplore hook (distance/sort calculations) and the FullscreenMap
+  // (blue dot + follow mode). Multiple parallel useUserLocation instances
+  // were racing on iOS/Capacitor and breaking the blue dot entirely.
+  const { location: userLocation, requestLocation, startWatching, stopWatching, PermissionDialog: ExplorePermissionDialog } = useUserLocation();
+  useEffect(() => {
+    requestLocation();
+    startWatching();
+    return () => stopWatching();
+  }, [requestLocation, startWatching, stopWatching]);
+
   const {
     activeFilter,
     setActiveFilter,
@@ -28,16 +39,7 @@ const ExplorePage = () => {
     nearbyByCategory,
     allNearbyItems,
     loading,
-  } = useExplore();
-
-  // Auto-request the user's GPS so the blue "you are here" dot appears
-  // on the inline map without requiring the user to open fullscreen first.
-  const { location: userLocation, requestLocation, startWatching, stopWatching, PermissionDialog: ExplorePermissionDialog } = useUserLocation();
-  useEffect(() => {
-    requestLocation();
-    startWatching();
-    return () => stopWatching();
-  }, [requestLocation, startWatching, stopWatching]);
+  } = useExplore(userLocation);
 
   useEffect(() => {
     if (searchParams.get("focus") === "search") {
@@ -225,6 +227,8 @@ const ExplorePage = () => {
         center={center}
         nearbyItems={allNearbyItems}
         findMyPet={false}
+        userLocation={userLocation}
+        onRequestLocation={requestLocation}
       />
       <ExplorePermissionDialog />
     </AppLayout>

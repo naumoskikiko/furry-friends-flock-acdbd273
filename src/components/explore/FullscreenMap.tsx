@@ -20,6 +20,11 @@ const emojiIcon = (emoji: string, active = false) =>
     iconAnchor: [active ? 22 : 18, active ? 22 : 18],
   });
 
+interface UserLatLng {
+  lat: number;
+  lng: number;
+}
+
 interface FullscreenMapProps {
   open: boolean;
   onClose: () => void;
@@ -27,11 +32,24 @@ interface FullscreenMapProps {
   center: [number, number];
   nearbyItems: NearbyItem[];
   findMyPet: boolean;
+  userLocation: UserLatLng | null;
+  locationLoading?: boolean;
+  onRequestLocation?: () => void;
 }
 
-const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet }: FullscreenMapProps) => {
+const FullscreenMap = ({
+  open,
+  onClose,
+  markers,
+  center,
+  nearbyItems,
+  findMyPet,
+  userLocation,
+  locationLoading = false,
+  onRequestLocation,
+}: FullscreenMapProps) => {
   const navigate = useNavigate();
-  const { location: userLocation, error: locationError, loading: locationLoading, requestLocation, startWatching, stopWatching, PermissionDialog: LocationPermissionDialog } = useUserLocation();
+
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
@@ -119,14 +137,14 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
   }, [open, mapReady]);
 
   // Auto-request the user's location when the fullscreen map opens so the
-  // blue dot appears without forcing a tap on the crosshair button.
-  // We start the watcher (continuously updates the dot) and trigger an
-  // immediate fix; we do NOT enable follow mode, so the map view stays put.
+  // The user's GPS watcher is owned by the parent (ExplorePage) — it's
+  // already running by the time this map opens, so the blue dot just appears
+  // as soon as `userLocation` updates. We optionally re-prompt on open in
+  // case permission was denied earlier.
   useEffect(() => {
     if (!open) return;
-    requestLocation();
-    startWatching();
-  }, [open, requestLocation, startWatching]);
+    onRequestLocation?.();
+  }, [open, onRequestLocation]);
 
   // Update markers (no selectedMarker dependency)
   useEffect(() => {
@@ -177,8 +195,15 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
   const handleCenterOnMe = () => {
     followingRef.current = true;
     setIsFollowing(true);
-    requestLocation();
-    startWatching();
+    onRequestLocation?.();
+    // If we already have a fix, fly to it immediately rather than waiting
+    // for the next watcher tick.
+    if (userLocation && mapRef.current) {
+      mapRef.current.flyTo([userLocation.lat, userLocation.lng], 16, {
+        animate: true,
+        duration: 0.6,
+      });
+    }
   };
 
   // React to location updates - place/move the blue dot
@@ -205,23 +230,16 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
     }
   }, [userLocation]);
 
-  // Show error toast
-  useEffect(() => {
-    if (locationError) {
-      toast.error(locationError);
-    }
-  }, [locationError]);
-
-  // Cleanup on close
+  // Cleanup on close - just remove the blue dot from this map. The watcher
+  // itself is owned/torn down by the parent.
   useEffect(() => {
     if (!open) {
       if (userMarkerRef.current) {
         userMarkerRef.current.remove();
         userMarkerRef.current = null;
       }
-      stopWatching();
     }
-  }, [open, stopWatching]);
+  }, [open]);
 
   const handleNearbyClick = useCallback((item: NearbyItem) => {
     const marker = filteredMarkers.find((m) => m.id === item.id);
@@ -430,7 +448,7 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
           ))}
         </div>
       </div>
-      <LocationPermissionDialog />
+      {/* Permission dialog is rendered by the parent (ExplorePage). */}
     </div>
   );
 };
