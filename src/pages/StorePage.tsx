@@ -42,10 +42,10 @@ const StorePage = () => {
       const prods = (prodRes.data as any) || [];
       setProducts(prods);
 
-      // Fetch best sellers from order_items
+      // Fetch best sellers from the privacy-safe store-order projection
       if (prods.length > 0) {
         const prodIds = prods.map((p: any) => p.id);
-        const { data: orderItems } = await (supabase as any).from("order_items")
+        const { data: orderItems } = await (supabase as any).from("store_order_items_safe")
           .select("product_id, quantity")
           .in("product_id", prodIds);
         if (orderItems && orderItems.length > 0) {
