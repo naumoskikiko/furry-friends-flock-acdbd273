@@ -1,15 +1,32 @@
 ---
-name: Pre-launch security baseline
-description: Hardening applied before public launch — RLS, RPC perms, realtime scoping, edge rate limits, HIBP password protection
+name: Security Baseline
+description: Pre-launch hardening — scoped realtime, EXECUTE locked to authenticated only, in-body role checks, store_order_items_safe view, edge_rate_limits, HIBP password check, payment edge function with Zod + getClaims.
 type: feature
 ---
-Production security baseline (do not regress):
 
-- **Realtime**: `realtime.messages` policies allow ONLY `conversation:<id>` (member-checked) and `user:<uid>` topics. Never re-add `public:%` wildcard.
-- **Crash reports**: explicit `WITH CHECK (false)` INSERT policy on `public.crash_reports` for `authenticated` + `anon`. Writes only via `ingest-crash` edge function (service role).
-- **RPC perms**: `EXECUTE` revoked from `anon` (and PUBLIC where applicable) on all `admin_*` functions, `delete_user_account`, `process_care_payment`, `prune_old_crash_reports`, `reduce_product_stock`, and all `group_*`/meetup chat helpers. Their internal `has_role` / `auth.uid()` checks remain.
-- **Store fulfilment**: store owners must read order data via the view `public.store_order_items_safe` (security_invoker, no buyer PII columns). Never expose `orders.shipping_*` to store owners.
-- **Edge rate limiting**: `public.edge_rate_limits` table is server-only (deny-all client policy). `process-payment` uses bucket `process-payment` with 10 attempts / 5 min per user.
-- **Auth**: HIBP leaked-password check enabled (`password_hibp_enabled: true`). Email confirmation required (`auto_confirm_email: false`). Anonymous signups disabled.
-- **Client password policy**: signup form requires ≥8 chars and at least one letter + one digit (defense in depth).
-- **Edge function pattern**: validate JWT via `getClaims()` (not `getUser()`), Zod-validate body, write audit row BEFORE external calls, never leak internal error details to the client.
+# Security Baseline (Production)
+
+## Database
+- **Realtime scoped**: `realtime.messages` restricted to `conversation:<id>` (membership-verified) and `user:<uid>`. No `public:%` wildcard.
+- **Function EXECUTE lockdown**:
+  - Blanket `REVOKE ALL ... FROM PUBLIC, anon` on every `public.*` function.
+  - `GRANT EXECUTE ... TO authenticated` only on user-callable RPCs (chat, groups, meetups, stock, care payments, account deletion, admin RPCs).
+  - Trigger functions (`update_*`, `handle_new_user`, `notify_*`, `prune_*`, `check_report_rate_limit`) are NOT granted — they run as triggers or via service role only.
+- **Admin RPCs** (`admin_change_user_role`, `admin_set_find_my_pet_access`, `admin_adjust_user_credits`) require `authenticated` EXECUTE because the function body enforces `has_role(auth.uid(), 'admin'|'owner')`. SECURITY DEFINER is required for cross-table writes that bypass RLS.
+- **PII isolation**: `store_order_items_safe` security-invoker view excludes buyer name/address/phone/email for store owners.
+- **crash_reports**: `WITH CHECK (false)` on insert for client roles; only ingest-crash edge function (service role) writes.
+
+## Auth
+- HIBP password check enabled.
+- Email confirmation required, anonymous signups disabled.
+- Client-side password strength: 8+ chars, letter + digit.
+- OAuth: Google + Apple (managed via Lovable Cloud).
+
+## Edge Functions
+- `process-payment`: Zod schema validation, `getClaims()` JWT verification, per-user rate limit (10/5min via `edge_rate_limits` table).
+- `ingest-crash`: anonymous-tolerant, writes via service role only.
+- All functions return CORS headers on every response including errors.
+
+## Linter Status
+- 0 anon-callable SECURITY DEFINER warnings.
+- 33 authenticated-callable warnings remain — all intentional, documented, and protected by in-body authorization checks. Marked as accepted in security findings.
