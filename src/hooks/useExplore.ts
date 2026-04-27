@@ -97,8 +97,8 @@ export function useExplore() {
   }, [requestLocation, startWatching]);
 
   const placeMarkers: MapMarker[] = useMemo(
-    () =>
-      dbPlaces
+    () => {
+      const mapped = dbPlaces
         .filter((p: any) => {
           const lat = Number(p.latitude);
           const lng = Number(p.longitude);
@@ -107,7 +107,12 @@ export function useExplore() {
         .map((p: any) => {
           const lat = Number(p.latitude);
           const lng = Number(p.longitude);
-          const dist = haversineDistance(center[0], center[1], lat, lng);
+          // Only compute & display distances when we have a real GPS fix.
+          // Otherwise distances would be measured from the Skopje fallback
+          // and mislead the user about what's actually nearby.
+          const dist = hasRealLocation
+            ? haversineDistance(center[0], center[1], lat, lng)
+            : NaN;
           return {
             id: p.id,
             lat,
@@ -120,13 +125,22 @@ export function useExplore() {
             image_url: p.image_url || undefined,
             description: p.description || undefined,
           };
-        })
-        .sort((a, b) => {
+        });
+
+      if (hasRealLocation) {
+        mapped.sort((a, b) => {
           const aDistance = Number.parseFloat(a.distance || "999999");
           const bDistance = Number.parseFloat(b.distance || "999999");
           return aDistance - bDistance;
-        }),
-    [dbPlaces, center]
+        });
+      } else {
+        mapped.sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      return mapped;
+    },
+    // Depend on the lat/lng primitives — `center` is a fresh array each render.
+    [dbPlaces, hasRealLocation, center[0], center[1]]
   );
 
   // Sitters/Walkers are intentionally NOT plotted on the Explore map.
