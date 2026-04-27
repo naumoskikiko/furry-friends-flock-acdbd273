@@ -1212,6 +1212,27 @@ export type Database = {
         }
         Relationships: []
       }
+      edge_rate_limits: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       find_my_pet_access: {
         Row: {
           chip_enabled: boolean
@@ -3669,6 +3690,50 @@ export type Database = {
       }
     }
     Views: {
+      store_order_items_safe: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          order_created_at: string | null
+          order_id: string | null
+          order_status: string | null
+          price: number | null
+          product_id: string | null
+          quantity: number | null
+          store_earnings: number | null
+          store_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "store_order_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_order_view: {
         Row: {
           created_at: string | null
