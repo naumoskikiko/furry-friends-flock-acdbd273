@@ -17,7 +17,7 @@
  *   3. **Fire-and-forget** — never block UI on analytics. Failures are silent.
  *   4. **Local-first sink** — events buffer to console in dev and POST to a
  *      same-origin `/__analytics` endpoint in prod. Swap for PostHog / Plausible
- *      / a Lovable Cloud edge function by editing `flush()` only.
+ *      / a custom edge function by editing `flush()` only.
  */
 
 const STORAGE_KEY = "petkeep:analytics:enabled";

@@ -13,7 +13,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
  * for each installed plugin.
  *
  * --- RELEASE BUILDS ---
- * The `server.url` block below points the native shell at the Lovable preview
+ * The `server.url` block below points the native shell at the hosted preview
  * for hot-reload during development. Apple/Google reject builds that load the
  * primary UI from a remote URL ("private API / external content" rejection).
  *
