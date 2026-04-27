@@ -3806,6 +3806,20 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      get_store_owner_orders: {
+        Args: never
+        Returns: {
+          buyer_id: string
+          created_at: string
+          id: string
+          shipping_city: string
+          shipping_country: string
+          shipping_name: string
+          status: string
+          total_price: number
+          updated_at: string
+        }[]
+      }
       group_add_member: {
         Args: { _conversation_id: string; _target_user_id: string }
         Returns: undefined
