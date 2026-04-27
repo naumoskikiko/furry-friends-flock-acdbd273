@@ -42,11 +42,21 @@ export function useExplore() {
   const [activeFilter, setActiveFilter] = useState<FilterType>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [findMyPet, setFindMyPet] = useState(false);
-  const [center, setCenter] = useState<[number, number]>(SKOPJE);
   const [dbPlaces, setDbPlaces] = useState<any[]>(() => cacheGet<any[]>("explore_places") || []);
   const [sitterProfiles, setSitterProfiles] = useState<any[]>(() => cacheGet<any[]>("explore_sitters") || []);
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(!cacheGet<any[]>("explore_places"));
+
+  // Single source of truth for the user's location across Explore + FullscreenMap.
+  // Goes through the proper permission prompt flow (works on iOS/Capacitor),
+  // unlike the raw geolocation API which silently fails when permission is not
+  // pre-granted and leaves us anchored to the Skopje fallback.
+  const { location: userLocation, requestLocation, startWatching } = useUserLocation();
+
+  const center: [number, number] = userLocation
+    ? [userLocation.lat, userLocation.lng]
+    : SKOPJE;
+  const hasRealLocation = !!userLocation;
 
   useEffect(() => {
     const load = async () => {
@@ -79,16 +89,12 @@ export function useExplore() {
     load();
   }, []);
 
+  // Kick off the permission prompt + continuous GPS watch as soon as Explore
+  // mounts. Distances will recompute automatically once the first fix lands.
   useEffect(() => {
-    if (!("geolocation" in navigator)) return;
-    // Use a fresh, high-accuracy fix so the user's pin and distance calculations are correct.
-    // Falls back silently to the Skopje default center on permission denial / failure.
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setCenter([pos.coords.latitude, pos.coords.longitude]),
-      () => {},
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
-    );
-  }, []);
+    requestLocation();
+    startWatching();
+  }, [requestLocation, startWatching]);
 
   const placeMarkers: MapMarker[] = useMemo(
     () =>
