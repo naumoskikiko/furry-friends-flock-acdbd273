@@ -137,14 +137,14 @@ const FullscreenMap = ({
   }, [open, mapReady]);
 
   // Auto-request the user's location when the fullscreen map opens so the
-  // blue dot appears without forcing a tap on the crosshair button.
-  // We start the watcher (continuously updates the dot) and trigger an
-  // immediate fix; we do NOT enable follow mode, so the map view stays put.
+  // The user's GPS watcher is owned by the parent (ExplorePage) — it's
+  // already running by the time this map opens, so the blue dot just appears
+  // as soon as `userLocation` updates. We optionally re-prompt on open in
+  // case permission was denied earlier.
   useEffect(() => {
     if (!open) return;
-    requestLocation();
-    startWatching();
-  }, [open, requestLocation, startWatching]);
+    onRequestLocation?.();
+  }, [open, onRequestLocation]);
 
   // Update markers (no selectedMarker dependency)
   useEffect(() => {
