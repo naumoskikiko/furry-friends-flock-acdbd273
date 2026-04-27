@@ -230,23 +230,16 @@ const FullscreenMap = ({
     }
   }, [userLocation]);
 
-  // Show error toast
-  useEffect(() => {
-    if (locationError) {
-      toast.error(locationError);
-    }
-  }, [locationError]);
-
-  // Cleanup on close
+  // Cleanup on close - just remove the blue dot from this map. The watcher
+  // itself is owned/torn down by the parent.
   useEffect(() => {
     if (!open) {
       if (userMarkerRef.current) {
         userMarkerRef.current.remove();
         userMarkerRef.current = null;
       }
-      stopWatching();
     }
-  }, [open, stopWatching]);
+  }, [open]);
 
   const handleNearbyClick = useCallback((item: NearbyItem) => {
     const marker = filteredMarkers.find((m) => m.id === item.id);
