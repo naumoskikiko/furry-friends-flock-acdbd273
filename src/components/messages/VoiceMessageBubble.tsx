@@ -48,7 +48,21 @@ const VoiceMessageBubble = ({
 
   const togglePlay = async () => {
     if (!audioRef.current) {
-      const audio = new Audio(audioUrl);
+      // Resolve the playable URL: prefer signed URL from the private bucket;
+      // fall back to legacy public URL stored on older messages.
+      let src = audioUrl ?? "";
+      if (!src && audioPath) {
+        const { data, error } = await supabase
+          .storage
+          .from("voice-messages")
+          .createSignedUrl(audioPath, 60 * 10); // 10-minute signed URL
+        if (error || !data?.signedUrl) {
+          return; // can't play — silently bail
+        }
+        src = data.signedUrl;
+      }
+      if (!src) return;
+      const audio = new Audio(src);
       audioRef.current = audio;
       audio.onended = () => {
         setIsPlaying(false);
