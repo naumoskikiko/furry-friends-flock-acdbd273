@@ -10,7 +10,7 @@
 //   3. The function uses the service role key to write, and applies cheap
 //      validation + size caps before insert.
 //
-// Deployment: this function is auto-deployed by Lovable. `verify_jwt = false`
+// Deployment: this function is auto-deployed. `verify_jwt = false`
 // is set in `supabase/config.toml` so signed-out clients can POST.
 //
 // Auth (best-effort): if the caller passes their JWT in `Authorization`,
