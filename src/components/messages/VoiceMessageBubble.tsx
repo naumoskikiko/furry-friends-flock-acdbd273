@@ -1,8 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Play, Pause } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VoiceMessageBubbleProps {
-  audioUrl: string;
+  /** Legacy: a publicly-readable URL stored on older messages. */
+  audioUrl?: string;
+  /** New: storage path inside the private `voice-messages` bucket. */
+  audioPath?: string;
   duration: number;
   isMine: boolean;
   playingId: string | null;
@@ -12,7 +16,7 @@ interface VoiceMessageBubbleProps {
 }
 
 const VoiceMessageBubble = ({
-  audioUrl, duration, isMine, playingId, messageId, onPlay, onStop,
+  audioUrl, audioPath, duration, isMine, playingId, messageId, onPlay, onStop,
 }: VoiceMessageBubbleProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [progress, setProgress] = useState(0);
@@ -44,7 +48,21 @@ const VoiceMessageBubble = ({
 
   const togglePlay = async () => {
     if (!audioRef.current) {
-      const audio = new Audio(audioUrl);
+      // Resolve the playable URL: prefer signed URL from the private bucket;
+      // fall back to legacy public URL stored on older messages.
+      let src = audioUrl ?? "";
+      if (!src && audioPath) {
+        const { data, error } = await supabase
+          .storage
+          .from("voice-messages")
+          .createSignedUrl(audioPath, 60 * 10); // 10-minute signed URL
+        if (error || !data?.signedUrl) {
+          return; // can't play — silently bail
+        }
+        src = data.signedUrl;
+      }
+      if (!src) return;
+      const audio = new Audio(src);
       audioRef.current = audio;
       audio.onended = () => {
         setIsPlaying(false);
