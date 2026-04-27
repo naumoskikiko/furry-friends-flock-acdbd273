@@ -4,7 +4,12 @@ import type { MapMarker } from "@/components/explore/ExploreMap";
 import type { NearbyItem } from "@/components/explore/NearbySection";
 import { getCategoryEmoji } from "@/hooks/usePlaces";
 import { cacheGet, cacheSet, CacheTTL } from "@/lib/cache";
+import { useUserLocation } from "@/hooks/useUserLocation";
 
+// Fallback used only for the initial map view when we don't yet have a real
+// GPS fix. Distances and sort order use the real user location once available;
+// while we're falling back, distance strings are intentionally omitted so we
+// don't display misleading "X km" labels measured from city center.
 const SKOPJE: [number, number] = [41.9981, 21.4254];
 
 const CATEGORY_TYPE_MAP: Record<string, string> = {
@@ -37,11 +42,21 @@ export function useExplore() {
   const [activeFilter, setActiveFilter] = useState<FilterType>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [findMyPet, setFindMyPet] = useState(false);
-  const [center, setCenter] = useState<[number, number]>(SKOPJE);
   const [dbPlaces, setDbPlaces] = useState<any[]>(() => cacheGet<any[]>("explore_places") || []);
   const [sitterProfiles, setSitterProfiles] = useState<any[]>(() => cacheGet<any[]>("explore_sitters") || []);
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(!cacheGet<any[]>("explore_places"));
+
+  // Single source of truth for the user's location across Explore + FullscreenMap.
+  // Goes through the proper permission prompt flow (works on iOS/Capacitor),
+  // unlike the raw geolocation API which silently fails when permission is not
+  // pre-granted and leaves us anchored to the Skopje fallback.
+  const { location: userLocation, requestLocation, startWatching } = useUserLocation();
+
+  const center: [number, number] = userLocation
+    ? [userLocation.lat, userLocation.lng]
+    : SKOPJE;
+  const hasRealLocation = !!userLocation;
 
   useEffect(() => {
     const load = async () => {
@@ -74,20 +89,16 @@ export function useExplore() {
     load();
   }, []);
 
+  // Kick off the permission prompt + continuous GPS watch as soon as Explore
+  // mounts. Distances will recompute automatically once the first fix lands.
   useEffect(() => {
-    if (!("geolocation" in navigator)) return;
-    // Use a fresh, high-accuracy fix so the user's pin and distance calculations are correct.
-    // Falls back silently to the Skopje default center on permission denial / failure.
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setCenter([pos.coords.latitude, pos.coords.longitude]),
-      () => {},
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
-    );
-  }, []);
+    requestLocation();
+    startWatching();
+  }, [requestLocation, startWatching]);
 
   const placeMarkers: MapMarker[] = useMemo(
-    () =>
-      dbPlaces
+    () => {
+      const mapped = dbPlaces
         .filter((p: any) => {
           const lat = Number(p.latitude);
           const lng = Number(p.longitude);
@@ -96,7 +107,12 @@ export function useExplore() {
         .map((p: any) => {
           const lat = Number(p.latitude);
           const lng = Number(p.longitude);
-          const dist = haversineDistance(center[0], center[1], lat, lng);
+          // Only compute & display distances when we have a real GPS fix.
+          // Otherwise distances would be measured from the Skopje fallback
+          // and mislead the user about what's actually nearby.
+          const dist = hasRealLocation
+            ? haversineDistance(center[0], center[1], lat, lng)
+            : NaN;
           return {
             id: p.id,
             lat,
@@ -109,13 +125,22 @@ export function useExplore() {
             image_url: p.image_url || undefined,
             description: p.description || undefined,
           };
-        })
-        .sort((a, b) => {
+        });
+
+      if (hasRealLocation) {
+        mapped.sort((a, b) => {
           const aDistance = Number.parseFloat(a.distance || "999999");
           const bDistance = Number.parseFloat(b.distance || "999999");
           return aDistance - bDistance;
-        }),
-    [dbPlaces, center]
+        });
+      } else {
+        mapped.sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      return mapped;
+    },
+    // Depend on the lat/lng primitives — `center` is a fresh array each render.
+    [dbPlaces, hasRealLocation, center[0], center[1]]
   );
 
   // Sitters/Walkers are intentionally NOT plotted on the Explore map.

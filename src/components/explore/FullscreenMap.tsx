@@ -106,12 +106,17 @@ const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet 
     };
   }, [open]);
 
-  // Update center
+  // Re-center the map only when it transitions from closed → open. The
+  // `center` value updates continuously as GPS streams in via useExplore, and
+  // re-applying setView on every change would yank the camera away from the
+  // user's pan/zoom. The blue dot + follow-mode camera are handled separately
+  // by the userLocation effect below.
   useEffect(() => {
-    if (mapRef.current && open) {
+    if (mapRef.current && open && mapReady) {
       mapRef.current.setView(center, mapRef.current.getZoom());
     }
-  }, [center, open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, mapReady]);
 
   // Auto-request the user's location when the fullscreen map opens so the
   // blue dot appears without forcing a tap on the crosshair button.
