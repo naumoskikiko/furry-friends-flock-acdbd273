@@ -11,7 +11,7 @@
  *     to receive them. Failures are swallowed — never let the reporter itself
  *     crash the app.
  *
- * Swap the network sink for Sentry, LogRocket, or a Lovable Cloud edge function
+ * Swap the network sink for Sentry, LogRocket, or a custom edge function
  * later by editing `sendToSink` only.
  */
 import { supabase } from "@/integrations/supabase/client";
