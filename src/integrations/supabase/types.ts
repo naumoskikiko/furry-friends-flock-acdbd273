@@ -3785,6 +3785,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      can_view_user_content: { Args: { _owner_id: string }; Returns: boolean }
       create_conversation_with_participant: {
         Args: { _other_user_id: string }
         Returns: string
