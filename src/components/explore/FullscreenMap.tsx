@@ -195,8 +195,15 @@ const FullscreenMap = ({
   const handleCenterOnMe = () => {
     followingRef.current = true;
     setIsFollowing(true);
-    requestLocation();
-    startWatching();
+    onRequestLocation?.();
+    // If we already have a fix, fly to it immediately rather than waiting
+    // for the next watcher tick.
+    if (userLocation && mapRef.current) {
+      mapRef.current.flyTo([userLocation.lat, userLocation.lng], 16, {
+        animate: true,
+        duration: 0.6,
+      });
+    }
   };
 
   // React to location updates - place/move the blue dot
