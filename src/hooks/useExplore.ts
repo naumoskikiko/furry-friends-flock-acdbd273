@@ -4,13 +4,17 @@ import type { MapMarker } from "@/components/explore/ExploreMap";
 import type { NearbyItem } from "@/components/explore/NearbySection";
 import { getCategoryEmoji } from "@/hooks/usePlaces";
 import { cacheGet, cacheSet, CacheTTL } from "@/lib/cache";
-import { useUserLocation } from "@/hooks/useUserLocation";
 
 // Fallback used only for the initial map view when we don't yet have a real
 // GPS fix. Distances and sort order use the real user location once available;
 // while we're falling back, distance strings are intentionally omitted so we
 // don't display misleading "X km" labels measured from city center.
 const SKOPJE: [number, number] = [41.9981, 21.4254];
+
+interface UserLatLng {
+  lat: number;
+  lng: number;
+}
 
 const CATEGORY_TYPE_MAP: Record<string, string> = {
   vet: "Vet Clinic",
