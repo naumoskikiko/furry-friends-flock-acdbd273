@@ -25,4 +25,4 @@ npm run dev
 
 ## Deployment
 
-The web app is deployed at [petkeepapp.com](https://petkeepapp.com). The native shell is built with Capacitor (`app.lovable.petkeep`).
+The web app is deployed at [petkeepapp.com](https://petkeepapp.com). The native shell is built with Capacitor.
