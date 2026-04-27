@@ -56,6 +56,22 @@
       height: 100%;
       pointer-events: none;
     }
+
+    /* Leaflet markers also receive button-like semantics for accessibility.
+       Do not apply the global tap-target positioning/pseudo-element to them:
+       Leaflet relies on absolute positioning + transform math to keep icons
+       anchored to map coordinates while panning and zooming. */
+    .leaflet-container .leaflet-marker-icon,
+    .leaflet-container .leaflet-marker-shadow {
+      position: absolute !important;
+      touch-action: auto;
+    }
+
+    .leaflet-container .leaflet-marker-icon::after,
+    .leaflet-container .leaflet-marker-shadow::after {
+      content: none !important;
+      display: none !important;
+    }
   }
 
   /* ---------------------------------------------------------------------

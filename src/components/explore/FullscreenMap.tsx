@@ -92,6 +92,7 @@ const FullscreenMap = ({
         zoom: 14,
         zoomControl: false,
         attributionControl: false,
+        markerZoomAnimation: false,
         rotate: false,
         rotateControl: false,
       } as any);
@@ -190,7 +191,10 @@ const FullscreenMap = ({
     leafletMarkersRef.current.clear();
 
     filteredMarkers.forEach((m) => {
-      const marker = L.marker([m.lat, m.lng], { icon: emojiIcon(m.emoji, false) });
+      const marker = L.marker([m.lat, m.lng], {
+        icon: emojiIcon(m.emoji, false),
+        keyboard: false,
+      });
 
       marker.on("click", () => {
         setSelectedMarker(m);
