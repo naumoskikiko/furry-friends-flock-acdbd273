@@ -21,9 +21,9 @@ const DashboardCustomersTab = ({ businessId }: Props) => {
   useEffect(() => {
     const fetchCustomers = async () => {
       setLoading(true);
-      // Get order items for this store
+      // Get non-PII order item rows for this store
       const { data: items } = await (supabase as any)
-        .from("order_items")
+        .from("store_order_items_safe")
         .select("order_id, price, quantity, store_earnings")
         .eq("store_id", businessId);
 
