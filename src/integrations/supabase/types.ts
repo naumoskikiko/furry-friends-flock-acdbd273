@@ -1706,6 +1706,60 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_gateway_transactions: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string
+          currency: string
+          error_code: string | null
+          error_message: string | null
+          gateway: Database["public"]["Enums"]["payment_gateway_provider"]
+          gateway_reference: string | null
+          gateway_transaction_id: string | null
+          id: string
+          order_id: string | null
+          raw_response: Json | null
+          status: Database["public"]["Enums"]["payment_gateway_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string
+          currency?: string
+          error_code?: string | null
+          error_message?: string | null
+          gateway: Database["public"]["Enums"]["payment_gateway_provider"]
+          gateway_reference?: string | null
+          gateway_transaction_id?: string | null
+          id?: string
+          order_id?: string | null
+          raw_response?: Json | null
+          status?: Database["public"]["Enums"]["payment_gateway_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string
+          currency?: string
+          error_code?: string | null
+          error_message?: string | null
+          gateway?: Database["public"]["Enums"]["payment_gateway_provider"]
+          gateway_reference?: string | null
+          gateway_transaction_id?: string | null
+          id?: string
+          order_id?: string | null
+          raw_response?: Json | null
+          status?: Database["public"]["Enums"]["payment_gateway_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payout_details: {
         Row: {
           account_number: string
@@ -2946,6 +3000,48 @@ export type Database = {
           },
         ]
       }
+      saved_payment_methods: {
+        Row: {
+          card_brand: string | null
+          card_last4: string | null
+          created_at: string
+          exp_month: number | null
+          exp_year: number | null
+          gateway: Database["public"]["Enums"]["payment_gateway_provider"]
+          gateway_token: string
+          id: string
+          is_default: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_brand?: string | null
+          card_last4?: string | null
+          created_at?: string
+          exp_month?: number | null
+          exp_year?: number | null
+          gateway: Database["public"]["Enums"]["payment_gateway_provider"]
+          gateway_token: string
+          id?: string
+          is_default?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_brand?: string | null
+          card_last4?: string | null
+          created_at?: string
+          exp_month?: number | null
+          exp_year?: number | null
+          gateway?: Database["public"]["Enums"]["payment_gateway_provider"]
+          gateway_token?: string
+          id?: string
+          is_default?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       saved_posts: {
         Row: {
           created_at: string
@@ -3709,6 +3805,19 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "owner"
+      payment_gateway_provider:
+        | "cpay"
+        | "halkbank"
+        | "nlb"
+        | "stripe"
+        | "manual"
+      payment_gateway_status:
+        | "pending"
+        | "authorized"
+        | "captured"
+        | "failed"
+        | "refunded"
+        | "cancelled"
       user_role_type: "owner" | "sitter" | "user" | "provider" | "business"
     }
     CompositeTypes: {
@@ -3838,6 +3947,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user", "owner"],
+      payment_gateway_provider: ["cpay", "halkbank", "nlb", "stripe", "manual"],
+      payment_gateway_status: [
+        "pending",
+        "authorized",
+        "captured",
+        "failed",
+        "refunded",
+        "cancelled",
+      ],
       user_role_type: ["owner", "sitter", "user", "provider", "business"],
     },
   },
