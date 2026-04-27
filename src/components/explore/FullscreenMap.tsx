@@ -20,6 +20,11 @@ const emojiIcon = (emoji: string, active = false) =>
     iconAnchor: [active ? 22 : 18, active ? 22 : 18],
   });
 
+interface UserLatLng {
+  lat: number;
+  lng: number;
+}
+
 interface FullscreenMapProps {
   open: boolean;
   onClose: () => void;
@@ -27,11 +32,24 @@ interface FullscreenMapProps {
   center: [number, number];
   nearbyItems: NearbyItem[];
   findMyPet: boolean;
+  userLocation: UserLatLng | null;
+  locationLoading?: boolean;
+  onRequestLocation?: () => void;
 }
 
-const FullscreenMap = ({ open, onClose, markers, center, nearbyItems, findMyPet }: FullscreenMapProps) => {
+const FullscreenMap = ({
+  open,
+  onClose,
+  markers,
+  center,
+  nearbyItems,
+  findMyPet,
+  userLocation,
+  locationLoading = false,
+  onRequestLocation,
+}: FullscreenMapProps) => {
   const navigate = useNavigate();
-  const { location: userLocation, error: locationError, loading: locationLoading, requestLocation, startWatching, stopWatching, PermissionDialog: LocationPermissionDialog } = useUserLocation();
+
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
