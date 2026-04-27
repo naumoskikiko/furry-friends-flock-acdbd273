@@ -33,11 +33,11 @@ const DashboardCustomersTab = ({ businessId }: Props) => {
         return;
       }
 
-      const orderIds = [...new Set((items as any[]).map((i: any) => i.order_id))];
-      const { data: orders } = await (supabase as any)
-        .from("orders")
-        .select("id, buyer_id, shipping_name, created_at, total_price")
-        .in("id", orderIds);
+      const orderIds = new Set((items as any[]).map((i: any) => i.order_id));
+      // Use the safe RPC — returns only non-PII fulfillment columns for orders
+      // that contain items from stores owned by the authenticated user.
+      const { data: ownerOrders } = await (supabase as any).rpc("get_store_owner_orders");
+      const orders = (ownerOrders as any[] | null)?.filter((o: any) => orderIds.has(o.id)) ?? null;
 
       if (!orders) {
         setCustomers([]);
