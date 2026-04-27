@@ -150,6 +150,16 @@ const FullscreenMap = ({
     };
   }, [mapReady]);
 
+  // Explicitly re-sync after the bottom panel animates between heights —
+  // the timeout matches the panel's 300ms transition.
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    const map = mapRef.current;
+    const t = setTimeout(() => map.invalidateSize({ pan: false }), 320);
+    return () => clearTimeout(t);
+  }, [panelExpanded, mapReady]);
+
+
   // Re-center the map only when it transitions from closed → open. The
   // `center` value updates continuously as GPS streams in via useExplore, and
   // re-applying setView on every change would yank the camera away from the
