@@ -223,6 +223,21 @@ const AuthPage = () => {
     }
   };
 
+  const handleOAuth = async (provider: "google" | "apple") => {
+    setLoading(true);
+    const result = await lovable.auth.signInWithOAuth(provider, {
+      redirect_uri: window.location.origin,
+    });
+    if (result?.error) {
+      setLoading(false);
+      toast({ title: `${provider === "google" ? "Google" : "Apple"} sign-in failed`, description: result.error.message, variant: "destructive" });
+      return;
+    }
+    if (result?.redirected) return; // browser will redirect
+    setLoading(false);
+    navigate("/");
+  };
+
   const openTermsModal = (tab: "terms" | "privacy") => {
     setTermsModalTab(tab);
     setTermsModalOpen(true);
