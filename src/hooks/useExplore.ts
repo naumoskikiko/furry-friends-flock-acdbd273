@@ -42,7 +42,7 @@ function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export function useExplore() {
+export function useExplore(userLocation?: UserLatLng | null) {
   const [activeFilter, setActiveFilter] = useState<FilterType>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [findMyPet, setFindMyPet] = useState(false);
@@ -51,12 +51,9 @@ export function useExplore() {
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(!cacheGet<any[]>("explore_places"));
 
-  // Single source of truth for the user's location across Explore + FullscreenMap.
-  // Goes through the proper permission prompt flow (works on iOS/Capacitor),
-  // unlike the raw geolocation API which silently fails when permission is not
-  // pre-granted and leaves us anchored to the Skopje fallback.
-  const { location: userLocation, requestLocation, startWatching } = useUserLocation();
-
+  // Single source of truth for the user's location is owned by the parent
+  // (ExplorePage). We just consume it here so distances/sort stay in sync
+  // with the blue dot — no second geolocation watcher is started here.
   const center: [number, number] = userLocation
     ? [userLocation.lat, userLocation.lng]
     : SKOPJE;
@@ -92,13 +89,6 @@ export function useExplore() {
     };
     load();
   }, []);
-
-  // Kick off the permission prompt + continuous GPS watch as soon as Explore
-  // mounts. Distances will recompute automatically once the first fix lands.
-  useEffect(() => {
-    requestLocation();
-    startWatching();
-  }, [requestLocation, startWatching]);
 
   const placeMarkers: MapMarker[] = useMemo(
     () => {
