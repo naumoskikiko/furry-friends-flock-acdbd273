@@ -1649,13 +1649,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "order_items_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "store_orders_safe"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "order_items_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
@@ -3726,13 +3719,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "order_items_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "store_orders_safe"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "order_items_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
@@ -3778,42 +3764,6 @@ export type Database = {
         }
         Relationships: []
       }
-      store_orders_safe: {
-        Row: {
-          buyer_id: string | null
-          created_at: string | null
-          id: string | null
-          shipping_city: string | null
-          shipping_country: string | null
-          shipping_name: string | null
-          status: string | null
-          total_price: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          buyer_id?: string | null
-          created_at?: string | null
-          id?: string | null
-          shipping_city?: string | null
-          shipping_country?: string | null
-          shipping_name?: string | null
-          status?: string | null
-          total_price?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          buyer_id?: string | null
-          created_at?: string | null
-          id?: string | null
-          shipping_city?: string | null
-          shipping_country?: string | null
-          shipping_name?: string | null
-          status?: string | null
-          total_price?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
       admin_adjust_user_credits: {
@@ -3855,6 +3805,20 @@ export type Database = {
       findmypet_tracking_allowed: {
         Args: { _user_id: string }
         Returns: boolean
+      }
+      get_store_owner_orders: {
+        Args: never
+        Returns: {
+          buyer_id: string
+          created_at: string
+          id: string
+          shipping_city: string
+          shipping_country: string
+          shipping_name: string
+          status: string
+          total_price: number
+          updated_at: string
+        }[]
       }
       group_add_member: {
         Args: { _conversation_id: string; _target_user_id: string }
