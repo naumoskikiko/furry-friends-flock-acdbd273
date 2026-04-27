@@ -358,15 +358,6 @@ const FullscreenMap = ({
           </div>
         )}
 
-  // Explicitly re-sync after the bottom panel animates between heights —
-  // the timeout matches the panel's 300ms transition.
-  useEffect(() => {
-    if (!mapReady || !mapRef.current) return;
-    const map = mapRef.current;
-    const t = setTimeout(() => map.invalidateSize({ pan: false }), 320);
-    return () => clearTimeout(t);
-  }, [panelExpanded, mapReady]);
-
 
         {findMyPet && (
           <div className="absolute top-3 left-3 z-[1000] rounded-full bg-accent/90 px-3 py-1.5 shadow-lg">
