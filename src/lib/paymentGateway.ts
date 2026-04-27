@@ -7,12 +7,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type LocalGateway = "cpay" | "halkbank" | "nlb" | "manual";
+export type LocalGateway = "cpay" | "halkbank" | "nlb";
 
 export interface ChargeInput {
   gateway: LocalGateway;
   amount: number;
-  currency?: string; // defaults to MKD server-side
+  currency?: "MKD"; // defaults to MKD server-side
   order_id?: string;
   booking_id?: string;
   saved_payment_method_id?: string;
