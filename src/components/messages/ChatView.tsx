@@ -183,12 +183,10 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
       return;
     }
 
-    const { data: urlData } = supabaseClient.storage
-      .from("voice-messages")
-      .getPublicUrl(fileName);
-
+    // Voice messages are stored in a PRIVATE bucket; persist the storage path
+    // and resolve a short-lived signed URL on demand at playback time.
     await sendMessage("🎤 Voice message", undefined, "voice", {
-      audio_url: urlData.publicUrl,
+      audio_path: fileName,
       duration,
     });
 
