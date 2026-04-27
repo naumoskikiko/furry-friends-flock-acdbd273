@@ -124,6 +124,42 @@ const FullscreenMap = ({
     };
   }, [open]);
 
+  // CRITICAL: Keep Leaflet's internal pixel↔latlng projection in sync with
+  // the actual container size. Without this, any layout shift after init
+  // (bottom panel expand/collapse, keyboard show, orientation change, address
+  // bar hide on scroll, late tile load) leaves the projection stale — and
+  // markers visibly drift across the map as the user pans/zooms.
+  useEffect(() => {
+    if (!mapReady || !containerRef.current || !mapRef.current) return;
+    const map = mapRef.current;
+    const el = containerRef.current;
+
+    const invalidate = () => {
+      requestAnimationFrame(() => map.invalidateSize({ pan: false }));
+    };
+
+    const ro = new ResizeObserver(invalidate);
+    ro.observe(el);
+    window.addEventListener("resize", invalidate);
+    window.addEventListener("orientationchange", invalidate);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", invalidate);
+      window.removeEventListener("orientationchange", invalidate);
+    };
+  }, [mapReady]);
+
+  // Explicitly re-sync after the bottom panel animates between heights —
+  // the timeout matches the panel's 300ms transition.
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    const map = mapRef.current;
+    const t = setTimeout(() => map.invalidateSize({ pan: false }), 320);
+    return () => clearTimeout(t);
+  }, [panelExpanded, mapReady]);
+
+
   // Re-center the map only when it transitions from closed → open. The
   // `center` value updates continuously as GPS streams in via useExplore, and
   // re-applying setView on every change would yank the camera away from the
