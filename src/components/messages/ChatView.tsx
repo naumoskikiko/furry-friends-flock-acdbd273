@@ -938,10 +938,11 @@ const ChatView = ({ conversation, onBack, onForward, onMuteToggle, onDeleteChat,
                       </button>
                     )}
 
-                    {/* Voice message */}
-                    {msg.message_type === "voice" && msg.metadata?.audio_url ? (
+                    {/* Voice message — supports legacy public audio_url AND new private audio_path */}
+                    {msg.message_type === "voice" && (msg.metadata?.audio_url || msg.metadata?.audio_path) ? (
                       <VoiceMessageBubble
                         audioUrl={msg.metadata.audio_url}
+                        audioPath={msg.metadata.audio_path}
                         duration={msg.metadata.duration || 0}
                         isMine={isMine}
                         playingId={playingVoiceId}
