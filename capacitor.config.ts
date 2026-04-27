@@ -27,18 +27,40 @@ import type { CapacitorConfig } from '@capacitor/cli';
  */
 const isRelease = process.env.CAPACITOR_RELEASE === '1';
 
+// Dev-only hot-reload target. NEVER shipped in release builds — the entire
+// `server` block is omitted below when CAPACITOR_RELEASE=1, so the WebView
+// loads `dist/index.html` from the app bundle and the app works fully offline.
 const devServer = {
   url: 'https://4be74104-e87c-4008-8b67-4575353b752a.lovableproject.com?forceHideBadge=true',
   cleartext: true,
 } as const;
 
+// Release builds use a fixed https scheme so cookies, service workers, OAuth
+// redirects, and Web Crypto / secure-context APIs work identically to the web
+// build. Without this, Android defaults to `http://localhost` which breaks
+// several APIs and is a common cause of white-screen-on-launch.
+const releaseServer = {
+  androidScheme: 'https',
+  iosScheme: 'https',
+  // Explicitly bind to localhost on Android so deep links resolve correctly.
+  hostname: 'localhost',
+} as const;
+
+if (!isRelease) {
+  // eslint-disable-next-line no-console
+  console.log('[capacitor.config] DEV mode — loading from', devServer.url);
+} else {
+  // eslint-disable-next-line no-console
+  console.log('[capacitor.config] RELEASE mode — loading bundled dist/');
+}
+
 const config: CapacitorConfig = {
   appId: 'app.lovable.petkeep',
   appName: 'PetKeep',
   webDir: 'dist',
-  // In release mode we omit `server` entirely so the WebView loads the bundled
-  // `dist/` assets — the only configuration accepted by the stores.
-  ...(isRelease ? {} : { server: devServer }),
+  // Release: bundled assets only (store-compliant, works offline, no white screen).
+  // Dev:     remote preview URL for hot-reload.
+  server: isRelease ? releaseServer : devServer,
   ios: {
     contentInset: 'always',
     // Allow embedded http content (e.g. map tiles) — required for some providers.
