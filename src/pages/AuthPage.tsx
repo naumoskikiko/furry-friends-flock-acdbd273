@@ -168,6 +168,16 @@ const AuthPage = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Strong password policy (defense in depth — server also enforces HIBP)
+    if (password.length < 8) {
+      toast({ title: "Weak password", description: "Use at least 8 characters.", variant: "destructive" });
+      return;
+    }
+    if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+      toast({ title: "Weak password", description: "Include both letters and numbers.", variant: "destructive" });
+      return;
+    }
+
     // App Store Guideline 1.3 / Play UGC policy require explicit user
     // confirmation that they meet the minimum age (13). We capture this as
     // a separate boolean from T&C so reviewers can see it's an explicit step.
