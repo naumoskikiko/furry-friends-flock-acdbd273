@@ -1,8 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Play, Pause } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VoiceMessageBubbleProps {
-  audioUrl: string;
+  /** Legacy: a publicly-readable URL stored on older messages. */
+  audioUrl?: string;
+  /** New: storage path inside the private `voice-messages` bucket. */
+  audioPath?: string;
   duration: number;
   isMine: boolean;
   playingId: string | null;
@@ -12,7 +16,7 @@ interface VoiceMessageBubbleProps {
 }
 
 const VoiceMessageBubble = ({
-  audioUrl, duration, isMine, playingId, messageId, onPlay, onStop,
+  audioUrl, audioPath, duration, isMine, playingId, messageId, onPlay, onStop,
 }: VoiceMessageBubbleProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [progress, setProgress] = useState(0);
