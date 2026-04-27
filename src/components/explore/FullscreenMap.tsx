@@ -448,7 +448,7 @@ const FullscreenMap = ({
           ))}
         </div>
       </div>
-      <LocationPermissionDialog />
+      {/* Permission dialog is rendered by the parent (ExplorePage). */}
     </div>
   );
 };
