@@ -25,12 +25,15 @@ const json = (status: number, body: unknown) =>
 // ---------- Validation ----------
 
 const ChargeSchema = z.object({
-  gateway: z.enum(["cpay", "halkbank", "nlb", "manual"]),
+  gateway: z.enum(["cpay", "halkbank", "nlb"]),
   amount: z.number().positive().max(1_000_000), // hard cap, MKD
-  currency: z.enum(["MKD", "EUR", "USD"]).optional(),
+  currency: z.literal("MKD").optional(),
   order_id: z.string().uuid().optional(),
   booking_id: z.string().uuid().optional(),
   saved_payment_method_id: z.string().uuid().optional(),
+}).refine((value) => Boolean(value.order_id) !== Boolean(value.booking_id), {
+  message: "Provide exactly one payable resource",
+  path: ["order_id"],
 });
 type ChargeRequest = z.infer<typeof ChargeSchema>;
 
@@ -82,8 +85,64 @@ async function dispatch(req: ChargeRequest): Promise<ChargeResult> {
     case "cpay": return chargeCpay(req.amount, currency);
     case "halkbank": return chargeHalkbank(req.amount, currency);
     case "nlb": return chargeNlb(req.amount, currency);
-    case "manual": return { ok: true, status: "captured", gateway_transaction_id: `manual_${crypto.randomUUID()}` };
   }
+}
+
+async function verifyPayableResource(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  body: ChargeRequest,
+): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  if (body.order_id) {
+    const { data: order, error } = await supabase
+      .from("orders")
+      .select("buyer_id,total_paid,total_price,status")
+      .eq("id", body.order_id)
+      .single();
+
+    if (error || !order) return { ok: false, status: 404, error: "Order not found" };
+    if (order.buyer_id !== userId) return { ok: false, status: 403, error: "Not authorized for this order" };
+    if (!["pending", "payment_pending"].includes(String(order.status))) {
+      return { ok: false, status: 409, error: "Order is not payable" };
+    }
+
+    const expected = Number(order.total_paid ?? order.total_price);
+    if (!Number.isFinite(expected) || Math.abs(Number(body.amount) - expected) > 0.01) {
+      return { ok: false, status: 400, error: "Payment amount mismatch" };
+    }
+  }
+
+  if (body.booking_id) {
+    const { data: booking, error } = await supabase
+      .from("care_bookings")
+      .select("user_id,provider_id,service_id,status")
+      .eq("id", body.booking_id)
+      .single();
+
+    if (error || !booking) return { ok: false, status: 404, error: "Booking not found" };
+    if (booking.user_id !== userId) return { ok: false, status: 403, error: "Not authorized for this booking" };
+    if (String(booking.status) !== "pending") {
+      return { ok: false, status: 409, error: "Booking is not payable" };
+    }
+
+    const { data: service, error: serviceError } = await supabase
+      .from("care_services")
+      .select("price,is_active")
+      .eq("id", booking.service_id)
+      .eq("provider_id", booking.provider_id)
+      .single();
+
+    if (serviceError || !service || !service.is_active) {
+      return { ok: false, status: 400, error: "Service is not payable" };
+    }
+
+    const minimum = Number(service.price);
+    if (!Number.isFinite(minimum) || Number(body.amount) < minimum) {
+      return { ok: false, status: 400, error: "Payment amount mismatch" };
+    }
+  }
+
+  return { ok: true };
 }
 
 // ---------- Rate limiting (server-side, per user) ----------
@@ -153,6 +212,9 @@ Deno.serve(async (req) => {
       return json(400, { error: "invalid request", details: parsed.error.flatten().fieldErrors });
     }
     const body = parsed.data;
+
+    const payable = await verifyPayableResource(supabase, userId, body);
+    if (!payable.ok) return json(payable.status, { error: payable.error });
 
     // Persist pending audit row
     const { data: txn, error: insErr } = await supabase
