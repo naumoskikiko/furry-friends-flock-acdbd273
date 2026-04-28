@@ -16,22 +16,6 @@ export const useUserLocation = () => {
   const grantedRef = useRef(false);
   const { request, promptProps } = usePermissionPrompt("location");
 
-  const ensurePermission = useCallback(async () => {
-    if (grantedRef.current) return true;
-    try {
-      const status = await (navigator as any).permissions?.query?.({ name: "geolocation" });
-      if (status?.state === "granted") {
-        grantedRef.current = true;
-        return true;
-      }
-    } catch {
-      /* permissions API unsupported — fall through to rationale */
-    }
-    const allowed = await request();
-    grantedRef.current = allowed;
-    return allowed;
-  }, [request]);
-
   // INTERNAL: actually invoke the browser geolocation API. Must be called
   // synchronously from a user gesture on iOS WebKit / Capacitor — any
   // intervening `await` drops the gesture-permission token and the call
