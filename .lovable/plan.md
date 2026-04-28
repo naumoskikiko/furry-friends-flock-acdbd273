@@ -1,52 +1,86 @@
-## The problem
+## What's broken
 
-In your screenshots, the blue dot (your real GPS position) is in the south-east of the map, but every place marker is clustered up north around Skopje city center. The "Nearby Places" panel still claims "Espresso · 0.5 km" — yet on the map, that café is clearly several kilometers away from the blue dot.
+In your screenshot, the **"Allow location access"** rationale dialog is rendering incorrectly on iOS:
 
-That "0.5 km" is wrong. It's measured from the **default Skopje city center**, not from where you actually are.
+- The orange MapPin icon is clipped at the very top edge of the card.
+- The title, description, and bullet points are missing/cut off.
+- Only the **"Not now"** button is visible — the primary **"Allow location"** button is also clipped.
+- The Explore map underneath is visible through the dialog area, making it look like "the map is on top".
+
+This dialog auto-fires when the Explore page mounts (and again from `LocationSearch` inside the Add Story flow), which is why you see it both on Explore and during story creation.
 
 ## Root cause
 
-The Explore page and the Fullscreen Map use **two different mechanisms** to find your location:
+`src/index.css` has a global mobile tap-target rule (lines 29–58) that does this to **every** `button` on touch devices:
 
-1. **`useExplore`** (powers markers + distances) calls the raw browser geolocation API directly. On iOS / Capacitor, when permission hasn't been pre-granted, this call fails silently — no permission rationale is shown, no retry — and `center` stays stuck on the hard-coded fallback `[41.9981, 21.4254]` (Skopje city center).
-2. **`useUserLocation`** (powers the blue dot inside the fullscreen map) goes through the proper permission prompt flow. It successfully gets your real GPS, so the blue dot appears in the right spot.
+```css
+button { position: relative; }
+button::after {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px; min-height: 44px;
+  width: 100%; height: 100%;
+}
+```
 
-Result: the blue dot is correct, but every marker position is computed/sorted relative to default Skopje, and every "X km" label is the distance from default Skopje to that place — completely disconnected from where you're standing.
+This is fine for normal buttons, but inside Radix `DialogContent` (which uses `display: grid`), the auto-injected close button + the two stacked footer buttons each get a 44×44 invisible overlay child. Combined with `DialogContent`'s `translate(-50%, -50%)` centering and `grid` row sizing, the grid tracks get pushed beyond the viewport on a 393×697 iOS screen with the notch/safe area, clipping the title and primary button. The body region renders as transparent space, exposing the Explore map below.
 
-A second smaller issue: even when location does eventually update, marker distance strings only recompute when `dbPlaces` or `center` changes — and once the fullscreen map is open, `center` updates immediately re-pan the map view (`map.setView(center, ...)`), which can yank the camera away while you're interacting.
+Secondary issue: `ExplorePage` calls `requestLocation()` immediately on mount, which fires the rationale prompt every time the user lands on Explore. Apple's review guideline is to request only after a clear user action.
 
-## The fix
+## Plan
 
-### 1. Use the same location source everywhere
-Replace the raw `navigator.geolocation.getCurrentPosition` call in `src/hooks/useExplore.ts` with the existing `useUserLocation` hook. This guarantees:
-- Same permission prompt flow (works on iOS/Capacitor)
-- Same coordinates used for distance calculation, marker sort order, and the blue dot
-- Continuous updates via `startWatching` so distances stay accurate as you move
+### 1. Harden the global tap-target rule so it skips dialog content
 
-`center` becomes: `userLocation ? [userLocation.lat, userLocation.lng] : SKOPJE_FALLBACK`.
+In `src/index.css`, exclude buttons inside Radix dialogs (and other overlays) from the `::after` pseudo-element. We keep the 44pt safety net for primary UI buttons, but stop the layout breakage in modal grids.
 
-### 2. Stop yanking the fullscreen map view on every location update
-In `src/components/explore/FullscreenMap.tsx`, the effect on lines 110-114 calls `map.setView(center, ...)` whenever `center` changes. With continuous watching, `center` will update every few seconds, fighting the user's pan/zoom. Change this so the map only re-centers on `center` **once at open time**, not on every change. Following-mode camera updates already happen separately via the `userLocation` effect.
+```css
+@media (hover: none) and (pointer: coarse) {
+  /* …existing rule… */
 
-### 3. Show a clear "no location" state instead of silently lying
-If location permission is denied or unavailable, distances computed from default Skopje are misleading. Update `useExplore` to:
-- Omit the `distance` field on markers/nearby items when we don't have a real user location yet
-- Sort by name (or leave unsorted) instead of by fake distance
+  /* Don't inflate buttons inside Radix overlays — their internal layout
+     (grid/flex with fixed gap) cannot absorb a stretched ::after child. */
+  [role="dialog"] button::after,
+  [role="alertdialog"] button::after,
+  [data-radix-popper-content-wrapper] button::after,
+  .leaflet-container button::after {
+    content: none !important;
+    display: none !important;
+  }
+}
+```
 
-The `NearbySection` / `FullscreenMap` panel will then just hide the "X km" chip when distance is empty (the existing JSX already conditionals on `m.distance`).
+### 2. Make `PermissionPrompt` resilient to short viewports
 
-### 4. Verify on a quick scan
-After the change:
-- Open Explore → blue dot and the markers should both be in the same neighborhood
-- The closest item in "Nearby Places" should actually be the closest one to the blue dot
-- Tapping recenter ("Following your location") and then panning shouldn't get hijacked back
+In `src/components/permissions/PermissionPrompt.tsx`:
+
+- Add `max-h-[85vh] overflow-y-auto` to `DialogContent` so the rationale scrolls instead of clipping on small phones.
+- Wrap the icon + header + bullets + footer in a single column with explicit `gap-3` (replacing the implicit grid gap so the layout is predictable on iOS Safari).
+- Ensure `DialogFooter` keeps `flex-col gap-2` on mobile and that both buttons render (the primary `Allow` was being pushed off-screen).
+
+### 3. Stop auto-firing the rationale on `ExplorePage`
+
+In `src/pages/ExplorePage.tsx`, remove the unconditional `requestLocation()` on mount. Instead:
+
+- On mount, only call `startWatching()` (which itself checks `permissions.query` first and returns silently if not yet granted — no prompt).
+- Trigger `requestLocation()` only when the user taps the **"Center on me / Locate"** button or opens the fullscreen map. This matches the existing pattern in `FullscreenMap` (`onRequestLocation`) and is App Store compliant (request on user action, not on page load).
+
+### 4. Verify the same dialog in the Add Story flow
+
+`CreateStoryModal` → Location tool uses `LocationSearch`, which doesn't directly call the permission prompt, but Nominatim search works without GPS. No change needed there — once the global CSS fix lands, any future location prompt fired from inside the story modal will also render correctly.
 
 ## Files to change
 
-- `src/hooks/useExplore.ts` — swap raw geolocation for `useUserLocation`; gate `distance` on real fix; sort markers by real distance only when available
-- `src/components/explore/FullscreenMap.tsx` — make the `center → setView` effect run only on map init, not on every `center` change
+- `src/index.css` — exclude dialog/overlay buttons from the tap-target `::after`.
+- `src/components/permissions/PermissionPrompt.tsx` — `max-h-[85vh] overflow-y-auto`, explicit gap, footer fix.
+- `src/pages/ExplorePage.tsx` — drop the auto `requestLocation()`; keep `startWatching()` (silent if not yet granted) and let user-tap actions trigger the rationale.
 
-## Out of scope
+## Validation
 
-- No DB changes — the place coordinates in the database are correct; the bug is purely in how the client computes "where I am."
-- No changes to map tiles, marker icons, or the bottom panel layout.
+After the changes:
+
+- On Explore, the permission rationale should no longer pop up automatically.
+- When triggered (by tapping locate / opening fullscreen map / Find My Pet), the dialog shows the orange icon, the "Allow location access" title, the 3 bullets, and **both** "Allow location" + "Not now" buttons fully visible on a 393×697 viewport.
+- The underlying map no longer bleeds through the dialog body.
+- Other dialogs across the app (Share Story, Forward, Boost, etc.) keep their normal layout — the tap-target rule still protects standalone buttons, just not those inside modal grids.

@@ -22,11 +22,14 @@ const ExplorePage = () => {
   // (blue dot + follow mode). Multiple parallel useUserLocation instances
   // were racing on iOS/Capacitor and breaking the blue dot entirely.
   const { location: userLocation, requestLocation, startWatching, stopWatching, PermissionDialog: ExplorePermissionDialog } = useUserLocation();
+  // App Store compliance: do NOT cold-prompt for location on page mount.
+  // startWatching() is silent if permission isn't granted yet — it only
+  // attaches a watcher when the OS already has permission. The rationale
+  // dialog only fires when the user taps Locate / opens fullscreen map.
   useEffect(() => {
-    requestLocation();
     startWatching();
     return () => stopWatching();
-  }, [requestLocation, startWatching, stopWatching]);
+  }, [startWatching, stopWatching]);
 
   const {
     activeFilter,
