@@ -72,6 +72,17 @@
       content: none !important;
       display: none !important;
     }
+
+    /* Don't inflate buttons inside Radix overlays — their internal grid/flex
+       layout cannot absorb a stretched ::after child, which on iOS pushes
+       titles and primary actions outside the visible viewport. */
+    [role="dialog"] button::after,
+    [role="alertdialog"] button::after,
+    [data-radix-popper-content-wrapper] button::after,
+    .leaflet-container button::after {
+      content: none !important;
+      display: none !important;
+    }
   }
 
   /* ---------------------------------------------------------------------
