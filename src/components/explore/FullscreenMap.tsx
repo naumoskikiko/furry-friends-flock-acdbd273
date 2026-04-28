@@ -34,7 +34,7 @@ interface FullscreenMapProps {
   findMyPet: boolean;
   userLocation: UserLatLng | null;
   locationLoading?: boolean;
-  onRequestLocation?: () => void;
+  onRequestLocation?: () => void | Promise<boolean>;
 }
 
 const FullscreenMap = ({
@@ -172,16 +172,6 @@ const FullscreenMap = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, mapReady]);
-
-  // Auto-request the user's location when the fullscreen map opens so the
-  // The user's GPS watcher is owned by the parent (ExplorePage) — it's
-  // already running by the time this map opens, so the blue dot just appears
-  // as soon as `userLocation` updates. We optionally re-prompt on open in
-  // case permission was denied earlier.
-  useEffect(() => {
-    if (!open) return;
-    onRequestLocation?.();
-  }, [open, onRequestLocation]);
 
   // Update markers (no selectedMarker dependency)
   useEffect(() => {
