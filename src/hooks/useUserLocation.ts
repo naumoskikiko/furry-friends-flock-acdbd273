@@ -128,7 +128,7 @@ export const useUserLocation = () => {
     // Only attach a watcher silently if permission is already granted —
     // never trigger a cold OS prompt from a non-gesture mount effect.
     try {
-      const status = await (navigator as any).permissions?.query?.({ name: "geolocation" });
+      const status = await navigator.permissions?.query({ name: "geolocation" as PermissionName });
       if (status?.state !== "granted") return;
     } catch {
       return;
