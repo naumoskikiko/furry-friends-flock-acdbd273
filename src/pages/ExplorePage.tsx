@@ -10,6 +10,7 @@ import FullscreenMap from "@/components/explore/FullscreenMap";
 import { useExplore, FILTERS } from "@/hooks/useExplore";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 const ExploreMap = lazy(() => import("@/components/explore/ExploreMap"));
 
@@ -21,7 +22,7 @@ const ExplorePage = () => {
   // useExplore hook (distance/sort calculations) and the FullscreenMap
   // (blue dot + follow mode). Multiple parallel useUserLocation instances
   // were racing on iOS/Capacitor and breaking the blue dot entirely.
-  const { location: userLocation, requestLocation, startWatching, stopWatching, PermissionDialog: ExplorePermissionDialog } = useUserLocation();
+  const { location: userLocation, error: locationError, loading: locationLoading, requestLocation, startWatching, stopWatching, PermissionDialog: ExplorePermissionDialog } = useUserLocation();
   // App Store compliance: do NOT cold-prompt for location on page mount.
   // startWatching() is silent if permission isn't granted yet — it only
   // attaches a watcher when the OS already has permission. The rationale
@@ -30,6 +31,10 @@ const ExplorePage = () => {
     startWatching();
     return () => stopWatching();
   }, [startWatching, stopWatching]);
+
+  useEffect(() => {
+    if (locationError) toast.error(locationError);
+  }, [locationError]);
 
   const {
     activeFilter,
@@ -231,6 +236,7 @@ const ExplorePage = () => {
         nearbyItems={allNearbyItems}
         findMyPet={false}
         userLocation={userLocation}
+        locationLoading={locationLoading}
         onRequestLocation={requestLocation}
       />
       <ExplorePermissionDialog />
