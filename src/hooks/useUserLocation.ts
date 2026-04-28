@@ -111,7 +111,20 @@ export const useUserLocation = () => {
   }, [fireNativeGetCurrentPosition, fireWebGetCurrentPosition]);
 
   const startWatching = useCallback(async () => {
-    if (!("geolocation" in navigator) || watchIdRef.current !== null) return;
+    if (watchRef.current) return;
+
+    if (isNativeLocation()) {
+      try {
+        const status = await Geolocation.checkPermissions();
+        if (status.location !== "granted") return;
+        await startNativeWatch();
+      } catch {
+        return;
+      }
+      return;
+    }
+
+    if (!("geolocation" in navigator)) return;
     // Only attach a watcher silently if permission is already granted —
     // never trigger a cold OS prompt from a non-gesture mount effect.
     try {
@@ -120,33 +133,26 @@ export const useUserLocation = () => {
     } catch {
       return;
     }
-    grantedRef.current = true;
-
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      (pos) => {
-        setLocation({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-        });
-      },
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 5000 }
-    );
-  }, []);
+    startWebWatch();
+  }, [startNativeWatch, startWebWatch]);
 
   const stopWatching = useCallback(() => {
-    if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
+    const watch = watchRef.current;
+    if (!watch) return;
+
+    if (watch.platform === "native") {
+      void Geolocation.clearWatch({ id: watch.id });
+    } else if ("geolocation" in navigator) {
+      navigator.geolocation.clearWatch(watch.id);
     }
+    watchRef.current = null;
   }, []);
 
   useEffect(() => {
     return () => stopWatching();
   }, [stopWatching]);
 
-  const PermissionDialog = () => createElement(PermissionPrompt, promptProps);
+  const PermissionDialog = () => null;
 
   return {
     location,
