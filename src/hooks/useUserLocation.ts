@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback, createElement } from "react";
-import { usePermissionPrompt } from "@/hooks/usePermissionPrompt";
-import { PermissionPrompt } from "@/components/permissions/PermissionPrompt";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Capacitor } from "@capacitor/core";
+import { Geolocation, type Position } from "@capacitor/geolocation";
 
 interface UserLocation {
   lat: number;
@@ -8,95 +8,107 @@ interface UserLocation {
   accuracy: number;
 }
 
+type WatchHandle =
+  | { platform: "web"; id: number }
+  | { platform: "native"; id: string };
+
+const isNativeLocation = () => Capacitor.isNativePlatform();
+
 export const useUserLocation = () => {
   const [location, setLocation] = useState<UserLocation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const watchIdRef = useRef<number | null>(null);
-  const grantedRef = useRef(false);
-  const { request, promptProps } = usePermissionPrompt("location");
+  const watchRef = useRef<WatchHandle | null>(null);
+
+  const updateLocation = useCallback((coords: Pick<GeolocationCoordinates, "latitude" | "longitude" | "accuracy">) => {
+    setLocation({
+      lat: coords.latitude,
+      lng: coords.longitude,
+      accuracy: coords.accuracy,
+    });
+  }, []);
+
+  const startNativeWatch = useCallback(async () => {
+    if (watchRef.current) return;
+
+    const id = await Geolocation.watchPosition(
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000, minimumUpdateInterval: 3000 },
+      (position: Position | null) => {
+        if (position) updateLocation(position.coords);
+      }
+    );
+    watchRef.current = { platform: "native", id };
+  }, [updateLocation]);
+
+  const startWebWatch = useCallback(() => {
+    if (!("geolocation" in navigator) || watchRef.current) return;
+
+    const id = navigator.geolocation.watchPosition(
+      (pos) => updateLocation(pos.coords),
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 5000 }
+    );
+    watchRef.current = { platform: "web", id };
+  }, [updateLocation]);
 
   // INTERNAL: actually invoke the browser geolocation API. Must be called
   // synchronously from a user gesture on iOS WebKit / Capacitor — any
   // intervening `await` drops the gesture-permission token and the call
   // silently no-ops, leaving the blue dot invisible forever.
-  const fireGetCurrentPosition = useCallback(() => {
+  const fireWebGetCurrentPosition = useCallback((): Promise<boolean> => new Promise((resolve) => {
     setLoading(true);
     setError(null);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setLocation({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-        });
+        updateLocation(pos.coords);
         setLoading(false);
-        // Kick off continuous updates now that we have a confirmed grant.
-        if (watchIdRef.current === null && "geolocation" in navigator) {
-          watchIdRef.current = navigator.geolocation.watchPosition(
-            (p) => {
-              setLocation({
-                lat: p.coords.latitude,
-                lng: p.coords.longitude,
-                accuracy: p.coords.accuracy,
-              });
-            },
-            () => {},
-            { enableHighAccuracy: true, maximumAge: 5000 }
-          );
-        }
+        startWebWatch();
+        resolve(true);
       },
       (err) => {
         setLoading(false);
         if (err.code === err.PERMISSION_DENIED) {
-          grantedRef.current = false;
           setError("Enable location to use this feature");
         } else {
           setError("Unable to get your location");
         }
+        resolve(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, []);
+  }), [startWebWatch, updateLocation]);
 
-  const requestLocation = useCallback(async () => {
+  const fireNativeGetCurrentPosition = useCallback(async (): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+      updateLocation(pos.coords);
+      setLoading(false);
+      void startNativeWatch();
+      return true;
+    } catch {
+      setLoading(false);
+      setError("Enable location to use this feature");
+      return false;
+    }
+  }, [startNativeWatch, updateLocation]);
+
+  const requestLocation = useCallback(() => {
+    if (isNativeLocation()) {
+      return fireNativeGetCurrentPosition();
+    }
+
     if (!("geolocation" in navigator)) {
       setError("Geolocation is not supported by your browser");
-      return;
+      return Promise.resolve(false);
     }
 
-    // Fast path — permission already granted: call the geolocation API
-    // SYNCHRONOUSLY (no await above this line in the click stack) so iOS
-    // accepts it. We optimistically check the cached grant flag first;
-    // if it's not set, try the synchronous Permissions API check.
-    let alreadyGranted = grantedRef.current;
-    if (!alreadyGranted) {
-      try {
-        const status = await (navigator as any).permissions?.query?.({ name: "geolocation" });
-        if (status?.state === "granted") {
-          grantedRef.current = true;
-          alreadyGranted = true;
-        }
-      } catch { /* unsupported — fall through */ }
-    }
-
-    if (alreadyGranted) {
-      fireGetCurrentPosition();
-      return;
-    }
-
-    // Cold path — show our rationale, then on Allow ask the OS. iOS will
-    // present its own native prompt here; once the user taps Allow, the
-    // resulting getCurrentPosition is itself initiated from the OS dialog
-    // dismissal which iOS treats as a continuation of the gesture.
-    const allowed = await request();
-    grantedRef.current = allowed;
-    if (!allowed) {
-      setError("Enable location to use this feature");
-      return;
-    }
-    fireGetCurrentPosition();
-  }, [request, fireGetCurrentPosition]);
+    // Call the browser API directly from the click stack so mobile Safari keeps
+    // the user-gesture permission token and shows the OS location prompt.
+    return fireWebGetCurrentPosition();
+  }, [fireNativeGetCurrentPosition, fireWebGetCurrentPosition]);
 
   const startWatching = useCallback(async () => {
     if (!("geolocation" in navigator) || watchIdRef.current !== null) return;
