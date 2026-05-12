@@ -12,6 +12,7 @@ import NativeShell from "@/components/NativeShell";
 import OfflineBanner from "@/components/OfflineBanner";
 import AnalyticsRouteTracker from "@/components/AnalyticsRouteTracker";
 import SkipToContent from "@/components/SkipToContent";
+import CloudDisabledBanner from "@/components/CloudDisabledBanner";
 
 // Auth & root tabs are eagerly loaded (entry points users hit first / most often).
 import Index from "./pages/Index";
@@ -88,6 +89,7 @@ const App = () => (
               <SkipToContent />
               <NativeShell />
               <OfflineBanner />
+              <CloudDisabledBanner />
               <AnalyticsRouteTracker />
               <ErrorBoundary area="this page">
                 <Suspense fallback={<RouteFallback />}>
