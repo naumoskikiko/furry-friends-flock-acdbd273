@@ -21,4 +21,4 @@ const envFlag = (import.meta as any)?.env?.VITE_USE_LOVABLE_CLOUD;
 export const USE_LOVABLE_CLOUD: boolean =
   typeof envFlag === "string"
     ? envFlag.toLowerCase() === "true"
-    : /* default → */ true;
+    : /* default → */ false;
