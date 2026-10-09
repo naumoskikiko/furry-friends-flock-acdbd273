@@ -20,7 +20,8 @@
   .safe-left { padding-left: env(safe-area-inset-left); }
   .safe-right { padding-right: env(safe-area-inset-right); }
   .safe-x { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
-  .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+  .pb-safe { padding-bottom: max(var(--safe-area-bottom), 0px); }
+  .above-bottom-nav { bottom: calc(5rem + var(--safe-area-bottom)); }
 
   /* Native tap-target safety net.
      Ensures every interactive element meets iOS HIG (44pt) / Material (48dp)
@@ -151,6 +152,7 @@
   }
 
   :root {
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
     --background: 30 50% 98%;
     --foreground: 25 30% 15%;
 

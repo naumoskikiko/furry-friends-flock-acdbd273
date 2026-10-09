@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import BusinessDashboard from "@/components/business/BusinessDashboard";
 import { useWishlist } from "@/hooks/useWishlist";
 import ProductImage from "@/components/marketplace/ProductImage";
+import { Button } from "@/components/ui/button";
 import { useRankedBusinesses, useRankedProducts } from "@/hooks/useRankedBusinesses";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { canDeliver, getDeliveryDistance, formatDistance } from "@/lib/deliveryRadius";
@@ -495,19 +496,19 @@ const MarketplacePage = () => {
 
       {/* Floating cart */}
       {itemCount > 0 && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-2rem)] max-w-[358px]">
-          <button
+        <div className="fixed above-bottom-nav left-1/2 -translate-x-1/2 z-30 w-[calc(100%-2rem)] max-w-[358px]">
+          <Button
             onClick={() => navigate("/cart")}
-            className="w-full flex items-center justify-between rounded-2xl petkeep-gradient text-primary-foreground px-5 py-4 shadow-lg"
+            className="h-auto w-full flex items-center justify-between rounded-2xl petkeep-gradient text-primary-foreground px-5 py-4 shadow-lg"
           >
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-xs font-bold">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-foreground/20 text-xs font-bold">
                 {itemCount}
               </div>
               <span className="text-sm font-bold">View Cart</span>
             </div>
             <span className="text-sm font-extrabold">{totalPrice.toLocaleString()} MKD</span>
-          </button>
+          </Button>
         </div>
       )}
 
