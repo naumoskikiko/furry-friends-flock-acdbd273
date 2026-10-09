@@ -311,6 +311,24 @@ const AuthPage = () => {
                   {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Signing in...</> : "Sign In"}
                 </Button>
 
+                {/* Demo accounts for presentations */}
+                <div className="rounded-lg border border-dashed p-3">
+                  <p className="mb-2 text-center text-[11px] font-bold uppercase text-muted-foreground">Demo login</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      ["guest", "Guest"], ["user", "Pet Owner"], ["admin", "Admin"], ["business", "Business"],
+                      ["sitter", "Sitter"], ["walker", "Walker"], ["vet", "Vet Clinic"], ["groomer", "Groomer"],
+                      ["trainer", "Trainer"], ["shelter", "Shelter"],
+                    ].map(([key, label]) => (
+                      <Button key={key} type="button" size="sm" variant="secondary" disabled={loading}
+                        onClick={() => { setEmail(`${key}@demo.petkeepapp.com`); setPassword("PetKeepDemo2026!"); setTimeout(() => document.querySelector<HTMLFormElement>("form")?.requestSubmit(), 0); }}>
+                        {label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+
                 {/* Social sign-in */}
                 <div className="relative my-2">
                   <div className="absolute inset-0 flex items-center">
