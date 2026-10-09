@@ -27,15 +27,17 @@
      minimum hit area on touch devices, without enlarging visual content.
      Uses a centered ::after pseudo-element so layout/visuals stay unchanged. */
   @media (hover: none) and (pointer: coarse) {
-    button,
-    a[role="button"],
-    [role="button"],
-    [role="tab"],
-    [role="menuitem"],
-    [role="switch"],
-    input[type="button"],
-    input[type="submit"],
-    input[type="reset"] {
+    /* Keep this fallback lower-specificity than positioning utilities so
+       absolute badges and fixed controls stay anchored on touch devices. */
+    :where(button,
+      a[role="button"],
+      [role="button"],
+      [role="tab"],
+      [role="menuitem"],
+      [role="switch"],
+      input[type="button"],
+      input[type="submit"],
+      input[type="reset"]) {
       position: relative;
       touch-action: manipulation;
     }
